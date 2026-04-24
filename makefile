@@ -19,7 +19,7 @@ run: fmt
 fmt:
 	gofumpt -w .
 
-build:
+build: build-web
 	mkdir -p bin
 	$(GO) build $(LDFLAGS) -o $(BIN) $(CMD)/...
 
@@ -28,3 +28,6 @@ test:
 
 clean:
 	rm -rf bin
+
+build-web:
+	cd web && npm install && npm run build
