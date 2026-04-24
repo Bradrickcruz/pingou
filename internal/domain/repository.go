@@ -14,6 +14,7 @@ type MonitorRepository interface {
 type CheckRepository interface {
 	Create(ctx context.Context, c *Check) error
 	FindByMonitor(ctx context.Context, monitorID string, limit, offset int) ([]*Check, int, error)
+	DeleteOlderThan(ctx context.Context, before string) (int64, error) // <- adiciona
 }
 
 type IncidentRepository interface {

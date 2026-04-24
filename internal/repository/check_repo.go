@@ -55,3 +55,13 @@ func (r *CheckRepo) FindByMonitor(ctx context.Context, monitorID string, limit, 
 
 	return checks, total, nil
 }
+
+func (r *CheckRepo) DeleteOlderThan(ctx context.Context, before string) (int64, error) {
+	res, err := r.db.ExecContext(ctx,
+		`DELETE FROM checks WHERE checked_at < ?`, before,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
+}
