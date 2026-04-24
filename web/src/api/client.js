@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export function createClient() {
-  const apiKey = sessionStorage.getItem("pingou_api_key") || "";
+  const apiKey = localStorage.getItem("pingou_api_key") || "";
 
   return axios.create({
     baseURL: "/api",

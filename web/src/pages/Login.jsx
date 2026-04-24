@@ -28,8 +28,8 @@ export function Login({ onLogin }) {
         return;
       }
 
-      // persiste no sessionStorage e notifica o App
-      sessionStorage.setItem("pingou_api_key", key);
+      // persiste no localStorage e notifica o App
+      localStorage.setItem("pingou_api_key", key);
       onLogin(key);
     } catch {
       setError("Could not connect to the API.");

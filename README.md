@@ -178,7 +178,7 @@ make docker-down
 O dashboard exige autenticação por **API Key**.
 
 Ao abrir a aplicação no navegador, a tela de login solicitará a chave.  
-Essa chave é validada contra a API e armazenada no `sessionStorage`.
+Essa chave é validada contra a API e armazenada no `localStorage`.
 
 Use o mesmo valor definido em:
 

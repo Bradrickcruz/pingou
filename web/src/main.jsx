@@ -12,13 +12,13 @@ injectGlobalStyles();
 
 function App() {
   const [apiKey, setApiKey] = useState(
-    () => sessionStorage.getItem("pingou_api_key") || "",
+    () => localStorage.getItem("pingou_api_key") || "",
   );
 
   const handleLogin = (key) => setApiKey(key);
 
   const handleLogout = () => {
-    sessionStorage.removeItem("pingou_api_key");
+    localStorage.removeItem("pingou_api_key");
     setApiKey("");
   };
 
