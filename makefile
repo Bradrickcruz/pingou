@@ -14,7 +14,7 @@ LDFLAGS=-ldflags "-X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.bu
 all: fmt build run
 
 run: fmt
-		. ./.env.local && $(GO) run $(CMD)/...
+	. ./.env && $(GO) run $(CMD)/...
 
 fmt:
 	gofumpt -w .
