@@ -1,0 +1,11 @@
+*.db
+*.db-shm
+*.db-wal
+
+.env*
+
+.git
+tmp/
+
+web/node_modules
+internal/handler/dist/
