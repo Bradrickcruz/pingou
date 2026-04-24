@@ -9,6 +9,7 @@ import (
 	"github.com/Bradrickcruz/pingou/internal/handler"
 	"github.com/Bradrickcruz/pingou/internal/repository"
 	"github.com/Bradrickcruz/pingou/internal/service"
+	"github.com/joho/godotenv"
 )
 
 var (
@@ -22,6 +23,11 @@ func main() {
 		Level: slog.LevelInfo,
 	}))
 	slog.SetDefault(logger)
+
+	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
+		slog.Warn("failed to load .env", "err", err)
+	}
+
 	slog.Info("Pingou starting", "version", version, "commit", commit, "buildDate", buildDate)
 
 	cfg, err := config.Load()
