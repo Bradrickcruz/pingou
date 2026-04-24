@@ -52,11 +52,11 @@ func main() {
 	monitorRepository := repository.NewMonitorRepo(db)
 	checkRepository := repository.NewCheckRepo(db)
 	incidentRepository := repository.NewIncidentRepo(db)
-	settingsRepo := repository.NewSettingsRepo(db)
+	settingsRepository := repository.NewSettingsRepo(db)
 
 	// webhookNotifier — lê webhook_url do banco em runtime
 	webhookNotifier := service.NewWebhookNotifier(func() string {
-		url, _ := settingsRepo.Get(context.Background(), "webhook_url")
+		url, _ := settingsRepository.Get(context.Background(), "webhook_url")
 		return url
 	})
 
@@ -69,7 +69,7 @@ func main() {
 	// services
 	monitorService := service.NewMonitorService(monitorRepository, checkRepository, incidentRepository)
 	incidentService := service.NewIncidentService(incidentRepository)
-	settingsService := service.NewSettingsService(settingsRepo)
+	settingsService := service.NewSettingsService(settingsRepository)
 
 	// scheduler
 	monitorScheduler := scheduler.NewScheduler(monitorRepository, httpChecker, stateMachine)
@@ -83,6 +83,10 @@ func main() {
 		slog.Error("scheduler error", "err", err)
 		os.Exit(1)
 	}
+
+	// retention worker
+	retention := scheduler.NewRetentionWorker(checkRepository, settingsRepository)
+	retention.Start(ctx)
 
 	// inicia server
 	server := handler.NewServer(loadedConfig, monitorService, incidentService, settingsService)
