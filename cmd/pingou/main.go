@@ -35,13 +35,13 @@ func main() {
 
 	slog.Info("Pingou starting", "version", version, "commit", commit, "buildDate", buildDate)
 
-	cfg, err := config.Load()
+	loadedConfig, err := config.Load()
 	if err != nil {
 		slog.Error("config error", "err", err)
 		os.Exit(1)
 	}
 
-	db, err := database.Open(cfg.DatabaseURL)
+	db, err := database.Open(loadedConfig.DatabaseURL)
 	if err != nil {
 		slog.Error("database error", "err", err)
 		os.Exit(1)
@@ -49,46 +49,46 @@ func main() {
 	defer db.Close()
 
 	// repositories
-	monitorRepo := repository.NewMonitorRepo(db)
-	checkRepo := repository.NewCheckRepo(db)
-	incidentRepo := repository.NewIncidentRepo(db)
+	monitorRepository := repository.NewMonitorRepo(db)
+	checkRepository := repository.NewCheckRepo(db)
+	incidentRepository := repository.NewIncidentRepo(db)
 	settingsRepo := repository.NewSettingsRepo(db)
 
-	// notifier — lê webhook_url do banco em runtime
-	notifier := service.NewWebhookNotifier(func() string {
+	// webhookNotifier — lê webhook_url do banco em runtime
+	webhookNotifier := service.NewWebhookNotifier(func() string {
 		url, _ := settingsRepo.Get(context.Background(), "webhook_url")
 		return url
 	})
 
 	// state machine
-	stateMachine := service.NewStateMachine(monitorRepo, checkRepo, incidentRepo, notifier)
+	stateMachine := service.NewStateMachine(monitorRepository, checkRepository, incidentRepository, webhookNotifier)
 
 	// checker
 	httpChecker := checker.NewHTTPChecker()
 
 	// services
-	monitorSvc := service.NewMonitorService(monitorRepo, checkRepo, incidentRepo)
-	incidentSvc := service.NewIncidentService(incidentRepo)
-	settingsSvc := service.NewSettingsService(settingsRepo)
+	monitorService := service.NewMonitorService(monitorRepository, checkRepository, incidentRepository)
+	incidentService := service.NewIncidentService(incidentRepository)
+	settingsService := service.NewSettingsService(settingsRepo)
 
 	// scheduler
-	sched := scheduler.NewScheduler(monitorRepo, httpChecker, stateMachine)
-	monitorSvc.SetReloader(sched)
+	monitorScheduler := scheduler.NewScheduler(monitorRepository, httpChecker, stateMachine)
+	monitorService.SetReloader(monitorScheduler)
 
 	// inicia scheduler
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	if err := sched.Start(ctx); err != nil {
+	if err := monitorScheduler.Start(ctx); err != nil {
 		slog.Error("scheduler error", "err", err)
 		os.Exit(1)
 	}
 
-	// server
-	srv := handler.NewServer(cfg, monitorSvc, incidentSvc, settingsSvc)
+	// inicia server
+	server := handler.NewServer(loadedConfig, monitorService, incidentService, settingsService)
 
 	go func() {
-		if err := srv.Start(); err != nil {
+		if err := server.Start(); err != nil {
 			slog.Error("server error", "err", err)
 			stop()
 		}
@@ -97,5 +97,5 @@ func main() {
 	// aguarda sinal de encerramento
 	<-ctx.Done()
 	slog.Info("shutting down...")
-	sched.Stop()
+	monitorScheduler.Stop()
 }
