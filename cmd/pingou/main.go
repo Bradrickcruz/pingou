@@ -24,11 +24,6 @@ var (
 )
 
 func main() {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
-	}))
-	slog.SetDefault(logger)
-
 	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
 		slog.Warn("failed to load .env", "err", err)
 	}
@@ -40,6 +35,11 @@ func main() {
 		slog.Error("config error", "err", err)
 		os.Exit(1)
 	}
+
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: loadedConfig.LogLevel,
+	}))
+	slog.SetDefault(logger)
 
 	db, err := database.Open(loadedConfig.DatabaseURL)
 	if err != nil {
