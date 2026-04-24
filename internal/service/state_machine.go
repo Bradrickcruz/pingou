@@ -73,9 +73,15 @@ func (sm *StateMachine) handleSuccess(ctx context.Context, m *domain.Monitor, pr
 		}
 		if incident != nil {
 			endedAt := now.Format(time.RFC3339)
-			if err := sm.incidents.Close(ctx, incident.ID, endedAt, 0); err != nil {
+			durationSeconds := int(now.Sub(incident.StartedAt).Seconds())
+			if durationSeconds < 0 {
+				durationSeconds = 0
+			}
+			if err := sm.incidents.Close(ctx, incident.ID, endedAt, durationSeconds); err != nil {
 				return err
 			}
+			d := int64(durationSeconds)
+			incident.DurationSeconds = &d
 			slog.Info("monitor recovered", "monitor_id", m.ID, "name", m.Name)
 			sm.notifier.NotifyRecovery(ctx, m, incident)
 		}

@@ -15,6 +15,7 @@ type incidentResponse struct {
 	EndedAt          *string `json:"ended_at"`
 	LastError        *string `json:"last_error"`
 	NotificationSent bool    `json:"notification_sent"`
+	DurationSeconds  int64   `json:"duration_seconds"`
 	Open             bool    `json:"open"`
 }
 
@@ -70,12 +71,21 @@ func (s *Server) handleListMonitorIncidents(w http.ResponseWriter, r *http.Reque
 }
 
 func toIncidentResponse(i *domain.Incident) incidentResponse {
+	durationSeconds := int64(time.Since(i.StartedAt).Seconds())
+	if durationSeconds < 0 {
+		durationSeconds = 0
+	}
+	if i.DurationSeconds != nil {
+		durationSeconds = *i.DurationSeconds
+	}
+
 	res := incidentResponse{
 		ID:               i.ID,
 		MonitorID:        i.MonitorID,
 		StartedAt:        i.StartedAt.Format(time.RFC3339),
 		LastError:        i.LastError,
 		NotificationSent: i.NotificationSent,
+		DurationSeconds:  durationSeconds,
 		Open:             i.EndedAt == nil,
 	}
 	if i.EndedAt != nil {

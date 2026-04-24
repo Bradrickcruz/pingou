@@ -9,4 +9,5 @@ type Incident struct {
 	EndedAt          *time.Time
 	LastError        *string
 	NotificationSent bool
+	DurationSeconds  *int64
 }

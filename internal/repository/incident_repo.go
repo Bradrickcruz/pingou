@@ -15,28 +15,34 @@ func NewIncidentRepo(db *sql.DB) *IncidentRepo { return &IncidentRepo{db: db} }
 
 func (r *IncidentRepo) Create(ctx context.Context, i *domain.Incident) error {
 	_, err := r.db.ExecContext(ctx, `
-		INSERT INTO incidents (id, monitor_id, started_at, last_error, notification_sent)
-		VALUES (?,?,?,?,?)`,
+		INSERT INTO incidents (id, monitor_id, started_at, last_error, notification_sent, duration_seconds)
+		VALUES (?,?,?,?,?,?)`,
 		i.ID, i.MonitorID, i.StartedAt.UTC().Format(time.RFC3339),
-		i.LastError, boolToInt(i.NotificationSent),
+		i.LastError, boolToInt(i.NotificationSent), i.DurationSeconds,
 	)
 	return err
 }
 
 func (r *IncidentRepo) FindOpenByMonitor(ctx context.Context, monitorID string) (*domain.Incident, error) {
 	row := r.db.QueryRowContext(ctx, `
-		SELECT id, monitor_id, started_at, ended_at, last_error, notification_sent
+		SELECT id, monitor_id, started_at, ended_at, last_error, notification_sent, duration_seconds
 		FROM incidents WHERE monitor_id = ? AND ended_at IS NULL`, monitorID)
 	return scanIncident(row)
 }
 
-func (r *IncidentRepo) Close(ctx context.Context, id string, endedAt string, _ int) error {
-	_, err := r.db.ExecContext(ctx, `UPDATE incidents SET ended_at = ? WHERE id = ?`, endedAt, id)
+func (r *IncidentRepo) Close(ctx context.Context, id string, endedAt string, durationSeconds int) error {
+	_, err := r.db.ExecContext(
+		ctx,
+		`UPDATE incidents SET ended_at = ?, duration_seconds = ? WHERE id = ?`,
+		endedAt,
+		durationSeconds,
+		id,
+	)
 	return err
 }
 
 func (r *IncidentRepo) FindByMonitor(ctx context.Context, monitorID string, onlyOpen bool, limit, offset int) ([]*domain.Incident, int, error) {
-	q := `SELECT id, monitor_id, started_at, ended_at, last_error, notification_sent FROM incidents WHERE monitor_id = ?`
+	q := `SELECT id, monitor_id, started_at, ended_at, last_error, notification_sent, duration_seconds FROM incidents WHERE monitor_id = ?`
 	args := []any{monitorID}
 	if onlyOpen {
 		q += ` AND ended_at IS NULL`
@@ -50,7 +56,7 @@ func (r *IncidentRepo) FindByMonitor(ctx context.Context, monitorID string, only
 }
 
 func (r *IncidentRepo) FindAll(ctx context.Context, onlyOpen bool, limit, offset int) ([]*domain.Incident, int, error) {
-	q := `SELECT id, monitor_id, started_at, ended_at, last_error, notification_sent FROM incidents WHERE 1=1`
+	q := `SELECT id, monitor_id, started_at, ended_at, last_error, notification_sent, duration_seconds FROM incidents WHERE 1=1`
 	if onlyOpen {
 		q += ` AND ended_at IS NULL`
 	}
@@ -86,8 +92,9 @@ func scanIncident(s scanner) (*domain.Incident, error) {
 	var startedAt string
 	var endedAt sql.NullString
 	var lastError sql.NullString
+	var durationSeconds sql.NullInt64
 
-	err := s.Scan(&i.ID, &i.MonitorID, &startedAt, &endedAt, &lastError, &notifSent)
+	err := s.Scan(&i.ID, &i.MonitorID, &startedAt, &endedAt, &lastError, &notifSent, &durationSeconds)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -103,6 +110,9 @@ func scanIncident(s scanner) (*domain.Incident, error) {
 	}
 	if lastError.Valid {
 		i.LastError = &lastError.String
+	}
+	if durationSeconds.Valid {
+		i.DurationSeconds = &durationSeconds.Int64
 	}
 
 	return &i, nil
