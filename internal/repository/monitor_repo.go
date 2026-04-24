@@ -110,7 +110,8 @@ func scanMonitor(s scanner) (*domain.Monitor, error) {
 	var m domain.Monitor
 	var enabled int
 	var state string
-	var lastChecked, createdAt, updatedAt string
+	var lastChecked sql.NullString
+	var createdAt, updatedAt string
 
 	err := s.Scan(
 		&m.ID, &m.Name, &m.URL, &m.IntervalSeconds, &m.TimeoutSeconds,
@@ -127,8 +128,8 @@ func scanMonitor(s scanner) (*domain.Monitor, error) {
 	m.CurrentState = domain.MonitorState(state)
 	m.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
 	m.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
-	if lastChecked != "" {
-		t, _ := time.Parse(time.RFC3339, lastChecked)
+	if lastChecked.Valid {
+		t, _ := time.Parse(time.RFC3339, lastChecked.String)
 		m.LastCheckedAt = &t
 	}
 
