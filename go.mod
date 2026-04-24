@@ -3,6 +3,7 @@ module github.com/Bradrickcruz/pingou
 go 1.25.1
 
 require (
+	github.com/google/uuid v1.6.0
 	github.com/mattn/go-sqlite3 v1.14.42
 	github.com/pressly/goose/v3 v3.27.0
 )
