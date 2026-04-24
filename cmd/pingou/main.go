@@ -7,6 +7,8 @@ import (
 	"github.com/Bradrickcruz/pingou/internal/config"
 	"github.com/Bradrickcruz/pingou/internal/database"
 	"github.com/Bradrickcruz/pingou/internal/handler"
+	"github.com/Bradrickcruz/pingou/internal/repository"
+	"github.com/Bradrickcruz/pingou/internal/service"
 )
 
 var (
@@ -20,7 +22,6 @@ func main() {
 		Level: slog.LevelInfo,
 	}))
 	slog.SetDefault(logger)
-
 	slog.Info("Pingou starting", "version", version, "commit", commit, "buildDate", buildDate)
 
 	cfg, err := config.Load()
@@ -36,7 +37,15 @@ func main() {
 	}
 	defer db.Close()
 
-	srv := handler.NewServer(cfg)
+	// repositories
+	monitorRepo := repository.NewMonitorRepo(db)
+	incidentRepo := repository.NewIncidentRepo(db)
+
+	// services
+	monitorSvc := service.NewMonitorService(monitorRepo, incidentRepo)
+
+	// server
+	srv := handler.NewServer(cfg, monitorSvc)
 	if err := srv.Start(); err != nil {
 		slog.Error("server error", "err", err)
 		os.Exit(1)
