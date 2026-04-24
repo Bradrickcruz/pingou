@@ -30,15 +30,17 @@ func NewWebhookNotifier(getWebhookURL func() string) *WebhookNotifier {
 }
 
 type webhookPayload struct {
-	Event     string `json:"event"`
-	MonitorID string `json:"monitor_id"`
-	Name      string `json:"name"`
-	URL       string `json:"url"`
-	State     string `json:"state"`
-	Error     string `json:"error,omitempty"`
-	StartedAt string `json:"started_at,omitempty"`
-	EndedAt   string `json:"ended_at,omitempty"`
-	Timestamp string `json:"timestamp"`
+	Event                   string                `json:"event"`
+	Monitor                 webhookPayloadMonitor `json:"monitor"`
+	Timestamp               string                `json:"timestamp"`
+	LastError               *string               `json:"last_error"`
+	DowntimeDurationSeconds *int64                `json:"downtime_duration_seconds"`
+}
+
+type webhookPayloadMonitor struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	URL  string `json:"url"`
 }
 
 func (n *WebhookNotifier) NotifyDown(ctx context.Context, m *domain.Monitor, i *domain.Incident) {
@@ -48,16 +50,15 @@ func (n *WebhookNotifier) NotifyDown(ctx context.Context, m *domain.Monitor, i *
 	}
 
 	payload := webhookPayload{
-		Event:     "monitor.down",
-		MonitorID: m.ID,
-		Name:      m.Name,
-		URL:       m.URL,
-		State:     "DOWN",
-		StartedAt: i.StartedAt.Format(time.RFC3339),
-		Timestamp: time.Now().UTC().Format(time.RFC3339),
-	}
-	if i.LastError != nil {
-		payload.Error = *i.LastError
+		Event: "down",
+		Monitor: webhookPayloadMonitor{
+			ID:   m.ID,
+			Name: m.Name,
+			URL:  m.URL,
+		},
+		Timestamp:               i.StartedAt.UTC().Format(time.RFC3339),
+		LastError:               i.LastError,
+		DowntimeDurationSeconds: nil,
 	}
 
 	n.send(url, payload)
@@ -69,17 +70,32 @@ func (n *WebhookNotifier) NotifyRecovery(ctx context.Context, m *domain.Monitor,
 		return
 	}
 
-	payload := webhookPayload{
-		Event:     "monitor.recovered",
-		MonitorID: m.ID,
-		Name:      m.Name,
-		URL:       m.URL,
-		State:     "UP",
-		StartedAt: i.StartedAt.Format(time.RFC3339),
-		Timestamp: time.Now().UTC().Format(time.RFC3339),
-	}
+	timestamp := time.Now().UTC()
 	if i.EndedAt != nil {
-		payload.EndedAt = i.EndedAt.Format(time.RFC3339)
+		timestamp = i.EndedAt.UTC()
+	}
+
+	var downtimeDurationSeconds *int64
+	if i.DurationSeconds != nil {
+		downtimeDurationSeconds = i.DurationSeconds
+	} else {
+		d := int64(timestamp.Sub(i.StartedAt).Seconds())
+		if d < 0 {
+			d = 0
+		}
+		downtimeDurationSeconds = &d
+	}
+
+	payload := webhookPayload{
+		Event: "up",
+		Monitor: webhookPayloadMonitor{
+			ID:   m.ID,
+			Name: m.Name,
+			URL:  m.URL,
+		},
+		Timestamp:               timestamp.Format(time.RFC3339),
+		LastError:               nil,
+		DowntimeDurationSeconds: downtimeDurationSeconds,
 	}
 
 	n.send(url, payload)

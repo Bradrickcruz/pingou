@@ -82,8 +82,7 @@ export function Settings() {
                 marginTop: "4px",
               }}
             >
-              Receives <code>monitor.down</code> and{" "}
-              <code>monitor.recovered</code> events.
+              Receives <code>down</code> and <code>up</code> events.
             </p>
           </div>
 
