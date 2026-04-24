@@ -17,12 +17,17 @@ type Reloader interface {
 
 type MonitorService struct {
 	monitors  domain.MonitorRepository
+	checks    domain.CheckRepository
 	incidents domain.IncidentRepository
-	reloader  Reloader // nil até o scheduler ser injetado
+	reloader  Reloader
 }
 
-func NewMonitorService(monitors domain.MonitorRepository, incidents domain.IncidentRepository) *MonitorService {
-	return &MonitorService{monitors: monitors, incidents: incidents}
+func NewMonitorService(
+	monitors domain.MonitorRepository,
+	checks domain.CheckRepository, // <- adiciona
+	incidents domain.IncidentRepository,
+) *MonitorService {
+	return &MonitorService{monitors: monitors, checks: checks, incidents: incidents}
 }
 
 func (s *MonitorService) SetReloader(r Reloader) {
@@ -155,4 +160,11 @@ func (s *MonitorService) reload(ctx context.Context, id string) {
 			slog.Error("scheduler reload error", "monitor_id", id, "err", err)
 		}
 	}
+}
+
+func (s *MonitorService) ListChecks(ctx context.Context, monitorID string, limit, offset int) ([]*domain.Check, int, error) {
+	if _, err := s.GetByID(ctx, monitorID); err != nil {
+		return nil, 0, err
+	}
+	return s.checks.FindByMonitor(ctx, monitorID, limit, offset)
 }
