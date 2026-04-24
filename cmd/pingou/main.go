@@ -67,7 +67,9 @@ func main() {
 	httpChecker := checker.NewHTTPChecker()
 
 	// services
-	monitorSvc := service.NewMonitorService(monitorRepo, incidentRepo)
+	monitorSvc := service.NewMonitorService(monitorRepo, checkRepo, incidentRepo)
+	incidentSvc := service.NewIncidentService(incidentRepo)
+	settingsSvc := service.NewSettingsService(settingsRepo)
 
 	// scheduler
 	sched := scheduler.NewScheduler(monitorRepo, httpChecker, stateMachine)
@@ -83,7 +85,7 @@ func main() {
 	}
 
 	// server
-	srv := handler.NewServer(cfg, monitorSvc)
+	srv := handler.NewServer(cfg, monitorSvc, incidentSvc, settingsSvc)
 
 	go func() {
 		if err := srv.Start(); err != nil {
