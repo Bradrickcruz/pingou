@@ -95,8 +95,10 @@ func (s *Scheduler) stopJob(id string) {
 }
 
 func (s *Scheduler) runLoop(ctx context.Context, m *domain.Monitor) {
-	// executa imediatamente na primeira vez
-	s.runCheck(ctx, m)
+	// primeiro check usa contexto próprio, independente da request HTTP
+	checkCtx, cancel := context.WithTimeout(context.Background(), time.Duration(m.TimeoutSeconds)*time.Second)
+	s.runCheck(checkCtx, m)
+	cancel()
 
 	ticker := time.NewTicker(time.Duration(m.IntervalSeconds) * time.Second)
 	defer ticker.Stop()
@@ -106,13 +108,13 @@ func (s *Scheduler) runLoop(ctx context.Context, m *domain.Monitor) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			// busca o monitor atualizado do banco antes de checar
-			// (interval ou timeout podem ter mudado via PATCH)
 			updated, err := s.monitors.FindByID(ctx, m.ID)
 			if err != nil || updated == nil || !updated.Enabled {
 				return
 			}
-			s.runCheck(ctx, updated)
+			checkCtx, cancel := context.WithTimeout(context.Background(), time.Duration(updated.TimeoutSeconds)*time.Second)
+			s.runCheck(checkCtx, updated)
+			cancel()
 		}
 	}
 }
