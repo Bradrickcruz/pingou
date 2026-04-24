@@ -2,7 +2,7 @@ APP=pingou
 CMD=./cmd/$(APP)
 BIN=bin/$(APP)
 
-VERSION?=dev
+VERSION?=$(shell git describe --tags --always --dirty)
 COMMIT?=$(shell git rev-parse --short HEAD 2>/dev/null)
 BUILD_DATE?=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 
