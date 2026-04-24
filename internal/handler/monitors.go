@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -167,6 +168,7 @@ func writeServiceError(w http.ResponseWriter, err error) {
 	case errors.Is(err, service.ErrValidation):
 		writeError(w, http.StatusBadRequest, err.Error(), "VALIDATION_ERROR")
 	default:
+		slog.Error("internal error", "err", err)
 		writeError(w, http.StatusInternalServerError, "internal error", "INTERNAL_ERROR")
 	}
 }
