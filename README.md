@@ -99,3 +99,226 @@ pingou/
 ├── go.mod
 └── README.md
 ```
+
+## Como rodar em desenvolvimento
+
+### Requisitos
+
+- Go
+- Node.js + npm
+- GCC ou toolchain compatível com CGO
+- SQLite
+- `gofumpt` instalado, se você for usar o target `fmt`
+
+### 1. Configurar ambiente
+
+Crie um arquivo `.env` na raiz do projeto com base no `.env.example`.
+
+Exemplo:
+
+```env
+PORT=8080
+DB_PATH=./pingou.db
+API_KEY=dev-api-key
+LOG_LEVEL=info
+```
+
+### 2. Rodar a aplicação
+
+```bash
+make run
+```
+
+Esse comando:
+
+- formata o código Go
+- sobe o backend
+- usa as variáveis do `.env`
+
+### 3. Build do frontend
+
+```bash
+make build-web
+```
+
+### 4. Build completo
+
+```bash
+make build
+```
+
+O binário será gerado em:
+
+```bash
+bin/pingou
+```
+
+## Como rodar com Docker
+
+### Build da imagem
+
+```bash
+make docker-build
+```
+
+### Subir com Docker Compose
+
+```bash
+make docker-up
+```
+
+### Derrubar containers
+
+```bash
+make docker-down
+```
+
+## Login no dashboard
+
+O dashboard exige autenticação por **API Key**.
+
+Ao abrir a aplicação no navegador, a tela de login solicitará a chave.  
+Essa chave é validada contra a API e armazenada no `sessionStorage`.
+
+Use o mesmo valor definido em:
+
+```env
+API_KEY=...
+```
+
+## Variáveis de ambiente
+
+| Variável    | Obrigatória | Default       | Descrição                                                 |
+| ----------- | ----------: | ------------- | --------------------------------------------------------- |
+| `PORT`      |         não | `8080`        | Porta HTTP da aplicação                                   |
+| `DB_PATH`   |         não | `./pingou.db` | Caminho do arquivo SQLite                                 |
+| `API_KEY`   |         sim | -             | Chave usada para proteger o dashboard e as rotas `/api/*` |
+| `LOG_LEVEL` |         não | `info`        | Nível de log                                              |
+
+## Autenticação da API
+
+Todas as rotas protegidas exigem o header:
+
+```http
+X-API-Key: sua-chave
+```
+
+### Exemplo com `curl`
+
+```bash
+curl -H "X-API-Key: dev-api-key" http://localhost:8080/api/monitors
+```
+
+## Endpoints principais
+
+### Público
+
+#### `GET /healthz`
+
+Retorna o status básico da aplicação.
+
+### Protegidos
+
+#### `GET /api/monitors`
+
+Lista os monitores.
+
+#### `POST /api/monitors`
+
+Cria um novo monitor.
+
+#### `GET /api/monitors/:id`
+
+Busca um monitor por ID.
+
+#### `PATCH /api/monitors/:id`
+
+Atualiza um monitor.
+
+#### `DELETE /api/monitors/:id`
+
+Remove um monitor.
+
+#### `GET /api/incidents`
+
+Lista incidentes.
+
+#### `GET /api/settings`
+
+Busca as configurações globais.
+
+#### `PATCH /api/settings`
+
+Atualiza configurações globais.
+
+#### `GET /api/export/db`
+
+Baixa um dump do banco SQLite.
+
+## Comandos disponíveis no Makefile
+
+```bash
+make run
+make fmt
+make build
+make test
+make clean
+make build-web
+make docker-build
+make docker-up
+make docker-down
+make release
+```
+
+## Release
+
+Para gerar uma release local:
+
+```bash
+make release
+```
+
+Esse processo gera o build da aplicação e deixa o binário pronto em:
+
+```bash
+bin/pingou
+```
+
+## Objetivos do projeto
+
+O Pingou nasceu com alguns objetivos bem claros:
+
+- ser um health checker simples
+- rodar com poucos recursos
+- usar SQLite para reduzir complexidade operacional
+- embutir o frontend no backend
+- funcionar bem como projeto real e também como estudo de Go
+
+## Limites e foco do MVP
+
+O projeto foi pensado para manter escopo controlado.  
+A ideia não é competir com ferramentas enterprise, e sim entregar um monitor funcional, leve e compreensível.
+
+Foco do MVP:
+
+- checks HTTP
+- incidentes básicos
+- webhook global
+- dashboard embutido
+- export do banco
+
+## Pós-MVP
+
+Ideias futuras:
+
+- TCP checks
+- status page pública
+- métricas e gráficos
+- integração com Prometheus
+- webhook por monitor
+- templates para Discord e Slack
+- multi-tenancy
+
+## Licença
+
+Apache 2.0
