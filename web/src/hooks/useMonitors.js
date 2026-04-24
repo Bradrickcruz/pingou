@@ -6,9 +6,8 @@ export function useMonitors() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetch = useCallback(async () => {
+  const loadMonitors = useCallback(async () => {
     try {
-      setLoading(true);
       const res = await monitorsApi.list({ limit: 100 });
       setMonitors(res.data);
     } catch (e) {
@@ -18,11 +17,23 @@ export function useMonitors() {
     }
   }, []);
 
-  useEffect(() => {
-    fetch();
-    const interval = setInterval(fetch, 15_000); // polling a cada 15s
-    return () => clearInterval(interval);
-  }, [fetch]);
+  const refetch = useCallback(async () => {
+    setLoading(true);
+    await loadMonitors();
+  }, [loadMonitors]);
 
-  return { monitors, loading, error, refetch: fetch };
+  useEffect(() => {
+    const initialLoad = setTimeout(() => {
+      void loadMonitors();
+    }, 0);
+    const interval = setInterval(() => {
+      void loadMonitors();
+    }, 15_000); // polling a cada 15s
+    return () => {
+      clearTimeout(initialLoad);
+      clearInterval(interval);
+    };
+  }, [loadMonitors]);
+
+  return { monitors, loading, error, refetch };
 }

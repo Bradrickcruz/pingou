@@ -6,9 +6,8 @@ export function useSettings() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetch = async () => {
+  const loadSettings = async () => {
     try {
-      setLoading(true);
       setSettings(await settingsApi.get());
     } catch (e) {
       setError(e.message);
@@ -24,7 +23,11 @@ export function useSettings() {
   };
 
   useEffect(() => {
-    fetch();
+    const initialLoad = setTimeout(() => {
+      void loadSettings();
+    }, 0);
+
+    return () => clearTimeout(initialLoad);
   }, []);
 
   return { settings, loading, error, update };

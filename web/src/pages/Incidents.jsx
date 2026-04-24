@@ -8,8 +8,12 @@ export function Incidents() {
   const [loading, setLoading] = useState(true);
   const [onlyOpen, setOnlyOpen] = useState(false);
 
-  useEffect(() => {
+  const handleToggleOnlyOpen = (event) => {
     setLoading(true);
+    setOnlyOpen(event.target.checked);
+  };
+
+  useEffect(() => {
     incidentsApi
       .list({ open: onlyOpen, limit: 50 })
       .then((r) => setIncidents(r.data))
@@ -39,7 +43,7 @@ export function Incidents() {
           <input
             type="checkbox"
             checked={onlyOpen}
-            onChange={(e) => setOnlyOpen(e.target.checked)}
+            onChange={handleToggleOnlyOpen}
             style={{ width: "auto" }}
           />
           Open only
