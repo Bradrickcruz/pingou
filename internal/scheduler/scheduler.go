@@ -120,7 +120,16 @@ func (s *Scheduler) runLoop(ctx context.Context, m *domain.Monitor) {
 }
 
 func (s *Scheduler) runCheck(ctx context.Context, m *domain.Monitor) {
+	slog.Debug("running check", "monitor_id", m.ID, "name", m.Name, "url", m.URL)
+
 	result := s.checker.Check(ctx, m)
+
+	slog.Debug("check result",
+		"monitor_id", m.ID,
+		"success", result.Success,
+		"latency_ms", result.LatencyMs,
+		"status_code", result.StatusCode,
+	)
 
 	if err := s.stateMachine.Process(ctx, m, result); err != nil {
 		slog.Error("state machine error", "monitor_id", m.ID, "err", err)
