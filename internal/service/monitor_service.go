@@ -3,19 +3,30 @@ package service
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/Bradrickcruz/pingou/internal/domain"
 	"github.com/google/uuid"
 )
 
+// Reloader é implementado pelo Scheduler — evita import circular
+type Reloader interface {
+	Reload(ctx context.Context, monitorID string) error
+}
+
 type MonitorService struct {
 	monitors  domain.MonitorRepository
 	incidents domain.IncidentRepository
+	reloader  Reloader // nil até o scheduler ser injetado
 }
 
 func NewMonitorService(monitors domain.MonitorRepository, incidents domain.IncidentRepository) *MonitorService {
 	return &MonitorService{monitors: monitors, incidents: incidents}
+}
+
+func (s *MonitorService) SetReloader(r Reloader) {
+	s.reloader = r
 }
 
 const maxMonitors = 100
@@ -68,6 +79,8 @@ func (s *MonitorService) Create(ctx context.Context, in CreateMonitorInput) (*do
 	if err := s.monitors.Create(ctx, m); err != nil {
 		return nil, err
 	}
+
+	s.reload(ctx, m.ID)
 	return m, nil
 }
 
@@ -120,6 +133,8 @@ func (s *MonitorService) Update(ctx context.Context, id string, in UpdateMonitor
 	if err := s.monitors.Update(ctx, m); err != nil {
 		return nil, err
 	}
+
+	s.reload(ctx, m.ID)
 	return m, nil
 }
 
@@ -127,5 +142,17 @@ func (s *MonitorService) Delete(ctx context.Context, id string) error {
 	if _, err := s.GetByID(ctx, id); err != nil {
 		return err
 	}
-	return s.monitors.Delete(ctx, id)
+	if err := s.monitors.Delete(ctx, id); err != nil {
+		return err
+	}
+	s.reload(ctx, id)
+	return nil
+}
+
+func (s *MonitorService) reload(ctx context.Context, id string) {
+	if s.reloader != nil {
+		if err := s.reloader.Reload(ctx, id); err != nil {
+			slog.Error("scheduler reload error", "monitor_id", id, "err", err)
+		}
+	}
 }
