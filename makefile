@@ -7,9 +7,9 @@ VERSION?=$(shell git describe --tags --always --dirty)
 COMMIT?=$(shell git rev-parse --short HEAD 2>/dev/null)
 BUILD_DATE?=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-LDFLAGS=-ldflags "-X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.buildDate=$(BUILD_DATE)"
+LDFLAGS=-ldflags "-s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.buildDate=$(BUILD_DATE)"
 
-.PHONY: all run fmt build test clean
+.PHONY: all run fmt build test clean build-web docker-build docker-up docker-down release
 
 all: fmt build run
 
@@ -21,7 +21,7 @@ fmt:
 
 build: build-web
 	mkdir -p bin
-	$(GO) build $(LDFLAGS) -o $(BIN) $(CMD)/...
+	CGO_ENABLED=1 $(GO) build $(LDFLAGS) -o $(BIN) $(CMD)/...
 
 test:
 	$(GO) test ./...
@@ -31,3 +31,22 @@ clean:
 
 build-web:
 	cd web && npm install && npm run build
+
+# ── docker ─────────────────────────────────────────────────────
+docker-build:
+	docker build \
+		--build-arg VERSION=$(VERSION) \
+		--build-arg COMMIT=$(COMMIT) \
+		--build-arg BUILD_DATE=$(BUILD_DATE) \
+		-t $(APP):$(VERSION) \
+		-t $(APP):latest .
+
+docker-up:
+	docker compose up --build
+
+docker-down:
+	docker compose down
+
+# ── release ────────────────────────────────────────────────────
+release: build
+	@echo "✓ Release $(VERSION) pronto em $(BIN)"
