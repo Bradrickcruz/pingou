@@ -71,4 +71,7 @@ func (s *Server) registerRoutes() {
 	api.HandleFunc("GET /export/db", s.handleExportDB)
 
 	s.router.Handle("/api/", s.authMiddleware(http.StripPrefix("/api", api)))
+
+	// SPA — deve ser a última rota
+	s.router.Handle("/", spaHandler())
 }
