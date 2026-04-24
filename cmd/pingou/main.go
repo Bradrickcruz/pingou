@@ -6,6 +6,7 @@ import (
 
 	"github.com/Bradrickcruz/pingou/internal/config"
 	"github.com/Bradrickcruz/pingou/internal/database"
+	"github.com/Bradrickcruz/pingou/internal/handler"
 )
 
 var (
@@ -35,5 +36,9 @@ func main() {
 	}
 	defer db.Close()
 
-	slog.Info("ready")
+	srv := handler.NewServer(cfg)
+	if err := srv.Start(); err != nil {
+		slog.Error("server error", "err", err)
+		os.Exit(1)
+	}
 }
