@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/Bradrickcruz/pingou/internal/domain"
-	"github.com/google/uuid"
 )
 
 // Reloader é implementado pelo Scheduler — evita import circular
@@ -64,8 +63,12 @@ func (s *MonitorService) Create(ctx context.Context, in CreateMonitorInput) (*do
 	}
 
 	now := time.Now().UTC()
+	id, err := newUUIDv7()
+	if err != nil {
+		return nil, fmt.Errorf("generate monitor id: %w", err)
+	}
 	m := &domain.Monitor{
-		ID:               uuid.New().String(),
+		ID:               id,
 		Name:             in.Name,
 		URL:              in.URL,
 		IntervalSeconds:  in.IntervalSeconds,

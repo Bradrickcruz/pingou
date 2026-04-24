@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/Bradrickcruz/pingou/internal/domain"
-	"github.com/google/uuid"
 )
 
 type StateMachine struct {
@@ -114,8 +113,12 @@ func (sm *StateMachine) handleFailure(ctx context.Context, m *domain.Monitor, pr
 
 	// só abre incidente e notifica na transição →DOWN (não repete se já estava DOWN)
 	if prevState != domain.StateDown {
+		id, err := newUUIDv7()
+		if err != nil {
+			return err
+		}
 		incident := &domain.Incident{
-			ID:        uuid.New().String(),
+			ID:        id,
 			MonitorID: m.ID,
 			StartedAt: now,
 			LastError: result.ErrorMessage,
