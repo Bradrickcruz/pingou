@@ -91,13 +91,10 @@ pingou/
 │   │   ├── service.go
 │   │   └── handler.go
 │   │
-│   ├── auth/
-│   │   └── middleware.go              # Valida X-API-Key
-│   │
-│   ├── server/
-│   │   ├── server.go                  # http.Server, graceful shutdown
-│   │   ├── router.go                  # Wire de rotas /api/*
-│   │   └── middleware.go              # Logging, recover, CORS
+│   ├── handler/
+│   │   ├── server.go                  # http.Server, rotas /api/* e SPA
+│   │   ├── middleware.go              # Logging com request ID, auth, recover/CORS futuros
+│   │   └── response.go                # Helpers JSON/erro
 │   │
 │   └── export/
 │       └── dump.go                    # Gera dump do SQLite
@@ -231,15 +228,15 @@ Fase 3 (Domínio Monitors: model + repo + service)
 
 **Objetivo de aprendizado:** `net/http` ServeMux Go 1.22+ com path params, handlers, JSON encoding, graceful shutdown.
 
-| #   | Subetapa                                                                           | Output                  | Verify                                |
-| --- | ---------------------------------------------------------------------------------- | ----------------------- | ------------------------------------- |
-| 4.1 | `server/server.go`: `http.Server` com timeouts (read/write/idle) configurados      | Server estruturado      | Compila                               |
-| 4.2 | Graceful shutdown via `signal.NotifyContext(ctx, SIGTERM, SIGINT)`                 | Shutdown limpo          | Ctrl+C não corrompe DB                |
-| 4.3 | `server/middleware.go`: logging (request ID, latency), recover (panic → 500), CORS | Middlewares             | Logs mostram request                  |
-| 4.4 | `monitors/handler.go`: handlers para POST/GET/PATCH/DELETE `/api/monitors`         | Endpoints REST          | curl funciona                         |
-| 4.5 | Helper `respondJSON(w, status, data)` e `respondError(w, status, msg)`             | Response consistente    | Erros sempre em JSON                  |
-| 4.6 | Integration tests com `httptest.NewServer`                                         | Tests E2E nos endpoints | `go test ./internal/server/...` passa |
-| 4.7 | Endpoint `/healthz` (sem auth, retorna `{status:"ok"}`)                            | Health endpoint         | `curl /healthz` retorna 200           |
+| #   | Subetapa                                                                                    | Output                  | Verify                      |
+| --- | ------------------------------------------------------------------------------------------- | ----------------------- | --------------------------- |
+| 4.1 | `handler/server.go`: `http.Server` com timeouts (read/write/idle) configurados              | Server estruturado      | Compila                     |
+| 4.2 | Graceful shutdown via `signal.NotifyContext(ctx, SIGTERM, SIGINT)` e `http.Server.Shutdown` | Shutdown limpo          | Ctrl+C não corrompe DB      |
+| 4.3 | `handler/middleware.go`: logging com request ID e latency; recover/CORS em tarefa futura    | Middlewares             | Logs mostram request        |
+| 4.4 | `handler/monitors.go`: handlers para POST/GET/PATCH/DELETE `/api/monitors`                  | Endpoints REST          | curl funciona               |
+| 4.5 | Helper `respondJSON(w, status, data)` e `respondError(w, status, msg)`                      | Response consistente    | Erros sempre em JSON        |
+| 4.6 | Integration tests com `httptest.NewServer`                                                  | Tests E2E nos endpoints | `go test ./...` passa       |
+| 4.7 | Endpoint `/healthz` (sem auth, retorna `{status:"ok"}`)                                     | Health endpoint         | `curl /healthz` retorna 200 |
 
 **🎓 Conceitos novos:** `http.Handler`, `http.HandlerFunc`, ServeMux 1.22 (`POST /api/monitors/{id}`), middleware composition, `httptest`.
 
@@ -249,13 +246,13 @@ Fase 3 (Domínio Monitors: model + repo + service)
 
 **Objetivo de aprendizado:** Middleware pattern, context, header validation.
 
-| #   | Subetapa                                                                                                            | Output           | Verify                  |
-| --- | ------------------------------------------------------------------------------------------------------------------- | ---------------- | ----------------------- |
-| 5.1 | `auth/middleware.go`: lê `X-API-Key`, compara com `config.APIKey` em tempo constante (`subtle.ConstantTimeCompare`) | Middleware       | Test rejeita key errada |
-| 5.2 | Aplicar middleware em todas rotas `/api/*` exceto `/healthz`                                                        | Rotas protegidas | curl sem header → 401   |
-| 5.3 | Documentar header esperado no README                                                                                | Doc              | README atualizado       |
+| #   | Subetapa                                                              | Output           | Verify                  |
+| --- | --------------------------------------------------------------------- | ---------------- | ----------------------- |
+| 5.1 | `handler/middleware.go`: lê `X-API-Key` e compara com `config.APIKey` | Middleware       | Test rejeita key errada |
+| 5.2 | Aplicar middleware em todas rotas `/api/*` exceto `/healthz`          | Rotas protegidas | curl sem header → 401   |
+| 5.3 | Documentar header esperado no README                                  | Doc              | README atualizado       |
 
-**🎓 Conceitos novos:** middleware decoration, `crypto/subtle` (timing-attack safe).
+**🎓 Conceitos novos:** middleware decoration, composição com `http.Handler`.
 
 ---
 
@@ -263,17 +260,17 @@ Fase 3 (Domínio Monitors: model + repo + service)
 
 **Objetivo de aprendizado:** Goroutines, channels, `context.Context`, `time.Ticker`, HTTP client com timeout.
 
-| #   | Subetapa                                                                                                  | Output             | Verify                               |
-| --- | --------------------------------------------------------------------------------------------------------- | ------------------ | ------------------------------------ |
-| 6.1 | `checks/model.go`: struct `Check`, `CheckResult`                                                          | Tipos              | Compila                              |
-| 6.2 | `checks/repository.go`: `Insert(check)`, `ListByMonitor(monitorID, limit)`                                | Repo CRUD          | Test passa                           |
-| 6.3 | `checks/checker.go`: função `Execute(ctx, monitor) CheckResult` — faz HTTP GET com timeout, mede latência | Checker puro       | Test contra `httptest.Server`        |
-| 6.4 | `checks/scheduler.go`: struct `Scheduler` com map[monitorID]chan struct{} pra cancelamento                | Estrutura          | Compila                              |
-| 6.5 | `Scheduler.Start(ctx)`: lança 1 goroutine por monitor ACTIVE com `time.Ticker(monitor.Interval)`          | Scheduler ativo    | Logs mostram checks executando       |
-| 6.6 | Integração: cada tick → `checker.Execute` → `repo.Insert` → emit event pro state machine                  | Pipeline funcional | DB acumula checks                    |
-| 6.7 | `Scheduler.Reload(monitorID)`: para goroutine antiga e cria nova (chamado quando monitor é editado)       | Hot reload         | Editar interval reflete no scheduler |
-| 6.8 | `Scheduler.Stop(monitorID)`: para goroutine quando monitor vira INACTIVE ou é deletado                    | Stop limpo         | Sem goroutine leak                   |
-| 6.9 | Endpoint `GET /api/monitors/:id/checks?limit=N`                                                           | Histórico via API  | curl retorna lista                   |
+| #   | Subetapa                                                                                                      | Output             | Verify                               |
+| --- | ------------------------------------------------------------------------------------------------------------- | ------------------ | ------------------------------------ |
+| 6.1 | `domain/check.go`: struct `Check`, `CheckResult`                                                              | Tipos              | Compila                              |
+| 6.2 | `repository/check_repo.go`: `Create(check)`, `FindByMonitor(monitorID, limit, offset)`                        | Repo CRUD          | Compila                              |
+| 6.3 | `checker/http_checker.go`: função `Check(ctx, monitor) CheckResult` — faz HTTP GET com timeout, mede latência | Checker puro       | Test futuro com `httptest.Server`    |
+| 6.4 | `scheduler/scheduler.go`: struct `Scheduler` com jobs cancelados por `context.CancelFunc`                     | Estrutura          | Compila                              |
+| 6.5 | `Scheduler.Start(ctx)`: lança 1 goroutine por monitor ACTIVE com `time.Ticker(monitor.Interval)`              | Scheduler ativo    | Logs mostram checks executando       |
+| 6.6 | Integração: cada tick → `checker.Check` → `stateMachine.Process` → persiste check/transição                   | Pipeline funcional | DB acumula checks                    |
+| 6.7 | `Scheduler.Reload(monitorID)`: para goroutine antiga e cria nova (chamado quando monitor é editado)           | Hot reload         | Editar interval reflete no scheduler |
+| 6.8 | `Scheduler.Stop(monitorID)`: para goroutine quando monitor vira INACTIVE ou é deletado                        | Stop limpo         | Sem goroutine leak                   |
+| 6.9 | Endpoint `GET /api/monitors/:id/checks?limit=N`                                                               | Histórico via API  | curl retorna lista                   |
 
 **🎓 Conceitos novos:** goroutines, `context.Context` (cancelamento), `time.Ticker`, channels, `sync.RWMutex`, `http.Client` com `Timeout`.
 
@@ -452,7 +449,7 @@ Contrato real do payload:
 - [ ] Rotas `/api/*` exigem `X-API-Key`
 - [ ] `/healthz` é público
 - [ ] Sem secrets hardcoded no código
-- [ ] Comparação de API key resistente a timing attack
+- [ ] Rotas protegidas rejeitam API key inválida
 
 ### Persistência & Retenção
 
