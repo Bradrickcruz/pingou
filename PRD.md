@@ -285,18 +285,18 @@ Fase 3 (Domínio Monitors: model + repo + service)
 
 ### 📊 Fase 7 — State Machine de Incidentes (P1)
 
-**Objetivo de aprendizado:** State machine, channels para event-driven, transactions.
+**Objetivo de aprendizado:** State machine integrada ao service, consistência de persistência e transições de incidentes.
 
-| #   | Subetapa                                                                                                                                                                                                                  | Output                | Verify                                       |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- | -------------------------------------------- |
-| 7.1 | `incidents/model.go`: struct `Incident`, type `State` (UNKNOWN, UP, DOWN)                                                                                                                                                 | Tipos                 | Compila                                      |
-| 7.2 | `incidents/repository.go`: `OpenIncident`, `CloseIncident`, `GetCurrentByMonitor`                                                                                                                                         | CRUD                  | Tests passam                                 |
-| 7.3 | `incidents/state_machine.go`: função pura `NextState(currentState, recentResults, threshold) (newState, eventType)`                                                                                                       | Lógica isolada        | Table-driven tests cobrindo todas transições |
-| 7.4 | Transições especificadas: <br>• UNKNOWN→UP: silencioso<br>• UNKNOWN→DOWN (após N falhas): emit `down`<br>• UP→DOWN (após N falhas): emit `down` + abre incident<br>• DOWN→UP (após 1 sucesso): emit `up` + fecha incident | Comportamento correto | Tests cobrem matriz completa                 |
-| 7.5 | Integração no scheduler: após cada check → consulta state → grava + emite event no channel                                                                                                                                | Pipeline event-driven | Logs mostram transições                      |
-| 7.6 | Endpoint `GET /api/incidents` (listar) e `GET /api/monitors/:id/incidents`                                                                                                                                                | Visibilidade          | curl retorna histórico                       |
+| #   | Subetapa                                                                                                                                                                                                                              | Output                | Verify                         |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- | ------------------------------ |
+| 7.1 | `domain/incident.go`: struct `Incident`, estados no `MonitorState` (UNKNOWN, UP, DOWN)                                                                                                                                                | Tipos                 | Compila                        |
+| 7.2 | `repository/incident_repo.go`: `Create`, `Close`, `FindOpenByMonitor`, listagens                                                                                                                                                      | CRUD                  | Compila                        |
+| 7.3 | `service/state_machine.go`: `Process(ctx, monitor, result)` persiste check, calcula transição e abre/fecha incidentes                                                                                                                 | Lógica integrada      | `go test ./...` passa          |
+| 7.4 | Transições especificadas: <br>• UNKNOWN→UP: silencioso<br>• UNKNOWN→DOWN (após N falhas): notifica `down`<br>• UP→DOWN (após N falhas): notifica `down` + abre incident<br>• DOWN→UP (após 1 sucesso): notifica `up` + fecha incident | Comportamento correto | Logs mostram transições        |
+| 7.5 | Integração no scheduler: após cada check → chamada direta para `stateMachine.Process`                                                                                                                                                 | Pipeline direto       | DB acumula checks e incidentes |
+| 7.6 | Endpoint `GET /api/incidents` (listar) e `GET /api/monitors/:id/incidents`                                                                                                                                                            | Visibilidade          | curl retorna histórico         |
 
-**🎓 Conceitos novos:** state machine como função pura, channels como event bus, transações SQL em Go.
+**🎓 Conceitos novos:** state machine em camada de service, transições de estado, consistência entre checks, monitors e incidents.
 
 ---
 
