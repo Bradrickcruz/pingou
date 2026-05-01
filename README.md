@@ -126,7 +126,7 @@ PINGOU_LOG_LEVEL=info
 ### 2. Rodar a aplicação
 
 ```bash
-make run
+make dev
 ```
 
 Esse comando:
@@ -294,7 +294,7 @@ Evento de recuperação:
 ## Comandos disponíveis no Makefile
 
 ```bash
-make run
+make dev
 make fmt
 make build
 make test

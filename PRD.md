@@ -178,9 +178,8 @@ Fase 3 (Domínio Monitors: model + repo + service)
 | 1.4 | Criar `internal/config/config.go` lendo env vars básicas (`PINGOU_PORT`, `PINGOU_API_KEY`, `PINGOU_DATABASE_URL`, `PINGOU_LOG_LEVEL`) | Struct `Config`     | Test unitário com env mockado      |
 | 1.5 | Adicionar `godotenv` e `.env.example`                                                                                                 | Carrega .env em dev | `make dev` carrega vars            |
 | 1.6 | Configurar `log/slog` JSON pra stdout                                                                                                 | Logger global       | Logs aparecem estruturados         |
-| 1.7 | Criar `Makefile` com `make dev`, `make build`, `make test`, `make lint`                                                               | Makefile funcional  | Cada target executa                |
+| 1.7 | Criar `Makefile` com `make dev`, `make build`, `make test`                                                                            | Makefile funcional  | Cada target executa                |
 | 1.8 | Adicionar `.gitignore`, `.dockerignore`, `.editorconfig`                                                                              | Arquivos            | Git ignora `bin/`, `*.db`, `.env`  |
-| 1.9 | Configurar `golangci-lint` com config básica                                                                                          | `.golangci.yml`     | `make lint` passa sem erros        |
 
 **🎓 Conceitos novos:** módulos Go, `cmd/internal`, structs, env vars, slog, build flags.
 
