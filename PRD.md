@@ -56,10 +56,9 @@ pingou/
 │   │   └── config.go                  # Carrega e valida env vars
 │   │
 │   ├── database/
-│   │   ├── database.go                # Abre SQLite, configura WAL, pool
+│   │   ├── database.go                # Abre SQLite, configura WAL, pool e embute migrations
 │   │   └── migrations/
-│   │       ├── 0001_init.sql          # monitors, checks, incidents, settings
-│   │       └── embed.go               # //go:embed *.sql
+│   │       └── 0001_init.sql          # monitors, checks, incidents, settings
 │   │
 │   ├── monitors/                      # Domínio: URLs monitoradas
 │   │   ├── model.go                   # Struct Monitor
@@ -195,7 +194,7 @@ Fase 3 (Domínio Monitors: model + repo + service)
 | 2.2 | Adicionar dep `github.com/pressly/goose/v3`                                                             | Lib disponível       | Import funciona                 |
 | 2.3 | Criar `internal/database/database.go`: abre DB, configura WAL, busy_timeout, max conns                  | `*sql.DB` retornado  | `db.Ping()` passa               |
 | 2.4 | Criar migration `0001_init.sql` com tabelas: `monitors`, `checks`, `incidents`, `settings`              | Arquivo SQL          | Schema sintaticamente válido    |
-| 2.5 | Criar `internal/database/migrations/embed.go` com `//go:embed *.sql`                                    | FS embutido          | Build inclui SQL                |
+| 2.5 | Embutir migrations SQL em `internal/database/database.go` com `//go:embed migrations/*.sql`             | FS embutido          | Build inclui SQL                |
 | 2.6 | Integrar goose pra rodar migrations no startup                                                          | Migrations aplicadas | DB criado com tabelas           |
 | 2.7 | Criar índices: `monitors(enabled)`, `checks(monitor_id, checked_at)`, `incidents(monitor_id, ended_at)` | Migration adicional  | `EXPLAIN QUERY PLAN` usa índice |
 | 2.8 | Adicionar comando CLI `pingou migrate up/down/status` (subcomando)                                      | CLI funcional        | `pingou migrate status` lista   |
