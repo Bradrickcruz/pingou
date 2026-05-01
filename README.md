@@ -255,6 +255,42 @@ Atualiza configurações globais.
 
 Baixa um dump do banco SQLite.
 
+## Webhook
+
+Quando `webhook_url` estiver configurado em settings, o Pingou envia um `POST` JSON nas transições de estado.
+
+Evento de queda:
+
+```json
+{
+  "event": "down",
+  "monitor": {
+    "id": "018f2f7a-...",
+    "name": "API",
+    "url": "https://api.example.com/health"
+  },
+  "timestamp": "2026-05-01T12:00:00Z",
+  "last_error": "unexpected status code: 500",
+  "downtime_duration_seconds": null
+}
+```
+
+Evento de recuperação:
+
+```json
+{
+  "event": "up",
+  "monitor": {
+    "id": "018f2f7a-...",
+    "name": "API",
+    "url": "https://api.example.com/health"
+  },
+  "timestamp": "2026-05-01T12:05:00Z",
+  "last_error": null,
+  "downtime_duration_seconds": 300
+}
+```
+
 ## Comandos disponíveis no Makefile
 
 ```bash
