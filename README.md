@@ -117,10 +117,10 @@ Crie um arquivo `.env` na raiz do projeto com base no `.env.example`.
 Exemplo:
 
 ```env
-PORT=8080
-DB_PATH=./pingou.db
-API_KEY=dev-api-key
-LOG_LEVEL=info
+PINGOU_PORT=8080
+PINGOU_DATABASE_URL=./pingou.db
+PINGOU_API_KEY=dev-api-key
+PINGOU_LOG_LEVEL=info
 ```
 
 ### 2. Rodar a aplicação
@@ -183,17 +183,17 @@ Essa chave é validada contra a API e armazenada no `localStorage`.
 Use o mesmo valor definido em:
 
 ```env
-API_KEY=...
+PINGOU_API_KEY=...
 ```
 
 ## Variáveis de ambiente
 
-| Variável    | Obrigatória | Default       | Descrição                                                 |
-| ----------- | ----------: | ------------- | --------------------------------------------------------- |
-| `PORT`      |         não | `8080`        | Porta HTTP da aplicação                                   |
-| `DB_PATH`   |         não | `./pingou.db` | Caminho do arquivo SQLite                                 |
-| `API_KEY`   |         sim | -             | Chave usada para proteger o dashboard e as rotas `/api/*` |
-| `LOG_LEVEL` |         não | `info`        | Nível de log                                              |
+| Variável              | Obrigatória | Default     | Descrição                                                 |
+| --------------------- | ----------: | ----------- | --------------------------------------------------------- |
+| `PINGOU_PORT`         |         não | `8080`      | Porta HTTP da aplicação                                   |
+| `PINGOU_DATABASE_URL` |         não | `pingou.db` | Caminho do arquivo SQLite                                 |
+| `PINGOU_API_KEY`      |         sim | -           | Chave usada para proteger o dashboard e as rotas `/api/*` |
+| `PINGOU_LOG_LEVEL`    |         não | `info`      | Nível de log (`DEBUG` habilita logs debug)                |
 
 ## Autenticação da API
 
