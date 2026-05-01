@@ -68,7 +68,7 @@ func (s *Server) registerRoutes() {
 	api.HandleFunc("PATCH /settings", s.handleUpdateSettings)
 
 	// export
-	api.HandleFunc("GET /export/db", s.handleExportDB)
+	api.HandleFunc("GET /export", s.handleExportDB)
 
 	s.router.Handle("/api/", s.authMiddleware(http.StripPrefix("/api", api)))
 

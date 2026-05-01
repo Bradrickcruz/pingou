@@ -251,7 +251,7 @@ Busca as configurações globais.
 
 Atualiza configurações globais.
 
-#### `GET /api/export/db`
+#### `GET /api/export`
 
 Baixa um dump do banco SQLite.
 

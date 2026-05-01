@@ -155,7 +155,7 @@ export function Settings() {
           Download a full SQLite dump of all monitors, checks and incidents.
         </p>
         <a
-          href="/api/export/db"
+          href="/api/export"
           style={{
             display: "inline-block",
             background: t.colors.surfaceAlt,
