@@ -26,20 +26,20 @@ Este projeto é também um **veículo de aprendizado de Go** para um dev senior 
 
 ## Tech Stack
 
-| Layer       | Technology                               | Rationale                                            |
-| ----------- | ---------------------------------------- | ---------------------------------------------------- |
-| Linguagem   | Go 1.25+                                 | Concorrência nativa, binário único, aprendizado      |
-| HTTP Router | `net/http` (stdlib)                      | Zero deps, routing nativo com path params (Go 1.22+) |
-| DB          | SQLite via `github.com/mattn/go-sqlite3` | Driver SQLite maduro; requer CGO no build            |
-| Migrations  | `goose`                                  | Padrão de mercado, simples, embedável                |
-| Scheduler   | `time.Ticker` + goroutines               | Idiomático Go, sem libs                              |
-| Logs        | `log/slog` (stdlib)                      | Estruturado, zero deps                               |
-| Config      | env vars + `godotenv`                    | KISS                                                 |
-| Validação   | `go-playground/validator`                | Padrão de mercado                                    |
-| HTTP Client | `net/http` (stdlib)                      | Idiomático                                           |
-| UI          | React 18 + Vite + TypeScript + Tailwind  | Familiaridade do dev                                 |
-| UI bundling | `embed.FS` (stdlib)                      | 1 binário único                                      |
-| Container   | Docker multi-stage + docker-compose      | Solicitado                                           |
+| Layer       | Technology                                                        | Rationale                                            |
+| ----------- | ----------------------------------------------------------------- | ---------------------------------------------------- |
+| Linguagem   | Go 1.25+                                                          | Concorrência nativa, binário único, aprendizado      |
+| HTTP Router | `net/http` (stdlib)                                               | Zero deps, routing nativo com path params (Go 1.22+) |
+| DB          | SQLite via `github.com/mattn/go-sqlite3`                          | Driver SQLite maduro; requer CGO no build            |
+| Migrations  | `goose`                                                           | Padrão de mercado, simples, embedável                |
+| Scheduler   | `time.Ticker` + goroutines                                        | Idiomático Go, sem libs                              |
+| Logs        | `log/slog` (stdlib)                                               | Estruturado, zero deps                               |
+| Config      | env vars + `godotenv`                                             | KISS                                                 |
+| Validação   | Manual no service; futura migração para `go-playground/validator` | KISS agora; validação declarativa depois             |
+| HTTP Client | `net/http` (stdlib)                                               | Idiomático                                           |
+| UI          | React 18 + Vite + TypeScript + Tailwind                           | Familiaridade do dev                                 |
+| UI bundling | `embed.FS` (stdlib)                                               | 1 binário único                                      |
+| Container   | Docker multi-stage + docker-compose                               | Solicitado                                           |
 
 ---
 
@@ -212,14 +212,14 @@ Fase 3 (Domínio Monitors: model + repo + service)
 
 **Objetivo de aprendizado:** Layered architecture, repository pattern, validação, enum em Go.
 
-| #   | Subetapa                                                                                                | Output                       | Verify                                  |
-| --- | ------------------------------------------------------------------------------------------------------- | ---------------------------- | --------------------------------------- |
-| 3.1 | `monitors/model.go`: struct `Monitor`, type `enabled` (BOOL), const                                     | Tipos definidos              | Compila                                 |
-| 3.2 | Tags de validação: `interval >= 10 && <= 86400`, `url required url`, `failure_threshold >= 1 && <= 10`  | Validador funcional          | Test com input inválido falha           |
-| 3.3 | `monitors/repository.go`: interface `Repository` + impl `sqlRepository` (Create/Get/List/Update/Delete) | CRUD completo                | Tests com SQLite in-memory              |
-| 3.4 | `monitors/service.go`: regras de negócio (validar antes de salvar, enforce limite de 100 monitors)      | Service layer                | Test rejeita o 101º monitor             |
-| 3.5 | DTOs: `CreateMonitorDTO`, `UpdateMonitorDTO` separados do model                                         | Separação domínio/transporte | Compila                                 |
-| 3.6 | Tests unitários do service com mock do repository                                                       | Coverage > 70% no service    | `go test ./internal/monitors/...` passa |
+| #   | Subetapa                                                                                                                                     | Output                       | Verify                 |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | ---------------------- |
+| 3.1 | `domain/monitor.go`: struct `Monitor`, type `MonitorState`, const                                                                            | Tipos definidos              | Compila                |
+| 3.2 | Validação manual no service: `interval >= 10 && <= 86400`, `failure_threshold >= 1 && <= 10`; URL por tamanho hoje, formato em tarefa futura | Validação funcional          | Input inválido falha   |
+| 3.3 | `repository/monitor_repo.go`: implementação SQLite (Create/Get/List/Update/Delete)                                                           | CRUD completo                | Compila                |
+| 3.4 | `service/monitor_service.go`: regras de negócio (validar antes de salvar, enforce limite de 100 monitors)                                    | Service layer                | Rejeita o 101º monitor |
+| 3.5 | DTOs: `CreateMonitorDTO`, `UpdateMonitorDTO` separados do model                                                                              | Separação domínio/transporte | Compila                |
+| 3.6 | `handler/monitors.go`: handlers HTTP para criação, listagem, atualização e remoção                                                           | Endpoints de monitors        | `go test ./...` passa  |
 
 **🎓 Conceitos novos:** interfaces Go, dependency injection manual, enums via const+type, table-driven tests.
 
