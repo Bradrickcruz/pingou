@@ -9,11 +9,11 @@ BUILD_DATE?=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 LDFLAGS=-ldflags "-s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.buildDate=$(BUILD_DATE)"
 
-.PHONY: all run fmt build test clean build-web docker-build docker-up docker-down release
+.PHONY: all dev fmt build test clean build-web docker-build docker-up docker-down release
 
-all: fmt build run
+all: fmt build dev
 
-run: fmt
+dev: fmt
 	. ./.env && $(GO) run $(CMD)/...
 
 fmt:
