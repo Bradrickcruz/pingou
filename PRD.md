@@ -26,20 +26,20 @@ Este projeto é também um **veículo de aprendizado de Go** para um dev senior 
 
 ## Tech Stack
 
-| Layer       | Technology                              | Rationale                                            |
-| ----------- | --------------------------------------- | ---------------------------------------------------- |
-| Linguagem   | Go 1.25+                                | Concorrência nativa, binário único, aprendizado      |
-| HTTP Router | `net/http` (stdlib)                     | Zero deps, routing nativo com path params (Go 1.22+) |
-| DB          | SQLite via `modernc.org/sqlite`         | CGO-free, cross-compile trivial                      |
-| Migrations  | `goose`                                 | Padrão de mercado, simples, embedável                |
-| Scheduler   | `time.Ticker` + goroutines              | Idiomático Go, sem libs                              |
-| Logs        | `log/slog` (stdlib)                     | Estruturado, zero deps                               |
-| Config      | env vars + `godotenv`                   | KISS                                                 |
-| Validação   | `go-playground/validator`               | Padrão de mercado                                    |
-| HTTP Client | `net/http` (stdlib)                     | Idiomático                                           |
-| UI          | React 18 + Vite + TypeScript + Tailwind | Familiaridade do dev                                 |
-| UI bundling | `embed.FS` (stdlib)                     | 1 binário único                                      |
-| Container   | Docker multi-stage + docker-compose     | Solicitado                                           |
+| Layer       | Technology                               | Rationale                                            |
+| ----------- | ---------------------------------------- | ---------------------------------------------------- |
+| Linguagem   | Go 1.25+                                 | Concorrência nativa, binário único, aprendizado      |
+| HTTP Router | `net/http` (stdlib)                      | Zero deps, routing nativo com path params (Go 1.22+) |
+| DB          | SQLite via `github.com/mattn/go-sqlite3` | Driver SQLite maduro; requer CGO no build            |
+| Migrations  | `goose`                                  | Padrão de mercado, simples, embedável                |
+| Scheduler   | `time.Ticker` + goroutines               | Idiomático Go, sem libs                              |
+| Logs        | `log/slog` (stdlib)                      | Estruturado, zero deps                               |
+| Config      | env vars + `godotenv`                    | KISS                                                 |
+| Validação   | `go-playground/validator`                | Padrão de mercado                                    |
+| HTTP Client | `net/http` (stdlib)                      | Idiomático                                           |
+| UI          | React 18 + Vite + TypeScript + Tailwind  | Familiaridade do dev                                 |
+| UI bundling | `embed.FS` (stdlib)                      | 1 binário único                                      |
+| Container   | Docker multi-stage + docker-compose      | Solicitado                                           |
 
 ---
 
@@ -122,7 +122,7 @@ pingou/
 ├── .env.example
 ├── .gitignore
 ├── .dockerignore
-├── Dockerfile                         # Multi-stage: node + go + scratch
+├── Dockerfile                         # Multi-stage: node + go + alpine
 ├── docker-compose.yml
 ├── Makefile                           # make dev, make build, make test, make docker
 ├── go.mod
@@ -170,17 +170,17 @@ Fase 3 (Domínio Monitors: model + repo + service)
 
 **Objetivo de aprendizado:** Estrutura de projeto Go, `go mod`, organização `cmd/internal`, ferramentas básicas.
 
-| #   | Subetapa                                                                          | Output              | Verify                             |
-| --- | --------------------------------------------------------------------------------- | ------------------- | ---------------------------------- |
-| 1.1 | Criar repo, `go mod init github.com/seu-user/pingou`                              | `go.mod`            | `go version` e `go mod tidy` rodam |
-| 1.2 | Criar estrutura de diretórios vazia (com `.gitkeep`)                              | Árvore acima        | `tree internal/` mostra estrutura  |
-| 1.3 | Criar `cmd/pingou/main.go` com "Hello, Pingou"                                    | Binário compila     | `go run ./cmd/pingou` imprime msg  |
-| 1.4 | Criar `internal/config/config.go` lendo env vars básicas (PORT, API_KEY, DB_PATH) | Struct `Config`     | Test unitário com env mockado      |
-| 1.5 | Adicionar `godotenv` e `.env.example`                                             | Carrega .env em dev | `make dev` carrega vars            |
-| 1.6 | Configurar `log/slog` JSON pra stdout                                             | Logger global       | Logs aparecem estruturados         |
-| 1.7 | Criar `Makefile` com `make dev`, `make build`, `make test`, `make lint`           | Makefile funcional  | Cada target executa                |
-| 1.8 | Adicionar `.gitignore`, `.dockerignore`, `.editorconfig`                          | Arquivos            | Git ignora `bin/`, `*.db`, `.env`  |
-| 1.9 | Configurar `golangci-lint` com config básica                                      | `.golangci.yml`     | `make lint` passa sem erros        |
+| #   | Subetapa                                                                                                                              | Output              | Verify                             |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ---------------------------------- |
+| 1.1 | Criar repo, `go mod init github.com/seu-user/pingou`                                                                                  | `go.mod`            | `go version` e `go mod tidy` rodam |
+| 1.2 | Criar estrutura de diretórios vazia (com `.gitkeep`)                                                                                  | Árvore acima        | `tree internal/` mostra estrutura  |
+| 1.3 | Criar `cmd/pingou/main.go` com "Hello, Pingou"                                                                                        | Binário compila     | `go run ./cmd/pingou` imprime msg  |
+| 1.4 | Criar `internal/config/config.go` lendo env vars básicas (`PINGOU_PORT`, `PINGOU_API_KEY`, `PINGOU_DATABASE_URL`, `PINGOU_LOG_LEVEL`) | Struct `Config`     | Test unitário com env mockado      |
+| 1.5 | Adicionar `godotenv` e `.env.example`                                                                                                 | Carrega .env em dev | `make dev` carrega vars            |
+| 1.6 | Configurar `log/slog` JSON pra stdout                                                                                                 | Logger global       | Logs aparecem estruturados         |
+| 1.7 | Criar `Makefile` com `make dev`, `make build`, `make test`, `make lint`                                                               | Makefile funcional  | Cada target executa                |
+| 1.8 | Adicionar `.gitignore`, `.dockerignore`, `.editorconfig`                                                                              | Arquivos            | Git ignora `bin/`, `*.db`, `.env`  |
+| 1.9 | Configurar `golangci-lint` com config básica                                                                                          | `.golangci.yml`     | `make lint` passa sem erros        |
 
 **🎓 Conceitos novos:** módulos Go, `cmd/internal`, structs, env vars, slog, build flags.
 
@@ -192,7 +192,7 @@ Fase 3 (Domínio Monitors: model + repo + service)
 
 | #   | Subetapa                                                                                                | Output               | Verify                          |
 | --- | ------------------------------------------------------------------------------------------------------- | -------------------- | ------------------------------- |
-| 2.1 | Adicionar dep `modernc.org/sqlite` (driver Go puro)                                                     | `go.sum` atualizado  | `go build` compila              |
+| 2.1 | Adicionar dep `github.com/mattn/go-sqlite3` (driver SQLite via CGO)                                     | `go.sum` atualizado  | `go build` compila com CGO      |
 | 2.2 | Adicionar dep `github.com/pressly/goose/v3`                                                             | Lib disponível       | Import funciona                 |
 | 2.3 | Criar `internal/database/database.go`: abre DB, configura WAL, busy_timeout, max conns                  | `*sql.DB` retornado  | `db.Ping()` passa               |
 | 2.4 | Criar migration `0001_init.sql` com tabelas: `monitors`, `checks`, `incidents`, `settings`              | Arquivo SQL          | Schema sintaticamente válido    |
@@ -309,14 +309,44 @@ Fase 3 (Domínio Monitors: model + repo + service)
 
 **Objetivo de aprendizado:** Worker pattern, retry com backoff, fan-out via channel.
 
-| #   | Subetapa                                                                                                                                | Output            | Verify                                   |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------- | ----------------- | ---------------------------------------- |
-| 8.1 | `notifications/model.go`: struct `WebhookPayload` (event, monitor, timestamp, last_error, downtime_duration)                            | Payload tipado    | Compila                                  |
-| 8.2 | `notifications/webhook.go`: `Send(ctx, url, payload)` — POST JSON com timeout 10s                                                       | Client HTTP       | Test contra `httptest.Server`            |
-| 8.3 | Retry: 3 tentativas, espera fixa 5s entre elas, `context.Done()` aborta                                                                 | Retry resiliente  | Test simula falha e sucesso              |
-| 8.4 | `notifications/dispatcher.go`: goroutine consumindo channel de events, chama webhook em goroutine separada (não bloqueia state machine) | Dispatcher async  | State machine não trava se webhook lento |
-| 8.5 | Integração: state machine emite event → dispatcher recebe → busca webhook URL em settings → envia                                       | Pipeline completo | Webhook real recebe POST                 |
-| 8.6 | Logs estruturados de envio (sucesso/falha + tentativa)                                                                                  | Observabilidade   | Logs mostram eventos                     |
+| #   | Subetapa                                                                                                                                        | Output            | Verify                                   |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- | ---------------------------------------- |
+| 8.1 | `notifications/model.go`: struct `WebhookPayload` com contrato real: `event`, `monitor`, `timestamp`, `last_error`, `downtime_duration_seconds` | Payload tipado    | Compila                                  |
+| 8.2 | `notifications/webhook.go`: `Send(ctx, url, payload)` — POST JSON com timeout 10s                                                               | Client HTTP       | Test contra `httptest.Server`            |
+| 8.3 | Retry: 3 tentativas, espera fixa 5s entre elas, `context.Done()` aborta                                                                         | Retry resiliente  | Test simula falha e sucesso              |
+| 8.4 | `notifications/dispatcher.go`: goroutine consumindo channel de events, chama webhook em goroutine separada (não bloqueia state machine)         | Dispatcher async  | State machine não trava se webhook lento |
+| 8.5 | Integração: state machine emite event → dispatcher recebe → busca webhook URL em settings → envia                                               | Pipeline completo | Webhook real recebe POST                 |
+| 8.6 | Logs estruturados de envio (sucesso/falha + tentativa)                                                                                          | Observabilidade   | Logs mostram eventos                     |
+
+Contrato real do payload:
+
+```json
+{
+  "event": "down",
+  "monitor": {
+    "id": "018f2f7a-...",
+    "name": "API",
+    "url": "https://api.example.com/health"
+  },
+  "timestamp": "2026-05-01T12:00:00Z",
+  "last_error": "unexpected status code: 500",
+  "downtime_duration_seconds": null
+}
+```
+
+```json
+{
+  "event": "up",
+  "monitor": {
+    "id": "018f2f7a-...",
+    "name": "API",
+    "url": "https://api.example.com/health"
+  },
+  "timestamp": "2026-05-01T12:05:00Z",
+  "last_error": null,
+  "downtime_duration_seconds": 300
+}
+```
 
 **🎓 Conceitos novos:** producer/consumer com channel, fan-out, `time.After` vs `time.Sleep` (cancelável).
 
@@ -364,19 +394,19 @@ Fase 3 (Domínio Monitors: model + repo + service)
 
 ### 🐳 Fase 11 — Docker & Docker Compose (P2)
 
-**Objetivo de aprendizado:** Multi-stage build (node + go + scratch/alpine), volumes, healthcheck.
+**Objetivo de aprendizado:** Multi-stage build (node + go + alpine), CGO em container, volumes, healthcheck.
 
-| #    | Subetapa                                                                                             | Output              | Verify                         |
-| ---- | ---------------------------------------------------------------------------------------------------- | ------------------- | ------------------------------ |
-| 11.1 | `Dockerfile` stage 1: `node:20-alpine` builda React                                                  | Stage builda        | Layer cacheado                 |
-| 11.2 | `Dockerfile` stage 2: `golang:1.25-alpine` builda Go com `CGO_ENABLED=0`, copiando assets do stage 1 | Binário estático    | Binário compila                |
-| 11.3 | `Dockerfile` stage 3: `gcr.io/distroless/static-debian12` ou `scratch` com binário + ca-certs        | Imagem final < 30MB | `docker images` mostra tamanho |
-| 11.4 | `HEALTHCHECK` no Dockerfile chamando `/healthz`                                                      | Healthcheck         | `docker ps` mostra "healthy"   |
-| 11.5 | `docker-compose.yml`: serviço `pingou`, volume nomeado `pingou-data:/data`, env vars, port 8080      | Compose funcional   | `docker compose up` sobe       |
-| 11.6 | `.dockerignore`: exclui `node_modules`, `bin`, `*.db`, `.env`, `.git`                                | Build rápido        | Context pequeno                |
-| 11.7 | Test: `docker compose up`, criar monitor, verificar persistência após `down`+`up`                    | E2E funcional       | Dados persistem                |
+| #    | Subetapa                                                                                                               | Output                         | Verify                         |
+| ---- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ------------------------------ |
+| 11.1 | `Dockerfile` stage 1: `node:20-alpine` builda React                                                                    | Stage builda                   | Layer cacheado                 |
+| 11.2 | `Dockerfile` stage 2: `golang:1.25-alpine` builda Go com `CGO_ENABLED=1`, `gcc`/`musl-dev`, copiando assets do stage 1 | Binário compila com SQLite CGO | Binário compila                |
+| 11.3 | `Dockerfile` stage 3: `alpine` com binário + ca-certs                                                                  | Imagem final enxuta            | `docker images` mostra tamanho |
+| 11.4 | `HEALTHCHECK` no Dockerfile chamando `/healthz`                                                                        | Healthcheck                    | `docker ps` mostra "healthy"   |
+| 11.5 | `docker-compose.yml`: serviço `pingou`, volume nomeado `pingou-data:/data`, env vars, port 8080                        | Compose funcional              | `docker compose up` sobe       |
+| 11.6 | `.dockerignore`: exclui `node_modules`, `bin`, `*.db`, `.env`, `.git`                                                  | Build rápido                   | Context pequeno                |
+| 11.7 | Test: `docker compose up`, criar monitor, verificar persistência após `down`+`up`                                      | E2E funcional                  | Dados persistem                |
 
-**🎓 Conceitos novos:** multi-stage builds, distroless, `CGO_ENABLED=0` (binário 100% estático), volumes Docker.
+**🎓 Conceitos novos:** multi-stage builds, CGO em containers Alpine, volumes Docker.
 
 ---
 
@@ -458,7 +488,7 @@ Fase 3 (Domínio Monitors: model + repo + service)
 > **D4 — `net/http` puro (sem chi):** Aprende routing nativo. Migrar pra chi depois é trivial se necessário.
 > **D5 — Layered por domínio:** Boundaries claros desde o dia 1. Custo de setup similar; ganho de manutenibilidade alto.
 > **D6 — Webhook global apenas:** Simplicidade. Per-URL fica pra v1.1 se houver demanda.
-> **D7 — `modernc.org/sqlite` (Go puro):** Cross-compile trivial, sem CGO. Trade-off: ~5% mais lento que `mattn/go-sqlite3` (irrelevante pra 100 URLs).
+> **D7 — `github.com/mattn/go-sqlite3` (CGO):** Driver SQLite maduro e amplamente usado. Trade-off: build exige CGO/toolchain C; Docker usa Alpine com `gcc`/`musl-dev`.
 > **D8 — Scheduler via goroutine-per-monitor:** Simples, idiomático. Limite de 100 monitors mantém isso viável (~100 goroutines = trivial).
 
 ---
