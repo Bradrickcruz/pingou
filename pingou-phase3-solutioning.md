@@ -207,13 +207,13 @@ DROP TABLE monitors;
 | Método | Path            | Input               | Output                          |
 | ------ | --------------- | ------------------- | ------------------------------- |
 | GET    | `/api/settings` | —                   | `{webhook_url, retention_days}` |
-| PUT    | `/api/settings` | `UpdateSettingsDTO` | Settings atualizado             |
+| PATCH  | `/api/settings` | `UpdateSettingsDTO` | Settings atualizado             |
 
 #### Export
 
-| Método | Path          | Output                                  |
-| ------ | ------------- | --------------------------------------- |
-| GET    | `/api/export` | `application/octet-stream` — dump `.db` |
+| Método | Path             | Output                                  |
+| ------ | ---------------- | --------------------------------------- |
+| GET    | `/api/export/db` | `application/octet-stream` — dump `.db` |
 
 ### DTOs
 
@@ -340,97 +340,72 @@ DROP TABLE monitors;
 
 ### Decisões de UX
 
-- **Dashboard-centric:** rota `/` concentra list + create + edit + detail via **modais**. Deep-link via query string (`/?monitor=<id>&action=edit`).
-- **Dark mode default** com toggle persistido em `localStorage` (chave `pingou.theme`).
-- **Tema customizado exclusivo** centralizado em `src/theme/` — design tokens + Tailwind config estendido.
+- **Dashboard-centric:** rota `/` concentra list + create + edit + delete via **modais** com estado local da página (sem deep-link obrigatório por query string).
+- **Tema atual** é estático, centralizado em `src/theme/` com tokens e estilos globais.
+- Não há toggle de tema nem troca dinâmica de paleta no MVP.
 
 ### Rotas (React Router)
 
-| Path         | Página          | Descrição                              |
-| ------------ | --------------- | -------------------------------------- |
-| `/login`     | `LoginPage`     | Input da API key (localStorage)        |
-| `/`          | `DashboardPage` | Lista + modais CRUD/detail de monitors |
-| `/incidents` | `IncidentsPage` | Histórico global de incidentes         |
-| `/settings`  | `SettingsPage`  | Webhook URL + retention + toggle tema  |
-| `/export`    | `ExportPage`    | Download do dump `.db`                 |
+| Path            | Página          | Descrição                                                       |
+| --------------- | --------------- | --------------------------------------------------------------- |
+| `(condicional)` | `Login`         | Tela de login renderizada fora do Router quando API key ausente |
+| `/`             | `Dashboard`     | Lista + modais CRUD de monitors                                 |
+| `/incidents`    | `IncidentsPage` | Histórico global de incidentes                                  |
+| `/settings`     | `Settings`      | Webhook URL + retention + download de dump `.db`                |
 
 ### Árvore de pastas
 
 ```
 src/
 ├── api/
-│   ├── client.ts              # fetch wrapper + X-API-Key + ApiError
-│   ├── monitors.ts
-│   ├── checks.ts
-│   ├── incidents.ts
-│   ├── settings.ts
-│   └── types.ts
+│   ├── client.js              # fetch wrapper + X-API-Key
+│   ├── monitors.js
+│   ├── incidents.js
+│   └── settings.js
 │
 ├── theme/
-│   ├── tokens.ts              # cores, espaçamentos, radius, shadows
-│   ├── ThemeProvider.tsx      # contexto light/dark + toggle
-│   ├── useTheme.ts            # hook consumidor
-│   └── index.ts               # barrel export
+│   ├── tokens.js              # cores, espaçamentos, radius
+│   └── globalStyles.js        # estilos globais e inputs base
 │
 ├── components/
 │   ├── ui/                    # primitivos (usam tokens do tema)
-│   │   ├── Button.tsx
-│   │   ├── Input.tsx
-│   │   ├── Select.tsx
-│   │   ├── Badge.tsx
-│   │   ├── Card.tsx
-│   │   ├── Modal.tsx          # base reutilizável
-│   │   ├── Pagination.tsx
-│   │   ├── Toast.tsx
-│   │   └── ThemeToggle.tsx
+│   │   ├── Button.jsx
+│   │   ├── Badge.jsx
+│   │   ├── Modal.jsx          # base reutilizável
+│   │   └── Spinner.jsx
 │   │
 │   ├── layout/
-│   │   ├── AppShell.tsx
-│   │   ├── Header.tsx         # logo + tema toggle + logout
-│   │   └── Sidebar.tsx
+│   │   └── Shell.jsx
 │   │
 │   ├── monitors/
-│   │   ├── MonitorCard.tsx          # card no dashboard
-│   │   ├── MonitorStateBadge.tsx    # UP/DOWN/UNKNOWN
-│   │   ├── MonitorForm.tsx          # form reutilizável (create/edit)
-│   │   ├── MonitorFormModal.tsx     # wrapper modal p/ create/edit
-│   │   ├── MonitorDetailModal.tsx   # detail + histórico + incidents
-│   │   ├── MonitorDeleteDialog.tsx  # confirm dialog
-│   │   └── ChecksTable.tsx
+│   │   ├── MonitorCard.jsx     # card no dashboard
+│   │   └── MonitorForm.jsx     # form reutilizável (create/edit)
 │   │
 │   └── incidents/
-│       ├── IncidentsList.tsx
-│       └── IncidentRow.tsx
+│       └── (ainda sem componentes dedicados)
 │
 ├── pages/
-│   ├── LoginPage.tsx
-│   ├── DashboardPage.tsx      # orquestra modais via query params
-│   ├── IncidentsPage.tsx
-│   ├── SettingsPage.tsx
-│   └── ExportPage.tsx
+│   ├── Login.jsx
+│   ├── Dashboard.jsx
+│   ├── Incidents.jsx
+│   └── Settings.jsx
 │
 ├── hooks/
-│   ├── useAuth.ts
-│   ├── useMonitors.ts
-│   ├── useMonitor.ts
-│   ├── useChecks.ts
-│   ├── useIncidents.ts
-│   ├── useSettings.ts
-│   └── useModalRoute.ts       # sincroniza modal ↔ query string
+│   ├── useMonitors.js
+│   └── useSettings.js
 │
 ├── lib/
-│   ├── format.ts
-│   └── constants.ts
+│   └── (sem lib dedicada ainda)
 │
-├── App.tsx
-└── main.tsx
+├── App.jsx
+└── main.jsx
 ```
 
 ### Sistema de tema
 
-**`src/theme/tokens.ts`**
+**`src/theme/tokens.js`**
 
-```ts
+```js
 export const tokens = {
   colors: {
     dark: {
@@ -469,54 +444,45 @@ export const tokens = {
   font: {
     family: "'Inter', ui-sans-serif, system-ui, sans-serif",
   },
-} as const;
-
-export type ThemeMode = "dark" | "light";
+};
 ```
 
-**`src/theme/ThemeProvider.tsx`**
+**`src/theme/globalStyles.js`**
 
-- Contexto React que expõe `{ mode, toggle, tokens }`.
-- Aplica `<html data-theme="dark">` para Tailwind estratégia `class` ou CSS vars.
-- Default: `dark`. Persistência em `localStorage["pingou.theme"]`.
-
-**Integração Tailwind:** `tailwind.config.js` estende `theme.extend.colors` consumindo CSS variables (`var(--color-primary)`) definidas em `:root[data-theme="dark"]` e `:root[data-theme="light"]`. Isso permite trocar tema sem re-render completo.
+- Injeta estilos globais do app.
+- Define tipografia, inputs, scrollbar e cores base.
+- Não há CSS variables por tema nem integração com Tailwind no estado atual.
 
 ### Padrão de modais no Dashboard
 
-**Query string como fonte de verdade:**
+**Estado local como fonte de verdade:**
 
-- `/` — lista
-- `/?action=create` — modal de criação
-- `/?monitor=<id>` — modal de detalhe
-- `/?monitor=<id>&action=edit` — modal de edição
-- `/?monitor=<id>&action=delete` — dialog de confirmação
+- `/` — lista principal
+- `create` — modal de criação via estado local
+- `edit` — modal de edição via estado local
+- `delete` — modal de confirmação via estado local
+- `selected` guarda o monitor ativo em memória do componente
+- `closeModal()` limpa `modal` e `selected`
 
-**Hook `useModalRoute`:**
+**Observação:**
 
-```ts
-const { action, monitorId, open, close } = useModalRoute();
-// open({ action: 'edit', monitorId: '01HXY...' })
-// close()
-```
-
-**Vantagens:** deep-link compartilhável, back-button do browser funciona, refresh preserva estado.
+- O dashboard não usa query string para controlar modais.
+- Back-button e refresh não preservam o modal aberto.
+- O fluxo atual prioriza simplicidade de implementação e manutenção no MVP.
 
 ### Componentes-chave
 
-**`MonitorCard`** — `{ monitor, onClick }` → click abre `MonitorDetailModal`.
+**`MonitorCard`** — `{ monitor, onEdit, onDelete }` → renderiza monitor e ações de editar/excluir.
 
-**`MonitorStateBadge`** — `{ state: 'UP'|'DOWN'|'UNKNOWN' }` → cor via tokens do tema.
+**`Badge`** — `{ state: 'UP'|'DOWN'|'UNKNOWN' }` → cor via tokens do tema.
 
 **`MonitorForm`** — `{ initialValue?, onSubmit, submitLabel }` — validações espelham backend (interval 10–86400, threshold 1–10, URL válida).
 
-**`MonitorFormModal`** — wrapper que consome `useModalRoute` e renderiza `MonitorForm` em `create` ou `edit`.
-
-**`MonitorDetailModal`** — abas: **Overview** (campos + estado atual), **Histórico** (`ChecksTable`), **Incidentes** (`IncidentsList`).
+**`Modal`** — wrapper genérico usado para create, edit e delete.
 
 **`useAuth`** — `{ apiKey, setApiKey, logout, isAuthenticated }`. Guarda em `localStorage["pingou.apiKey"]`, redireciona pra `/login` quando ausente.
 
-**`client.ts`** — base URL `/api`, injeta `X-API-Key`, parse de erro → `throw new ApiError(message, code, status)`.
+**`client.js`** — base URL `/api`, injeta `X-API-Key` a partir do `localStorage`.
 
 ### Estado da aplicação
 
@@ -526,15 +492,15 @@ Sem Redux/Zustand/TanStack Query no MVP. `useState` + refetch manual após mutat
 
 ## 📐 Decisões Arquiteturais (consolidadas nesta fase)
 
-| ID      | Decisão                                                                          | Rationale                                                              |
-| ------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| **D9**  | IDs mistos: UUID v7 para monitors/incidents, INTEGER autoincrement para `checks` | Otimiza espaço/performance em tabela de alto volume (~13M rows em 90d) |
-| **D10** | `monitors.current_state` materializado (cache)                                   | O(1) vs query derivada; atualizado em transação                        |
-| **D11** | `settings` como key-value                                                        | Evita migration por config; tipagem forte no service layer             |
-| **D12** | Sem state manager no MVP                                                         | Complexidade desnecessária p/ 7 telas simples                          |
-| **D13** | Dashboard-centric UX com modais + query string                                   | Elimina navegação para tarefas rotineiras; preserva deep-link          |
-| **D14** | Tema customizado isolado em `src/theme/` com CSS vars                            | Troca de paleta sem tocar em componentes; dark-default                 |
-| **D15** | `monitors.enabled` BOOL em vez de `status` enum                                  | Só há 2 estados; boolean é mais honesto que enum com 2 valores         |
+| ID      | Decisão                                                                          | Rationale                                                                       |
+| ------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| **D9**  | IDs mistos: UUID v7 para monitors/incidents, INTEGER autoincrement para `checks` | Otimiza espaço/performance em tabela de alto volume (~13M rows em 90d)          |
+| **D10** | `monitors.current_state` materializado (cache)                                   | O(1) vs query derivada; atualizado em transação                                 |
+| **D11** | `settings` como key-value                                                        | Evita migration por config; tipagem forte no service layer                      |
+| **D12** | Sem state manager no MVP                                                         | Complexidade desnecessária p/ 7 telas simples                                   |
+| **D13** | Dashboard-centric UX com modais em estado local                                  | Elimina navegação para tarefas rotineiras com implementação mais simples no MVP |
+| **D14** | Tema estático isolado em `src/theme/` com tokens e estilos globais               | Centraliza aparência atual sem toggle ou troca dinâmica de paleta               |
+| **D15** | `monitors.enabled` BOOL em vez de `status` enum                                  | Só há 2 estados; boolean é mais honesto que enum com 2 valores                  |
 
 ---
 
