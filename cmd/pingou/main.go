@@ -64,7 +64,7 @@ func main() {
 	stateMachine := service.NewStateMachine(monitorRepository, checkRepository, incidentRepository, webhookNotifier)
 
 	// checker
-	httpChecker := checker.NewHTTPChecker()
+	httpChecker := checker.NewHTTPChecker(loadedConfig.MaxRedirects, loadedConfig.GlobalTimeout)
 
 	// services
 	monitorService := service.NewMonitorService(monitorRepository, checkRepository, incidentRepository)

@@ -4,15 +4,18 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strconv"
 	"strings"
 )
 
 type Config struct {
-	APIKey      string
-	DatabaseURL string
-	Port        string
-	LogLevel    slog.Level
+	APIKey             string
+	DatabaseURL        string
+	Port               string
+	LogLevel           slog.Level
 	CORSAllowedOrigins []string
+	MaxRedirects       int
+	GlobalTimeout      int
 }
 
 func Load() (*Config, error) {
@@ -48,11 +51,32 @@ func Load() (*Config, error) {
 		}
 	}
 
+	maxRedirects := 5
+	if v := os.Getenv("PINGOU_MAX_REDIRECTS"); v != "" {
+		if n := parseInt(v); n > 0 {
+			maxRedirects = n
+		}
+	}
+
+	globalTimeout := 60
+	if v := os.Getenv("PINGOU_GLOBAL_TIMEOUT"); v != "" {
+		if n := parseInt(v); n > 0 {
+			globalTimeout = n
+		}
+	}
+
 	return &Config{
-		APIKey:      apiKey,
-		DatabaseURL: dbURL,
-		Port:        port,
-		LogLevel:    logLevel,
+		APIKey:             apiKey,
+		DatabaseURL:        dbURL,
+		Port:               port,
+		LogLevel:           logLevel,
 		CORSAllowedOrigins: corsOrigins,
+		MaxRedirects:       maxRedirects,
+		GlobalTimeout:      globalTimeout,
 	}, nil
+}
+
+func parseInt(s string) int {
+	n, _ := strconv.Atoi(s)
+	return n
 }

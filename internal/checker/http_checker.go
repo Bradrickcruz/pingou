@@ -13,12 +13,18 @@ type HTTPChecker struct {
 	client *http.Client
 }
 
-func NewHTTPChecker() *HTTPChecker {
+func NewHTTPChecker(maxRedirects, globalTimeout int) *HTTPChecker {
+	if maxRedirects <= 0 {
+		maxRedirects = 5
+	}
+	if globalTimeout <= 0 {
+		globalTimeout = 60
+	}
 	return &HTTPChecker{
 		client: &http.Client{
-			Timeout: 60 * time.Second, // timeout máximo global
+			Timeout: time.Duration(globalTimeout) * time.Second,
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				if len(via) >= 5 {
+				if len(via) >= maxRedirects {
 					return fmt.Errorf("too many redirects")
 				}
 				return nil

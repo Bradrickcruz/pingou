@@ -221,6 +221,8 @@ PINGOU_API_KEY=...
 | `PINGOU_API_KEY`              |         sim | -           | Chave usada para proteger o dashboard e as rotas `/api/*`                                                          |
 | `PINGOU_LOG_LEVEL`            |         não | `info`      | Nível de log (`DEBUG` habilita logs debug)                                                                         |
 | `PINGOU_CORS_ALLOWED_ORIGINS` |         não | (vazio)     | Lista separada por vírgula de origins permitidas para CORS; vazio = CORS desabilitado. Ex: `http://localhost:5173` |
+| `PINGOU_MAX_REDIRECTS`        |         não | `5`         | Número máximo de redirects que o checker HTTP segue                                                                |
+| `PINGOU_GLOBAL_TIMEOUT`       |         não | `60`        | Timeout global em segundos para requisições HTTP                                                                   |
 
 ## SQLite
 
