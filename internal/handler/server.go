@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"database/sql"
 	"log/slog"
 	"net/http"
@@ -14,6 +15,7 @@ type Server struct {
 	cfg             *config.Config
 	db              *sql.DB
 	router          *http.ServeMux
+	srv             *http.Server
 	monitorService  *service.MonitorService
 	incidentService *service.IncidentService
 	settingsService *service.SettingsService
@@ -43,7 +45,7 @@ func (s *Server) Start() error {
 	handler = s.corsMiddleware(handler)
 	handler = recoverMiddleware(handler)
 
-	srv := &http.Server{
+	s.srv = &http.Server{
 		Addr:         ":" + s.cfg.Port,
 		Handler:      handler,
 		ReadTimeout:  10 * time.Second,
@@ -51,7 +53,14 @@ func (s *Server) Start() error {
 		IdleTimeout:  60 * time.Second,
 	}
 	slog.Info("server listening", "port", s.cfg.Port)
-	return srv.ListenAndServe()
+	return s.srv.ListenAndServe()
+}
+
+func (s *Server) Shutdown(ctx context.Context) error {
+	if s.srv == nil {
+		return nil
+	}
+	return s.srv.Shutdown(ctx)
 }
 
 func (s *Server) registerRoutes() {

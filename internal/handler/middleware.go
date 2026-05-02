@@ -2,6 +2,7 @@ package handler
 
 import (
 	"crypto/rand"
+	"crypto/subtle"
 	"encoding/hex"
 	"log/slog"
 	"net/http"
@@ -14,12 +15,16 @@ import (
 func (s *Server) authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		key := r.Header.Get("X-API-Key")
-		if key != s.cfg.APIKey {
+		if !constantTimeEqual(key, s.cfg.APIKey) {
 			writeError(w, http.StatusUnauthorized, "invalid API key", "UNAUTHORIZED")
 			return
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+func constantTimeEqual(a, b string) bool {
+	return len(a) == len(b) && subtle.ConstantTimeCompare([]byte(a), []byte(b)) == 1
 }
 
 // loggingMiddleware loga método, path, status e latência

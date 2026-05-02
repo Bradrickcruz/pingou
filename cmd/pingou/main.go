@@ -101,5 +101,10 @@ func main() {
 	// aguarda sinal de encerramento
 	<-ctx.Done()
 	slog.Info("shutting down...")
+
+	if err := server.Shutdown(context.Background()); err != nil {
+		slog.Error("server shutdown error", "err", err)
+	}
+
 	monitorScheduler.Stop()
 }
