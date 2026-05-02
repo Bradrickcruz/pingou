@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 )
 
 type Config struct {
@@ -11,6 +12,7 @@ type Config struct {
 	DatabaseURL string
 	Port        string
 	LogLevel    slog.Level
+	CORSAllowedOrigins []string
 }
 
 func Load() (*Config, error) {
@@ -34,10 +36,23 @@ func Load() (*Config, error) {
 		logLevel = slog.LevelDebug
 	}
 
+	// CORS allowed origins (comma separated). Empty = no CORS headers.
+	cors := os.Getenv("PINGOU_CORS_ALLOWED_ORIGINS")
+	var corsOrigins []string
+	if cors != "" {
+		for _, o := range strings.Split(cors, ",") {
+			o = strings.TrimSpace(o)
+			if o != "" {
+				corsOrigins = append(corsOrigins, o)
+			}
+		}
+	}
+
 	return &Config{
 		APIKey:      apiKey,
 		DatabaseURL: dbURL,
 		Port:        port,
 		LogLevel:    logLevel,
+		CORSAllowedOrigins: corsOrigins,
 	}, nil
 }

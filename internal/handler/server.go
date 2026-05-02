@@ -35,9 +35,13 @@ func NewServer(
 }
 
 func (s *Server) Start() error {
+	handler := loggingMiddleware(s.router)
+	handler = s.corsMiddleware(handler)
+	handler = recoverMiddleware(handler)
+
 	srv := &http.Server{
 		Addr:         ":" + s.cfg.Port,
-		Handler:      loggingMiddleware(s.router),
+		Handler:      handler,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  60 * time.Second,
