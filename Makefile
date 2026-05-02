@@ -21,7 +21,7 @@ fmt:
 
 build: build-web
 	mkdir -p bin
-	CGO_ENABLED=1 $(GO) build $(LDFLAGS) -o $(BIN) $(CMD)/...
+	CGO_ENABLED=1 $(GO) build $(LDFLAGS) -o $(BIN) $(CMD)
 
 test:
 	$(GO) test ./...
