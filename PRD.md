@@ -167,16 +167,16 @@ Fase 3 (Domínio Monitors: model + repo + service)
 
 **Objetivo de aprendizado:** Estrutura de projeto Go, `go mod`, organização `cmd/internal`, ferramentas básicas.
 
-| #   | Subetapa                                                                                                                              | Output              | Verify                             |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ---------------------------------- |
-| 1.1 | Criar repo, `go mod init github.com/seu-user/pingou`                                                                                  | `go.mod`            | `go version` e `go mod tidy` rodam |
-| 1.2 | Criar estrutura de diretórios vazia (com `.gitkeep`)                                                                                  | Árvore acima        | `tree internal/` mostra estrutura  |
-| 1.3 | Criar `cmd/pingou/main.go` com "Hello, Pingou"                                                                                        | Binário compila     | `go run ./cmd/pingou` imprime msg  |
-| 1.4 | Criar `internal/config/config.go` lendo env vars básicas (`PINGOU_PORT`, `PINGOU_API_KEY`, `PINGOU_DATABASE_URL`, `PINGOU_LOG_LEVEL`) | Struct `Config`     | Test unitário com env mockado      |
-| 1.5 | Adicionar `godotenv` e `.env.example`                                                                                                 | Carrega .env em dev | `make dev` carrega vars            |
-| 1.6 | Configurar `log/slog` JSON pra stdout                                                                                                 | Logger global       | Logs aparecem estruturados         |
-| 1.7 | Criar `Makefile` com `make dev`, `make build`, `make test`                                                                            | Makefile funcional  | Cada target executa                |
-| 1.8 | Adicionar `.gitignore`, `.dockerignore`, `.editorconfig`                                                                              | Arquivos            | Git ignora `bin/`, `*.db`, `.env`  |
+| #   | Subetapa                                                                                                                                                                   | Output                | Verify                                 |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- | -------------------------------------- |
+| 1.1 | Criar repo, `go mod init github.com/seu-user/pingou`                                                                                                                       | `go.mod`              | `go version` e `go mod tidy` rodam     |
+| 1.2 | Criar estrutura de diretórios vazia (com `.gitkeep`)                                                                                                                       | Árvore acima          | `tree internal/` mostra estrutura      |
+| 1.3 | Criar `cmd/pingou/main.go` com "Hello, Pingou"                                                                                                                             | Binário compila       | `go run ./cmd/pingou` imprime msg      |
+| 1.4 | Criar `internal/config/config.go` lendo env vars básicas (`PINGOU_PORT`, `PINGOU_API_KEY`, `PINGOU_DATABASE_URL`, `PINGOU_LOG_LEVEL`)                                      | Struct `Config`       | Test unitário com env mockado          |
+| 1.5 | Adicionar `godotenv` e `.env.example`                                                                                                                                      | Carrega .env em dev   | `make dev` carrega vars                |
+| 1.6 | Configurar `log/slog` JSON pra stdout                                                                                                                                      | Logger global         | Logs aparecem estruturados             |
+| 1.7 | Criar `Makefile` com `make dev`, `make build`, `make test`                                                                                                                 | Makefile funcional    | Cada target executa                    |
+| 1.8 | Adicionar `.gitignore`, `.dockerignore`, `.editorconfig`                                                                                                                   | Arquivos              | Git ignora `bin/`, `*.db`, `.env`      |
 | 1.9 | Configurar `.editorconfig` com UTF-8, LF, newline final, trim de trailing whitespace, tabs para Go/Makefile e 2 espacos para JS/JSON/CSS/Markdown/YAML/SQL/Dockerfile/.env | Padrao entre editores | Arquivos novos seguem convencao minima |
 
 **🎓 Conceitos novos:** módulos Go, `cmd/internal`, structs, env vars, slog, build flags.
@@ -187,23 +187,23 @@ Fase 3 (Domínio Monitors: model + repo + service)
 
 **Objetivo de aprendizado:** `database/sql`, SQLite com WAL, migrations embutidas, pool de conexões.
 
-| #   | Subetapa                                                                                                | Output               | Verify                          |
-| --- | ------------------------------------------------------------------------------------------------------- | -------------------- | ------------------------------- |
-| 2.1 | Adicionar dep `github.com/mattn/go-sqlite3` (driver SQLite via CGO)                                     | `go.sum` atualizado  | `go build` compila com CGO      |
-| 2.2 | Adicionar dep `github.com/pressly/goose/v3`                                                             | Lib disponível       | Import funciona                 |
-| 2.3 | Criar `internal/database/database.go`: abre DB, configura WAL, busy_timeout, max conns                  | `*sql.DB` retornado  | `db.Ping()` passa               |
-| 2.4 | Criar migration `0001_init.sql` com tabelas: `monitors`, `checks`, `incidents`, `settings`              | Arquivo SQL          | Schema sintaticamente válido    |
-| 2.5 | Embutir migrations SQL em `internal/database/database.go` com `//go:embed migrations/*.sql`             | FS embutido          | Build inclui SQL                |
-| 2.6 | Integrar goose pra rodar migrations no startup                                                          | Migrations aplicadas | DB criado com tabelas           |
-| 2.7 | Criar índices: `monitors(enabled)`, `checks(monitor_id, checked_at)`, `incidents(monitor_id, ended_at)` | Migration adicional  | `EXPLAIN QUERY PLAN` usa índice |
-| 2.8 | Adicionar comando CLI `pingou migrate up/down/status` (subcomando)                                      | CLI funcional        | `pingou migrate status` lista   |
+| #   | Subetapa                                                                                                                                                | Output               | Verify                          |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ------------------------------- |
+| 2.1 | Adicionar dep `github.com/mattn/go-sqlite3` (driver SQLite via CGO)                                                                                     | `go.sum` atualizado  | `go build` compila com CGO      |
+| 2.2 | Adicionar dep `github.com/pressly/goose/v3`                                                                                                             | Lib disponível       | Import funciona                 |
+| 2.3 | Criar `internal/database/database.go`: abre DB, configura WAL, `_busy_timeout=5000`, foreign keys e max conns; preservar query params existentes no DSN | `*sql.DB` retornado  | `db.Ping()` passa               |
+| 2.4 | Criar migration `0001_init.sql` com tabelas: `monitors`, `checks`, `incidents`, `settings`                                                              | Arquivo SQL          | Schema sintaticamente válido    |
+| 2.5 | Embutir migrations SQL em `internal/database/database.go` com `//go:embed migrations/*.sql`                                                             | FS embutido          | Build inclui SQL                |
+| 2.6 | Integrar goose pra rodar migrations no startup                                                                                                          | Migrations aplicadas | DB criado com tabelas           |
+| 2.7 | Criar índices: `monitors(enabled)`, `checks(monitor_id, checked_at)`, `incidents(monitor_id, ended_at)`                                                 | Migration adicional  | `EXPLAIN QUERY PLAN` usa índice |
+| 2.8 | Adicionar comando CLI `pingou migrate up/down/status` (subcomando)                                                                                      | CLI funcional        | `pingou migrate status` lista   |
 
 **🎓 Conceitos novos:** `database/sql`, drivers Go, `embed.FS`, WAL mode, migrations declarativas.
 
 **⚠️ Pitfalls Node→Go:**
 
 - Em Go, `*sql.DB` é **pool de conexões**, não conexão única. Não feche depois de cada query.
-- SQLite + concurrent writes = use WAL (`PRAGMA journal_mode=WAL`) e limite writers a 1 (`SetMaxOpenConns(1)` pra writes, ou serialize via mutex).
+- SQLite + concurrent writes = use WAL (`PRAGMA journal_mode=WAL`), configure busy timeout (`_busy_timeout=5000`) e limite writers a 1 (`SetMaxOpenConns(1)` pra writes, ou serialize via mutex).
 
 ---
 
@@ -456,6 +456,7 @@ Contrato real do payload:
 ### Persistência & Retenção
 
 - [ ] SQLite usa WAL mode
+- [ ] SQLite usa `_busy_timeout=5000`
 - [ ] Retention job remove checks antigos
 - [ ] Limites enforced: interval 10s–86400s, retention 7d–90d, máx 100 monitors
 - [ ] Export gera dump válido (abre em outro SQLite)

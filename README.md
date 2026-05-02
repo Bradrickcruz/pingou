@@ -207,6 +207,17 @@ PINGOU_API_KEY=...
 | `PINGOU_API_KEY`      |         sim | -           | Chave usada para proteger o dashboard e as rotas `/api/*` |
 | `PINGOU_LOG_LEVEL`    |         não | `info`      | Nível de log (`DEBUG` habilita logs debug)                |
 
+## SQLite
+
+O backend abre o SQLite com:
+
+- `_foreign_keys=on`
+- `_journal_mode=WAL`
+- `_busy_timeout=5000`
+- `SetMaxOpenConns(1)`
+
+Se `PINGOU_DATABASE_URL` ja incluir query params, eles sao preservados e os parametros operacionais acima sao aplicados pelo app.
+
 ## Autenticação da API
 
 Todas as rotas protegidas exigem o header:
