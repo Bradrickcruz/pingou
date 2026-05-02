@@ -302,18 +302,19 @@ Fase 3 (Domínio Monitors: model + repo + service)
 
 ---
 
-### 📢 Fase 8 — Notifications: Webhook Dispatcher (P1)
+### 📢 Fase 8 — Notifications: Webhook Simples (P1)
 
-**Objetivo de aprendizado:** Worker pattern, retry com backoff, fan-out via channel.
+**Objetivo de aprendizado:** HTTP client com timeout, tratamento de erros em I/O, chamadas síncronas em goroutines.
 
-| #   | Subetapa                                                                                                                                        | Output            | Verify                                   |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- | ---------------------------------------- |
-| 8.1 | `notifications/model.go`: struct `WebhookPayload` com contrato real: `event`, `monitor`, `timestamp`, `last_error`, `downtime_duration_seconds` | Payload tipado    | Compila                                  |
-| 8.2 | `notifications/webhook.go`: `Send(ctx, url, payload)` — POST JSON com timeout 10s                                                               | Client HTTP       | Test contra `httptest.Server`            |
-| 8.3 | Retry: 3 tentativas, espera fixa 5s entre elas, `context.Done()` aborta                                                                         | Retry resiliente  | Test simula falha e sucesso              |
-| 8.4 | `notifications/dispatcher.go`: goroutine consumindo channel de events, chama webhook em goroutine separada (não bloqueia state machine)         | Dispatcher async  | State machine não trava se webhook lento |
-| 8.5 | Integração: state machine emite event → dispatcher recebe → busca webhook URL em settings → envia                                               | Pipeline completo | Webhook real recebe POST                 |
-| 8.6 | Logs estruturados de envio (sucesso/falha + tentativa)                                                                                          | Observabilidade   | Logs mostram eventos                     |
+**Decisão arquitetural:** Manter webhook como chamada **síncrona e direta** no fluxo do state machine. Justificativa em [`state-machine-channel-event-necessidade-e-melhorias.md`](state-machine-channel-event-necessidade-e-melhorias.md).
+
+| #   | Subetapa                                                                                                                                      | Output           | Verify                        |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ----------------------------- |
+| 8.1 | `service/notifier.go`: struct `WebhookNotifier` com contrato real: `event`, `monitor`, `timestamp`, `last_error`, `downtime_duration_seconds` | Notifier tipado  | Compila                       |
+| 8.2 | `WebhookNotifier.Send(ctx, payload)` — POST JSON para webhook URL com timeout 10s                                                             | Client HTTP      | Test contra `httptest.Server` |
+| 8.3 | Tratamento de erro: log silencioso se webhook falhar, não retorna erro (não bloqueia state machine)                                           | Erro tratado     | Logs mostram tentativa        |
+| 8.4 | Integração: state machine chama `notifier.Send()` diretamente após transição                                                                  | Pipeline simples | Webhook real recebe POST      |
+| 8.5 | Logs estruturados de envio (sucesso/falha)                                                                                                    | Observabilidade  | Logs mostram eventos          |
 
 Contrato real do payload:
 
@@ -345,7 +346,7 @@ Contrato real do payload:
 }
 ```
 
-**🎓 Conceitos novos:** producer/consumer com channel, fan-out, `time.After` vs `time.Sleep` (cancelável).
+**🎓 Conceitos novos:** HTTP client com context, goroutine com não-blocking I/O, tratamento de erros em chamadas I/O.
 
 ---
 
