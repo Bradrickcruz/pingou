@@ -41,4 +41,8 @@ COPY --from=go-builder /bin/pingou .
 
 EXPOSE 8080
 
+# Health check via endpoint público /healthz (sem auth)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD wget -qO- http://localhost:8080/healthz || exit 1
+
 ENTRYPOINT ["./pingou"]
