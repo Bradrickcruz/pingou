@@ -364,18 +364,49 @@ Evento de recuperação:
 
 ## Comandos disponíveis no Makefile
 
-```bash
-make dev
-make fmt
-make build
-make test
-make clean
-make build-web
-make docker-build
-make docker-up
-make docker-down
-make release
-```
+Os alvos do `Makefile` e seu propósito (uso típico):
+
+- `all`: Executa `fmt`, `build` e `dev`. Atalho para iniciar desenvolvimento completo.
+
+- `dev`: Roda a aplicação em modo desenvolvimento usando as variáveis de `.env`.
+  - Uso: `make dev`
+
+- `fmt`: Formata o código Go com `gofumpt`.
+  - Uso: `make fmt`
+
+- `build`: Compila o frontend e o binário Go (usa `CGO_ENABLED=1`). Gera `bin/pingou`.
+  - Uso: `make build` (invoca `build-web` internamente)
+
+- `test`: Executa os testes Go em todo o módulo.
+  - Uso: `make test`
+
+- `clean`: Remove artefatos locais como `bin/`.
+  - Uso: `make clean`
+
+- `build-web`: Instala dependências do frontend e gera o bundle via Vite.
+  - Uso: `make build-web`
+
+- `docker-build`: Constrói a imagem Docker multi-stage e a marca com `$(VERSION)` e `latest`.
+  - Uso: `make docker-build`
+
+- `docker-up`: Sobe os serviços via `docker compose up --build` (desenvolvimento/integração local).
+  - Uso: `make docker-up`
+
+- `docker-down`: Derruba os serviços levantados via `docker compose`.
+  - Uso: `make docker-down`
+
+- `docker-size`: Constrói uma imagem temporária `pingou:size-check`, imprime informação de tamanho e remove a imagem.
+  - Objetivo: validar automaticamente o requisito de tamanho da imagem (PRD).
+  - Uso: `make docker-size`
+
+- `docker-startup-test`: Mede o tempo de startup do `docker compose` (aguarda healthcheck), considera < 30s como sucesso.
+  - Objetivo: validar o critério de sucesso `docker compose up < 30s` automaticamente.
+  - Uso: `make docker-startup-test`
+
+- `release`: Gera o build final (compila e imprime o local do binário em `bin/pingou`).
+  - Uso: `make release`
+
+Cada target tem comentários e comportamentos encadeados no `Makefile` (por exemplo, `build` roda `build-web` antes de compilar o binário). Use `make <target>` para executar o fluxo desejado.
 
 ## Release
 
