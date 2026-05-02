@@ -37,7 +37,7 @@ Este projeto é também um **veículo de aprendizado de Go** para um dev senior 
 | Config      | env vars + `godotenv`                                             | KISS                                                 |
 | Validação   | Manual no service; futura migração para `go-playground/validator` | KISS agora; validação declarativa depois             |
 | HTTP Client | `net/http` (stdlib)                                               | Idiomático                                           |
-| UI          | React 18 + Vite + TypeScript + Tailwind                           | Familiaridade do dev                                 |
+| UI          | React 19 + Vite + JavaScript + CSS/tokens                        | Familiaridade do dev                                 |
 | UI bundling | `embed.FS` (stdlib)                                               | 1 binário único                                      |
 | Container   | Docker multi-stage + docker-compose                               | Solicitado                                           |
 
@@ -104,10 +104,9 @@ pingou/
 │   │   ├── pages/
 │   │   ├── components/
 │   │   ├── api/
-│   │   └── App.tsx
+│   │   └── theme/                     # CSS tokens
 │   ├── package.json
-│   ├── vite.config.ts
-│   └── tailwind.config.js
+│   └── vite.config.js
 │
 ├── ui/
 │   └── embed.go                       # //go:embed dist  → embute build do React
@@ -373,8 +372,8 @@ Contrato real do payload:
 
 | #     | Subetapa                                                                                                                                                  | Output               | Verify                      |
 | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | --------------------------- |
-| 10.1  | `web/`: `npm create vite@latest -- --template react-ts`                                                                                                   | Projeto Vite         | `npm run dev` roda          |
-| 10.2  | Setup Tailwind v4 + estrutura de pastas (`pages/`, `components/`, `api/`)                                                                                 | Stack pronta         | Hot reload funciona         |
+| 10.1  | `web/`: `npm create vite@latest -- --template react`                                                                                                     | Projeto Vite         | `npm run dev` roda          |
+| 10.2  | Setup estrutura de pastas (`pages/`, `components/`, `api/`, `theme/`) e CSS/tokens                                                                     | Stack pronta         | Hot reload funciona         |
 | 10.3  | Página: lista de monitors com status badge (UP verde, DOWN vermelho, UNKNOWN cinza)                                                                       | UI funcional         | Renderiza mock              |
 | 10.4  | Página: detalhe do monitor com últimos N checks + lista de incidentes                                                                                     | UI funcional         | Navega entre rotas          |
 | 10.5  | Form: criar/editar monitor (validações client-side espelhando backend)                                                                                    | CRUD via UI          | Submit funciona             |
