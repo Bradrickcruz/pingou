@@ -82,9 +82,9 @@ Implementado:
 
 Divergencias:
 
-- PRD pede GitHub Action com `go test ./...` e `golangci-lint`; nao ha workflow visivel.
+- PRD pede GitHub Action com `go test ./...` e `golangci-lint`; implementacao atual nao inclui workflow e CI fica fora do primeiro momento.
+- PRD ainda referencia testes automatizados em fases futuras; no primeiro momento nao teremos testes Go e a validacao fica manual/local.
 - PRD pede checklist manual executado; nao ha registro.
-- Nao ha testes automatizados Go.
 
 ## Divergencias de criterio de sucesso
 
@@ -118,6 +118,8 @@ Divergencias:
 14. **Frontend React stack resolvido (2026-05-02)**: PRD.md atualizado para refletir React 19 + JavaScript + CSS/tokens (sem TypeScript/Tailwind) como implementação real.
 15. **Export integrado com Settings (2026-05-02)**: PRD.md Fase 10.6 atualizado para refletir que botão de export está integrado na página de Settings, não em página separada. Divergência removida.
 16. **Embed e SPA resolvidos (2026-05-02)**: PRD.md File Structure e Fase 10 atualizados para refletir `internal/handler/spa.go` e `internal/handler/dist` (Vite configura outDir diretamente) ao invés de `ui/embed.go` e `ui/dist` com script de cópia. Divergência removida.
+17. **CI adiado (2026-05-02)**: GitHub Actions não entram no primeiro momento; validação fica local via `make test`/`make build` e a documentação foi atualizada para refletir isso.
+18. **Testes adiados (2026-05-02)**: Não teremos testes automatizados Go neste primeiro momento; PRD e README foram ajustados para refletir validação manual/local.
 
 ## Arquivos-chave analisados
 

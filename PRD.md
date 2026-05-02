@@ -207,14 +207,14 @@ Fase 3 (Domínio Monitors: model + repo + service)
 
 **Objetivo de aprendizado:** Layered architecture, repository pattern, validação, enum em Go.
 
-| #   | Subetapa                                                                                                                                     | Output                       | Verify                 |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | ---------------------- |
-| 3.1 | `domain/monitor.go`: struct `Monitor`, type `MonitorState`, const                                                                            | Tipos definidos              | Compila                |
-| 3.2 | Validação manual no service: `interval >= 10 && <= 86400`, `failure_threshold >= 1 && <= 10`; URL por tamanho hoje, formato em tarefa futura | Validação funcional          | Input inválido falha   |
-| 3.3 | `repository/monitor_repo.go`: implementação SQLite (Create/Get/List/Update/Delete)                                                           | CRUD completo                | Compila                |
-| 3.4 | `service/monitor_service.go`: regras de negócio (validar antes de salvar, enforce limite de 100 monitors)                                    | Service layer                | Rejeita o 101º monitor |
-| 3.5 | DTOs: `CreateMonitorDTO`, `UpdateMonitorDTO` separados do model                                                                              | Separação domínio/transporte | Compila                |
-| 3.6 | `handler/monitors.go`: handlers HTTP para criação, listagem, atualização e remoção                                                           | Endpoints de monitors        | `go test ./...` passa  |
+| #   | Subetapa                                                                                                                                     | Output                       | Verify                    |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | ------------------------- |
+| 3.1 | `domain/monitor.go`: struct `Monitor`, type `MonitorState`, const                                                                            | Tipos definidos              | Compila                   |
+| 3.2 | Validação manual no service: `interval >= 10 && <= 86400`, `failure_threshold >= 1 && <= 10`; URL por tamanho hoje, formato em tarefa futura | Validação funcional          | Input inválido falha      |
+| 3.3 | `repository/monitor_repo.go`: implementação SQLite (Create/Get/List/Update/Delete)                                                           | CRUD completo                | Compila                   |
+| 3.4 | `service/monitor_service.go`: regras de negócio (validar antes de salvar, enforce limite de 100 monitors)                                    | Service layer                | Rejeita o 101º monitor    |
+| 3.5 | DTOs: `CreateMonitorDTO`, `UpdateMonitorDTO` separados do model                                                                              | Separação domínio/transporte | Compila                   |
+| 3.6 | `handler/monitors.go`: handlers HTTP para criação, listagem, atualização e remoção                                                           | Endpoints de monitors        | Compila; validação manual |
 
 **🎓 Conceitos novos:** interfaces Go, dependency injection manual, enums via const+type, table-driven tests.
 
@@ -226,15 +226,15 @@ Fase 3 (Domínio Monitors: model + repo + service)
 
 **Objetivo de aprendizado:** `net/http` ServeMux Go 1.22+ com path params, handlers, JSON encoding, graceful shutdown.
 
-| #   | Subetapa                                                                                    | Output                  | Verify                      |
-| --- | ------------------------------------------------------------------------------------------- | ----------------------- | --------------------------- |
-| 4.1 | `handler/server.go`: `http.Server` com timeouts (read/write/idle) configurados              | Server estruturado      | Compila                     |
-| 4.2 | Graceful shutdown via `signal.NotifyContext(ctx, SIGTERM, SIGINT)` e `http.Server.Shutdown` | Shutdown limpo          | Ctrl+C não corrompe DB      |
-| 4.3 | `handler/middleware.go`: logging com request ID e latency; recover/CORS implementados       | Middlewares             | Logs mostram request        |
-| 4.4 | `handler/monitors.go`: handlers para POST/GET/PATCH/DELETE `/api/monitors`                  | Endpoints REST          | curl funciona               |
-| 4.5 | Helper `respondJSON(w, status, data)` e `respondError(w, status, msg)`                      | Response consistente    | Erros sempre em JSON        |
-| 4.6 | Integration tests com `httptest.NewServer`                                                  | Tests E2E nos endpoints | `go test ./...` passa       |
-| 4.7 | Endpoint `/healthz` (sem auth, retorna `{status:"ok"}`)                                     | Health endpoint         | `curl /healthz` retorna 200 |
+| #   | Subetapa                                                                                    | Output               | Verify                      |
+| --- | ------------------------------------------------------------------------------------------- | -------------------- | --------------------------- |
+| 4.1 | `handler/server.go`: `http.Server` com timeouts (read/write/idle) configurados              | Server estruturado   | Compila                     |
+| 4.2 | Graceful shutdown via `signal.NotifyContext(ctx, SIGTERM, SIGINT)` e `http.Server.Shutdown` | Shutdown limpo       | Ctrl+C não corrompe DB      |
+| 4.3 | `handler/middleware.go`: logging com request ID e latency; recover/CORS implementados       | Middlewares          | Logs mostram request        |
+| 4.4 | `handler/monitors.go`: handlers para POST/GET/PATCH/DELETE `/api/monitors`                  | Endpoints REST       | curl funciona               |
+| 4.5 | Helper `respondJSON(w, status, data)` e `respondError(w, status, msg)`                      | Response consistente | Erros sempre em JSON        |
+| 4.6 | Integration tests com `httptest.NewServer` (fora do primeiro momento)                       | Tests E2E futuros    | Plano registrado            |
+| 4.7 | Endpoint `/healthz` (sem auth, retorna `{status:"ok"}`)                                     | Health endpoint      | `curl /healthz` retorna 200 |
 
 **🎓 Conceitos novos:** `http.Handler`, `http.HandlerFunc`, ServeMux 1.22 (`POST /api/monitors/{id}`), middleware composition, `httptest`.
 
@@ -289,7 +289,7 @@ Fase 3 (Domínio Monitors: model + repo + service)
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- | ------------------------------ |
 | 7.1 | `domain/incident.go`: struct `Incident`, estados no `MonitorState` (UNKNOWN, UP, DOWN)                                                                                                                                                | Tipos                 | Compila                        |
 | 7.2 | `repository/incident_repo.go`: `Create`, `Close`, `FindOpenByMonitor`, listagens                                                                                                                                                      | CRUD                  | Compila                        |
-| 7.3 | `service/state_machine.go`: `Process(ctx, monitor, result)` persiste check, calcula transição e abre/fecha incidentes                                                                                                                 | Lógica integrada      | `go test ./...` passa          |
+| 7.3 | `service/state_machine.go`: `Process(ctx, monitor, result)` persiste check, calcula transição e abre/fecha incidentes                                                                                                                 | Lógica integrada      | Compila; validação manual      |
 | 7.4 | Transições especificadas: <br>• UNKNOWN→UP: silencioso<br>• UNKNOWN→DOWN (após N falhas): notifica `down`<br>• UP→DOWN (após N falhas): notifica `down` + abre incident<br>• DOWN→UP (após 1 sucesso): notifica `up` + fecha incident | Comportamento correto | Logs mostram transições        |
 | 7.5 | Integração no scheduler: após cada check → chamada direta para `stateMachine.Process`                                                                                                                                                 | Pipeline direto       | DB acumula checks e incidentes |
 | 7.6 | Endpoint `GET /api/incidents` (listar) e `GET /api/monitors/:id/incidents`                                                                                                                                                            | Visibilidade          | curl retorna histórico         |
@@ -411,7 +411,7 @@ Contrato real do payload:
 | X.2 | `.env.example` com TODAS as vars documentadas e valores default                                | Docs                   | Cópia funciona           |
 | X.3 | Documentar payload do webhook + exemplo de receiver (Discord/Slack) no README                  | Integração documentada | Webhook compreensível    |
 | X.4 | LICENSE (MIT recomendado pra OSS)                                                              | Licença                | Arquivo presente         |
-| X.5 | GitHub Action básica: `go test ./...` + `golangci-lint` em PR                                  | CI funcional           | PR mostra checks         |
+| X.5 | GitHub Action básica: `go test ./...` + `golangci-lint` em PR (fora do primeiro momento)       | CI futuro              | PR mostra checks         |
 | X.6 | Checklist de verificação manual (ver abaixo) executado                                         | Tudo verde             | Lista preenchida         |
 
 ---
@@ -422,8 +422,7 @@ Contrato real do payload:
 
 - [ ] `make build` gera binário < 20MB
 - [ ] `docker compose build` constrói imagem < 30MB
-- [ ] `go test ./...` passa sem flakes
-- [ ] `golangci-lint run` sem warnings
+- [ ] Não há suíte automatizada ainda; validar manualmente o fluxo principal
 
 ### Funcionalidade Core
 

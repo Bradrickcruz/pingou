@@ -166,6 +166,8 @@ O binário será gerado em:
 bin/pingou
 ```
 
+Ainda não há workflow de GitHub Actions neste momento. Também não há suíte de testes automatizados no primeiro momento; a validação do projeto é local e manual, via `make build` e `make docker-build` quando necessário.
+
 ## Como rodar com Docker
 
 O Dockerfile inclui um `HEALTHCHECK` que verifica o status da aplicação a cada 30 segundos via endpoint público `/healthz`.
