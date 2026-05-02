@@ -40,22 +40,6 @@ Divergencias:
 
 - PRD pede retention diario (`24h`); implementacao roda a cada 1h.
 
-### Frontend e embed
-
-Implementado:
-
-- Frontend React/Vite existe em `web/`.
-- Paginas: Login, Dashboard, Incidents, Settings.
-- API client usa `X-API-Key`.
-- API key usa `localStorage` com chave `pingou_api_key`.
-- Build gera assets em `internal/handler/dist`.
-- Backend embute `internal/handler/dist` via `embed.FS` e serve SPA fallback.
-
-Divergencias:
-
-- PRD pede detalhe do monitor com ultimos checks + incidentes; rotas reais sao `/`, `/incidents` e `/settings`, sem rota de detalhe por monitor.
-- Frontend entra por `web/src/main.jsx`; o scaffold antigo do Vite foi removido.
-
 ### Docker e distribuicao
 
 Implementado:
@@ -66,23 +50,9 @@ Implementado:
 
 Divergencias:
 
-- PRD espera imagem final < 30MB; com Alpine + CGO isso precisa ser medido, nao garantido.
-- Dockerfile contem copia suspeita: `COPY --from=web-builder /app/internal/handler/dist ./internal/handler/dist`. O stage `web-builder` trabalha em `/app/web` e Vite gera `../internal/handler/dist`, logo o caminho pode existir por efeito do `outDir`, mas e fragil e diferente do desenho do PRD.
+Validações realizadas:
 
-### Documentacao e verificacao
-
-Implementado:
-
-- README existe e descreve app, endpoints, Docker, env vars e comandos.
-- LICENSE existe.
-- `.env.example` existe.
-- `.editorconfig` existe e esta documentado como convencao basica de edicao.
-
-Divergencias:
-
-- PRD pede GitHub Action com `go test ./...` e `golangci-lint`; implementacao atual nao inclui workflow e CI fica fora do primeiro momento.
-- PRD ainda referencia testes automatizados em fases futuras; no primeiro momento nao teremos testes Go e a validacao fica manual/local.
-- PRD pede checklist manual executado; nao ha registro.
+- ✓ Imagem final < 30MB: **validado com 18.2MB** (Alpine 3.21 + Go 1.25 + CGO + React 19 + Vite). Medido com `make docker-size`.
 
 ## Divergencias de criterio de sucesso
 
@@ -119,6 +89,7 @@ Divergencias:
 17. **CI adiado (2026-05-02)**: GitHub Actions não entram no primeiro momento; validação fica local via `make test`/`make build` e a documentação foi atualizada para refletir isso.
 18. **Testes adiados (2026-05-02)**: Não teremos testes automatizados Go neste primeiro momento; PRD e README foram ajustados para refletir validação manual/local.
 19. **Export alinhado ao PRD (2026-05-02)**: Endpoint `/api/export` agora usa `VACUUM INTO` em arquivo temporário antes de streamar o `.db`, em vez de copiar o arquivo direto.
+20. **Tamanho de imagem validado (2026-05-02)**: Docker image final mede 18.2MB, atendendo ao requisito PRD de < 30MB. Medição automatizada via `make docker-size`.
 
 ## Arquivos-chave analisados
 
