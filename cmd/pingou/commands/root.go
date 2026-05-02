@@ -45,6 +45,7 @@ func Execute() {
 func init() {
 	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "modo verboso")
 	RootCmd.AddCommand(serveCmd)
+	RootCmd.AddCommand(migrateCmd)
 }
 
 // GetVersion retorna a versao atual

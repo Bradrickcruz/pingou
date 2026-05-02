@@ -18,12 +18,22 @@ type Config struct {
 	GlobalTimeout      int
 }
 
+// Load carrega configuracao completa (requer API key)
 func Load() (*Config, error) {
 	apiKey := os.Getenv("PINGOU_API_KEY")
 	if apiKey == "" {
 		return nil, fmt.Errorf("PINGOU_API_KEY is required")
 	}
 
+	return loadConfigWithAPIKey(apiKey)
+}
+
+// LoadConfig carrega configuracao minima para CLI (sem API key)
+func LoadConfig() (*Config, error) {
+	return loadConfigWithAPIKey("")
+}
+
+func loadConfigWithAPIKey(apiKey string) (*Config, error) {
 	dbURL := os.Getenv("PINGOU_DATABASE_URL")
 	if dbURL == "" {
 		dbURL = "pingou.db"
@@ -39,7 +49,6 @@ func Load() (*Config, error) {
 		logLevel = slog.LevelDebug
 	}
 
-	// CORS allowed origins (comma separated). Empty = no CORS headers.
 	cors := os.Getenv("PINGOU_CORS_ALLOWED_ORIGINS")
 	var corsOrigins []string
 	if cors != "" {
