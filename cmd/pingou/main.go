@@ -89,7 +89,7 @@ func main() {
 	retention.Start(ctx)
 
 	// inicia server
-	server := handler.NewServer(loadedConfig, monitorService, incidentService, settingsService)
+	server := handler.NewServer(loadedConfig, db, monitorService, incidentService, settingsService)
 
 	go func() {
 		if err := server.Start(); err != nil {

@@ -5,6 +5,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -13,14 +15,23 @@ type ExportHandler struct {
 }
 
 func (s *Server) handleExportDB(w http.ResponseWriter, r *http.Request) {
-	dbPath := os.Getenv("PINGOU_DATABASE_URL")
-	if dbPath == "" {
-		dbPath = "pingou.db"
+	tmpDir, err := os.MkdirTemp("", "pingou-export-*")
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "could not create export temp dir", "INTERNAL_ERROR")
+		return
+	}
+	defer os.RemoveAll(tmpDir)
+
+	exportPath := filepath.Join(tmpDir, "backup.db")
+	exportSQL := "VACUUM INTO '" + escapeSQLiteLiteral(exportPath) + "'"
+	if _, err := s.db.ExecContext(r.Context(), exportSQL); err != nil {
+		writeError(w, http.StatusInternalServerError, "could not export database", "INTERNAL_ERROR")
+		return
 	}
 
-	f, err := os.Open(dbPath)
+	f, err := os.Open(exportPath)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "could not open database file", "INTERNAL_ERROR")
+		writeError(w, http.StatusInternalServerError, "could not open exported database", "INTERNAL_ERROR")
 		return
 	}
 	defer f.Close()
@@ -29,5 +40,12 @@ func (s *Server) handleExportDB(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Content-Disposition", `attachment; filename="`+filename+`"`)
 
-	io.Copy(w, f)
+	if _, err := io.Copy(w, f); err != nil {
+		writeError(w, http.StatusInternalServerError, "could not stream exported database", "INTERNAL_ERROR")
+		return
+	}
+}
+
+func escapeSQLiteLiteral(value string) string {
+	return strings.ReplaceAll(value, "'", "''")
 }

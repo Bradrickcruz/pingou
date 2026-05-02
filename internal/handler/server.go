@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"log/slog"
 	"net/http"
 	"time"
@@ -11,6 +12,7 @@ import (
 
 type Server struct {
 	cfg             *config.Config
+	db              *sql.DB
 	router          *http.ServeMux
 	monitorService  *service.MonitorService
 	incidentService *service.IncidentService
@@ -19,12 +21,14 @@ type Server struct {
 
 func NewServer(
 	cfg *config.Config,
+	db *sql.DB,
 	monitorService *service.MonitorService,
 	incidentService *service.IncidentService,
 	settingsService *service.SettingsService,
 ) *Server {
 	s := &Server{
 		cfg:             cfg,
+		db:              db,
 		router:          http.NewServeMux(),
 		monitorService:  monitorService,
 		incidentService: incidentService,
