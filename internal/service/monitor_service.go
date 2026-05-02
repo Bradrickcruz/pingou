@@ -54,6 +54,10 @@ type UpdateMonitorInput struct {
 }
 
 func (s *MonitorService) Create(ctx context.Context, in CreateMonitorInput) (*domain.Monitor, error) {
+	if err := validateCreateInput(in); err != nil {
+		return nil, err
+	}
+
 	count, err := s.monitors.Count(ctx)
 	if err != nil {
 		return nil, err
@@ -80,10 +84,6 @@ func (s *MonitorService) Create(ctx context.Context, in CreateMonitorInput) (*do
 		UpdatedAt:        now,
 	}
 
-	if err := validate(m); err != nil {
-		return nil, err
-	}
-
 	if err := s.monitors.Create(ctx, m); err != nil {
 		return nil, err
 	}
@@ -108,6 +108,10 @@ func (s *MonitorService) List(ctx context.Context, f domain.MonitorFilter) ([]*d
 }
 
 func (s *MonitorService) Update(ctx context.Context, id string, in UpdateMonitorInput) (*domain.Monitor, error) {
+	if err := validateUpdateInput(in); err != nil {
+		return nil, err
+	}
+
 	m, err := s.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -133,10 +137,6 @@ func (s *MonitorService) Update(ctx context.Context, id string, in UpdateMonitor
 	}
 
 	m.UpdatedAt = time.Now().UTC()
-
-	if err := validate(m); err != nil {
-		return nil, err
-	}
 
 	if err := s.monitors.Update(ctx, m); err != nil {
 		return nil, err
