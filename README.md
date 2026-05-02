@@ -96,6 +96,7 @@ pingou/
 ├── docker-compose.yml
 ├── Makefile
 ├── .env.example
+├── .editorconfig
 ├── go.mod
 └── README.md
 ```
@@ -109,6 +110,17 @@ pingou/
 - GCC ou toolchain compatível com CGO
 - SQLite
 - `gofumpt` instalado, se você for usar o target `fmt`
+
+## Convenções de formatação
+
+O projeto inclui `.editorconfig` na raiz para padronizar configuracoes basicas entre editores:
+
+- UTF-8, line endings LF e newline final.
+- Remocao de espacos finais em editores compativeis.
+- Tabs para arquivos Go e Makefile.
+- 2 espacos para JS, JSX, JSON, CSS, Markdown, YAML, SQL, Dockerfile e `.env*`.
+
+Essa configuracao complementa `gofumpt` no backend e ESLint/Vite no frontend.
 
 ### 1. Configurar ambiente
 

@@ -116,6 +116,7 @@ pingou/
 │   └── build.sh                       # Build completo: web → embed → go build
 │
 ├── .env.example
+├── .editorconfig
 ├── .gitignore
 ├── .dockerignore
 ├── Dockerfile                         # Multi-stage: node + go + alpine
@@ -176,6 +177,7 @@ Fase 3 (Domínio Monitors: model + repo + service)
 | 1.6 | Configurar `log/slog` JSON pra stdout                                                                                                 | Logger global       | Logs aparecem estruturados         |
 | 1.7 | Criar `Makefile` com `make dev`, `make build`, `make test`                                                                            | Makefile funcional  | Cada target executa                |
 | 1.8 | Adicionar `.gitignore`, `.dockerignore`, `.editorconfig`                                                                              | Arquivos            | Git ignora `bin/`, `*.db`, `.env`  |
+| 1.9 | Configurar `.editorconfig` com UTF-8, LF, newline final, trim de trailing whitespace, tabs para Go/Makefile e 2 espacos para JS/JSON/CSS/Markdown/YAML/SQL/Dockerfile/.env | Padrao entre editores | Arquivos novos seguem convencao minima |
 
 **🎓 Conceitos novos:** módulos Go, `cmd/internal`, structs, env vars, slog, build flags.
 
@@ -485,6 +487,7 @@ Contrato real do payload:
 > **D6 — Webhook global apenas:** Simplicidade. Per-URL fica pra v1.1 se houver demanda.
 > **D7 — `github.com/mattn/go-sqlite3` (CGO):** Driver SQLite maduro e amplamente usado. Trade-off: build exige CGO/toolchain C; Docker usa Alpine com `gcc`/`musl-dev`.
 > **D8 — Scheduler via goroutine-per-monitor:** Simples, idiomático. Limite de 100 monitors mantém isso viável (~100 goroutines = trivial).
+> **D9 — `.editorconfig` na raiz:** Padroniza formatacao basica entre editores sem substituir `gofumpt` no Go nem ESLint/Vite no frontend.
 
 ---
 
@@ -500,5 +503,5 @@ Contrato real do payload:
 
 ---
 
-**Última atualização:** 2026-04-23
+**Última atualização:** 2026-05-02
 **Status:** Plano aprovado, aguardando início da Fase 1
