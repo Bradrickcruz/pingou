@@ -39,7 +39,6 @@ Implementado:
 Divergencias:
 
 - PRD pede retention diario (`24h`); implementacao roda a cada 1h.
-- PRD pede export com `VACUUM INTO` ou copia com lock; implementacao abre e copia o arquivo direto, sem lock aparente.
 
 ### Frontend e embed
 
@@ -120,6 +119,7 @@ Divergencias:
 16. **Embed e SPA resolvidos (2026-05-02)**: PRD.md File Structure e Fase 10 atualizados para refletir `internal/handler/spa.go` e `internal/handler/dist` (Vite configura outDir diretamente) ao invés de `ui/embed.go` e `ui/dist` com script de cópia. Divergência removida.
 17. **CI adiado (2026-05-02)**: GitHub Actions não entram no primeiro momento; validação fica local via `make test`/`make build` e a documentação foi atualizada para refletir isso.
 18. **Testes adiados (2026-05-02)**: Não teremos testes automatizados Go neste primeiro momento; PRD e README foram ajustados para refletir validação manual/local.
+19. **Export alinhado ao PRD (2026-05-02)**: Endpoint `/api/export` agora usa `VACUUM INTO` em arquivo temporário antes de streamar o `.db`, em vez de copiar o arquivo direto.
 
 ## Arquivos-chave analisados
 

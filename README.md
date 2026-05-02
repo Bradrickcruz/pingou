@@ -323,7 +323,7 @@ Atualiza configurações globais.
 
 #### `GET /api/export`
 
-Baixa um dump do banco SQLite.
+Baixa um dump do banco SQLite gerado com `VACUUM INTO` em arquivo temporário.
 
 ## Webhook
 

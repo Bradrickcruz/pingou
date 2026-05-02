@@ -355,7 +355,7 @@ Contrato real do payload:
 | 9.1 | `settings/`: CRUD em tabela `settings(key, value)`. Keys: `webhook_url`, `retention_days`                                      | Settings funcionais | API GET/PUT funciona  |
 | 9.2 | Validação: `retention_days >= 7 && <= 90`                                                                                      | Limite enforced     | API rejeita 5 ou 100  |
 | 9.3 | `checks/retention.go`: goroutine que roda diariamente (`time.Ticker(24h)`) e deleta `checks` mais antigos que `retention_days` | Cleanup automático  | Logs mostram execução |
-| 9.4 | `export/dump.go`: gera dump SQLite usando `VACUUM INTO 'tmp.db'` ou copia o arquivo com lock                                   | Export funcional    | Arquivo `.db` gerado  |
+| 9.4 | `export/dump.go`: gera dump SQLite usando `VACUUM INTO` em arquivo temporário                                                  | Export funcional    | Arquivo `.db` gerado  |
 | 9.5 | Endpoint `GET /api/export` (auth required): retorna `application/octet-stream` com o dump                                      | Download via HTTP   | curl baixa o `.db`    |
 | 9.6 | Comando CLI `pingou export --output backup.db`                                                                                 | CLI funcional       | Comando gera arquivo  |
 
