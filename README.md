@@ -168,6 +168,8 @@ bin/pingou
 
 ## Como rodar com Docker
 
+O Dockerfile inclui um `HEALTHCHECK` que verifica o status da aplicação a cada 30 segundos via endpoint público `/healthz`.
+
 ### Build da imagem
 
 ```bash
@@ -179,6 +181,14 @@ make docker-build
 ```bash
 make docker-up
 ```
+
+Verifique o status de health do container com:
+
+```bash
+docker ps
+```
+
+Você deverá ver o status `healthy` na coluna `STATUS` se tudo estiver funcionando.
 
 ### Derrubar containers
 
@@ -233,6 +243,39 @@ X-API-Key: sua-chave
 ```bash
 curl -H "X-API-Key: dev-api-key" http://localhost:8080/api/monitors
 ```
+
+## Middlewares HTTP
+
+### Recover
+
+O servidor inclui um middleware de `recover` que captura `panic` em handlers, loga internamente com `request_id` e stack trace, e responde ao cliente com JSON `500` (mensagem genérica).
+
+Resposta de erro:
+
+```json
+{
+  "error": "internal server error",
+  "code": "INTERNAL_ERROR"
+}
+```
+
+### CORS
+
+CORS é controlado via variável de ambiente `PINGOU_CORS_ALLOWED_ORIGINS` (lista separada por vírgula). Se vazia (padrão), nenhum cabeçalho CORS é adicionado.
+
+Exemplo para desenvolvimento com Vite:
+
+```env
+PINGOU_CORS_ALLOWED_ORIGINS=http://localhost:5173
+```
+
+O middleware:
+
+- Responde a preflight `OPTIONS` com cabeçalhos apropriados.
+- Permite header `X-API-Key` em requisições cross-origin.
+- Valida a origem contra a lista de permitidas.
+
+---
 
 ## Endpoints principais
 
