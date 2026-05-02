@@ -37,7 +37,7 @@ Este projeto é também um **veículo de aprendizado de Go** para um dev senior 
 | Config      | env vars + `godotenv`                                             | KISS                                                 |
 | Validação   | Manual no service; futura migração para `go-playground/validator` | KISS agora; validação declarativa depois             |
 | HTTP Client | `net/http` (stdlib)                                               | Idiomático                                           |
-| UI          | React 19 + Vite + JavaScript + CSS/tokens                        | Familiaridade do dev                                 |
+| UI          | React 19 + Vite + JavaScript + CSS/tokens                         | Familiaridade do dev                                 |
 | UI bundling | `embed.FS` (stdlib)                                               | 1 binário único                                      |
 | Container   | Docker multi-stage + docker-compose                               | Solicitado                                           |
 
@@ -94,7 +94,9 @@ pingou/
 │   ├── handler/
 │   │   ├── server.go                  # http.Server, rotas /api/* e SPA
 │   │   ├── middleware.go              # Logging com request ID, auth, recover/CORS
-│   │   └── response.go                # Helpers JSON/erro
+│   │   ├── spa.go                     # //go:embed dist → serve assets com fallback SPA
+│   │   ├── response.go                # Helpers JSON/erro
+│   │   └── dist/                      # Assets React buildados
 │   │
 │   └── export/
 │       └── dump.go                    # Gera dump do SQLite
@@ -106,13 +108,8 @@ pingou/
 │   │   ├── api/
 │   │   └── theme/                     # CSS tokens
 │   ├── package.json
-│   └── vite.config.js
-│
-├── ui/
-│   └── embed.go                       # //go:embed dist  → embute build do React
-│
-├── scripts/
-│   └── build.sh                       # Build completo: web → embed → go build
+│   ├── vite.config.js                 # outDir: ../internal/handler/dist
+│   └── eslint.config.js
 │
 ├── .env.example
 ├── .editorconfig
@@ -370,20 +367,19 @@ Contrato real do payload:
 
 **Objetivo de aprendizado:** `embed.FS`, servir SPA via Go, build pipeline integrado.
 
-| #     | Subetapa                                                                                                                                                  | Output               | Verify                      |
-| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | --------------------------- |
-| 10.1  | `web/`: `npm create vite@latest -- --template react`                                                                                                     | Projeto Vite         | `npm run dev` roda          |
-| 10.2  | Setup estrutura de pastas (`pages/`, `components/`, `api/`, `theme/`) e CSS/tokens                                                                     | Stack pronta         | Hot reload funciona         |
-| 10.3  | Página: lista de monitors com status badge (UP verde, DOWN vermelho, UNKNOWN cinza)                                                                       | UI funcional         | Renderiza mock              |
-| 10.4  | Página: detalhe do monitor com últimos N checks + lista de incidentes                                                                                     | UI funcional         | Navega entre rotas          |
-| 10.5  | Form: criar/editar monitor (validações client-side espelhando backend)                                                                                    | CRUD via UI          | Submit funciona             |
-| 10.6  | Página: settings (webhook URL, retention days)                                                                                                            | UI configurável      | Salva                       |
-| 10.7  | Página: export → botão que baixa o dump                                                                                                                   | Download             | Arquivo baixa               |
-| 10.8  | Cliente API: passa `X-API-Key` (lida de localStorage; tela de login simples pede key na 1ª visita)                                                        | Auth funcional       | Requests autenticados       |
-| 10.9  | Build de produção: `vite build` gera `web/dist/`                                                                                                          | Build estático       | `dist/index.html` existe    |
-| 10.10 | `ui/embed.go`: `//go:embed all:dist` (assumindo cópia de `web/dist` pra `ui/dist`) + handler que serve assets com fallback pra `index.html` (SPA routing) | Embed funcional      | `go build` inclui assets    |
-| 10.11 | Integrar no router: `/` e `/assets/*` servidos pelo handler do embed; `/api/*` pelos handlers Go                                                          | Tudo no mesmo server | UI carrega na porta 8080    |
-| 10.12 | Script `scripts/build.sh`: builda React → copia pra `ui/dist` → builda Go                                                                                 | Build integrado      | `make build` gera 1 binário |
+| #     | Subetapa                                                                                                                                                                    | Output               | Verify                      |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | --------------------------- |
+| 10.1  | `web/`: `npm create vite@latest -- --template react`                                                                                                                        | Projeto Vite         | `npm run dev` roda          |
+| 10.2  | Setup estrutura de pastas (`pages/`, `components/`, `api/`, `theme/`) e CSS/tokens                                                                                          | Stack pronta         | Hot reload funciona         |
+| 10.3  | Página: lista de monitors com status badge (UP verde, DOWN vermelho, UNKNOWN cinza)                                                                                         | UI funcional         | Renderiza mock              |
+| 10.4  | Página: detalhe do monitor com últimos N checks + lista de incidentes                                                                                                       | UI funcional         | Navega entre rotas          |
+| 10.5  | Form: criar/editar monitor (validações client-side espelhando backend)                                                                                                      | CRUD via UI          | Submit funciona             |
+| 10.6  | Página: settings (webhook URL, retention days, botão export para baixar dump do SQLite)                                                                                     | UI configurável      | Salva; export funciona      |
+| 10.7  | Cliente API: passa `X-API-Key` (lida de localStorage; tela de login simples pede key na 1ª visita)                                                                          | Auth funcional       | Requests autenticados       |
+| 10.8  | Build de produção: `vite build` gera `web/dist/`                                                                                                                            | Build estático       | `dist/index.html` existe    |
+| 10.9  | `internal/handler/spa.go`: `//go:embed dist` (Vite já configura outDir para `internal/handler/dist`) + handler que serve assets com fallback pra `index.html` (SPA routing) | Embed funcional      | `go build` inclui assets    |
+| 10.10 | Integrar no router: `/` e `/assets/*` servidos pelo handler spa; `/api/*` pelos handlers Go                                                                                 | Tudo no mesmo server | UI carrega na porta 8080    |
+| 10.11 | Build completo: Vite builda pra `internal/handler/dist` → Go embute → `go build` gera 1 binário                                                                             | Build integrado      | `make build` gera 1 binário |
 
 **🎓 Conceitos novos:** `embed.FS`, `http.FileServerFS`, SPA fallback routing em Go.
 

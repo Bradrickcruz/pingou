@@ -55,10 +55,7 @@ Implementado:
 Divergencias:
 
 - PRD pede detalhe do monitor com ultimos checks + incidentes; rotas reais sao `/`, `/incidents` e `/settings`, sem rota de detalhe por monitor.
-- PRD pede pagina/export com botao de download; nao apareceu pagina dedicada de export nos arquivos principais.
-- Botao de export existente em Settings aponta para `GET /api/export`.
 - `web/src/App.jsx` ainda contem app padrao do Vite, mas nao e usado por `web/src/main.jsx`.
-- PRD pede `ui/embed.go` e `ui/dist`; implementacao usa `internal/handler/spa.go` e `internal/handler/dist`.
 - PRD pede `scripts/build.sh`; nao existe.
 
 ### Docker e distribuicao
@@ -119,6 +116,8 @@ Divergencias:
 12. **Middleware recover e CORS implementados (2026-05-02)**: Adicionados em `internal/handler/middleware.go` com documentação em `http-recover-cors-necessidade-e-melhorias.md`.
 13. **HEALTHCHECK implementado (2026-05-02)**: Dockerfile agora inclui HEALTHCHECK que verifica `/healthz` a cada 30s.
 14. **Frontend React stack resolvido (2026-05-02)**: PRD.md atualizado para refletir React 19 + JavaScript + CSS/tokens (sem TypeScript/Tailwind) como implementação real.
+15. **Export integrado com Settings (2026-05-02)**: PRD.md Fase 10.6 atualizado para refletir que botão de export está integrado na página de Settings, não em página separada. Divergência removida.
+16. **Embed e SPA resolvidos (2026-05-02)**: PRD.md File Structure e Fase 10 atualizados para refletir `internal/handler/spa.go` e `internal/handler/dist` (Vite configura outDir diretamente) ao invés de `ui/embed.go` e `ui/dist` com script de cópia. Divergência removida.
 
 ## Arquivos-chave analisados
 
