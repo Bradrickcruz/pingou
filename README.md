@@ -133,6 +133,7 @@ PINGOU_PORT=8080
 PINGOU_DATABASE_URL=./pingou.db
 PINGOU_API_KEY=dev-api-key
 PINGOU_LOG_LEVEL=info
+PINGOU_CORS_ALLOWED_ORIGINS=
 ```
 
 ### 2. Rodar a aplicação
@@ -189,7 +190,7 @@ make docker-down
 
 O dashboard exige autenticação por **API Key**.
 
-Ao abrir a aplicação no navegador, a tela de login solicitará a chave.  
+Ao abrir a aplicação no navegador, a tela de login solicitará a chave.
 Essa chave é validada contra a API e armazenada no `localStorage`.
 
 Use o mesmo valor definido em:
@@ -200,12 +201,13 @@ PINGOU_API_KEY=...
 
 ## Variáveis de ambiente
 
-| Variável              | Obrigatória | Default     | Descrição                                                 |
-| --------------------- | ----------: | ----------- | --------------------------------------------------------- |
-| `PINGOU_PORT`         |         não | `8080`      | Porta HTTP da aplicação                                   |
-| `PINGOU_DATABASE_URL` |         não | `pingou.db` | Caminho do arquivo SQLite                                 |
-| `PINGOU_API_KEY`      |         sim | -           | Chave usada para proteger o dashboard e as rotas `/api/*` |
-| `PINGOU_LOG_LEVEL`    |         não | `info`      | Nível de log (`DEBUG` habilita logs debug)                |
+| Variável                      | Obrigatória | Default     | Descrição                                                                                                          |
+| ----------------------------- | ----------: | ----------- | ------------------------------------------------------------------------------------------------------------------ |
+| `PINGOU_PORT`                 |         não | `8080`      | Porta HTTP da aplicação                                                                                            |
+| `PINGOU_DATABASE_URL`         |         não | `pingou.db` | Caminho do arquivo SQLite                                                                                          |
+| `PINGOU_API_KEY`              |         sim | -           | Chave usada para proteger o dashboard e as rotas `/api/*`                                                          |
+| `PINGOU_LOG_LEVEL`            |         não | `info`      | Nível de log (`DEBUG` habilita logs debug)                                                                         |
+| `PINGOU_CORS_ALLOWED_ORIGINS` |         não | (vazio)     | Lista separada por vírgula de origins permitidas para CORS; vazio = CORS desabilitado. Ex: `http://localhost:5173` |
 
 ## SQLite
 
@@ -355,7 +357,7 @@ O Pingou nasceu com alguns objetivos bem claros:
 
 ## Limites e foco do MVP
 
-O projeto foi pensado para manter escopo controlado.  
+O projeto foi pensado para manter escopo controlado.
 A ideia não é competir com ferramentas enterprise, e sim entregar um monitor funcional, leve e compreensível.
 
 Foco do MVP:

@@ -93,7 +93,7 @@ pingou/
 │   │
 │   ├── handler/
 │   │   ├── server.go                  # http.Server, rotas /api/* e SPA
-│   │   ├── middleware.go              # Logging com request ID, auth, recover/CORS futuros
+│   │   ├── middleware.go              # Logging com request ID, auth, recover/CORS
 │   │   └── response.go                # Helpers JSON/erro
 │   │
 │   └── export/
@@ -234,7 +234,7 @@ Fase 3 (Domínio Monitors: model + repo + service)
 | --- | ------------------------------------------------------------------------------------------- | ----------------------- | --------------------------- |
 | 4.1 | `handler/server.go`: `http.Server` com timeouts (read/write/idle) configurados              | Server estruturado      | Compila                     |
 | 4.2 | Graceful shutdown via `signal.NotifyContext(ctx, SIGTERM, SIGINT)` e `http.Server.Shutdown` | Shutdown limpo          | Ctrl+C não corrompe DB      |
-| 4.3 | `handler/middleware.go`: logging com request ID e latency; recover/CORS em tarefa futura    | Middlewares             | Logs mostram request        |
+| 4.3 | `handler/middleware.go`: logging com request ID e latency; recover/CORS implementados       | Middlewares             | Logs mostram request        |
 | 4.4 | `handler/monitors.go`: handlers para POST/GET/PATCH/DELETE `/api/monitors`                  | Endpoints REST          | curl funciona               |
 | 4.5 | Helper `respondJSON(w, status, data)` e `respondError(w, status, msg)`                      | Response consistente    | Erros sempre em JSON        |
 | 4.6 | Integration tests com `httptest.NewServer`                                                  | Tests E2E nos endpoints | `go test ./...` passa       |
