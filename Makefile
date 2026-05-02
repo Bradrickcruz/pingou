@@ -9,7 +9,7 @@ BUILD_DATE?=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 LDFLAGS=-ldflags "-s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.buildDate=$(BUILD_DATE)"
 
-.PHONY: all dev fmt build test clean build-web docker-build docker-up docker-down docker-size release
+.PHONY: all dev fmt build test clean build-web docker-build docker-up docker-down docker-size docker-startup-test release
 
 all: fmt build dev
 
@@ -68,6 +68,42 @@ docker-size:
 	echo ""
 	@docker rmi $(APP):size-check > /dev/null
 	@echo "✓ Imagem de verificação removida"
+
+docker-startup-test:
+	@echo "🚀 Validando startup time do docker compose..."
+	@echo ""
+	@docker compose down > /dev/null 2>&1 || true
+	@docker system prune -f > /dev/null 2>&1 || true
+	@echo "⏱️  Iniciando container..."
+	@START=$$(date +%s%N); \
+	docker compose up -d > /dev/null 2>&1; \
+	\
+	for i in {1..60}; do \
+		if docker ps 2>/dev/null | grep -q "healthy"; then \
+			END=$$(date +%s%N); \
+			ELAPSED_NS=$$(((END - START) / 1000000)); \
+			ELAPSED_S=$$(( ELAPSED_NS / 1000 )); \
+			ELAPSED_MS=$$(( ELAPSED_NS % 1000 )); \
+			echo ""; \
+			echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
+			echo "✓ Container saudável"; \
+			echo "⏱️  Tempo de startup: $${ELAPSED_S}.$${ELAPSED_MS}s"; \
+			if [ $${ELAPSED_S} -lt 30 ]; then \
+				echo "✅ PASSOU: < 30s"; \
+			else \
+				echo "❌ FALHOU: >= 30s"; \
+			fi; \
+			echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
+			echo ""; \
+			exit 0; \
+		fi; \
+		sleep 1; \
+	done; \
+	echo ""; \
+	echo "❌ TIMEOUT: Container não ficou healthy em 60s"; \
+	echo ""; \
+	docker compose logs; \
+	exit 1
 
 # ── release ────────────────────────────────────────────────────
 release: build
