@@ -54,8 +54,7 @@ Implementado:
 Divergencias:
 
 - PRD pede detalhe do monitor com ultimos checks + incidentes; rotas reais sao `/`, `/incidents` e `/settings`, sem rota de detalhe por monitor.
-- `web/src/App.jsx` ainda contem app padrao do Vite, mas nao e usado por `web/src/main.jsx`.
-- PRD pede `scripts/build.sh`; nao existe.
+- Frontend entra por `web/src/main.jsx`; o scaffold antigo do Vite foi removido.
 
 ### Docker e distribuicao
 

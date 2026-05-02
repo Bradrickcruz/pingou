@@ -88,6 +88,7 @@ pingou/
 │   │   ├── components/
 │   │   ├── hooks/
 │   │   ├── pages/
+│   │   ├── main.jsx
 │   │   └── theme/
 │   ├── package.json
 │   └── vite.config.js
