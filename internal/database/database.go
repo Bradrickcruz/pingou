@@ -5,6 +5,8 @@ import (
 	"embed"
 	"fmt"
 	"log/slog"
+	"net/url"
+	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pressly/goose/v3"
@@ -14,7 +16,7 @@ import (
 var migrationFiles embed.FS
 
 func Open(dsn string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", dsn+"?_foreign_keys=on&_journal_mode=WAL")
+	db, err := sql.Open("sqlite3", sqliteDSN(dsn))
 	if err != nil {
 		return nil, fmt.Errorf("open db: %w", err)
 	}
@@ -31,6 +33,20 @@ func Open(dsn string) (*sql.DB, error) {
 
 	slog.Info("database ready")
 	return db, nil
+}
+
+func sqliteDSN(dsn string) string {
+	base, rawQuery, ok := strings.Cut(dsn, "?")
+	values, err := url.ParseQuery(rawQuery)
+	if !ok || err != nil {
+		values = url.Values{}
+	}
+
+	values.Set("_foreign_keys", "on")
+	values.Set("_journal_mode", "WAL")
+	values.Set("_busy_timeout", "5000")
+
+	return base + "?" + values.Encode()
 }
 
 func runMigrations(db *sql.DB) error {
