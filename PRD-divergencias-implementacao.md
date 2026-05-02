@@ -38,21 +38,7 @@ Implementado:
 
 Divergencias:
 
-- PRD pede retention diario (`24h`); implementacao roda a cada 1h.
-
-### Docker e distribuicao
-
-Implementado:
-
-- `Dockerfile` multi-stage: Node build, Go build, Alpine final.
-- `docker-compose.yml` com volume `/data`, porta `8080`, env vars `PINGOU_*`.
-- `HEALTHCHECK` no Dockerfile via `GET /healthz` (30s interval, 10s timeout, 3 retries).
-
-Divergencias:
-
-Validações realizadas:
-
-- ✓ Imagem final < 30MB: **validado com 18.2MB** (Alpine 3.21 + Go 1.25 + CGO + React 19 + Vite). Medido com `make docker-size`.
+(nenhuma)
 
 ## Divergencias de criterio de sucesso
 
@@ -90,6 +76,7 @@ Validações realizadas:
 18. **Testes adiados (2026-05-02)**: Não teremos testes automatizados Go neste primeiro momento; PRD e README foram ajustados para refletir validação manual/local.
 19. **Export alinhado ao PRD (2026-05-02)**: Endpoint `/api/export` agora usa `VACUUM INTO` em arquivo temporário antes de streamar o `.db`, em vez de copiar o arquivo direto.
 20. **Tamanho de imagem validado (2026-05-02)**: Docker image final mede 18.2MB, atendendo ao requisito PRD de < 30MB. Medição automatizada via `make docker-size`.
+21. **Retention timing padronizado (2026-05-02)**: PRD.md atualizado para refletir que retention job roda a cada 1h (não diariamente). Alinhado com implementação.
 
 ## Arquivos-chave analisados
 
