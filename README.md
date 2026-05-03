@@ -368,7 +368,8 @@ Evento de recuperação:
 
 Os alvos do `Makefile` e seu propósito (uso típico):
 
-- `all`: Executa `fmt`, `build` e `dev`. Atalho para iniciar desenvolvimento completo.
+- `start`: Compila e executa o binário usando as variáveis do `.env`.
+  - Uso: `make start`
 
 - `dev`: Roda a aplicação em modo desenvolvimento usando as variáveis de `.env`.
   - Uso: `make dev`
