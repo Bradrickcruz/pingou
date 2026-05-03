@@ -13,11 +13,11 @@ import (
 
 // migrateCmd e o comando pai para migrate
 var migrateCmd = &cobra.Command{
-	Use:                 "migrate",
-	Short:               "Gerencia migrations do banco de dados",
-	Long:                "Executa migrations (up, down, status) no banco de dados",
-	PersistentPreRunE:     requireKey,
-	TraverseChildren:      true,
+	Use:               "migrate",
+	Short:             "Gerencia migrations do banco de dados",
+	Long:              "Executa migrations (up, down, status) no banco de dados",
+	PersistentPreRunE: requireKey,
+	TraverseChildren:  true,
 }
 
 var migrateUpCmd = &cobra.Command{
