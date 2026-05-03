@@ -75,6 +75,7 @@ O Pingou implementa **atomicidade** no fluxo de processamento da state machine u
 ### O problema
 
 Antes desta implementação, `StateMachine.Process` executava operações sequenciais via repositórios:
+
 1. Inserir `checks`
 2. Atualizar `monitors` (current_state, last_checked_at)
 3. Abrir incidente (se transita para DOWN)
@@ -108,13 +109,13 @@ A implementação usa **transações SQL** para garantir que todas as operaçõe
 
 ### Componentes
 
-| Componente | Arquivo | Descrição |
-|------------|---------|-----------|
-| `UnitOfWork` | `internal/service/unit_of_work.go` | Interface para gerenciamento de transações |
-| `sqliteUnitOfWork` | `internal/service/unit_of_work_impl.go` | Implementação com `sql.Tx` |
-| `CheckRepoTx` | `internal/repository/check_repo_tx.go` | Repositório de checks com suporte a Tx |
-| `MonitorRepoTx` | `internal/repository/monitor_repo_tx.go` | Repositório de monitors com suporte a Tx |
-| `IncidentRepoTx` | `internal/repository/incident_repo_tx.go` | Repositório de incidents com suporte a Tx |
+| Componente         | Arquivo                                   | Descrição                                  |
+| ------------------ | ----------------------------------------- | ------------------------------------------ |
+| `UnitOfWork`       | `internal/service/unit_of_work.go`        | Interface para gerenciamento de transações |
+| `sqliteUnitOfWork` | `internal/service/unit_of_work_impl.go`   | Implementação com `sql.Tx`                 |
+| `CheckRepoTx`      | `internal/repository/check_repo_tx.go`    | Repositório de checks com suporte a Tx     |
+| `MonitorRepoTx`    | `internal/repository/monitor_repo_tx.go`  | Repositório de monitors com suporte a Tx   |
+| `IncidentRepoTx`   | `internal/repository/incident_repo_tx.go` | Repositório de incidents com suporte a Tx  |
 
 ## Estrutura do projeto
 
@@ -477,6 +478,8 @@ go build -o pingou ./cmd/pingou
 
 | Comando                 | Descrição                                                |
 | ----------------------- | -------------------------------------------------------- |
+| `pingou add`            | Cria um novo monitor                                     |
+| `pingou rm`             | Remove um monitor pelo ID                                |
 | `pingou serve`          | Inicia o servidor API + dashboard (comportamento padrão) |
 | `pingou migrate up`     | Executa migrations pendentes                             |
 | `pingou migrate down`   | Reverte a última migration                               |
@@ -500,6 +503,44 @@ PINGOU_PORT=9999 ./pingou serve
 ```
 
 **Proteção anti-multinstância**: O comando usa um lock file em `~/.pingou/pingou.lock` para evitar múltiplas instâncias. Se já houver um servidor rodando, retorna erro.
+
+#### add
+
+Cria um novo monitor de health check.
+
+```bash
+# Exemplo básico
+./pingou add -n "Meu Servico" -u "https://api.exemplo.com/health" --key <API_KEY>
+
+# Com flags opcionais
+./pingou add -n "API" -u "https://api.exemplo.com/health" -i 30 -t 10 -K 5 --key <API_KEY>
+```
+
+**Flags**:
+
+| Flag          | Abrev | Padrão        | Descrição                        |
+| ------------- | ----- | ------------- | -------------------------------- |
+| `--name`      | `-n`  | (obrigatório) | Nome do monitor                  |
+| `--url`       | `-u`  | (obrigatório) | URL para verificar health        |
+| `--interval`  | `-i`  | `60`          | Intervalo em segundos            |
+| `--timeout`   | `-t`  | `5`           | Timeout em segundos              |
+| `--threshold` | `-K`  | `3`           | Falhas antes de marcar como down |
+
+O monitor é sempre criado com `enabled: true`.
+
+#### rm
+
+Remove um monitor pelo ID.
+
+```bash
+./pingou rm --id 019def55-0c92-76a5-a7c4-b573ab447ac2 --key <API_KEY>
+```
+
+**Flags**:
+
+| Flag   | Abrev | Padrão        | Descrição     |
+| ------ | ----- | ------------- | ------------- |
+| `--id` | `-i`  | (obrigatório) | ID do monitor |
 
 #### migrate
 
