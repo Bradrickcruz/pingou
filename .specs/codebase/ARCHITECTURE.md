@@ -26,9 +26,24 @@
                        │              SQLite Database             │
                        │                                         │
                        └─────────────────────────────────────────┘
+                                ▲
+                                │
+                       ┌─────────────────┐
+                       │   CLI Commands   │
+                       │   (Cobra)       │
+                       │                 │
+                       └─────────────────┘
 ```
 
 ## Backend Architecture Layers
+
+### 0. CLI Layer (`cmd/pingou/commands/`)
+- **Root Command**: Entry point and global configuration
+- **Serve Command**: HTTP server management
+- **Migrate Command**: Database migration operations
+- **Export Command**: Database export functionality
+- **Info Command**: Application information and status
+- **Configuration Management**: Viper-based configuration loading
 
 ### 1. Handler Layer (`internal/handler/`)
 
@@ -44,6 +59,9 @@
 - **SettingsService**: Global configuration management
 - **StateMachine**: State transition logic for monitor status changes
 - **WebhookNotifier**: External notification delivery
+- **NotificationService**: Comprehensive notification management
+- **HealthCheckService**: Health check orchestration and coordination
+- **ExportService**: Data export and backup operations
 
 ### 3. Repository Layer (`internal/repository/`)
 
@@ -51,6 +69,9 @@
 - **CheckRepo**: Check result persistence
 - **IncidentRepo**: Incident data access
 - **SettingsRepo**: Configuration data access
+- **HealthCheckRepo**: Health check data operations
+- **NotificationRepo**: Notification data access
+- **UserRepo**: User data access (future multi-user support)
 
 ### 4. Domain Layer (`internal/domain/`)
 
@@ -76,14 +97,14 @@
 ## Frontend Architecture
 
 ### Component Structure
-
 ```
 src/
 ├── components/     # Reusable UI components
 ├── pages/         # Route-level components
 ├── hooks/         # Custom React hooks
 ├── api/           # API client and types
-└── theme/         # Styling and UI theming
+├── styles/        # Tailwind CSS styling
+└── theme/         # UI theming and design system
 ```
 
 ### Data Flow
@@ -112,6 +133,15 @@ Request  Auth   Business   Data      Persist
         Logic   Logic     Access
 ```
 
+### CLI Command Flow
+
+```
+CLI → Cobra Command → Service → Repository → Database
+ ↓        ↓             ↓         ↓          ↓
+User    Command      Business  Data      Persist
+Input   Logic        Logic     Access
+```
+
 ## Key Architectural Decisions
 
 ### 1. Single Binary Architecture
@@ -126,13 +156,19 @@ Request  Auth   Business   Data      Persist
 - **Implementation**: Single file database with migrations
 - **Trade-offs**: Limited concurrency vs. simplicity
 
-### 3. Domain-Driven Design
+### 3. CLI Framework with Cobra and Viper
+
+- **Rationale**: Professional command-line interface with configuration management
+- **Implementation**: Cobra for CLI structure, Viper for configuration
+- **Trade-offs**: Additional complexity vs. enhanced usability
+
+### 4. Domain-Driven Design
 
 - **Rationale**: Clear separation of concerns and business logic
 - **Implementation**: Layered architecture with clear boundaries
 - **Trade-offs**: More boilerplate vs. maintainability
 
-### 4. Background Scheduler
+### 5. Background Scheduler
 
 - **Rationale**: Independent health checking from HTTP serving
 - **Implementation**: Context-based goroutine management
