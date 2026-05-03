@@ -410,6 +410,116 @@ Os alvos do `Makefile` e seu propósito (uso típico):
 
 Cada target tem comentários e comportamentos encadeados no `Makefile` (por exemplo, `build` roda `build-web` antes de compilar o binário). Use `make <target>` para executar o fluxo desejado.
 
+## CLI
+
+O Pingou inclui um binário CLI para operações de banco de dados e debug sem passar pela API.
+
+### Instalação
+
+```bash
+make build
+# ou compilar diretamente
+go build -o pingou ./cmd/pingou
+```
+
+### Comandos
+
+| Comando                 | Descrição                                                |
+| ----------------------- | -------------------------------------------------------- |
+| `pingou serve`          | Inicia o servidor API + dashboard (comportamento padrão) |
+| `pingou migrate up`     | Executa migrations pendentes                             |
+| `pingou migrate down`   | Reverte a última migration                               |
+| `pingou migrate status` | Mostra o status das migrations                           |
+| `pingou export-db`      | Exporta o banco SQLite                                   |
+| `pingou version`        | Exibe versão do binário                                  |
+| `pingou config`         | Exibe configuração atual                                 |
+
+### Detalhes
+
+#### serve
+
+Inicia o servidor HTTP com API REST e dashboard SPA.
+
+```bash
+# Porta padrão
+./pingou serve
+
+# Porta customizada
+PINGOU_PORT=9999 ./pingou serve
+```
+
+**Proteção anti-multinstância**: O comando usa um lock file em `~/.pingou/pingou.lock` para evitar múltiplas instâncias. Se já houver um servidor rodando, retorna erro.
+
+#### migrate
+
+Gerencia migrations do banco de dados.
+
+```bash
+# Aplicar migrations
+./pingou migrate up --key <API_KEY>
+
+# Reverter última migration
+./pingou migrate down --key <API_KEY>
+
+# Ver status
+./pingou migrate status --key <API_KEY>
+```
+
+> **Nota**: Requer `--key` igual ao `PINGOU_API_KEY` do `.env`.
+
+#### export-db
+
+Exporta o banco de dados atual para um arquivo SQLite.
+
+```bash
+# Sem argumento: cria exported_<banco>.db no PWD
+./pingou export-db --key <API_KEY>
+
+#指定 output path
+./pingou export-db -o /tmp/backup.db --key <API_KEY>
+```
+
+#### version
+
+Exibe informações de versão.
+
+```bash
+./pingou version
+# Output:
+# pingou dev
+# commit: none
+# build date: unknown
+```
+
+#### config
+
+Exibe a configuração atual (sem secrets).
+
+```bash
+./pingou config --key <API_KEY>
+# Output:
+# {
+#   "DatabaseURL": "./pingou.db",
+#   "Port": "8080",
+#   "LogLevel": "debug",
+#   "CORSAllowedOrigins": null,
+#   "MaxRedirects": 5,
+#   "GlobalTimeout": 60
+# }
+```
+
+### Flags globais
+
+| Flag            | Descrição                                                           |
+| --------------- | ------------------------------------------------------------------- |
+| `--key`         | API key para comandos protegidos (`migrate`, `export-db`, `config`) |
+| `-v, --verbose` | Modo verboso                                                        |
+
+### Exit codes
+
+- `0`: Sucesso
+- `1`: Erro
+
 ## Release
 
 Para gerar uma release local:
