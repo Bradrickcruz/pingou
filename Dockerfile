@@ -26,9 +26,9 @@ ARG BUILD_DATE=unknown
 
 RUN CGO_ENABLED=1 GOOS=linux go build \
   -ldflags="-s -w \
-  -X main.version=${VERSION} \
-  -X main.commit=${COMMIT} \
-  -X main.buildDate=${BUILD_DATE}" \
+  -X github.com/Bradrickcruz/pingou/cmd/pingou/commands.version=${VERSION} \
+  -X github.com/Bradrickcruz/pingou/cmd/pingou/commands.commit=${COMMIT} \
+  -X github.com/Bradrickcruz/pingou/cmd/pingou/commands.date=${BUILD_DATE}" \
   -o /bin/pingou ./cmd/pingou
 
 # ─── Stage 3: Final ───────────────────────────────────────────

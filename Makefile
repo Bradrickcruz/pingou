@@ -7,7 +7,7 @@ VERSION?=$(shell git describe --tags --always --dirty)
 COMMIT?=$(shell git rev-parse --short HEAD 2>/dev/null)
 BUILD_DATE?=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-LDFLAGS=-ldflags "-s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.buildDate=$(BUILD_DATE)"
+LDFLAGS=-ldflags "-s -w -X github.com/Bradrickcruz/pingou/cmd/pingou/commands.version=$(VERSION) -X github.com/Bradrickcruz/pingou/cmd/pingou/commands.commit=$(COMMIT) -X github.com/Bradrickcruz/pingou/cmd/pingou/commands.date=$(BUILD_DATE)"
 
 .PHONY: all dev fmt build test clean build-web docker-build docker-up docker-down docker-size docker-startup-test release
 
