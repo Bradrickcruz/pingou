@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "../ui/Button";
+import { TimeRangeSlider } from "../ui/TimeRangeSlider";
 import { tokens as t } from "../../theme/tokens";
 
 const defaults = {
@@ -56,42 +57,55 @@ export function MonitorForm({ initial = {}, onSubmit, onCancel, loading }) {
 
   return (
     <form onSubmit={handleSubmit}>
-      {field("Name", "name", "text", { required: true, placeholder: "My API" })}
+      <div className="flex items-center justify-between mb-4">
+        <span
+          className="text-sm font-medium"
+          style={{ color: t.colors.textPrimary }}
+        >
+          Enabled
+        </span>
+        <button
+          type="button"
+          onClick={() => set("enabled", !form.enabled)}
+          className="relative w-11 h-6 rounded-full transition-colors"
+          style={{
+            background: form.enabled ? t.colors.primary : t.colors.surface,
+          }}
+        >
+          <span
+            className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform"
+            style={{
+              transform: form.enabled ? "translateX(20px)" : "translateX(0)",
+            }}
+          />
+        </button>
+      </div>
+
       {field("URL", "url", "url", {
         required: true,
         placeholder: "https://example.com",
       })}
-      {field("Interval (seconds)", "interval_seconds", "number", {
-        min: 10,
-        max: 3600,
-      })}
-      {field("Timeout (seconds)", "timeout_seconds", "number", {
-        min: 1,
-        max: 60,
-      })}
+      {field("Name", "name", "text", { required: true, placeholder: "My API" })}
+      <TimeRangeSlider
+        label="Interval (seconds)"
+        value={form.interval_seconds}
+        onChange={(v) => set("interval_seconds", v)}
+        min={10}
+        max={3600}
+        step={10}
+      />
+      <TimeRangeSlider
+        label="Timeout (seconds)"
+        value={form.timeout_seconds}
+        onChange={(v) => set("timeout_seconds", v)}
+        min={5}
+        max={60}
+        step={5}
+      />
       {field("Failure threshold", "failure_threshold", "number", {
         min: 1,
         max: 10,
       })}
-
-      <div className="flex items-center gap-2.5 mb-5">
-        <input
-          type="checkbox"
-          id="enabled"
-          checked={form.enabled}
-          onChange={(e) => set("enabled", e.target.checked)}
-          className="w-auto"
-        />
-        <label
-          htmlFor="enabled"
-          className="text-sm"
-          style={{
-            color: t.colors.textMuted,
-          }}
-        >
-          Enabled
-        </label>
-      </div>
 
       {error && (
         <p
