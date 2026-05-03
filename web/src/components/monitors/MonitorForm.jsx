@@ -33,14 +33,11 @@ export function MonitorForm({ initial = {}, onSubmit, onCancel, loading }) {
   };
 
   const field = (label, key, type = "text", extra = {}) => (
-    <div style={{ marginBottom: "14px" }}>
+    <div className="mb-3.5">
       <label
+        className="block mb-1.5 text-xs font-medium"
         style={{
-          display: "block",
-          marginBottom: "6px",
           color: t.colors.textMuted,
-          fontSize: "12px",
-          fontWeight: 500,
         }}
       >
         {label}
@@ -51,6 +48,7 @@ export function MonitorForm({ initial = {}, onSubmit, onCancel, loading }) {
         onChange={(e) =>
           set(key, type === "number" ? e.target.value : e.target.value)
         }
+        className="w-full px-3 py-2 rounded text-sm bg-[var(--bg)] border border-[var(--border)] text-[var(--text-h)] focus:outline-none focus:border-[var(--accent)]"
         {...extra}
       />
     </div>
@@ -76,24 +74,20 @@ export function MonitorForm({ initial = {}, onSubmit, onCancel, loading }) {
         max: 10,
       })}
 
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "10px",
-          marginBottom: "20px",
-        }}
-      >
+      <div className="flex items-center gap-2.5 mb-5">
         <input
           type="checkbox"
           id="enabled"
           checked={form.enabled}
           onChange={(e) => set("enabled", e.target.checked)}
-          style={{ width: "auto" }}
+          className="w-auto"
         />
         <label
           htmlFor="enabled"
-          style={{ color: t.colors.textMuted, fontSize: "13px" }}
+          className="text-sm"
+          style={{
+            color: t.colors.textMuted,
+          }}
         >
           Enabled
         </label>
@@ -101,17 +95,16 @@ export function MonitorForm({ initial = {}, onSubmit, onCancel, loading }) {
 
       {error && (
         <p
+          className="text-sm mb-3.5"
           style={{
             color: t.colors.danger,
-            fontSize: "13px",
-            marginBottom: "14px",
           }}
         >
           {error}
         </p>
       )}
 
-      <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+      <div className="flex gap-2.5 justify-end">
         <Button variant="ghost" onClick={onCancel} type="button">
           Cancel
         </Button>

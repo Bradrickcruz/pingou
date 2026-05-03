@@ -10,15 +10,11 @@ export function Badge({ state }) {
   const c = stateColors[state] ?? stateColors.UNKNOWN;
   return (
     <span
+      className="inline-block px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider rounded"
       style={{
         background: c.bg,
         color: c.color,
         borderRadius: t.radius.sm,
-        padding: "2px 10px",
-        fontSize: "11px",
-        fontWeight: 600,
-        letterSpacing: "0.05em",
-        textTransform: "uppercase",
       }}
     >
       {state}

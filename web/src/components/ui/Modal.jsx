@@ -10,45 +10,25 @@ export function Modal({ title, onClose, children }) {
 
   return (
     <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.6)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 1000,
-      }}
+      className="fixed inset-0 bg-black/60 flex items-center justify-center z-[1000]"
       onClick={onClose}
     >
       <div
+        className="bg-[var(--bg)] border border-[var(--border)] rounded-lg p-7 w-full max-w-[520px] max-h-[90vh] overflow-y-auto"
         style={{
           background: t.colors.surface,
-          border: `1px solid ${t.colors.border}`,
+          borderColor: t.colors.border,
           borderRadius: t.radius.lg,
-          padding: "28px",
-          width: "100%",
-          maxWidth: "520px",
-          maxHeight: "90vh",
-          overflowY: "auto",
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "20px",
-          }}
-        >
-          <h2 style={{ fontSize: "16px", fontWeight: 600 }}>{title}</h2>
+        <div className="flex justify-between items-center mb-5">
+          <h2 className="text-base font-semibold text-[var(--text-h)]">{title}</h2>
           <button
             onClick={onClose}
+            className="text-[var(--text)] text-xl leading-none hover:text-[var(--text-h)]"
             style={{
               color: t.colors.textMuted,
-              fontSize: "20px",
-              lineHeight: 1,
             }}
           >
             ×

@@ -13,7 +13,6 @@ export function Login({ onLogin }) {
     setLoading(true);
 
     try {
-      // valida a key fazendo uma request real pra API
       const res = await fetch("/api/monitors?limit=1", {
         headers: { "X-API-Key": key },
       });
@@ -28,7 +27,6 @@ export function Login({ onLogin }) {
         return;
       }
 
-      // persiste no localStorage e notifica o App
       localStorage.setItem("pingou_api_key", key);
       onLogin(key);
     } catch {
@@ -40,40 +38,33 @@ export function Login({ onLogin }) {
 
   return (
     <div
+      className="min-h-screen flex items-center justify-center"
       style={{
-        minHeight: "100vh",
         background: t.colors.bg,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
       }}
     >
       <div
+        className="p-10 rounded-lg border w-full max-w-[380px]"
         style={{
           background: t.colors.surface,
-          border: `1px solid ${t.colors.border}`,
+          borderColor: t.colors.border,
           borderRadius: t.radius.lg,
-          padding: "40px",
-          width: "100%",
-          maxWidth: "380px",
         }}
       >
-        <div style={{ textAlign: "center", marginBottom: "32px" }}>
-          <div style={{ fontSize: "40px", marginBottom: "8px" }}>🏓</div>
+        <div className="text-center mb-8">
+          <div className="text-[40px] mb-2">🏓</div>
           <h1
+            className="text-[22px] font-bold"
             style={{
-              fontSize: "22px",
-              fontWeight: 700,
               color: t.colors.primary,
             }}
           >
             Pingou
           </h1>
           <p
+            className="text-sm mt-1"
             style={{
               color: t.colors.textMuted,
-              fontSize: "13px",
-              marginTop: "4px",
             }}
           >
             health checker
@@ -81,14 +72,11 @@ export function Login({ onLogin }) {
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: "16px" }}>
+          <div className="mb-4">
             <label
+              className="block mb-1.5 text-xs font-medium"
               style={{
-                display: "block",
-                marginBottom: "6px",
                 color: t.colors.textMuted,
-                fontSize: "12px",
-                fontWeight: 500,
               }}
             >
               API Key
@@ -100,15 +88,15 @@ export function Login({ onLogin }) {
               placeholder="Enter your API key"
               required
               autoFocus
+              className="w-full px-3 py-2 rounded text-sm bg-[var(--bg)] border border-[var(--border)] text-[var(--text-h)] focus:outline-none focus:border-[var(--accent)]"
             />
           </div>
 
           {error && (
             <p
+              className="text-sm mb-3.5"
               style={{
                 color: t.colors.danger,
-                fontSize: "13px",
-                marginBottom: "14px",
               }}
             >
               {error}
@@ -118,7 +106,7 @@ export function Login({ onLogin }) {
           <Button
             type="submit"
             disabled={loading || !key}
-            style={{ width: "100%", justifyContent: "center" }}
+            className="w-full justify-center"
           >
             {loading ? "Verifying..." : "Enter"}
           </Button>

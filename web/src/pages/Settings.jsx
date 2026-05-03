@@ -14,9 +14,7 @@ export function Settings() {
 
   if (loading)
     return (
-      <div
-        style={{ display: "flex", justifyContent: "center", padding: "48px" }}
-      >
+      <div className="flex justify-center py-12">
         <Spinner />
       </div>
     );
@@ -60,31 +58,23 @@ export function Settings() {
   };
 
   return (
-    <div style={{ maxWidth: "480px" }}>
-      <h1 style={{ fontSize: "20px", fontWeight: 700, marginBottom: "24px" }}>
-        Settings
-      </h1>
+    <div className="max-w-[480px]">
+      <h1 className="text-xl font-bold mb-6">Settings</h1>
 
       <form onSubmit={handleSubmit}>
         <div
+          className="p-6 rounded-md border flex flex-col gap-4.5"
           style={{
             background: t.colors.surface,
-            border: `1px solid ${t.colors.border}`,
+            borderColor: t.colors.border,
             borderRadius: t.radius.md,
-            padding: "24px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "18px",
           }}
         >
           <div>
             <label
+              className="block mb-1.5 text-xs font-medium"
               style={{
-                display: "block",
-                marginBottom: "6px",
                 color: t.colors.textMuted,
-                fontSize: "12px",
-                fontWeight: 500,
               }}
             >
               Webhook URL
@@ -94,12 +84,12 @@ export function Settings() {
               value={current.webhook_url ?? ""}
               onChange={(e) => set("webhook_url", e.target.value)}
               placeholder="https://hooks.example.com/..."
+              className="w-full px-3 py-2 rounded text-sm bg-[var(--bg)] border border-[var(--border)] text-[var(--text-h)] focus:outline-none focus:border-[var(--accent)]"
             />
             <p
+              className="text-[11px] mt-1"
               style={{
-                fontSize: "11px",
                 color: t.colors.textMuted,
-                marginTop: "4px",
               }}
             >
               Receives <code>down</code> and <code>up</code> events.
@@ -108,12 +98,9 @@ export function Settings() {
 
           <div>
             <label
+              className="block mb-1.5 text-xs font-medium"
               style={{
-                display: "block",
-                marginBottom: "6px",
                 color: t.colors.textMuted,
-                fontSize: "12px",
-                fontWeight: 500,
               }}
             >
               Retention (days)
@@ -124,12 +111,12 @@ export function Settings() {
               max={90}
               value={current.retention_days ?? 30}
               onChange={(e) => set("retention_days", Number(e.target.value))}
+              className="w-full px-3 py-2 rounded text-sm bg-[var(--bg)] border border-[var(--border)] text-[var(--text-h)] focus:outline-none focus:border-[var(--accent)]"
             />
             <p
+              className="text-[11px] mt-1"
               style={{
-                fontSize: "11px",
                 color: t.colors.textMuted,
-                marginTop: "4px",
               }}
             >
               Checks older than this are automatically deleted. Min 7, max 90.
@@ -137,15 +124,27 @@ export function Settings() {
           </div>
 
           {error && (
-            <p style={{ color: t.colors.danger, fontSize: "13px" }}>{error}</p>
+            <p
+              className="text-sm"
+              style={{
+                color: t.colors.danger,
+              }}
+            >
+              {error}
+            </p>
           )}
 
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div className="flex items-center gap-3">
             <Button type="submit" disabled={saving}>
               {saving ? "Saving..." : "Save Settings"}
             </Button>
             {saved && (
-              <span style={{ color: t.colors.success, fontSize: "13px" }}>
+              <span
+                className="text-sm"
+                style={{
+                  color: t.colors.success,
+                }}
+              >
                 ✓ Saved
               </span>
             )}
@@ -154,38 +153,29 @@ export function Settings() {
       </form>
 
       <div
+        className="mt-6 p-5 rounded-md border"
         style={{
-          marginTop: "24px",
           background: t.colors.surface,
-          border: `1px solid ${t.colors.border}`,
+          borderColor: t.colors.border,
           borderRadius: t.radius.md,
-          padding: "20px",
         }}
       >
-        <p style={{ fontWeight: 600, marginBottom: "12px", fontSize: "13px" }}>
-          Database Export
-        </p>
+        <p className="font-semibold mb-3 text-sm">Database Export</p>
         <p
+          className="text-xs mb-3.5"
           style={{
             color: t.colors.textMuted,
-            fontSize: "12px",
-            marginBottom: "14px",
           }}
         >
           Download a full SQLite dump of all monitors, checks and incidents.
         </p>
         <button
           onClick={handleExport}
+          className="inline-block px-4 py-2 rounded text-sm font-semibold border cursor-pointer"
           style={{
-            display: "inline-block",
             background: t.colors.surfaceAlt,
             color: t.colors.textPrimary,
-            padding: "8px 16px",
-            borderRadius: t.radius.sm,
-            fontSize: "13px",
-            fontWeight: 600,
-            border: `1px solid ${t.colors.border}`,
-            cursor: "pointer",
+            borderColor: t.colors.border,
           }}
         >
           ↓ Download dump

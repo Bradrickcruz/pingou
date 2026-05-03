@@ -10,7 +10,7 @@ import { tokens as t } from "../theme/tokens";
 
 export function Dashboard() {
   const { monitors, loading, error, refetch } = useMonitors();
-  const [modal, setModal] = useState(null); // null | 'create' | 'edit' | 'delete'
+  const [modal, setModal] = useState(null);
   const [selected, setSelected] = useState(null);
   const [saving, setSaving] = useState(false);
 
@@ -67,21 +67,13 @@ export function Dashboard() {
   return (
     <div>
       {/* header */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "28px",
-        }}
-      >
+      <div className="flex justify-between items-center mb-7">
         <div>
-          <h1 style={{ fontSize: "20px", fontWeight: 700 }}>Dashboard</h1>
+          <h1 className="text-xl font-bold">Dashboard</h1>
           <p
+            className="text-sm mt-0.5"
             style={{
               color: t.colors.textMuted,
-              fontSize: "13px",
-              marginTop: "2px",
             }}
           >
             {monitors.length} monitors · {up} up · {down} down · {unknown}{" "}
@@ -93,14 +85,7 @@ export function Dashboard() {
 
       {/* stats */}
       {monitors.length > 0 && (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: "12px",
-            marginBottom: "24px",
-          }}
-        >
+        <div className="grid grid-cols-3 gap-3 mb-6">
           {[
             { label: "Up", value: up, color: t.colors.success },
             { label: "Down", value: down, color: t.colors.danger },
@@ -108,21 +93,25 @@ export function Dashboard() {
           ].map(({ label, value, color }) => (
             <div
               key={label}
+              className="p-4 rounded-md border"
               style={{
                 background: t.colors.surface,
-                border: `1px solid ${t.colors.border}`,
+                borderColor: t.colors.border,
                 borderRadius: t.radius.md,
-                padding: "16px 20px",
               }}
             >
-              <div style={{ fontSize: "28px", fontWeight: 700, color }}>
+              <div
+                className="text-[28px] font-bold"
+                style={{
+                  color,
+                }}
+              >
                 {value}
               </div>
               <div
+                className="text-xs mt-0.5"
                 style={{
-                  fontSize: "12px",
                   color: t.colors.textMuted,
-                  marginTop: "2px",
                 }}
               >
                 {label}
@@ -134,37 +123,39 @@ export function Dashboard() {
 
       {/* list */}
       {loading && (
-        <div
-          style={{ display: "flex", justifyContent: "center", padding: "48px" }}
-        >
+        <div className="flex justify-center py-12">
           <Spinner />
         </div>
       )}
 
-      {error && <p style={{ color: t.colors.danger }}>{error}</p>}
+      {error && (
+        <p
+          className="text-sm"
+          style={{
+            color: t.colors.danger,
+          }}
+        >
+          {error}
+        </p>
+      )}
 
       {!loading && monitors.length === 0 && (
         <div
+          className="text-center py-16 px-4 rounded-lg border border-dashed"
           style={{
-            textAlign: "center",
-            padding: "64px",
             color: t.colors.textMuted,
-            border: `1px dashed ${t.colors.border}`,
+            borderColor: t.colors.border,
             borderRadius: t.radius.lg,
           }}
         >
-          <p style={{ fontSize: "32px", marginBottom: "12px" }}>🏓</p>
-          <p style={{ fontWeight: 600, marginBottom: "6px" }}>
-            No monitors yet
-          </p>
-          <p style={{ fontSize: "13px", marginBottom: "20px" }}>
-            Add your first URL to start monitoring
-          </p>
+          <p className="text-[32px] mb-3">🏓</p>
+          <p className="font-semibold mb-1.5">No monitors yet</p>
+          <p className="text-sm mb-5">Add your first URL to start monitoring</p>
           <Button onClick={() => setModal("create")}>+ Add Monitor</Button>
         </div>
       )}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+      <div className="flex flex-col gap-2.5">
         {monitors.map((m) => (
           <MonitorCard
             key={m.id}
@@ -199,16 +190,23 @@ export function Dashboard() {
 
       {modal === "delete" && selected && (
         <Modal title="Delete Monitor" onClose={closeModal}>
-          <p style={{ color: t.colors.textMuted, marginBottom: "20px" }}>
+          <p
+            className="mb-5"
+            style={{
+              color: t.colors.textMuted,
+            }}
+          >
             Delete{" "}
-            <strong style={{ color: t.colors.textPrimary }}>
+            <strong
+              style={{
+                color: t.colors.textPrimary,
+              }}
+            >
               {selected.name}
             </strong>
             ? This action cannot be undone.
           </p>
-          <div
-            style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}
-          >
+          <div className="flex gap-2.5 justify-end">
             <Button variant="ghost" onClick={closeModal}>
               Cancel
             </Button>

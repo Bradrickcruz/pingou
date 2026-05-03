@@ -10,60 +10,55 @@ const nav = [
 
 export function Shell({ children, onLogout }) {
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
+    <div className="flex min-h-screen">
       <aside
+        className="w-[220px] flex-shrink-0 flex flex-col py-6 px-0"
         style={{
-          width: "220px",
-          flexShrink: 0,
           background: t.colors.surface,
           borderRight: `1px solid ${t.colors.border}`,
-          display: "flex",
-          flexDirection: "column",
-          padding: "24px 0",
         }}
       >
         <div
+          className="px-5 pb-6 border-b"
           style={{
-            padding: "0 20px 24px",
-            borderBottom: `1px solid ${t.colors.border}`,
+            borderColor: t.colors.border,
           }}
         >
           <div
+            className="font-bold text-base"
             style={{
-              fontWeight: 700,
-              fontSize: "16px",
               color: t.colors.primary,
             }}
           >
             🏓 Pingou
           </div>
           <div
+            className="text-[11px] mt-0.5"
             style={{
-              fontSize: "11px",
               color: t.colors.textMuted,
-              marginTop: "2px",
             }}
           >
             health checker
           </div>
         </div>
 
-        <nav style={{ padding: "16px 12px", flex: 1 }}>
+        <nav className="py-4 px-3 flex-1">
           {nav.map(({ to, label }) => (
             <NavLink
               key={to}
               to={to}
               end={to === "/"}
+              className={({ isActive }) =>
+                `block py-2 px-3 rounded mb-1 text-[13px] transition-all duration-150 ${
+                  isActive
+                    ? "bg-[var(--social-bg)] font-semibold"
+                    : "text-[var(--text)] font-normal"
+                }`
+              }
               style={({ isActive }) => ({
-                display: "block",
-                padding: "9px 12px",
-                borderRadius: t.radius.sm,
-                marginBottom: "4px",
                 color: isActive ? t.colors.textPrimary : t.colors.textMuted,
                 background: isActive ? t.colors.surfaceAlt : "transparent",
                 fontWeight: isActive ? 600 : 400,
-                fontSize: "13px",
-                transition: "all 0.15s",
               })}
             >
               {label}
@@ -72,28 +67,30 @@ export function Shell({ children, onLogout }) {
         </nav>
 
         <div
+          className="py-4 px-5 border-t flex flex-col gap-2"
           style={{
-            padding: "16px 20px",
-            borderTop: `1px solid ${t.colors.border}`,
-            display: "flex",
-            flexDirection: "column",
-            gap: "8px",
+            borderColor: t.colors.border,
           }}
         >
           <Button
             variant="ghost"
             onClick={onLogout}
-            style={{ fontSize: "12px", padding: "6px 12px", textAlign: "left" }}
+            className="text-[12px] py-1.5 px-3 text-left"
           >
             ⎋ Logout
           </Button>
-          <span style={{ fontSize: "11px", color: t.colors.textMuted }}>
+          <span
+            className="text-[11px]"
+            style={{
+              color: t.colors.textMuted,
+            }}
+          >
             Pingou v1.0
           </span>
         </div>
       </aside>
 
-      <main style={{ flex: 1, padding: "32px", overflowY: "auto" }}>
+      <main className="flex-1 p-8 overflow-y-auto">
         {children}
       </main>
     </div>

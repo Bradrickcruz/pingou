@@ -22,99 +22,94 @@ export function Incidents() {
 
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "24px",
-        }}
-      >
-        <h1 style={{ fontSize: "20px", fontWeight: 700 }}>Incidents</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-xl font-bold">Incidents</h1>
         <label
+          className="flex items-center gap-2 text-sm"
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
             color: t.colors.textMuted,
-            fontSize: "13px",
           }}
         >
           <input
             type="checkbox"
             checked={onlyOpen}
             onChange={handleToggleOnlyOpen}
-            style={{ width: "auto" }}
+            className="w-auto"
           />
           Open only
         </label>
       </div>
 
       {loading && (
-        <div
-          style={{ display: "flex", justifyContent: "center", padding: "48px" }}
-        >
+        <div className="flex justify-center py-12">
           <Spinner />
         </div>
       )}
 
       {!loading && incidents.length === 0 && (
         <p
+          className="text-center py-12"
           style={{
             color: t.colors.textMuted,
-            textAlign: "center",
-            padding: "48px",
           }}
         >
           No incidents found 🎉
         </p>
       )}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+      <div className="flex flex-col gap-2">
         {incidents.map((i) => (
           <div
             key={i.id}
+            className="p-3.5 rounded-md border"
             style={{
               background: t.colors.surface,
-              border: `1px solid ${i.open ? t.colors.danger : t.colors.border}`,
+              borderColor: i.open ? t.colors.danger : t.colors.border,
               borderRadius: t.radius.md,
-              padding: "14px 18px",
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <span style={{ fontWeight: 600, fontSize: "13px" }}>
+            <div className="flex justify-between items-center">
+              <span className="font-semibold text-sm">
                 {i.open ? (
-                  <span style={{ color: t.colors.danger }}>● OPEN</span>
+                  <span
+                    style={{
+                      color: t.colors.danger,
+                    }}
+                  >
+                    ● OPEN
+                  </span>
                 ) : (
-                  <span style={{ color: t.colors.success }}>✓ RESOLVED</span>
+                  <span
+                    style={{
+                      color: t.colors.success,
+                    }}
+                  >
+                    ✓ RESOLVED
+                  </span>
                 )}
                 <span
+                  className="font-normal ml-2.5"
                   style={{
                     color: t.colors.textMuted,
-                    fontWeight: 400,
-                    marginLeft: "10px",
                   }}
                 >
                   {i.monitor_id}
                 </span>
               </span>
-              <span style={{ fontSize: "11px", color: t.colors.textMuted }}>
+              <span
+                className="text-[11px]"
+                style={{
+                  color: t.colors.textMuted,
+                }}
+              >
                 {new Date(i.started_at).toLocaleString()}
               </span>
             </div>
             {i.last_error && (
               <p
+                className="text-xs mt-1.5 font-mono"
                 style={{
                   color: t.colors.textMuted,
-                  fontSize: "12px",
-                  marginTop: "6px",
-                  fontFamily: t.font.mono,
                 }}
               >
                 {i.last_error}
