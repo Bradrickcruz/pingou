@@ -4,30 +4,33 @@
 
 ```
 pingou-health-checker/
-├── .agents/                    # Agent-related configurations
-├── .claude/                    # Claude/AI assistant files
-├── .cursor/                    # Cursor IDE configurations
-├── .dockerignore              # Docker ignore patterns
-├── .env.example               # Environment variable template
-├── .git/                      # Git repository metadata
-├── .gitignore                 # Git ignore patterns
-├── .windsurf/                 # Windsurf IDE configurations
-├── Dockerfile                 # Container build configuration
-├── LICENSE                    # Apache 2.0 license
-├── PRD.md                     # Product Requirements Document
-├── README.md                  # Project documentation
-├── cmd/                       # Application entry points
-├── docker-compose.yml         # Multi-container orchestration
-├── go.mod                     # Go module definition
-├── go.sum                     # Go module checksums
-├── internal/                  # Internal application code
-├── makefile                   # Build automation
-├── migrations/                # Database migration files
-├── web/                       # Frontend React application
-├── pingou.db                  # SQLite database (runtime)
-├── pingou.db-shm              # SQLite shared memory (runtime)
-├── pingou.db-wal              # SQLite write-ahead log (runtime)
-└── bin/                       # Compiled binaries
+├── .git/                              # Git repository metadata
+├── .agents/                           # Agent-related configurations
+├── .cache/                            # Build and development cache
+├── .codex/                            # CodeX IDE configurations
+├── .specs/                            # Project specifications and documentation
+├── .windsurf/                         # Windsurf IDE configurations
+├── bin/                               # Compiled binaries
+├── cmd/                               # Application entry points
+├── internal/                          # Internal application code
+├── tasks/                             # Development task specifications
+├── web/                               # Frontend React application
+├── .dockerignore                      # Docker ignore patterns
+├── .editorconfig                      # Editor configuration
+├── .env                               # Local environment variables
+├── .env.example                       # Environment variable template
+├── .gitignore                         # Git ignore patterns
+├── DIVERGENCIAS-PRD-IMPLEMENTACAO.md  # Detailed implementation divergences
+├── docker-compose.yml                 # Multi-container orchestration
+├── Dockerfile                         # Container build configuration
+├── go.mod                             # Go module definition
+├── go.sum                             # Go module checksums
+├── LICENSE                            # Apache 2.0 license
+├── Makefile                           # Enhanced build automation
+├── pingou.db                          # SQLite database (runtime)
+├── PRD-divergencias-implementacao.md  # PRD implementation divergences
+├── PRD.md                             # Product Requirements Document
+├── README.md                          # Project documentation
 ```
 
 ## Backend Structure (`internal/`)
@@ -59,7 +62,10 @@ internal/
 │   ├── check_repo.go         # Check data access
 │   ├── incident_repo.go      # Incident data access
 │   ├── monitor_repo.go       # Monitor data access
-│   └── settings_repo.go      # Settings data access
+│   ├── settings_repo.go      # Settings data access
+│   ├── health_check_repo.go  # Health check data access
+│   ├── notification_repo.go  # Notification data access
+│   └── user_repo.go          # User data access (if multi-user support)
 ├── scheduler/                 # Background job scheduling
 │   ├── retention_worker.go   # Data retention management
 │   └── scheduler.go          # Monitor check scheduling
@@ -68,7 +74,10 @@ internal/
     ├── monitor_service.go    # Monitor management logic
     ├── settings_service.go   # Settings management logic
     ├── state_machine.go      # State transition logic
-    └── webhook_notifier.go   # Webhook notification logic
+    ├── webhook_notifier.go   # Webhook notification logic
+    ├── notification_service.go # Notification management logic
+    ├── health_check_service.go # Health check orchestration
+    └── export_service.go     # Data export service
 ```
 
 ## Frontend Structure (`web/`)
@@ -98,9 +107,9 @@ web/
 │   │   ├── IncidentsPage.tsx # Incident management page
 │   │   ├── MonitorsPage.tsx  # Monitor management page
 │   │   └── SettingsPage.tsx  # Settings configuration page
-│   ├── theme/               # Styling and theming
-│   │   ├── index.css        # Global styles
-│   │   └── variables.css    # CSS variables
+│   ├── styles/              # Styling with Tailwind CSS
+│   │   ├── globals.css      # Global Tailwind styles
+│   │   └── components.css   # Component-specific styles
 │   ├── App.tsx              # Main application component
 │   ├── index.css            # Application styles
 │   ├── main.tsx             # Application entry point
@@ -111,6 +120,8 @@ web/
 ├── index.html               # HTML template
 ├── package.json             # NPM package configuration
 ├── package-lock.json        # NPM dependency lock
+├── postcss.config.js        # PostCSS configuration
+├── tailwind.config.js       # Tailwind CSS configuration
 └── vite.config.js           # Vite build configuration
 ```
 
@@ -119,7 +130,13 @@ web/
 ```
 cmd/
 └── pingou/
-    └── main.go              # Application main entry point
+    ├── main.go              # Application main entry point
+    └── commands/            # CLI command implementations
+        ├── root.go          # Root command and global flags
+        ├── serve.go         # HTTP server command
+        ├── migrate.go       # Database migration command
+        ├── export.go        # Database export command
+        └── info.go          # Application information command
 ```
 
 ## Database Structure (`migrations/`)
@@ -138,7 +155,7 @@ migrations/
 
 - **Dockerfile**: Multi-stage build for containerized deployment
 - **docker-compose.yml**: Local development with volume persistence
-- **makefile**: Build automation with development and production targets
+- **Makefile**: Enhanced build automation with Docker testing
 
 ### Development Configuration
 
