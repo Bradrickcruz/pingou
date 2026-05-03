@@ -31,6 +31,8 @@ internal/
 - **Functions**: Verb-noun pattern for actions (e.g., `NewMonitorService`)
 - **Variables**: Short but meaningful names
 - **Constants**: UPPER_SNAKE_CASE
+- **CLI Commands**: Descriptive command names (e.g., `serveCmd`, `migrateCmd`)
+- **Configuration Keys**: Descriptive, hierarchical keys (e.g., `database.url`, `server.port`)
 
 ### Error Handling
 
@@ -38,6 +40,14 @@ internal/
 - **Error wrapping**: Use `fmt.Errorf` with `%w` for error wrapping
 - **Structured logging**: Use `log/slog` with context and key-value pairs
 - **Error messages**: Descriptive, actionable messages
+
+### CLI Conventions (Cobra & Viper)
+- **Command Structure**: Each command in separate file under `cmd/pingou/commands/`
+- **Command Registration**: Use `AddCommand()` in parent command
+- **Flag Definition**: Use `PersistentFlags()` for global flags, `Flags()` for command-specific
+- **Configuration**: Viper for configuration loading and environment variable binding
+- **Help Text**: Comprehensive help text for all commands and flags
+- **Error Handling**: CLI-specific error messages and exit codes
 
 ### Concurrency Patterns
 
@@ -63,7 +73,8 @@ src/
 ├── components/    # Reusable UI components
 ├── hooks/         # Custom React hooks
 ├── pages/         # Route-level components
-└── theme/         # Styling and theme configuration
+├── styles/        # Tailwind CSS and global styles
+└── theme/         # Design system and theme configuration
 ```
 
 ### Naming Conventions
@@ -72,7 +83,9 @@ src/
 - **Files**: camelCase for components, kebab-case for utilities
 - **Functions**: camelCase for functions and methods
 - **Constants**: UPPER_SNAKE_CASE
-- **CSS classes**: kebab-case following BEM methodology
+- **CSS classes**: Tailwind utility classes with component-specific overrides
+- **Component styling**: Utility-first approach with Tailwind CSS
+- **Custom CSS**: Minimal custom CSS, primarily for global styles
 
 ### API Integration
 
@@ -205,8 +218,16 @@ src/
 
 - **Standard targets**: `build`, `run`, `test`, `clean`
 - **Development targets**: `fmt`, `lint`, `dev`
-- **Docker targets**: `docker-build`, `docker-up`, `docker-down`
+- **Docker targets**: `docker-build`, `docker-up`, `docker-down`, `docker-size`, `docker-startup-test`
 - **Release targets**: `release` for production builds
+- **Frontend targets**: `build-web` for React application build
+
+### Docker Conventions
+
+- **Multi-stage builds**: Optimized for size and security
+- **Health checks**: Built-in health check endpoints
+- **Startup testing**: Automated startup time validation
+- **Size monitoring**: Regular image size optimization
 
 ### Version Management
 
