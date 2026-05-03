@@ -78,14 +78,22 @@ func runServe(cmd *cobra.Command, args []string) error {
 	incidentRepository := repository.NewIncidentRepo(db)
 	settingsRepository := repository.NewSettingsRepo(db)
 
+	// repositories com suporte a transação
+	checkRepoTx := repository.NewCheckRepoTx(db)
+	monitorRepoTx := repository.NewMonitorRepoTx(db)
+	incidentRepoTx := repository.NewIncidentRepoTx(db)
+
 	// webhookNotifier
 	webhookNotifier := service.NewWebhookNotifier(func() string {
 		url, _ := settingsRepository.Get(context.Background(), "webhook_url")
 		return url
 	})
 
+	// unit of work
+	uow := service.NewUnitOfWork(db, checkRepoTx, monitorRepoTx, incidentRepoTx)
+
 	// state machine
-	stateMachine := service.NewStateMachine(monitorRepository, checkRepository, incidentRepository, webhookNotifier)
+	stateMachine := service.NewStateMachine(uow, webhookNotifier)
 
 	// checker
 	httpChecker := checker.NewHTTPChecker(loadedConfig.MaxRedirects, loadedConfig.GlobalTimeout)
