@@ -11,20 +11,17 @@ import (
 )
 
 var exportCmd = &cobra.Command{
-	Use:   "export-db",
-	Short: "Exporta banco de dados SQLite",
-	Long:  "Exporta o banco de dados atual para um arquivo SQLite.\nSe --output nao for especificado, usa o nome do banco de PINGOU_DATABASE_URL ou 'pingou.db' no diretorio atual.",
-	RunE:  runExportDB,
+	Use:               "export-db",
+	Short:             "Exporta banco de dados SQLite",
+	Long:              "Exporta o banco de dados atual para um arquivo SQLite.\nSe --output nao for especificado, usa o nome do banco de PINGOU_DATABASE_URL ou 'pingou.db' no diretorio atual.",
+	RunE:              runExportDB,
 	PersistentPreRunE: requireKey,
 }
 
-var (
-	flagOutput string
-)
+var flagOutput string
 
 func init() {
 	exportCmd.Flags().StringVarP(&flagOutput, "output", "o", "", "caminho do arquivo de output (default: PINGOU_DATABASE_URL ou pingou.db)")
-	RootCmd.AddCommand(exportCmd)
 }
 
 func runExportDB(cmd *cobra.Command, args []string) error {

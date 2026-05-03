@@ -17,16 +17,11 @@ var versionCmd = &cobra.Command{
 }
 
 var configCmd = &cobra.Command{
-	Use:   "config",
-	Short: "Mostra a configuracao atual",
-	Long:  "Exibe as configuracoes do Pingou (sem secrets)",
-	RunE:  runConfig,
+	Use:               "config",
+	Short:             "Mostra a configuracao atual",
+	Long:              "Exibe as configuracoes do Pingou (sem secrets)",
+	RunE:              runConfig,
 	PersistentPreRunE: requireKey,
-}
-
-func init() {
-	RootCmd.AddCommand(versionCmd)
-	RootCmd.AddCommand(configCmd)
 }
 
 func runVersion(cmd *cobra.Command, args []string) error {
@@ -37,20 +32,17 @@ func runVersion(cmd *cobra.Command, args []string) error {
 }
 
 func runConfig(cmd *cobra.Command, args []string) error {
-	// Carregar .env
 	_ = godotenv.Load()
 
-	// Obter config do ambiente
 	cfg := map[string]interface{}{
 		"DatabaseURL":        getEnvOr("PINGOU_DATABASE_URL", "pingou.db"),
 		"Port":               getEnvOr("PINGOU_PORT", "8080"),
 		"LogLevel":           getEnvOr("PINGOU_LOG_LEVEL", "INFO"),
-		"CORSAllowedOrigins":  getEnvList("PINGOU_CORS_ALLOWED_ORIGINS"),
-		"MaxRedirects":      getEnvInt("PINGOU_MAX_REDIRECTS", 5),
+		"CORSAllowedOrigins": getEnvList("PINGOU_CORS_ALLOWED_ORIGINS"),
+		"MaxRedirects":       getEnvInt("PINGOU_MAX_REDIRECTS", 5),
 		"GlobalTimeout":      getEnvInt("PINGOU_GLOBAL_TIMEOUT", 60),
 	}
 
-	// Pretty print
 	out, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		return fmt.Errorf("json error: %w", err)
