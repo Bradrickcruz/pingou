@@ -3,6 +3,8 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./index.css";
 import { injectGlobalStyles } from "./theme/globalStyles";
+import { ConnectionProvider } from "./hooks/useConnection";
+import { ConnectionOverlay } from "./components/ui/ConnectionOverlay";
 import { Shell } from "./components/layout/Shell";
 import { Dashboard } from "./pages/Dashboard";
 import { Incidents } from "./pages/Incidents";
@@ -28,15 +30,19 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
-      <Shell onLogout={handleLogout}>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/incidents" element={<Incidents />} />
-          <Route path="/settings" element={<Settings />} />
-        </Routes>
-      </Shell>
-    </BrowserRouter>
+    <ConnectionProvider>
+      <ConnectionOverlay>
+        <BrowserRouter>
+          <Shell onLogout={handleLogout}>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/incidents" element={<Incidents />} />
+              <Route path="/settings" element={<Settings />} />
+            </Routes>
+          </Shell>
+        </BrowserRouter>
+      </ConnectionOverlay>
+    </ConnectionProvider>
   );
 }
 
