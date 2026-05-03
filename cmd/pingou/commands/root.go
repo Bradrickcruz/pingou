@@ -46,6 +46,7 @@ func init() {
 	RootCmd.PersistentFlags().StringVar(&flagKey, "key", "", "API key para comandos protegidos (PINGOU_API_KEY)")
 	RootCmd.AddCommand(serveCmd)
 	RootCmd.AddCommand(addCmd)
+	RootCmd.AddCommand(rmCmd)
 	RootCmd.AddCommand(migrateCmd)
 	RootCmd.AddCommand(exportCmd)
 	RootCmd.AddCommand(versionCmd)
