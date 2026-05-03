@@ -5,6 +5,7 @@ export function useMonitors() {
   const [monitors, setMonitors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isFetching, setIsFetching] = useState(false);
 
   const loadMonitors = useCallback(async () => {
     try {
@@ -14,10 +15,12 @@ export function useMonitors() {
       setError(e.message);
     } finally {
       setLoading(false);
+      setIsFetching(false);
     }
   }, []);
 
   const refetch = useCallback(async () => {
+    setIsFetching(true);
     setLoading(true);
     await loadMonitors();
   }, [loadMonitors]);
@@ -35,5 +38,5 @@ export function useMonitors() {
     };
   }, [loadMonitors]);
 
-  return { monitors, loading, error, refetch };
+  return { monitors, loading, error, refetch, isFetching };
 }

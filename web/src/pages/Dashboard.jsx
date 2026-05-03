@@ -9,7 +9,7 @@ import { Spinner } from "../components/ui/Spinner";
 import { tokens as t } from "../theme/tokens";
 
 export function Dashboard() {
-  const { monitors, loading, error, refetch } = useMonitors();
+  const { monitors, loading, error, refetch, isFetching } = useMonitors();
   const [modal, setModal] = useState(null);
   const [selected, setSelected] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -80,7 +80,30 @@ export function Dashboard() {
             unknown
           </p>
         </div>
-        <Button onClick={() => setModal("create")}>+ Add Monitor</Button>
+        <div className="flex gap-2">
+          <button
+            onClick={refetch}
+            disabled={isFetching}
+            aria-label="Atualizar lista de monitores"
+            aria-busy={isFetching}
+            className={`
+              flex items-center justify-center w-9 h-9 rounded-md border transition-all
+              ${isFetching ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50 cursor-pointer"}
+            `}
+            style={{
+              borderColor: t.colors.border,
+              background: t.colors.surface,
+            }}
+          >
+            <span
+              className={`text-lg ${isFetching ? "animate-spin" : ""}`}
+              style={{ display: "inline-block" }}
+            >
+              🔄
+            </span>
+          </button>
+          <Button onClick={() => setModal("create")}>+ Add Monitor</Button>
+        </div>
       </div>
 
       {/* stats */}
