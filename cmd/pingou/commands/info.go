@@ -21,6 +21,7 @@ var configCmd = &cobra.Command{
 	Short: "Mostra a configuracao atual",
 	Long:  "Exibe as configuracoes do Pingou (sem secrets)",
 	RunE:  runConfig,
+	PersistentPreRunE: requireKey,
 }
 
 func init() {

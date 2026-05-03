@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 )
 
@@ -12,6 +13,7 @@ var (
 	version = "dev"
 	commit  = "none"
 	date    = "unknown"
+	flagKey string
 )
 
 // RootCmd representa o comando root do CLI
@@ -29,9 +31,6 @@ Uso sem subcomando executa 'serve' por padrao.`,
 			os.Exit(1)
 		}
 	},
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		// Logica de pre-run se necessaria
-	},
 }
 
 // Execute executa todos os comandos
@@ -44,11 +43,36 @@ func Execute() {
 
 func init() {
 	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "modo verboso")
+	RootCmd.PersistentFlags().StringVar(&flagKey, "key", "", "API key para comandos protegidos (PINGOU_API_KEY)")
 	RootCmd.AddCommand(serveCmd)
 	RootCmd.AddCommand(migrateCmd)
 	RootCmd.AddCommand(exportCmd)
 	RootCmd.AddCommand(versionCmd)
 	RootCmd.AddCommand(configCmd)
+}
+
+// requireKey valida a flag --key contra PINGOU_API_KEY
+func requireKey(cmd *cobra.Command, args []string) error {
+	// Carregar .env se existir
+	godotenv.Load()
+
+	// Se nao passou --key, tentar usar o do .env
+	requiredKey := os.Getenv("PINGOU_API_KEY")
+	if requiredKey == "" {
+		// Sem API key configurada - permitir (modo desenvolvimento)
+		return nil
+	}
+
+	// Validar key fornecida
+	if flagKey == "" {
+		return fmt.Errorf("flag --key e obrigatoria. Use: pingou %s --key <API_KEY>", cmd.Name())
+	}
+
+	if flagKey != requiredKey {
+		return fmt.Errorf("API key invalida")
+	}
+
+	return nil
 }
 
 // GetVersion retorna a versao atual

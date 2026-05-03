@@ -13,12 +13,13 @@ import (
 
 // migrateCmd e o comando pai para migrate
 var migrateCmd = &cobra.Command{
-	Use:   "migrate",
-	Short: "Gerencia migrations do banco de dados",
-	Long:  "Executa migrations (up, down, status) no banco de dados",
+	Use:                 "migrate",
+	Short:               "Gerencia migrations do banco de dados",
+	Long:                "Executa migrations (up, down, status) no banco de dados",
+	PersistentPreRunE:     requireKey,
+	TraverseChildren:      true,
 }
 
-// migrateUpCmd executa migrations pendentes
 var migrateUpCmd = &cobra.Command{
 	Use:   "up",
 	Short: "Executa migrations pendentes",
@@ -26,7 +27,6 @@ var migrateUpCmd = &cobra.Command{
 	RunE:  runMigrateUp,
 }
 
-// migrateDownCmd reverte a ultima migration
 var migrateDownCmd = &cobra.Command{
 	Use:   "down",
 	Short: "Reverte a ultima migration",
@@ -34,7 +34,6 @@ var migrateDownCmd = &cobra.Command{
 	RunE:  runMigrateDown,
 }
 
-// migrateStatusCmd mostra o status das migrations
 var migrateStatusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Mostra o status das migrations",
@@ -48,7 +47,6 @@ func init() {
 	migrateCmd.AddCommand(migrateStatusCmd)
 }
 
-// runMigrateUp executa migrations pendentes
 func runMigrateUp(cmd *cobra.Command, args []string) error {
 	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
 		log.Printf("WARNING: failed to load .env: %v", err)
@@ -73,7 +71,6 @@ func runMigrateUp(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// runMigrateDown reverte a ultima migration
 func runMigrateDown(cmd *cobra.Command, args []string) error {
 	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
 		log.Printf("WARNING: failed to load .env: %v", err)
@@ -98,7 +95,6 @@ func runMigrateDown(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// runMigrateStatus mostra o status das migrations
 func runMigrateStatus(cmd *cobra.Command, args []string) error {
 	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
 		log.Printf("WARNING: failed to load .env: %v", err)
@@ -115,7 +111,6 @@ func runMigrateStatus(cmd *cobra.Command, args []string) error {
 	}
 	defer db.Close()
 
-	// Debug: listar arquivos de migration
 	migrations, err := database.ListMigrations()
 	if err != nil {
 		return fmt.Errorf("list migrations failed: %w", err)
@@ -126,7 +121,6 @@ func runMigrateStatus(cmd *cobra.Command, args []string) error {
 		fmt.Println(" -", m)
 	}
 
-	// Mostrar status do banco
 	rows, err := db.Query("SELECT version_id, is_applied, tstamp FROM goose_db_version ORDER BY version_id")
 	if err != nil {
 		return fmt.Errorf("query failed: %w", err)
