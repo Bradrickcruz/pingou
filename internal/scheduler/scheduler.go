@@ -2,11 +2,13 @@ package scheduler
 
 import (
 	"context"
+	"database/sql"
 	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/Bradrickcruz/pingou/internal/domain"
+	"github.com/Bradrickcruz/pingou/internal/repository"
 	"github.com/Bradrickcruz/pingou/internal/service"
 )
 
@@ -16,23 +18,36 @@ type job struct {
 }
 
 type Scheduler struct {
-	monitors     domain.MonitorRepository
-	checker      domain.Checker
-	stateMachine *service.StateMachine
-	jobs         map[string]*job
-	mu           sync.Mutex
+	monitors         domain.MonitorRepository
+	checker          domain.Checker
+	db               *sql.DB
+	checkRepoTx      *repository.CheckRepoTx
+	monitorRepoTx    *repository.MonitorRepoTx
+	incidentRepoTx   *repository.IncidentRepoTx
+	notifier        service.Notifier
+	jobs            map[string]*job
+	dbMu            sync.Mutex // serializa acesso ao DB (SQLite com MaxOpenConns=1)
+	mu              sync.Mutex
 }
 
 func NewScheduler(
 	monitors domain.MonitorRepository,
 	checker domain.Checker,
-	stateMachine *service.StateMachine,
+	db *sql.DB,
+	checkRepoTx *repository.CheckRepoTx,
+	monitorRepoTx *repository.MonitorRepoTx,
+	incidentRepoTx *repository.IncidentRepoTx,
+	notifier service.Notifier,
 ) *Scheduler {
 	return &Scheduler{
-		monitors:     monitors,
-		checker:      checker,
-		stateMachine: stateMachine,
-		jobs:         make(map[string]*job),
+		monitors:         monitors,
+		checker:          checker,
+		db:               db,
+		checkRepoTx:      checkRepoTx,
+		monitorRepoTx:    monitorRepoTx,
+		incidentRepoTx:   incidentRepoTx,
+		notifier:        notifier,
+		jobs:            make(map[string]*job),
 	}
 }
 
@@ -120,6 +135,10 @@ func (s *Scheduler) runLoop(ctx context.Context, m *domain.Monitor) {
 }
 
 func (s *Scheduler) runCheck(ctx context.Context, m *domain.Monitor) {
+	// Serializar TODA a operação (HTTP + DB) para evitar conflito com SQLite
+	s.dbMu.Lock()
+	defer s.dbMu.Unlock()
+
 	slog.Debug("running check", "monitor_id", m.ID, "name", m.Name, "url", m.URL)
 
 	result := s.checker.Check(ctx, m)
@@ -131,7 +150,11 @@ func (s *Scheduler) runCheck(ctx context.Context, m *domain.Monitor) {
 		"status_code", result.StatusCode,
 	)
 
-	if err := s.stateMachine.Process(ctx, m, result); err != nil {
+	// Criar nova UnitOfWork para este check
+	uow := service.NewUnitOfWork(s.db, s.checkRepoTx, s.monitorRepoTx, s.incidentRepoTx)
+	sm := service.NewStateMachine(uow, s.notifier)
+
+	if err := sm.Process(ctx, m, result); err != nil {
 		slog.Error("state machine error", "monitor_id", m.ID, "err", err)
 	}
 }

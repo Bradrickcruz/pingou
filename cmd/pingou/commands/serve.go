@@ -89,12 +89,6 @@ func runServe(cmd *cobra.Command, args []string) error {
 		return url
 	})
 
-	// unit of work
-	uow := service.NewUnitOfWork(db, checkRepoTx, monitorRepoTx, incidentRepoTx)
-
-	// state machine
-	stateMachine := service.NewStateMachine(uow, webhookNotifier)
-
 	// checker
 	httpChecker := checker.NewHTTPChecker(loadedConfig.MaxRedirects, loadedConfig.GlobalTimeout)
 
@@ -104,7 +98,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 	settingsService := service.NewSettingsService(settingsRepository)
 
 	// scheduler
-	monitorScheduler := scheduler.NewScheduler(monitorRepository, httpChecker, stateMachine)
+	monitorScheduler := scheduler.NewScheduler(monitorRepository, httpChecker, db, checkRepoTx, monitorRepoTx, incidentRepoTx, webhookNotifier)
 	monitorService.SetReloader(monitorScheduler)
 
 	// Context com signal
