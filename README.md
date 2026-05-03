@@ -59,6 +59,7 @@ A aplicação pode ser distribuída de duas formas:
 - Vite
 - React Router
 - Axios
+- Tailwind CSS
 
 ### Infra
 
