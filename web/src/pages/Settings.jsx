@@ -105,21 +105,45 @@ export function Settings() {
             >
               Retention (days)
             </label>
-            <input
-              type="number"
-              min={7}
-              max={90}
-              value={current.retention_days ?? 30}
-              onChange={(e) => set("retention_days", Number(e.target.value))}
-              className="w-full px-3 py-2 rounded text-sm bg-[var(--bg)] border border-[var(--border)] text-[var(--text-h)] focus:outline-none focus:border-[var(--accent)]"
-            />
+            <div className="grid grid-cols-5 gap-2">
+              {[7, 14, 30, 60, 90].map((days) => (
+                <label
+                  key={days}
+                  className="flex items-center justify-center gap-2 py-2 rounded cursor-pointer border transition-colors"
+                  style={{
+                    background:
+                      current.retention_days === days
+                        ? t.colors.primary
+                        : t.colors.surface,
+                    borderColor:
+                      current.retention_days === days
+                        ? t.colors.primary
+                        : t.colors.border,
+                    color:
+                      current.retention_days === days
+                        ? "#fff"
+                        : t.colors.textPrimary,
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="retention_days"
+                    value={days}
+                    checked={current.retention_days === days}
+                    onChange={() => set("retention_days", days)}
+                    className="sr-only"
+                  />
+                  <span className="text-sm font-medium">{days}</span>
+                </label>
+              ))}
+            </div>
             <p
-              className="text-[11px] mt-1"
+              className="text-[11px] mt-1.5"
               style={{
                 color: t.colors.textMuted,
               }}
             >
-              Checks older than this are automatically deleted. Min 7, max 90.
+              Checks older than this are automatically deleted.
             </p>
           </div>
 
