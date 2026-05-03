@@ -47,7 +47,7 @@ func (sm *StateMachine) Process(ctx context.Context, m *domain.Monitor, result d
 		ErrorMessage: result.ErrorMessage,
 		CheckedAt:    now,
 	}
-	if err := sm.uow.CheckRepo().CreateWithTx(ctx, nil, check); err != nil {
+	if err := sm.uow.CheckRepo().CreateWithTx(ctx, check); err != nil {
 		return err
 	}
 
@@ -81,7 +81,7 @@ func (sm *StateMachine) handleSuccess(ctx context.Context, m *domain.Monitor, pr
 	m.LastCheckedAt = &now
 	m.UpdatedAt = now
 
-	if err := sm.uow.MonitorRepo().UpdateWithTx(ctx, nil, m); err != nil {
+	if err := sm.uow.MonitorRepo().UpdateWithTx(ctx, m); err != nil {
 		return err
 	}
 
@@ -124,12 +124,12 @@ func (sm *StateMachine) handleFailure(ctx context.Context, m *domain.Monitor, pr
 
 	// threshold ainda não atingido — mantém estado atual
 	if consecutiveFails < m.FailureThreshold {
-		return sm.uow.MonitorRepo().UpdateWithTx(ctx, nil, m)
+		return sm.uow.MonitorRepo().UpdateWithTx(ctx, m)
 	}
 
 	// threshold atingido — vai pra DOWN
 	m.CurrentState = domain.StateDown
-	if err := sm.uow.MonitorRepo().UpdateWithTx(ctx, nil, m); err != nil {
+	if err := sm.uow.MonitorRepo().UpdateWithTx(ctx, m); err != nil {
 		return err
 	}
 
@@ -145,7 +145,7 @@ func (sm *StateMachine) handleFailure(ctx context.Context, m *domain.Monitor, pr
 			StartedAt: now,
 			LastError: result.ErrorMessage,
 		}
-		if err := sm.uow.IncidentRepo().CreateWithTx(ctx, nil, incident); err != nil {
+		if err := sm.uow.IncidentRepo().CreateWithTx(ctx, incident); err != nil {
 			return err
 		}
 		slog.Warn("monitor down", "monitor_id", m.ID, "name", m.Name, "error", result.ErrorMessage)
