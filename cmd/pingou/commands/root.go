@@ -45,6 +45,7 @@ func init() {
 	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "modo verboso")
 	RootCmd.PersistentFlags().StringVar(&flagKey, "key", "", "API key para comandos protegidos (PINGOU_API_KEY)")
 	RootCmd.AddCommand(serveCmd)
+	RootCmd.AddCommand(addCmd)
 	RootCmd.AddCommand(migrateCmd)
 	RootCmd.AddCommand(exportCmd)
 	RootCmd.AddCommand(versionCmd)
