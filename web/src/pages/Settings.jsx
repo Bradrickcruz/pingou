@@ -3,6 +3,7 @@ import { useSettings } from "../hooks/useSettings";
 import { Button } from "../components/ui/Button";
 import { Spinner } from "../components/ui/Spinner";
 import { tokens as t } from "../theme/tokens";
+import { client } from "../api/client";
 
 export function Settings() {
   const { settings, loading, update } = useSettings();
@@ -38,6 +39,25 @@ export function Settings() {
   };
 
   const set = (k, v) => setForm((f) => ({ ...(f ?? settings), [k]: v }));
+
+  const handleExport = async () => {
+    try {
+      const res = await client.get("/export", { responseType: "blob" });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute(
+        "download",
+        `pingou_bkp_${new Date().toISOString().slice(0, 19).replace(/[-:]/g, "")}.db`,
+      );
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e.message);
+    }
+  };
 
   return (
     <div style={{ maxWidth: "480px" }}>
@@ -154,8 +174,8 @@ export function Settings() {
         >
           Download a full SQLite dump of all monitors, checks and incidents.
         </p>
-        <a
-          href="/api/export"
+        <button
+          onClick={handleExport}
           style={{
             display: "inline-block",
             background: t.colors.surfaceAlt,
@@ -165,10 +185,11 @@ export function Settings() {
             fontSize: "13px",
             fontWeight: 600,
             border: `1px solid ${t.colors.border}`,
+            cursor: "pointer",
           }}
         >
           ↓ Download dump
-        </a>
+        </button>
       </div>
     </div>
   );
