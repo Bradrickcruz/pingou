@@ -41,6 +41,7 @@ A aplicação pode ser distribuída de duas formas:
 - Configuração de retenção de checks
 - Export do banco SQLite
 - Execução self-hosted com SQLite
+- **Atomicidade nas operações de state machine** (transações SQL)
 
 ## Stack atual
 
@@ -66,6 +67,54 @@ A aplicação pode ser distribuída de duas formas:
 - Docker
 - Docker Compose
 - `embed.FS` para embutir os assets do frontend no binário
+
+## Arquitetura de Transações
+
+O Pingou implementa **atomicidade** no fluxo de processamento da state machine usando o padrão **Unit of Work**.
+
+### O problema
+
+Antes desta implementação, `StateMachine.Process` executava operações sequenciais via repositórios:
+1. Inserir `checks`
+2. Atualizar `monitors` (current_state, last_checked_at)
+3. Abrir incidente (se transita para DOWN)
+4. Fechar incidente (se transita para UP)
+
+Se uma etapa falhasse depois de outra já ter sido gravada, o banco ficaria em estado parcialmente persistido.
+
+### A solução
+
+A implementação usa **transações SQL** para garantir que todas as operações sejam aplicadas atomicamente:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     StateMachine.Process                     │
+├─────────────────────────────────────────────────────────────┤
+│  1. uow.Begin() → inicia transação                          │
+│  2. checkRepo.CreateWithTx() → insere check                  │
+│  3. monitorRepo.UpdateWithTx() → atualiza monitor            │
+│  4. incidentRepo.CreateWithTx() → abre incidente            │
+│  5. incidentRepo.Close() → fecha incidente                   │
+│  6. uow.Commit() → confirma transação                        │
+│  7. notifier.NotifyDown/NotifyRecovery() → webhook (APÓS!)  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Garantias
+
+- **Atomicidade**: Check + mudança de estado + incidente são persistidos juntos
+- **Rollback automático**: Em caso de erro, todas as operações são desfeitas
+- **Webhook seguro**: Notificações são enviadas APÓS o commit, garantindo que o estado do banco está correto
+
+### Componentes
+
+| Componente | Arquivo | Descrição |
+|------------|---------|-----------|
+| `UnitOfWork` | `internal/service/unit_of_work.go` | Interface para gerenciamento de transações |
+| `sqliteUnitOfWork` | `internal/service/unit_of_work_impl.go` | Implementação com `sql.Tx` |
+| `CheckRepoTx` | `internal/repository/check_repo_tx.go` | Repositório de checks com suporte a Tx |
+| `MonitorRepoTx` | `internal/repository/monitor_repo_tx.go` | Repositório de monitors com suporte a Tx |
+| `IncidentRepoTx` | `internal/repository/incident_repo_tx.go` | Repositório de incidents com suporte a Tx |
 
 ## Estrutura do projeto
 
