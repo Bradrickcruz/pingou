@@ -21,7 +21,13 @@
 ### Configuration & Environment
 
 - **github.com/joho/godotenv** - Environment variable loading
+- **github.com/spf13/viper** - Advanced configuration management
 - **Environment variables** - Configuration management
+
+### CLI Framework
+
+- **github.com/spf13/cobra** - Command-line interface framework
+- **github.com/spf13/pflag** - Command-line flag parsing
 
 ### Utilities
 
@@ -42,6 +48,12 @@
 - **@vitejs/plugin-react 4.7.0** - React plugin for Vite
 - **ESLint 10.2.1** - Code linting
 
+### Styling & CSS Framework
+
+- **Tailwind CSS 3.4.17** - Utility-first CSS framework
+- **PostCSS 8.5.13** - CSS transformation tool
+- **Autoprefixer 10.5.0** - CSS vendor prefixing
+
 ### HTTP Client
 
 - **Axios 1.15.2** - HTTP client for API calls
@@ -59,15 +71,16 @@
 - **Docker Compose** - Multi-container orchestration
 
 ### Build & Distribution
-
-- **Makefile** - Build automation
+- **Makefile** - Enhanced build automation with Docker testing
 - **embed.FS** - Frontend embedding in Go binary
 - **Single binary distribution** - Self-contained deployment
+- **Docker compose** - Multi-container orchestration
 
 ### Development Workflow
-
 - **gofumpt** - Go code formatting
 - **CGO** - Required for SQLite driver
+- **Docker startup testing** - Automated container startup validation
+- **Docker size optimization** - Image size monitoring
 
 ## Architecture Patterns
 
@@ -93,6 +106,9 @@
 - **goose** - Database schema management
 - **React** - Frontend framework
 - **Vite** - Build system
+- **Cobra** - CLI framework for command structure
+- **Viper** - Configuration management
+- **Tailwind CSS** - UI styling framework
 
 ### Development Dependencies
 
