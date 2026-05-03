@@ -9,12 +9,13 @@ BUILD_DATE?=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 LDFLAGS=-ldflags "-s -w -X github.com/Bradrickcruz/pingou/cmd/pingou/commands.version=$(VERSION) -X github.com/Bradrickcruz/pingou/cmd/pingou/commands.commit=$(COMMIT) -X github.com/Bradrickcruz/pingou/cmd/pingou/commands.date=$(BUILD_DATE)"
 
-.PHONY: all dev fmt build test clean build-web docker-build docker-up docker-down docker-size docker-startup-test release
+.PHONY: start dev fmt build test clean build-web docker-build docker-up docker-down docker-size docker-startup-test release
 
-all: fmt build dev
+start: build
+	. ./.env && ./$(BIN)
 
-dev: fmt
-	. ./.env && $(GO) run $(CMD)/...
+dev: fmt build
+	. ./.env && $(GO) run $(CMD)/main.go
 
 fmt:
 	gofumpt -w .
