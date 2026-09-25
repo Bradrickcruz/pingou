@@ -1,4 +1,6 @@
-# 🏓 Pingou
+![Pingou](assets/capa-readme.png)
+
+# 💧 Pingou
 
 > **Rodou, Pingou** — health checker self-hosted, leve e open-source em Go.
 
@@ -668,6 +670,14 @@ Ideias futuras:
 - webhook por monitor
 - templates para Discord e Slack
 - multi-tenancy
+
+## Identidade visual
+
+A marca, cores, tipografia e grafismos do Pingou estão documentados em:
+
+- [`DESIGN.md`](DESIGN.md) — design system resumido (tokens de cor, tipografia, componentes), fonte da verdade para UI, README e assets.
+- [`docs/pingou-manual-identidade-visual.pdf`](docs/pingou-manual-identidade-visual.pdf) — Manual de Identidade Visual completo.
+- [`assets/`](assets/) — logos, símbolos, favicons e grafismos oficiais em SVG/PNG.
 
 ## Licença
 
