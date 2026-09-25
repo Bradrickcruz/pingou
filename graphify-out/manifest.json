@@ -497,18 +497,6 @@
     "ast_hash": "03a44994cbf251fb410480b4dc746d83",
     "semantic_hash": "03a44994cbf251fb410480b4dc746d83"
   },
-  "web/public/favicon.svg": {
-    "mtime": 1777051783.7957969,
-    "seen": 1790220686.5526733,
-    "ast_hash": "7e840862161341271697daa99a40d76b",
-    "semantic_hash": "7e840862161341271697daa99a40d76b"
-  },
-  "web/public/icons.svg": {
-    "mtime": 1777051783.7957969,
-    "seen": 1790220686.5526743,
-    "ast_hash": "3b4fcfcf393eca4d264dca4a4663bc37",
-    "semantic_hash": "3b4fcfcf393eca4d264dca4a4663bc37"
-  },
   "web/src/assets/hero.png": {
     "mtime": 1777051783.7957969,
     "seen": 1790220686.5526752,
@@ -684,9 +672,9 @@
     "semantic_hash": ""
   },
   "web/index.html": {
-    "mtime": 1777051783.7957969,
-    "seen": 1790368292.8510711,
-    "ast_hash": "5a28700b4eb0ed4ee7cd5925ee46be48",
+    "mtime": 1790369425.5753443,
+    "seen": 1790369475.5712652,
+    "ast_hash": "3a1ed5ed60330ba171d2623da370c17a",
     "semantic_hash": ""
   },
   "docs/pingou-manual-identidade-visual.pdf": {
@@ -837,6 +825,12 @@
     "mtime": 1790368822.5110066,
     "seen": 1790368831.8691847,
     "ast_hash": "928acd473150ed9956092c9ba104accb",
+    "semantic_hash": ""
+  },
+  "web/public/favicon-16.png": {
+    "mtime": 1790369420.353416,
+    "seen": 1790369475.5712972,
+    "ast_hash": "7a3661a421b8095123c0890cbe07321e",
     "semantic_hash": ""
   }
 }

@@ -1,37 +1,7 @@
 {
   "directed": false,
   "multigraph": false,
-  "graph": {
-    "hyperedges": [
-      {
-        "id": "social_icons",
-        "label": "Social Media Icons",
-        "nodes": [
-          "web_public_icons_bluesky_icon",
-          "web_public_icons_discord_icon",
-          "web_public_icons_github_icon",
-          "web_public_icons_x_icon"
-        ],
-        "relation": "participate_in",
-        "confidence": "EXTRACTED",
-        "confidence_score": 1.0,
-        "source_file": "web/public/icons.svg"
-      },
-      {
-        "id": "brand_assets",
-        "label": "Brand Assets",
-        "nodes": [
-          "web_public_favicon",
-          "web_src_assets_vite",
-          "web_src_assets_hero"
-        ],
-        "relation": "participate_in",
-        "confidence": "INFERRED",
-        "confidence_score": 0.8,
-        "source_file": "web/src/assets/hero.png"
-      }
-    ]
-  },
+  "graph": {},
   "nodes": [
     {
       "id": "web_src_api_client_createclient",
@@ -770,28 +740,6 @@
       "source_location": "L129"
     },
     {
-      "id": "service_webhookpayload",
-      "label": "webhookPayload",
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "serve.go",
-      "file_type": "code",
-      "norm_label": "webhookpayload",
-      "source_file": "internal/service/notifier.go",
-      "source_location": "L32"
-    },
-    {
-      "id": "service_webhookpayloadmonitor",
-      "label": "webhookPayloadMonitor",
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "serve.go",
-      "file_type": "code",
-      "norm_label": "webhookpayloadmonitor",
-      "source_file": "internal/service/notifier.go",
-      "source_location": "L40"
-    },
-    {
       "id": "web_src_api_client",
       "label": "client.js",
       "_origin": "ast",
@@ -1188,39 +1136,6 @@
       "source_location": "L14"
     },
     {
-      "id": "domain_checkrepository_create",
-      "label": ".Create()",
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "context.Context",
-      "file_type": "code",
-      "norm_label": ".create()",
-      "source_file": "internal/domain/repository.go",
-      "source_location": "L15"
-    },
-    {
-      "id": "domain_checkrepository_deleteolderthan",
-      "label": ".DeleteOlderThan()",
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "context.Context",
-      "file_type": "code",
-      "norm_label": ".deleteolderthan()",
-      "source_file": "internal/domain/repository.go",
-      "source_location": "L17"
-    },
-    {
-      "id": "domain_checkrepository_findbymonitor",
-      "label": ".FindByMonitor()",
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "context.Context",
-      "file_type": "code",
-      "norm_label": ".findbymonitor()",
-      "source_file": "internal/domain/repository.go",
-      "source_location": "L16"
-    },
-    {
       "id": "domain_monitorrepository_count",
       "label": ".Count()",
       "_origin": "ast",
@@ -1309,17 +1224,6 @@
       "source_location": "L5"
     },
     {
-      "id": "internal_domain_repository_go_domain_checkrepository",
-      "label": "CheckRepository",
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "context.Context",
-      "file_type": "code",
-      "norm_label": "checkrepository",
-      "source_file": "internal/domain/repository.go",
-      "source_location": "L14"
-    },
-    {
       "id": "internal_domain_repository_go_domain_monitorrepository",
       "label": "MonitorRepository",
       "_origin": "ast",
@@ -1329,17 +1233,6 @@
       "norm_label": "monitorrepository",
       "source_file": "internal/domain/repository.go",
       "source_location": "L5"
-    },
-    {
-      "id": "internal_scheduler_retention_newretentionworker",
-      "label": "NewRetentionWorker()",
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "context.Context",
-      "file_type": "code",
-      "norm_label": "newretentionworker()",
-      "source_file": "internal/scheduler/retention.go",
-      "source_location": "L18"
     },
     {
       "id": "repository_checkrepo",
@@ -1395,50 +1288,6 @@
       "norm_label": ".findbymonitor()",
       "source_file": "internal/repository/check_repo_tx.go",
       "source_location": "L33"
-    },
-    {
-      "id": "scheduler_retentionworker",
-      "label": "RetentionWorker",
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "context.Context",
-      "file_type": "code",
-      "norm_label": "retentionworker",
-      "source_file": "internal/scheduler/retention.go",
-      "source_location": "L13"
-    },
-    {
-      "id": "scheduler_retentionworker_purge",
-      "label": ".purge()",
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "context.Context",
-      "file_type": "code",
-      "norm_label": ".purge()",
-      "source_file": "internal/scheduler/retention.go",
-      "source_location": "L45"
-    },
-    {
-      "id": "scheduler_retentionworker_run",
-      "label": ".run()",
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "context.Context",
-      "file_type": "code",
-      "norm_label": ".run()",
-      "source_file": "internal/scheduler/retention.go",
-      "source_location": "L26"
-    },
-    {
-      "id": "scheduler_retentionworker_start",
-      "label": ".Start()",
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "context.Context",
-      "file_type": "code",
-      "norm_label": ".start()",
-      "source_file": "internal/scheduler/retention.go",
-      "source_location": "L22"
     },
     {
       "id": "service_checkrepositorytx",
@@ -1727,6 +1576,50 @@
       "source_location": "L22"
     },
     {
+      "id": "cmd_pingou_commands_export",
+      "label": "commands/export.go",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "info.go",
+      "file_type": "code",
+      "norm_label": "commands/export.go",
+      "source_file": "cmd/pingou/commands/export.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "cmd_pingou_commands_export_copyfile",
+      "label": "copyFile()",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "info.go",
+      "file_type": "code",
+      "norm_label": "copyfile()",
+      "source_file": "cmd/pingou/commands/export.go",
+      "source_location": "L87"
+    },
+    {
+      "id": "cmd_pingou_commands_export_init",
+      "label": "init()",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "info.go",
+      "file_type": "code",
+      "norm_label": "init()",
+      "source_file": "cmd/pingou/commands/export.go",
+      "source_location": "L23"
+    },
+    {
+      "id": "cmd_pingou_commands_export_runexportdb",
+      "label": "runExportDB()",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "info.go",
+      "file_type": "code",
+      "norm_label": "runexportdb()",
+      "source_file": "cmd/pingou/commands/export.go",
+      "source_location": "L27"
+    },
+    {
       "id": "cmd_pingou_commands_info",
       "label": "info.go",
       "_origin": "ast",
@@ -1824,6 +1717,28 @@
       "norm_label": "trim()",
       "source_file": "cmd/pingou/commands/info.go",
       "source_location": "L112"
+    },
+    {
+      "id": "cmd_pingou_commands_migrate",
+      "label": "migrate.go",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "info.go",
+      "file_type": "code",
+      "norm_label": "migrate.go",
+      "source_file": "cmd/pingou/commands/migrate.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "cmd_pingou_commands_migrate_init",
+      "label": "init()",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "info.go",
+      "file_type": "code",
+      "norm_label": "init()",
+      "source_file": "cmd/pingou/commands/migrate.go",
+      "source_location": "L44"
     },
     {
       "id": "cmd_pingou_commands_root",
@@ -1925,114 +1840,235 @@
       "source_location": "L7"
     },
     {
-      "id": "internal_repository_monitor_repo_scanmonitor",
-      "label": "scanMonitor()",
+      "id": "handler_exporthandler",
+      "label": "ExportHandler",
       "_origin": "ast",
-      "community": 13,
-      "community_name": "MonitorRepo",
+      "community": 12,
+      "community_name": "info.go",
       "file_type": "code",
-      "norm_label": "scanmonitor()",
-      "source_file": "internal/repository/monitor_repo.go",
-      "source_location": "L109"
+      "norm_label": "exporthandler",
+      "source_file": "internal/handler/export.go",
+      "source_location": "L13"
     },
     {
-      "id": "repository_monitorrepo",
-      "label": "MonitorRepo",
+      "id": "internal_handler_export",
+      "label": "handler/export.go",
       "_origin": "ast",
-      "community": 13,
-      "community_name": "MonitorRepo",
+      "community": 12,
+      "community_name": "info.go",
       "file_type": "code",
-      "norm_label": "monitorrepo",
-      "source_file": "internal/repository/monitor_repo.go",
-      "source_location": "L12"
+      "norm_label": "handler/export.go",
+      "source_file": "internal/handler/export.go",
+      "source_location": "L1"
     },
     {
-      "id": "repository_monitorrepo_count",
-      "label": ".Count()",
+      "id": "internal_handler_export_escapesqliteliteral",
+      "label": "escapeSQLiteLiteral()",
       "_origin": "ast",
-      "community": 13,
-      "community_name": "MonitorRepo",
+      "community": 12,
+      "community_name": "info.go",
       "file_type": "code",
-      "norm_label": ".count()",
-      "source_file": "internal/repository/monitor_repo.go",
-      "source_location": "L97"
+      "norm_label": "escapesqliteliteral()",
+      "source_file": "internal/handler/export.go",
+      "source_location": "L49"
     },
     {
-      "id": "repository_monitorrepo_create",
-      "label": ".Create()",
+      "id": "internal_service_validate",
+      "label": "validate.go",
       "_origin": "ast",
       "community": 13,
-      "community_name": "MonitorRepo",
+      "community_name": "validate.go",
       "file_type": "code",
-      "norm_label": ".create()",
-      "source_file": "internal/repository/monitor_repo.go",
-      "source_location": "L18"
+      "norm_label": "validate.go",
+      "source_file": "internal/service/validate.go",
+      "source_location": "L1"
     },
     {
-      "id": "repository_monitorrepo_delete",
-      "label": ".Delete()",
+      "id": "internal_service_validate_validatecreateinput",
+      "label": "validateCreateInput()",
       "_origin": "ast",
       "community": 13,
-      "community_name": "MonitorRepo",
+      "community_name": "validate.go",
       "file_type": "code",
-      "norm_label": ".delete()",
-      "source_file": "internal/repository/monitor_repo.go",
-      "source_location": "L92"
+      "norm_label": "validatecreateinput()",
+      "source_file": "internal/service/validate.go",
+      "source_location": "L95"
     },
     {
-      "id": "repository_monitorrepo_findall",
-      "label": ".FindAll()",
+      "id": "internal_service_validate_validateinterval",
+      "label": "validateInterval()",
       "_origin": "ast",
       "community": 13,
-      "community_name": "MonitorRepo",
+      "community_name": "validate.go",
       "file_type": "code",
-      "norm_label": ".findall()",
-      "source_file": "internal/repository/monitor_repo.go",
-      "source_location": "L37"
+      "norm_label": "validateinterval()",
+      "source_file": "internal/service/validate.go",
+      "source_location": "L55"
     },
     {
-      "id": "repository_monitorrepo_findbyid",
-      "label": ".FindByID()",
+      "id": "internal_service_validate_validatemonitor",
+      "label": "validateMonitor()",
       "_origin": "ast",
       "community": 13,
-      "community_name": "MonitorRepo",
+      "community_name": "validate.go",
       "file_type": "code",
-      "norm_label": ".findbyid()",
-      "source_file": "internal/repository/monitor_repo.go",
-      "source_location": "L32"
+      "norm_label": "validatemonitor()",
+      "source_file": "internal/service/validate.go",
+      "source_location": "L76"
     },
     {
-      "id": "repository_monitorrepotx_findbyid",
-      "label": ".FindByID()",
+      "id": "internal_service_validate_validatename",
+      "label": "validateName()",
       "_origin": "ast",
       "community": 13,
-      "community_name": "MonitorRepo",
+      "community_name": "validate.go",
       "file_type": "code",
-      "norm_label": ".findbyid()",
-      "source_file": "internal/repository/monitor_repo_tx.go",
+      "norm_label": "validatename()",
+      "source_file": "internal/service/validate.go",
+      "source_location": "L48"
+    },
+    {
+      "id": "internal_service_validate_validatethreshold",
+      "label": "validateThreshold()",
+      "_origin": "ast",
+      "community": 13,
+      "community_name": "validate.go",
+      "file_type": "code",
+      "norm_label": "validatethreshold()",
+      "source_file": "internal/service/validate.go",
+      "source_location": "L69"
+    },
+    {
+      "id": "internal_service_validate_validatetimeout",
+      "label": "validateTimeout()",
+      "_origin": "ast",
+      "community": 13,
+      "community_name": "validate.go",
+      "file_type": "code",
+      "norm_label": "validatetimeout()",
+      "source_file": "internal/service/validate.go",
+      "source_location": "L62"
+    },
+    {
+      "id": "internal_service_validate_validateupdateinput",
+      "label": "validateUpdateInput()",
+      "_origin": "ast",
+      "community": 13,
+      "community_name": "validate.go",
+      "file_type": "code",
+      "norm_label": "validateupdateinput()",
+      "source_file": "internal/service/validate.go",
+      "source_location": "L114"
+    },
+    {
+      "id": "internal_service_validate_validateurl",
+      "label": "validateURL()",
+      "_origin": "ast",
+      "community": 13,
+      "community_name": "validate.go",
+      "file_type": "code",
+      "norm_label": "validateurl()",
+      "source_file": "internal/service/validate.go",
       "source_location": "L38"
     },
     {
-      "id": "repository_scanner",
-      "label": "scanner",
+      "id": "domain_checkrepository_create",
+      "label": ".Create()",
       "_origin": "ast",
-      "community": 13,
-      "community_name": "MonitorRepo",
+      "community": 14,
+      "community_name": "CheckRepository",
       "file_type": "code",
-      "norm_label": "scanner",
-      "source_file": "internal/repository/monitor_repo.go",
-      "source_location": "L105"
+      "norm_label": ".create()",
+      "source_file": "internal/domain/repository.go",
+      "source_location": "L15"
     },
     {
-      "id": "repository_scanner_scan",
-      "label": ".Scan()",
+      "id": "domain_checkrepository_deleteolderthan",
+      "label": ".DeleteOlderThan()",
       "_origin": "ast",
-      "community": 13,
-      "community_name": "MonitorRepo",
+      "community": 14,
+      "community_name": "CheckRepository",
       "file_type": "code",
-      "norm_label": ".scan()",
-      "source_file": "internal/repository/monitor_repo.go",
-      "source_location": "L106"
+      "norm_label": ".deleteolderthan()",
+      "source_file": "internal/domain/repository.go",
+      "source_location": "L17"
+    },
+    {
+      "id": "domain_checkrepository_findbymonitor",
+      "label": ".FindByMonitor()",
+      "_origin": "ast",
+      "community": 14,
+      "community_name": "CheckRepository",
+      "file_type": "code",
+      "norm_label": ".findbymonitor()",
+      "source_file": "internal/domain/repository.go",
+      "source_location": "L16"
+    },
+    {
+      "id": "internal_domain_repository_go_domain_checkrepository",
+      "label": "CheckRepository",
+      "_origin": "ast",
+      "community": 14,
+      "community_name": "CheckRepository",
+      "file_type": "code",
+      "norm_label": "checkrepository",
+      "source_file": "internal/domain/repository.go",
+      "source_location": "L14"
+    },
+    {
+      "id": "internal_scheduler_retention_newretentionworker",
+      "label": "NewRetentionWorker()",
+      "_origin": "ast",
+      "community": 14,
+      "community_name": "CheckRepository",
+      "file_type": "code",
+      "norm_label": "newretentionworker()",
+      "source_file": "internal/scheduler/retention.go",
+      "source_location": "L18"
+    },
+    {
+      "id": "scheduler_retentionworker",
+      "label": "RetentionWorker",
+      "_origin": "ast",
+      "community": 14,
+      "community_name": "CheckRepository",
+      "file_type": "code",
+      "norm_label": "retentionworker",
+      "source_file": "internal/scheduler/retention.go",
+      "source_location": "L13"
+    },
+    {
+      "id": "scheduler_retentionworker_purge",
+      "label": ".purge()",
+      "_origin": "ast",
+      "community": 14,
+      "community_name": "CheckRepository",
+      "file_type": "code",
+      "norm_label": ".purge()",
+      "source_file": "internal/scheduler/retention.go",
+      "source_location": "L45"
+    },
+    {
+      "id": "scheduler_retentionworker_run",
+      "label": ".run()",
+      "_origin": "ast",
+      "community": 14,
+      "community_name": "CheckRepository",
+      "file_type": "code",
+      "norm_label": ".run()",
+      "source_file": "internal/scheduler/retention.go",
+      "source_location": "L26"
+    },
+    {
+      "id": "scheduler_retentionworker_start",
+      "label": ".Start()",
+      "_origin": "ast",
+      "community": 14,
+      "community_name": "CheckRepository",
+      "file_type": "code",
+      "norm_label": ".start()",
+      "source_file": "internal/scheduler/retention.go",
+      "source_location": "L22"
     },
     {
       "id": "go_type_database_sql_tx",
@@ -2233,6 +2269,28 @@
       "source_location": "L104"
     },
     {
+      "id": "service_webhookpayload",
+      "label": "webhookPayload",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "WebhookNotifier",
+      "file_type": "code",
+      "norm_label": "webhookpayload",
+      "source_file": "internal/service/notifier.go",
+      "source_location": "L32"
+    },
+    {
+      "id": "service_webhookpayloadmonitor",
+      "label": "webhookPayloadMonitor",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "WebhookNotifier",
+      "file_type": "code",
+      "norm_label": "webhookpayloadmonitor",
+      "source_file": "internal/service/notifier.go",
+      "source_location": "L40"
+    },
+    {
       "id": "web_tailwind_config",
       "label": "tailwind.config.js",
       "_origin": "ast",
@@ -2253,72 +2311,6 @@
       "norm_label": "runadd()",
       "source_file": "cmd/pingou/commands/add.go",
       "source_location": "L62"
-    },
-    {
-      "id": "cmd_pingou_commands_export",
-      "label": "commands/export.go",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "database/sql.DB",
-      "file_type": "code",
-      "norm_label": "commands/export.go",
-      "source_file": "cmd/pingou/commands/export.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "cmd_pingou_commands_export_copyfile",
-      "label": "copyFile()",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "database/sql.DB",
-      "file_type": "code",
-      "norm_label": "copyfile()",
-      "source_file": "cmd/pingou/commands/export.go",
-      "source_location": "L87"
-    },
-    {
-      "id": "cmd_pingou_commands_export_init",
-      "label": "init()",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "database/sql.DB",
-      "file_type": "code",
-      "norm_label": "init()",
-      "source_file": "cmd/pingou/commands/export.go",
-      "source_location": "L23"
-    },
-    {
-      "id": "cmd_pingou_commands_export_runexportdb",
-      "label": "runExportDB()",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "database/sql.DB",
-      "file_type": "code",
-      "norm_label": "runexportdb()",
-      "source_file": "cmd/pingou/commands/export.go",
-      "source_location": "L27"
-    },
-    {
-      "id": "cmd_pingou_commands_migrate",
-      "label": "migrate.go",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "database/sql.DB",
-      "file_type": "code",
-      "norm_label": "migrate.go",
-      "source_file": "cmd/pingou/commands/migrate.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "cmd_pingou_commands_migrate_init",
-      "label": "init()",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "database/sql.DB",
-      "file_type": "code",
-      "norm_label": "init()",
-      "source_file": "cmd/pingou/commands/migrate.go",
-      "source_location": "L44"
     },
     {
       "id": "cmd_pingou_commands_migrate_runmigratedown",
@@ -2387,6 +2379,17 @@
       "source_location": "L45"
     },
     {
+      "id": "go_type_context_cancelfunc",
+      "label": "context.CancelFunc",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "database/sql.DB",
+      "file_type": "code",
+      "norm_label": "context.cancelfunc",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
       "id": "go_type_database_sql_db",
       "label": "database/sql.DB",
       "_origin": "ast",
@@ -2409,92 +2412,15 @@
       "source_location": ""
     },
     {
-      "id": "go_type_log_slog_level",
-      "label": "log/slog.Level",
+      "id": "go_type_sync_mutex",
+      "label": "sync.Mutex",
       "_origin": "ast",
       "community": 2,
       "community_name": "database/sql.DB",
       "file_type": "code",
-      "norm_label": "log/slog.level",
+      "norm_label": "sync.mutex",
       "source_file": "",
       "source_location": ""
-    },
-    {
-      "id": "handler_exporthandler",
-      "label": "ExportHandler",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "database/sql.DB",
-      "file_type": "code",
-      "norm_label": "exporthandler",
-      "source_file": "internal/handler/export.go",
-      "source_location": "L13"
-    },
-    {
-      "id": "internal_config_config",
-      "label": "config.go",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "database/sql.DB",
-      "file_type": "code",
-      "norm_label": "config.go",
-      "source_file": "internal/config/config.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "internal_config_config_go_config_config",
-      "label": "Config",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "database/sql.DB",
-      "file_type": "code",
-      "norm_label": "config",
-      "source_file": "internal/config/config.go",
-      "source_location": "L11"
-    },
-    {
-      "id": "internal_config_config_load",
-      "label": "Load()",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "database/sql.DB",
-      "file_type": "code",
-      "norm_label": "load()",
-      "source_file": "internal/config/config.go",
-      "source_location": "L22"
-    },
-    {
-      "id": "internal_config_config_loadconfig",
-      "label": "LoadConfig()",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "database/sql.DB",
-      "file_type": "code",
-      "norm_label": "loadconfig()",
-      "source_file": "internal/config/config.go",
-      "source_location": "L32"
-    },
-    {
-      "id": "internal_config_config_loadconfigwithapikey",
-      "label": "loadConfigWithAPIKey()",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "database/sql.DB",
-      "file_type": "code",
-      "norm_label": "loadconfigwithapikey()",
-      "source_file": "internal/config/config.go",
-      "source_location": "L36"
-    },
-    {
-      "id": "internal_config_config_parseint",
-      "label": "parseInt()",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "database/sql.DB",
-      "file_type": "code",
-      "norm_label": "parseint()",
-      "source_file": "internal/config/config.go",
-      "source_location": "L88"
     },
     {
       "id": "internal_database_database",
@@ -2585,26 +2511,15 @@
       "source_location": "L75"
     },
     {
-      "id": "internal_handler_export",
-      "label": "handler/export.go",
+      "id": "internal_domain_checker_go_domain_checker",
+      "label": "Checker",
       "_origin": "ast",
       "community": 2,
       "community_name": "database/sql.DB",
       "file_type": "code",
-      "norm_label": "handler/export.go",
-      "source_file": "internal/handler/export.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "internal_handler_export_escapesqliteliteral",
-      "label": "escapeSQLiteLiteral()",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "database/sql.DB",
-      "file_type": "code",
-      "norm_label": "escapesqliteliteral()",
-      "source_file": "internal/handler/export.go",
-      "source_location": "L49"
+      "norm_label": "checker",
+      "source_file": "internal/domain/checker.go",
+      "source_location": "L12"
     },
     {
       "id": "internal_repository_check_repo_newcheckrepo",
@@ -2748,6 +2663,105 @@
       "norm_label": ".close()",
       "source_file": "internal/repository/incident_repo_tx.go",
       "source_location": "L41"
+    },
+    {
+      "id": "scheduler_job",
+      "label": "job",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "database/sql.DB",
+      "file_type": "code",
+      "norm_label": "job",
+      "source_file": "internal/scheduler/scheduler.go",
+      "source_location": "L15"
+    },
+    {
+      "id": "scheduler_scheduler",
+      "label": "Scheduler",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "database/sql.DB",
+      "file_type": "code",
+      "norm_label": "scheduler",
+      "source_file": "internal/scheduler/scheduler.go",
+      "source_location": "L20"
+    },
+    {
+      "id": "scheduler_scheduler_reload",
+      "label": ".Reload()",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "database/sql.DB",
+      "file_type": "code",
+      "norm_label": ".reload()",
+      "source_file": "internal/scheduler/scheduler.go",
+      "source_location": "L75"
+    },
+    {
+      "id": "scheduler_scheduler_runcheck",
+      "label": ".runCheck()",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "database/sql.DB",
+      "file_type": "code",
+      "norm_label": ".runcheck()",
+      "source_file": "internal/scheduler/scheduler.go",
+      "source_location": "L137"
+    },
+    {
+      "id": "scheduler_scheduler_runloop",
+      "label": ".runLoop()",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "database/sql.DB",
+      "file_type": "code",
+      "norm_label": ".runloop()",
+      "source_file": "internal/scheduler/scheduler.go",
+      "source_location": "L112"
+    },
+    {
+      "id": "scheduler_scheduler_start",
+      "label": ".Start()",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "database/sql.DB",
+      "file_type": "code",
+      "norm_label": ".start()",
+      "source_file": "internal/scheduler/scheduler.go",
+      "source_location": "L55"
+    },
+    {
+      "id": "scheduler_scheduler_startjob",
+      "label": ".startJob()",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "database/sql.DB",
+      "file_type": "code",
+      "norm_label": ".startjob()",
+      "source_file": "internal/scheduler/scheduler.go",
+      "source_location": "L90"
+    },
+    {
+      "id": "scheduler_scheduler_stop",
+      "label": ".Stop()",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "database/sql.DB",
+      "file_type": "code",
+      "norm_label": ".stop()",
+      "source_file": "internal/scheduler/scheduler.go",
+      "source_location": "L163"
+    },
+    {
+      "id": "scheduler_scheduler_stopjob",
+      "label": ".stopJob()",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "database/sql.DB",
+      "file_type": "code",
+      "norm_label": ".stopjob()",
+      "source_file": "internal/scheduler/scheduler.go",
+      "source_location": "L101"
     },
     {
       "id": "service_sqliteunitofwork",
@@ -3317,7 +3331,7 @@
       "label": "MonitorService",
       "_origin": "ast",
       "community": 34,
-      "community_name": "validate.go",
+      "community_name": "MonitorService",
       "file_type": "code",
       "norm_label": "monitorservice",
       "source_file": "internal/service/monitor_service.go",
@@ -3328,117 +3342,18 @@
       "label": "newUUIDv7()",
       "_origin": "ast",
       "community": 34,
-      "community_name": "validate.go",
+      "community_name": "MonitorService",
       "file_type": "code",
       "norm_label": "newuuidv7()",
       "source_file": "internal/service/uuid.go",
       "source_location": "L5"
     },
     {
-      "id": "internal_service_validate",
-      "label": "validate.go",
-      "_origin": "ast",
-      "community": 34,
-      "community_name": "validate.go",
-      "file_type": "code",
-      "norm_label": "validate.go",
-      "source_file": "internal/service/validate.go",
-      "source_location": "L1"
-    },
-    {
-      "id": "internal_service_validate_validatecreateinput",
-      "label": "validateCreateInput()",
-      "_origin": "ast",
-      "community": 34,
-      "community_name": "validate.go",
-      "file_type": "code",
-      "norm_label": "validatecreateinput()",
-      "source_file": "internal/service/validate.go",
-      "source_location": "L95"
-    },
-    {
-      "id": "internal_service_validate_validateinterval",
-      "label": "validateInterval()",
-      "_origin": "ast",
-      "community": 34,
-      "community_name": "validate.go",
-      "file_type": "code",
-      "norm_label": "validateinterval()",
-      "source_file": "internal/service/validate.go",
-      "source_location": "L55"
-    },
-    {
-      "id": "internal_service_validate_validatemonitor",
-      "label": "validateMonitor()",
-      "_origin": "ast",
-      "community": 34,
-      "community_name": "validate.go",
-      "file_type": "code",
-      "norm_label": "validatemonitor()",
-      "source_file": "internal/service/validate.go",
-      "source_location": "L76"
-    },
-    {
-      "id": "internal_service_validate_validatename",
-      "label": "validateName()",
-      "_origin": "ast",
-      "community": 34,
-      "community_name": "validate.go",
-      "file_type": "code",
-      "norm_label": "validatename()",
-      "source_file": "internal/service/validate.go",
-      "source_location": "L48"
-    },
-    {
-      "id": "internal_service_validate_validatethreshold",
-      "label": "validateThreshold()",
-      "_origin": "ast",
-      "community": 34,
-      "community_name": "validate.go",
-      "file_type": "code",
-      "norm_label": "validatethreshold()",
-      "source_file": "internal/service/validate.go",
-      "source_location": "L69"
-    },
-    {
-      "id": "internal_service_validate_validatetimeout",
-      "label": "validateTimeout()",
-      "_origin": "ast",
-      "community": 34,
-      "community_name": "validate.go",
-      "file_type": "code",
-      "norm_label": "validatetimeout()",
-      "source_file": "internal/service/validate.go",
-      "source_location": "L62"
-    },
-    {
-      "id": "internal_service_validate_validateupdateinput",
-      "label": "validateUpdateInput()",
-      "_origin": "ast",
-      "community": 34,
-      "community_name": "validate.go",
-      "file_type": "code",
-      "norm_label": "validateupdateinput()",
-      "source_file": "internal/service/validate.go",
-      "source_location": "L114"
-    },
-    {
-      "id": "internal_service_validate_validateurl",
-      "label": "validateURL()",
-      "_origin": "ast",
-      "community": 34,
-      "community_name": "validate.go",
-      "file_type": "code",
-      "norm_label": "validateurl()",
-      "source_file": "internal/service/validate.go",
-      "source_location": "L38"
-    },
-    {
       "id": "service_createmonitorinput",
       "label": "CreateMonitorInput",
       "_origin": "ast",
       "community": 34,
-      "community_name": "validate.go",
+      "community_name": "MonitorService",
       "file_type": "code",
       "norm_label": "createmonitorinput",
       "source_file": "internal/service/monitor_service.go",
@@ -3449,7 +3364,7 @@
       "label": ".Create()",
       "_origin": "ast",
       "community": 34,
-      "community_name": "validate.go",
+      "community_name": "MonitorService",
       "file_type": "code",
       "norm_label": ".create()",
       "source_file": "internal/service/monitor_service.go",
@@ -3460,7 +3375,7 @@
       "label": ".Delete()",
       "_origin": "ast",
       "community": 34,
-      "community_name": "validate.go",
+      "community_name": "MonitorService",
       "file_type": "code",
       "norm_label": ".delete()",
       "source_file": "internal/service/monitor_service.go",
@@ -3471,7 +3386,7 @@
       "label": ".GetByID()",
       "_origin": "ast",
       "community": 34,
-      "community_name": "validate.go",
+      "community_name": "MonitorService",
       "file_type": "code",
       "norm_label": ".getbyid()",
       "source_file": "internal/service/monitor_service.go",
@@ -3482,7 +3397,7 @@
       "label": ".ListChecks()",
       "_origin": "ast",
       "community": 34,
-      "community_name": "validate.go",
+      "community_name": "MonitorService",
       "file_type": "code",
       "norm_label": ".listchecks()",
       "source_file": "internal/service/monitor_service.go",
@@ -3493,7 +3408,7 @@
       "label": ".reload()",
       "_origin": "ast",
       "community": 34,
-      "community_name": "validate.go",
+      "community_name": "MonitorService",
       "file_type": "code",
       "norm_label": ".reload()",
       "source_file": "internal/service/monitor_service.go",
@@ -3504,7 +3419,7 @@
       "label": ".SetReloader()",
       "_origin": "ast",
       "community": 34,
-      "community_name": "validate.go",
+      "community_name": "MonitorService",
       "file_type": "code",
       "norm_label": ".setreloader()",
       "source_file": "internal/service/monitor_service.go",
@@ -3515,7 +3430,7 @@
       "label": ".Update()",
       "_origin": "ast",
       "community": 34,
-      "community_name": "validate.go",
+      "community_name": "MonitorService",
       "file_type": "code",
       "norm_label": ".update()",
       "source_file": "internal/service/monitor_service.go",
@@ -3526,7 +3441,7 @@
       "label": "Reloader",
       "_origin": "ast",
       "community": 34,
-      "community_name": "validate.go",
+      "community_name": "MonitorService",
       "file_type": "code",
       "norm_label": "reloader",
       "source_file": "internal/service/monitor_service.go",
@@ -3537,7 +3452,7 @@
       "label": ".Reload()",
       "_origin": "ast",
       "community": 34,
-      "community_name": "validate.go",
+      "community_name": "MonitorService",
       "file_type": "code",
       "norm_label": ".reload()",
       "source_file": "internal/service/monitor_service.go",
@@ -3548,143 +3463,286 @@
       "label": "UpdateMonitorInput",
       "_origin": "ast",
       "community": 34,
-      "community_name": "validate.go",
+      "community_name": "MonitorService",
       "file_type": "code",
       "norm_label": "updatemonitorinput",
       "source_file": "internal/service/monitor_service.go",
       "source_location": "L47"
     },
     {
-      "id": "go_type_context_cancelfunc",
-      "label": "context.CancelFunc",
+      "id": "go_type_log_slog_level",
+      "label": "log/slog.Level",
       "_origin": "ast",
       "community": 4,
-      "community_name": "Scheduler",
+      "community_name": "config.go",
       "file_type": "code",
-      "norm_label": "context.cancelfunc",
+      "norm_label": "log/slog.level",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "go_type_sync_mutex",
-      "label": "sync.Mutex",
+      "id": "go_type_net_http_servemux",
+      "label": "net/http.ServeMux",
       "_origin": "ast",
       "community": 4,
-      "community_name": "Scheduler",
+      "community_name": "config.go",
       "file_type": "code",
-      "norm_label": "sync.mutex",
+      "norm_label": "net/http.servemux",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "internal_domain_checker_go_domain_checker",
-      "label": "Checker",
+      "id": "go_type_net_http_server",
+      "label": "net/http.Server",
       "_origin": "ast",
       "community": 4,
-      "community_name": "Scheduler",
+      "community_name": "config.go",
       "file_type": "code",
-      "norm_label": "checker",
-      "source_file": "internal/domain/checker.go",
-      "source_location": "L12"
+      "norm_label": "net/http.server",
+      "source_file": "",
+      "source_location": ""
     },
     {
-      "id": "scheduler_job",
-      "label": "job",
+      "id": "handler_server_registerroutes",
+      "label": ".registerRoutes()",
       "_origin": "ast",
       "community": 4,
-      "community_name": "Scheduler",
+      "community_name": "config.go",
       "file_type": "code",
-      "norm_label": "job",
-      "source_file": "internal/scheduler/scheduler.go",
+      "norm_label": ".registerroutes()",
+      "source_file": "internal/handler/server.go",
+      "source_location": "L66"
+    },
+    {
+      "id": "handler_server_shutdown",
+      "label": ".Shutdown()",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "config.go",
+      "file_type": "code",
+      "norm_label": ".shutdown()",
+      "source_file": "internal/handler/server.go",
+      "source_location": "L59"
+    },
+    {
+      "id": "handler_updatesettingsrequest",
+      "label": "updateSettingsRequest",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "config.go",
+      "file_type": "code",
+      "norm_label": "updatesettingsrequest",
+      "source_file": "internal/handler/settings.go",
+      "source_location": "L10"
+    },
+    {
+      "id": "internal_config_config",
+      "label": "config.go",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "config.go",
+      "file_type": "code",
+      "norm_label": "config.go",
+      "source_file": "internal/config/config.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "internal_config_config_go_config_config",
+      "label": "Config",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "config.go",
+      "file_type": "code",
+      "norm_label": "config",
+      "source_file": "internal/config/config.go",
+      "source_location": "L11"
+    },
+    {
+      "id": "internal_config_config_load",
+      "label": "Load()",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "config.go",
+      "file_type": "code",
+      "norm_label": "load()",
+      "source_file": "internal/config/config.go",
+      "source_location": "L22"
+    },
+    {
+      "id": "internal_config_config_loadconfig",
+      "label": "LoadConfig()",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "config.go",
+      "file_type": "code",
+      "norm_label": "loadconfig()",
+      "source_file": "internal/config/config.go",
+      "source_location": "L32"
+    },
+    {
+      "id": "internal_config_config_loadconfigwithapikey",
+      "label": "loadConfigWithAPIKey()",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "config.go",
+      "file_type": "code",
+      "norm_label": "loadconfigwithapikey()",
+      "source_file": "internal/config/config.go",
+      "source_location": "L36"
+    },
+    {
+      "id": "internal_config_config_parseint",
+      "label": "parseInt()",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "config.go",
+      "file_type": "code",
+      "norm_label": "parseint()",
+      "source_file": "internal/config/config.go",
+      "source_location": "L88"
+    },
+    {
+      "id": "internal_handler_server_go_handler_server",
+      "label": "Server",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "config.go",
+      "file_type": "code",
+      "norm_label": "server",
+      "source_file": "internal/handler/server.go",
+      "source_location": "L14"
+    },
+    {
+      "id": "internal_handler_server_newserver",
+      "label": "NewServer()",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "config.go",
+      "file_type": "code",
+      "norm_label": "newserver()",
+      "source_file": "internal/handler/server.go",
+      "source_location": "L24"
+    },
+    {
+      "id": "internal_handler_settings_toupdatesettingsinput",
+      "label": "toUpdateSettingsInput()",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "config.go",
+      "file_type": "code",
+      "norm_label": "toupdatesettingsinput()",
+      "source_file": "internal/handler/settings.go",
+      "source_location": "L40"
+    },
+    {
+      "id": "internal_repository_settings_repo_go_repository_settingsrepo",
+      "label": "SettingsRepo",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "config.go",
+      "file_type": "code",
+      "norm_label": "settingsrepo",
+      "source_file": "internal/repository/settings_repo.go",
+      "source_location": "L9"
+    },
+    {
+      "id": "internal_repository_settings_repo_newsettingsrepo",
+      "label": "NewSettingsRepo()",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "config.go",
+      "file_type": "code",
+      "norm_label": "newsettingsrepo()",
+      "source_file": "internal/repository/settings_repo.go",
+      "source_location": "L11"
+    },
+    {
+      "id": "internal_service_settings_service_go_service_settingsservice",
+      "label": "SettingsService",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "config.go",
+      "file_type": "code",
+      "norm_label": "settingsservice",
+      "source_file": "internal/service/settings_service.go",
+      "source_location": "L11"
+    },
+    {
+      "id": "internal_service_settings_service_go_service_updatesettingsinput",
+      "label": "UpdateSettingsInput",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "config.go",
+      "file_type": "code",
+      "norm_label": "updatesettingsinput",
+      "source_file": "internal/service/settings_service.go",
+      "source_location": "L24"
+    },
+    {
+      "id": "internal_service_settings_service_newsettingsservice",
+      "label": "NewSettingsService()",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "config.go",
+      "file_type": "code",
+      "norm_label": "newsettingsservice()",
+      "source_file": "internal/service/settings_service.go",
       "source_location": "L15"
     },
     {
-      "id": "scheduler_scheduler",
-      "label": "Scheduler",
+      "id": "repository_settingsrepo_get",
+      "label": ".Get()",
       "_origin": "ast",
       "community": 4,
-      "community_name": "Scheduler",
+      "community_name": "config.go",
       "file_type": "code",
-      "norm_label": "scheduler",
-      "source_file": "internal/scheduler/scheduler.go",
-      "source_location": "L20"
+      "norm_label": ".get()",
+      "source_file": "internal/repository/settings_repo.go",
+      "source_location": "L13"
     },
     {
-      "id": "scheduler_scheduler_reload",
-      "label": ".Reload()",
+      "id": "repository_settingsrepo_set",
+      "label": ".Set()",
       "_origin": "ast",
       "community": 4,
-      "community_name": "Scheduler",
+      "community_name": "config.go",
       "file_type": "code",
-      "norm_label": ".reload()",
-      "source_file": "internal/scheduler/scheduler.go",
-      "source_location": "L75"
+      "norm_label": ".set()",
+      "source_file": "internal/repository/settings_repo.go",
+      "source_location": "L22"
     },
     {
-      "id": "scheduler_scheduler_runcheck",
-      "label": ".runCheck()",
+      "id": "service_settings",
+      "label": "Settings",
       "_origin": "ast",
       "community": 4,
-      "community_name": "Scheduler",
+      "community_name": "config.go",
       "file_type": "code",
-      "norm_label": ".runcheck()",
-      "source_file": "internal/scheduler/scheduler.go",
-      "source_location": "L137"
+      "norm_label": "settings",
+      "source_file": "internal/service/settings_service.go",
+      "source_location": "L19"
     },
     {
-      "id": "scheduler_scheduler_runloop",
-      "label": ".runLoop()",
+      "id": "service_settingsservice_get",
+      "label": ".Get()",
       "_origin": "ast",
       "community": 4,
-      "community_name": "Scheduler",
+      "community_name": "config.go",
       "file_type": "code",
-      "norm_label": ".runloop()",
-      "source_file": "internal/scheduler/scheduler.go",
-      "source_location": "L112"
+      "norm_label": ".get()",
+      "source_file": "internal/service/settings_service.go",
+      "source_location": "L29"
     },
     {
-      "id": "scheduler_scheduler_start",
-      "label": ".Start()",
+      "id": "service_settingsservice_update",
+      "label": ".Update()",
       "_origin": "ast",
       "community": 4,
-      "community_name": "Scheduler",
+      "community_name": "config.go",
       "file_type": "code",
-      "norm_label": ".start()",
-      "source_file": "internal/scheduler/scheduler.go",
-      "source_location": "L55"
-    },
-    {
-      "id": "scheduler_scheduler_startjob",
-      "label": ".startJob()",
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "Scheduler",
-      "file_type": "code",
-      "norm_label": ".startjob()",
-      "source_file": "internal/scheduler/scheduler.go",
-      "source_location": "L90"
-    },
-    {
-      "id": "scheduler_scheduler_stop",
-      "label": ".Stop()",
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "Scheduler",
-      "file_type": "code",
-      "norm_label": ".stop()",
-      "source_file": "internal/scheduler/scheduler.go",
-      "source_location": "L163"
-    },
-    {
-      "id": "scheduler_scheduler_stopjob",
-      "label": ".stopJob()",
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "Scheduler",
-      "file_type": "code",
-      "norm_label": ".stopjob()",
-      "source_file": "internal/scheduler/scheduler.go",
-      "source_location": "L101"
+      "norm_label": ".update()",
+      "source_file": "internal/service/settings_service.go",
+      "source_location": "L49"
     },
     {
       "id": "design",
@@ -4279,28 +4337,6 @@
       "source_location": ""
     },
     {
-      "id": "go_type_net_http_servemux",
-      "label": "net/http.ServeMux",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": "net/http.servemux",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "go_type_net_http_server",
-      "label": "net/http.Server",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": "net/http.server",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
       "id": "handler_responsewriter",
       "label": "responseWriter",
       "_origin": "ast",
@@ -4345,28 +4381,6 @@
       "source_location": "L98"
     },
     {
-      "id": "handler_server_registerroutes",
-      "label": ".registerRoutes()",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": ".registerroutes()",
-      "source_file": "internal/handler/server.go",
-      "source_location": "L66"
-    },
-    {
-      "id": "handler_server_shutdown",
-      "label": ".Shutdown()",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": ".shutdown()",
-      "source_file": "internal/handler/server.go",
-      "source_location": "L59"
-    },
-    {
       "id": "handler_server_start",
       "label": ".Start()",
       "_origin": "ast",
@@ -4376,17 +4390,6 @@
       "norm_label": ".start()",
       "source_file": "internal/handler/server.go",
       "source_location": "L43"
-    },
-    {
-      "id": "handler_updatesettingsrequest",
-      "label": "updateSettingsRequest",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": "updatesettingsrequest",
-      "source_file": "internal/handler/settings.go",
-      "source_location": "L10"
     },
     {
       "id": "internal_handler_middleware",
@@ -4455,39 +4458,6 @@
       "source_location": "L72"
     },
     {
-      "id": "internal_handler_server_go_handler_server",
-      "label": "Server",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": "server",
-      "source_file": "internal/handler/server.go",
-      "source_location": "L14"
-    },
-    {
-      "id": "internal_handler_server_newserver",
-      "label": "NewServer()",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": "newserver()",
-      "source_file": "internal/handler/server.go",
-      "source_location": "L24"
-    },
-    {
-      "id": "internal_handler_settings_toupdatesettingsinput",
-      "label": "toUpdateSettingsInput()",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": "toupdatesettingsinput()",
-      "source_file": "internal/handler/settings.go",
-      "source_location": "L40"
-    },
-    {
       "id": "internal_handler_spa",
       "label": "spa.go",
       "_origin": "ast",
@@ -4508,116 +4478,6 @@
       "norm_label": "spahandler()",
       "source_file": "internal/handler/spa.go",
       "source_location": "L12"
-    },
-    {
-      "id": "internal_repository_settings_repo_go_repository_settingsrepo",
-      "label": "SettingsRepo",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": "settingsrepo",
-      "source_file": "internal/repository/settings_repo.go",
-      "source_location": "L9"
-    },
-    {
-      "id": "internal_repository_settings_repo_newsettingsrepo",
-      "label": "NewSettingsRepo()",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": "newsettingsrepo()",
-      "source_file": "internal/repository/settings_repo.go",
-      "source_location": "L11"
-    },
-    {
-      "id": "internal_service_settings_service_go_service_settingsservice",
-      "label": "SettingsService",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": "settingsservice",
-      "source_file": "internal/service/settings_service.go",
-      "source_location": "L11"
-    },
-    {
-      "id": "internal_service_settings_service_go_service_updatesettingsinput",
-      "label": "UpdateSettingsInput",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": "updatesettingsinput",
-      "source_file": "internal/service/settings_service.go",
-      "source_location": "L24"
-    },
-    {
-      "id": "internal_service_settings_service_newsettingsservice",
-      "label": "NewSettingsService()",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": "newsettingsservice()",
-      "source_file": "internal/service/settings_service.go",
-      "source_location": "L15"
-    },
-    {
-      "id": "repository_settingsrepo_get",
-      "label": ".Get()",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": ".get()",
-      "source_file": "internal/repository/settings_repo.go",
-      "source_location": "L13"
-    },
-    {
-      "id": "repository_settingsrepo_set",
-      "label": ".Set()",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": ".set()",
-      "source_file": "internal/repository/settings_repo.go",
-      "source_location": "L22"
-    },
-    {
-      "id": "service_settings",
-      "label": "Settings",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": "settings",
-      "source_file": "internal/service/settings_service.go",
-      "source_location": "L19"
-    },
-    {
-      "id": "service_settingsservice_get",
-      "label": ".Get()",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": ".get()",
-      "source_file": "internal/service/settings_service.go",
-      "source_location": "L29"
-    },
-    {
-      "id": "service_settingsservice_update",
-      "label": ".Update()",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": ".update()",
-      "source_file": "internal/service/settings_service.go",
-      "source_location": "L49"
     },
     {
       "id": "checker_httpchecker_check",
@@ -4697,6 +4557,17 @@
       "source_location": "L28"
     },
     {
+      "id": "internal_repository_monitor_repo_scanmonitor",
+      "label": "scanMonitor()",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "Monitor",
+      "file_type": "code",
+      "norm_label": "scanmonitor()",
+      "source_file": "internal/repository/monitor_repo.go",
+      "source_location": "L109"
+    },
+    {
       "id": "internal_service_notifier_go_service_notifier",
       "label": "Notifier",
       "_origin": "ast",
@@ -4717,6 +4588,105 @@
       "norm_label": "newstatemachine()",
       "source_file": "internal/service/state_machine.go",
       "source_location": "L16"
+    },
+    {
+      "id": "repository_monitorrepo",
+      "label": "MonitorRepo",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "Monitor",
+      "file_type": "code",
+      "norm_label": "monitorrepo",
+      "source_file": "internal/repository/monitor_repo.go",
+      "source_location": "L12"
+    },
+    {
+      "id": "repository_monitorrepo_count",
+      "label": ".Count()",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "Monitor",
+      "file_type": "code",
+      "norm_label": ".count()",
+      "source_file": "internal/repository/monitor_repo.go",
+      "source_location": "L97"
+    },
+    {
+      "id": "repository_monitorrepo_create",
+      "label": ".Create()",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "Monitor",
+      "file_type": "code",
+      "norm_label": ".create()",
+      "source_file": "internal/repository/monitor_repo.go",
+      "source_location": "L18"
+    },
+    {
+      "id": "repository_monitorrepo_delete",
+      "label": ".Delete()",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "Monitor",
+      "file_type": "code",
+      "norm_label": ".delete()",
+      "source_file": "internal/repository/monitor_repo.go",
+      "source_location": "L92"
+    },
+    {
+      "id": "repository_monitorrepo_findall",
+      "label": ".FindAll()",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "Monitor",
+      "file_type": "code",
+      "norm_label": ".findall()",
+      "source_file": "internal/repository/monitor_repo.go",
+      "source_location": "L37"
+    },
+    {
+      "id": "repository_monitorrepo_findbyid",
+      "label": ".FindByID()",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "Monitor",
+      "file_type": "code",
+      "norm_label": ".findbyid()",
+      "source_file": "internal/repository/monitor_repo.go",
+      "source_location": "L32"
+    },
+    {
+      "id": "repository_monitorrepotx_findbyid",
+      "label": ".FindByID()",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "Monitor",
+      "file_type": "code",
+      "norm_label": ".findbyid()",
+      "source_file": "internal/repository/monitor_repo_tx.go",
+      "source_location": "L38"
+    },
+    {
+      "id": "repository_scanner",
+      "label": "scanner",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "Monitor",
+      "file_type": "code",
+      "norm_label": "scanner",
+      "source_file": "internal/repository/monitor_repo.go",
+      "source_location": "L105"
+    },
+    {
+      "id": "repository_scanner_scan",
+      "label": ".Scan()",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "Monitor",
+      "file_type": "code",
+      "norm_label": ".scan()",
+      "source_file": "internal/repository/monitor_repo.go",
+      "source_location": "L106"
     },
     {
       "id": "service_monitorservice_list",
@@ -5059,29 +5029,13 @@
       "source_url": null
     },
     {
-      "id": "web_public_favicon",
-      "label": "Favicon",
-      "_origin": "semantic",
-      "author": null,
-      "captured_at": null,
-      "community": 19,
-      "community_name": "Favicon",
-      "contributor": null,
-      "file_type": "image",
-      "norm_label": "favicon",
-      "rationale": null,
-      "source_file": "web/public/favicon.svg",
-      "source_location": null,
-      "source_url": null
-    },
-    {
       "id": "web_src_assets_vite",
       "label": "Vite Logo",
       "_origin": "semantic",
       "author": null,
       "captured_at": null,
       "community": 19,
-      "community_name": "Favicon",
+      "community_name": "Vite Logo",
       "contributor": null,
       "file_type": "image",
       "norm_label": "vite logo",
@@ -5152,102 +5106,6 @@
       "norm_label": "technical concerns & risk assessment",
       "rationale": null,
       "source_file": ".specs/codebase/CONCERNS.md",
-      "source_location": null,
-      "source_url": null
-    },
-    {
-      "id": "web_public_icons_bluesky_icon",
-      "label": "Bluesky Icon",
-      "_origin": "semantic",
-      "author": null,
-      "captured_at": null,
-      "community": 26,
-      "community_name": "Bluesky Icon",
-      "contributor": null,
-      "file_type": "image",
-      "norm_label": "bluesky icon",
-      "rationale": null,
-      "source_file": "web/public/icons.svg",
-      "source_location": null,
-      "source_url": null
-    },
-    {
-      "id": "web_public_icons_discord_icon",
-      "label": "Discord Icon",
-      "_origin": "semantic",
-      "author": null,
-      "captured_at": null,
-      "community": 27,
-      "community_name": "Discord Icon",
-      "contributor": null,
-      "file_type": "image",
-      "norm_label": "discord icon",
-      "rationale": null,
-      "source_file": "web/public/icons.svg",
-      "source_location": null,
-      "source_url": null
-    },
-    {
-      "id": "web_public_icons_documentation_icon",
-      "label": "Documentation Icon",
-      "_origin": "semantic",
-      "author": null,
-      "captured_at": null,
-      "community": 28,
-      "community_name": "Documentation Icon",
-      "contributor": null,
-      "file_type": "image",
-      "norm_label": "documentation icon",
-      "rationale": null,
-      "source_file": "web/public/icons.svg",
-      "source_location": null,
-      "source_url": null
-    },
-    {
-      "id": "web_public_icons_github_icon",
-      "label": "GitHub Icon",
-      "_origin": "semantic",
-      "author": null,
-      "captured_at": null,
-      "community": 29,
-      "community_name": "GitHub Icon",
-      "contributor": null,
-      "file_type": "image",
-      "norm_label": "github icon",
-      "rationale": null,
-      "source_file": "web/public/icons.svg",
-      "source_location": null,
-      "source_url": null
-    },
-    {
-      "id": "web_public_icons_social_icon",
-      "label": "Social Icon",
-      "_origin": "semantic",
-      "author": null,
-      "captured_at": null,
-      "community": 30,
-      "community_name": "Social Icon",
-      "contributor": null,
-      "file_type": "image",
-      "norm_label": "social icon",
-      "rationale": null,
-      "source_file": "web/public/icons.svg",
-      "source_location": null,
-      "source_url": null
-    },
-    {
-      "id": "web_public_icons_x_icon",
-      "label": "X (Twitter) Icon",
-      "_origin": "semantic",
-      "author": null,
-      "captured_at": null,
-      "community": 31,
-      "community_name": "X (Twitter) Icon",
-      "contributor": null,
-      "file_type": "image",
-      "norm_label": "x (twitter) icon",
-      "rationale": null,
-      "source_file": "web/public/icons.svg",
       "source_location": null,
       "source_url": null
     },
@@ -5476,6 +5334,78 @@
       "type": "external"
     },
     {
+      "id": "go_pkg_io",
+      "label": "go_pkg_io",
+      "_origin": "semantic",
+      "community": 12,
+      "community_name": "info.go",
+      "external": true,
+      "file_type": "concept",
+      "norm_label": "go_pkg_io",
+      "source_file": "",
+      "type": "external"
+    },
+    {
+      "id": "go_pkg_log",
+      "label": "go_pkg_log",
+      "_origin": "semantic",
+      "community": 12,
+      "community_name": "info.go",
+      "external": true,
+      "file_type": "concept",
+      "norm_label": "go_pkg_log",
+      "source_file": "",
+      "type": "external"
+    },
+    {
+      "id": "go_pkg_os",
+      "label": "go_pkg_os",
+      "_origin": "semantic",
+      "community": 12,
+      "community_name": "info.go",
+      "external": true,
+      "file_type": "concept",
+      "norm_label": "go_pkg_os",
+      "source_file": "",
+      "type": "external"
+    },
+    {
+      "id": "go_pkg_path_filepath",
+      "label": "go_pkg_path_filepath",
+      "_origin": "semantic",
+      "community": 12,
+      "community_name": "info.go",
+      "external": true,
+      "file_type": "concept",
+      "norm_label": "go_pkg_path_filepath",
+      "source_file": "",
+      "type": "external"
+    },
+    {
+      "id": "go_pkg_strings",
+      "label": "go_pkg_strings",
+      "_origin": "semantic",
+      "community": 12,
+      "community_name": "info.go",
+      "external": true,
+      "file_type": "concept",
+      "norm_label": "go_pkg_strings",
+      "source_file": "",
+      "type": "external"
+    },
+    {
+      "id": "go_pkg_regexp",
+      "label": "go_pkg_regexp",
+      "_origin": "semantic",
+      "community": 13,
+      "community_name": "validate.go",
+      "external": true,
+      "file_type": "concept",
+      "norm_label": "go_pkg_regexp",
+      "source_file": "",
+      "type": "external"
+    },
+    {
       "id": "go_pkg_github_com_mattn_go_sqlite3",
       "label": "go_pkg_github_com_mattn_go_sqlite3",
       "_origin": "semantic",
@@ -5500,30 +5430,6 @@
       "type": "external"
     },
     {
-      "id": "go_pkg_io",
-      "label": "go_pkg_io",
-      "_origin": "semantic",
-      "community": 2,
-      "community_name": "database/sql.DB",
-      "external": true,
-      "file_type": "concept",
-      "norm_label": "go_pkg_io",
-      "source_file": "",
-      "type": "external"
-    },
-    {
-      "id": "go_pkg_log",
-      "label": "go_pkg_log",
-      "_origin": "semantic",
-      "community": 2,
-      "community_name": "database/sql.DB",
-      "external": true,
-      "file_type": "concept",
-      "norm_label": "go_pkg_log",
-      "source_file": "",
-      "type": "external"
-    },
-    {
       "id": "go_pkg_net_url",
       "label": "go_pkg_net_url",
       "_origin": "semantic",
@@ -5536,62 +5442,14 @@
       "type": "external"
     },
     {
-      "id": "go_pkg_os",
-      "label": "go_pkg_os",
-      "_origin": "semantic",
-      "community": 2,
-      "community_name": "database/sql.DB",
-      "external": true,
-      "file_type": "concept",
-      "norm_label": "go_pkg_os",
-      "source_file": "",
-      "type": "external"
-    },
-    {
-      "id": "go_pkg_path_filepath",
-      "label": "go_pkg_path_filepath",
-      "_origin": "semantic",
-      "community": 2,
-      "community_name": "database/sql.DB",
-      "external": true,
-      "file_type": "concept",
-      "norm_label": "go_pkg_path_filepath",
-      "source_file": "",
-      "type": "external"
-    },
-    {
       "id": "go_pkg_strconv",
       "label": "go_pkg_strconv",
       "_origin": "semantic",
-      "community": 2,
-      "community_name": "database/sql.DB",
+      "community": 4,
+      "community_name": "config.go",
       "external": true,
       "file_type": "concept",
       "norm_label": "go_pkg_strconv",
-      "source_file": "",
-      "type": "external"
-    },
-    {
-      "id": "go_pkg_strings",
-      "label": "go_pkg_strings",
-      "_origin": "semantic",
-      "community": 2,
-      "community_name": "database/sql.DB",
-      "external": true,
-      "file_type": "concept",
-      "norm_label": "go_pkg_strings",
-      "source_file": "",
-      "type": "external"
-    },
-    {
-      "id": "go_pkg_regexp",
-      "label": "go_pkg_regexp",
-      "_origin": "semantic",
-      "community": 34,
-      "community_name": "validate.go",
-      "external": true,
-      "file_type": "concept",
-      "norm_label": "go_pkg_regexp",
       "source_file": "",
       "type": "external"
     },
@@ -22071,17 +21929,6 @@
       "weight": 1.0
     },
     {
-      "source": "web_src_assets_vite",
-      "target": "web_public_favicon",
-      "relation": "semantically_similar_to",
-      "_origin": "semantic",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.9,
-      "source_file": "web/src/assets/vite.svg",
-      "source_location": null,
-      "weight": 1.0
-    },
-    {
       "source": "divergencias_prd_implementacao",
       "target": "prd_readme",
       "relation": "cites",
@@ -22093,34 +21940,6 @@
       "weight": 1.0
     }
   ],
-  "hyperedges": [
-    {
-      "id": "social_icons",
-      "label": "Social Media Icons",
-      "nodes": [
-        "web_public_icons_bluesky_icon",
-        "web_public_icons_discord_icon",
-        "web_public_icons_github_icon",
-        "web_public_icons_x_icon"
-      ],
-      "relation": "participate_in",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "web/public/icons.svg"
-    },
-    {
-      "id": "brand_assets",
-      "label": "Brand Assets",
-      "nodes": [
-        "web_public_favicon",
-        "web_src_assets_vite",
-        "web_src_assets_hero"
-      ],
-      "relation": "participate_in",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "web/src/assets/hero.png"
-    }
-  ],
-  "built_at_commit": "68b02b1837a862615ecad2161da7811f24476014"
+  "hyperedges": [],
+  "built_at_commit": "013389346743c2238b57b1bebb59739b1dc9c61b"
 }
