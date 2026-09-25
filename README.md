@@ -363,9 +363,17 @@ Atualiza um monitor.
 
 Remove um monitor.
 
+#### `GET /api/monitors/:id/checks`
+
+Histórico de checks de um monitor, paginado (`limit`, `offset`).
+
+#### `GET /api/monitors/:id/incidents`
+
+Incidentes de um monitor, paginado (`limit`, `offset`, `open=true` filtra apenas abertos).
+
 #### `GET /api/incidents`
 
-Lista incidentes.
+Lista incidentes (mesma paginação e filtro `open` acima).
 
 #### `GET /api/settings`
 
