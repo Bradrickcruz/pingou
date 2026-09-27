@@ -438,16 +438,16 @@
     "semantic_hash": ""
   },
   "web/src/theme/globalStyles.js": {
-    "mtime": 1777051931.6173155,
-    "seen": 1790220686.5526626,
-    "ast_hash": "c6be94ccf1c2cc96b0c2e8839abcf60a",
-    "semantic_hash": "c6be94ccf1c2cc96b0c2e8839abcf60a"
+    "mtime": 1790472037.6408205,
+    "seen": 1790472730.3412683,
+    "ast_hash": "9b3c5ac3b7e1cd4673d09eebde14fb11",
+    "semantic_hash": ""
   },
   "web/src/theme/tokens.js": {
-    "mtime": 1777051918.02309,
-    "seen": 1790220686.5526633,
-    "ast_hash": "1f7548b9c016fd8cb10fb401fa90418d",
-    "semantic_hash": "1f7548b9c016fd8cb10fb401fa90418d"
+    "mtime": 1790472032.4718907,
+    "seen": 1790472730.3412697,
+    "ast_hash": "892d6161bc5f2bb49ec96e5b4dbc3256",
+    "semantic_hash": ""
   },
   "web/tailwind.config.js": {
     "mtime": 1790470516.6624944,
@@ -630,9 +630,9 @@
     "semantic_hash": ""
   },
   "DESIGN.md": {
-    "mtime": 1790368822.5040066,
-    "seen": 1790368831.8691416,
-    "ast_hash": "d1bb459056f13317cdde5e72a325536e",
+    "mtime": 1790472731.6780725,
+    "seen": 1790472758.5968904,
+    "ast_hash": "7d819991a5d7c6d1f07120040a0990ee",
     "semantic_hash": ""
   },
   "PRD-divergencias-implementacao.md": {
@@ -843,6 +843,18 @@
     "mtime": 1790471209.0844717,
     "seen": 1790471885.4873629,
     "ast_hash": "bd2d80625558194c2a4b9a6ff5c88bc4",
+    "semantic_hash": ""
+  },
+  "web/src/assets/fonts/OFL-Inter.txt": {
+    "mtime": 1790472019.593066,
+    "seen": 1790472730.3413136,
+    "ast_hash": "2eeb2b3ada55f38ae966db32bcb1f92a",
+    "semantic_hash": ""
+  },
+  "web/src/assets/fonts/OFL-Rubik.txt": {
+    "mtime": 1790472019.594066,
+    "seen": 1790472730.341315,
+    "ast_hash": "e2ec5b5c772e95c499c2bc81cad065ed",
     "semantic_hash": ""
   }
 }

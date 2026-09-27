@@ -1,9 +1,9 @@
 # Graph Report - pingou-health-checker  (2026-09-26)
 
 ## Corpus Check
-- 109 files · ~83,371 words
+- 109 files · ~84,854 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 12 file(s) not represented in the graph (top: (none) 9, .css 2, .example 1)
+- Unclassified: 16 file(s) not represented in the graph (top: (none) 9, .woff2 4, .css 2)
 
 ## Summary
 - 494 nodes · 1407 edges · 29 communities (17 shown, 12 thin omitted)
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `21c17506`
+- Built from commit: `0521ab5f`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -142,7 +142,7 @@ Cohesion: 0.39
 Nodes (11): go_pkg_regexp, validateCreateInput(), validateInterval(), validateMonitor(), validateName(), validateThreshold(), validateTimeout(), validateUpdateInput() (+3 more)
 
 ## Knowledge Gaps
-- **69 isolated node(s):** `name`, `private`, `version`, `type`, `dev` (+64 more)
+- **69 isolated node(s):** `0. Como usar este arquivo`, `1. Conceito`, `Arquivos oficiais`, `3.1 Tokens`, `3.2 Tailwind` (+64 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 109 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **12 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -155,7 +155,7 @@ _Questions this graph is uniquely positioned to answer:_
   _High betweenness centrality (0.018) - this node is a cross-community bridge._
 - **Why does `Server` connect `middleware.go` to `serve.go`, `runServe`, `database/sql.DB`, `Incident`, `MonitorService`?**
   _High betweenness centrality (0.018) - this node is a cross-community bridge._
-- **What connects `name`, `private`, `version` to the rest of the system?**
+- **What connects `0. Como usar este arquivo`, `1. Conceito`, `Arquivos oficiais` to the rest of the system?**
   _69 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `main.jsx` be split into smaller, more focused modules?**
   _Cohesion score 0.08306010928961749 - nodes in this community are weakly interconnected._

@@ -3778,7 +3778,7 @@
       "node_kind": "heading",
       "norm_label": "10. pendencias (nao definidas na v1.0)",
       "source_file": "DESIGN.md",
-      "source_location": "L210"
+      "source_location": "L214"
     },
     {
       "id": "design_11_checklist_antes_de_entregar",
@@ -3790,7 +3790,7 @@
       "node_kind": "heading",
       "norm_label": "11. checklist antes de entregar",
       "source_file": "DESIGN.md",
-      "source_location": "L215"
+      "source_location": "L219"
     },
     {
       "id": "design_1_conceito",
@@ -3850,7 +3850,7 @@
       "node_kind": "heading",
       "norm_label": "3.3 proporcao",
       "source_file": "DESIGN.md",
-      "source_location": "L111"
+      "source_location": "L113"
     },
     {
       "id": "design_3_4_regras_de_cor",
@@ -3862,7 +3862,7 @@
       "node_kind": "heading",
       "norm_label": "3.4 regras de cor",
       "source_file": "DESIGN.md",
-      "source_location": "L115"
+      "source_location": "L117"
     },
     {
       "id": "design_3_5_contraste_sobre_branco",
@@ -3874,7 +3874,7 @@
       "node_kind": "heading",
       "norm_label": "3.5 contraste sobre branco",
       "source_file": "DESIGN.md",
-      "source_location": "L124"
+      "source_location": "L126"
     },
     {
       "id": "design_3_cores",
@@ -3898,7 +3898,7 @@
       "node_kind": "heading",
       "norm_label": "4. status",
       "source_file": "DESIGN.md",
-      "source_location": "L135"
+      "source_location": "L137"
     },
     {
       "id": "design_5_tipografia",
@@ -3910,7 +3910,7 @@
       "node_kind": "heading",
       "norm_label": "5. tipografia",
       "source_file": "DESIGN.md",
-      "source_location": "L147"
+      "source_location": "L149"
     },
     {
       "id": "design_6_forma_e_espa\u00e7o",
@@ -3922,7 +3922,7 @@
       "node_kind": "heading",
       "norm_label": "6. forma e espaco",
       "source_file": "DESIGN.md",
-      "source_location": "L167"
+      "source_location": "L171"
     },
     {
       "id": "design_7_componentes_base",
@@ -3934,7 +3934,7 @@
       "node_kind": "heading",
       "norm_label": "7. componentes base",
       "source_file": "DESIGN.md",
-      "source_location": "L175"
+      "source_location": "L179"
     },
     {
       "id": "design_8_grafismos_de_apoio",
@@ -3946,7 +3946,7 @@
       "node_kind": "heading",
       "norm_label": "8. grafismos de apoio",
       "source_file": "DESIGN.md",
-      "source_location": "L186"
+      "source_location": "L190"
     },
     {
       "id": "design_9_tom_de_voz_ui",
@@ -3958,7 +3958,7 @@
       "node_kind": "heading",
       "norm_label": "9. tom de voz (ui)",
       "source_file": "DESIGN.md",
-      "source_location": "L203"
+      "source_location": "L207"
     },
     {
       "id": "design_arquivos_oficiais",
@@ -5344,6 +5344,18 @@
       "type": "external"
     },
     {
+      "id": "web_src_assets_brand_pingou_simbolo",
+      "label": "web_src_assets_brand_pingou_simbolo",
+      "_origin": "semantic",
+      "community": 1,
+      "community_name": "main.jsx",
+      "external": true,
+      "file_type": "concept",
+      "norm_label": "web_src_assets_brand_pingou_simbolo",
+      "source_file": "",
+      "type": "external"
+    },
+    {
       "id": "web_src_index",
       "label": "web_src_index",
       "_origin": "semantic",
@@ -5544,17 +5556,6 @@
       "external": true,
       "file_type": "concept",
       "norm_label": "go_pkg_runtime_debug",
-      "source_file": "",
-      "type": "external"
-    },
-    {
-      "id": "web_src_assets_brand_pingou_simbolo",
-      "label": "web_src_assets_brand_pingou_simbolo",
-      "community": 1,
-      "community_name": "main.jsx",
-      "external": true,
-      "file_type": "concept",
-      "norm_label": "web_src_assets_brand_pingou_simbolo",
       "source_file": "",
       "type": "external"
     }
@@ -18231,7 +18232,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DESIGN.md",
-      "source_location": "L111",
+      "source_location": "L113",
       "weight": 1.0
     },
     {
@@ -18242,7 +18243,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DESIGN.md",
-      "source_location": "L115",
+      "source_location": "L117",
       "weight": 1.0
     },
     {
@@ -18253,7 +18254,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DESIGN.md",
-      "source_location": "L124",
+      "source_location": "L126",
       "weight": 1.0
     },
     {
@@ -18286,7 +18287,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DESIGN.md",
-      "source_location": "L135",
+      "source_location": "L137",
       "weight": 1.0
     },
     {
@@ -18308,7 +18309,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DESIGN.md",
-      "source_location": "L147",
+      "source_location": "L149",
       "weight": 1.0
     },
     {
@@ -18319,7 +18320,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DESIGN.md",
-      "source_location": "L167",
+      "source_location": "L171",
       "weight": 1.0
     },
     {
@@ -18330,7 +18331,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DESIGN.md",
-      "source_location": "L175",
+      "source_location": "L179",
       "weight": 1.0
     },
     {
@@ -18341,7 +18342,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DESIGN.md",
-      "source_location": "L186",
+      "source_location": "L190",
       "weight": 1.0
     },
     {
@@ -18352,7 +18353,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DESIGN.md",
-      "source_location": "L203",
+      "source_location": "L207",
       "weight": 1.0
     },
     {
@@ -18363,7 +18364,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DESIGN.md",
-      "source_location": "L210",
+      "source_location": "L214",
       "weight": 1.0
     },
     {
@@ -18374,7 +18375,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DESIGN.md",
-      "source_location": "L215",
+      "source_location": "L219",
       "weight": 1.0
     },
     {
@@ -22105,5 +22106,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "21c175062e978e7555f7017209cb91b562c6d5e9"
+  "built_at_commit": "0521ab5f1d82007f1cbbd09c8d2a5978d2fd38c8"
 }
