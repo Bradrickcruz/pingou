@@ -108,6 +108,8 @@ theme: {
 
 Tailwind v4: declare os mesmos valores em `@theme` (`--color-pg-ciano: #1E9BB3;` etc.).
 
+> **Migração gradual (`web/`):** o projeto já tinha tokens Tailwind próprios antes deste design system. Para não quebrá-los, `fontFamily`, `fontSize` e `borderRadius` usam chaves com prefixo `pg-` (`font-pg-heading`, `text-pg-h1`, `rounded-pg-card`, ver `web/tailwind.config.js`) em vez de sobrescrever `heading`/`sans`/`h1`/`sm` existentes. `colors.pg` não precisa de prefixo extra: já é um namespace próprio. Conforme os componentes forem migrados, as chaves antigas somem e o prefixo `pg-` pode cair.
+
 ### 3.3 Proporção
 
 ~60% nuvem/branco · ~25% ardósia · ~10% ciano · ~5% ciano-fundo/névoa. Status só onde houver estado.
@@ -162,7 +164,9 @@ Tailwind v4: declare os mesmos valores em `@theme` (`--color-pg-ciano: #1E9BB3;`
 - URLs, IDs e logs: fonte mono na cor `--pg-ciano-fundo`.
 - Números no dashboard (tempo de resposta, %, contagens): `font-variant-numeric: tabular-nums`.
 - Nada menor que 12 px.
-- Fontes: Google Fonts, licença SIL OFL 1.1. Carregar só `Rubik:wght@400;500` e `Inter:wght@400;500`.
+- Fontes: **self-hosted**, licença SIL OFL 1.1. **NUNCA** carregar via Google Fonts ou outro CDN externo em runtime.
+  - Arquivos `.woff2`, subset latin, só pesos 400/500, versionados em `web/src/assets/fonts/` (`inter-latin-400.woff2`, `inter-latin-500.woff2`, `rubik-latin-400.woff2`, `rubik-latin-500.woff2`), com as licenças `OFL-Inter.txt` e `OFL-Rubik.txt` ao lado.
+  - Carregamento via `@font-face` em `web/src/index.css`, com `font-display: swap`. O Vite empacota os arquivos com hash e o binário Go os serve via `go:embed` — nenhuma requisição de fonte sai do próprio host.
 
 ## 6. Forma e espaço
 
