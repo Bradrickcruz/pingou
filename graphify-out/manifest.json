@@ -300,10 +300,10 @@
     "semantic_hash": "3aa4b57d7f08181d86bde52a4dcb7f22"
   },
   "web/package.json": {
-    "mtime": 1777787025.665237,
-    "seen": 1790220686.5526314,
-    "ast_hash": "a02a0be6cd0054f1913af81606c48259",
-    "semantic_hash": "a02a0be6cd0054f1913af81606c48259"
+    "mtime": 1790471205.9905076,
+    "seen": 1790471885.4872952,
+    "ast_hash": "f6921b4450c33c4c12e79b2dcd0df964",
+    "semantic_hash": ""
   },
   "web/postcss.config.js": {
     "mtime": 1777786429.3334193,
@@ -336,10 +336,10 @@
     "semantic_hash": "9f17f988455370bfd577c6f328dcf251"
   },
   "web/src/components/layout/Shell.jsx": {
-    "mtime": 1777786560.4429843,
-    "seen": 1790220686.5526443,
-    "ast_hash": "8fa2847522225f445019b29bf114869a",
-    "semantic_hash": "8fa2847522225f445019b29bf114869a"
+    "mtime": 1790471230.8692186,
+    "seen": 1790471885.4873002,
+    "ast_hash": "8ad8add4c310ca36f14e7c63b7a84d1b",
+    "semantic_hash": ""
   },
   "web/src/components/monitors/MonitorCard.jsx": {
     "mtime": 1777786570.0689273,
@@ -354,10 +354,10 @@
     "semantic_hash": "3f6b78ee33c3b15ed51291a11caa0d43"
   },
   "web/src/components/ui/Badge.jsx": {
-    "mtime": 1777786553.1720269,
-    "seen": 1790220686.5526474,
-    "ast_hash": "afaa5cfdb32212f4770786e7e93e454e",
-    "semantic_hash": "afaa5cfdb32212f4770786e7e93e454e"
+    "mtime": 1790471304.3013492,
+    "seen": 1790471885.487302,
+    "ast_hash": "5785075b49075ed9b5c15b12ea76c358",
+    "semantic_hash": ""
   },
   "web/src/components/ui/Button.jsx": {
     "mtime": 1777786551.6920352,
@@ -372,10 +372,10 @@
     "semantic_hash": "adcf0e383a94a28e847eee157159e8d6"
   },
   "web/src/components/ui/Modal.jsx": {
-    "mtime": 1777786553.6840239,
-    "seen": 1790220686.5526505,
-    "ast_hash": "8e84e556dcba0e57097473945b471262",
-    "semantic_hash": "8e84e556dcba0e57097473945b471262"
+    "mtime": 1790471263.022841,
+    "seen": 1790471885.4873042,
+    "ast_hash": "ea5a75ed6d68ae2e7ddd77791a5bafc7",
+    "semantic_hash": ""
   },
   "web/src/components/ui/Spinner.jsx": {
     "mtime": 1777786553.6910238,
@@ -414,28 +414,28 @@
     "semantic_hash": "53704bf8333550a67c09d096f87d5954"
   },
   "web/src/pages/Dashboard.jsx": {
-    "mtime": 1777838497.827507,
-    "seen": 1790220686.552658,
-    "ast_hash": "f4937129c5006762301a5b5f399d9b2a",
-    "semantic_hash": "f4937129c5006762301a5b5f399d9b2a"
+    "mtime": 1790471346.8158355,
+    "seen": 1790471885.4873085,
+    "ast_hash": "2efa256bd4db1d51b922fb15ff27d41f",
+    "semantic_hash": ""
   },
   "web/src/pages/Incidents.jsx": {
-    "mtime": 1777786588.3998153,
-    "seen": 1790220686.5526593,
-    "ast_hash": "fe6148b50e077e021bb0c3e6159b342f",
-    "semantic_hash": "fe6148b50e077e021bb0c3e6159b342f"
+    "mtime": 1790471296.995437,
+    "seen": 1790471885.4873092,
+    "ast_hash": "de7a8427b326a97f9ec153daaef01fc9",
+    "semantic_hash": ""
   },
   "web/src/pages/Login.jsx": {
-    "mtime": 1790470536.3864074,
-    "seen": 1790471013.7242088,
-    "ast_hash": "63e75df316ab31c032192ac3483ab084",
+    "mtime": 1790471269.5577636,
+    "seen": 1790471885.48731,
+    "ast_hash": "96a025b91772cdad84f5c7d33599788a",
     "semantic_hash": ""
   },
   "web/src/pages/Settings.jsx": {
-    "mtime": 1777788771.0560582,
-    "seen": 1790220686.5526612,
-    "ast_hash": "801ff6eb8c0d24f1f7b9bf46f02e7963",
-    "semantic_hash": "801ff6eb8c0d24f1f7b9bf46f02e7963"
+    "mtime": 1790471284.1465902,
+    "seen": 1790471885.4873104,
+    "ast_hash": "b1dad60e90be3eda36da11ec3bab5798",
+    "semantic_hash": ""
   },
   "web/src/theme/globalStyles.js": {
     "mtime": 1777051931.6173155,
@@ -837,6 +837,12 @@
     "mtime": 1790370117.3746576,
     "seen": 1790471013.7242324,
     "ast_hash": "0f9baf89fcc5284ab45c2ba7a3e35eb7",
+    "semantic_hash": ""
+  },
+  "web/src/assets/brand/pingou-simbolo.svg": {
+    "mtime": 1790471209.0844717,
+    "seen": 1790471885.4873629,
+    "ast_hash": "bd2d80625558194c2a4b9a6ff5c88bc4",
     "semantic_hash": ""
   }
 }

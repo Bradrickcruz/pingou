@@ -426,10 +426,10 @@
     "semantic_hash": "fe6148b50e077e021bb0c3e6159b342f"
   },
   "web/src/pages/Login.jsx": {
-    "mtime": 1777786591.367797,
-    "seen": 1790220686.5526602,
-    "ast_hash": "8e0f2d7b0510c3d880decb0ea04ef318",
-    "semantic_hash": "8e0f2d7b0510c3d880decb0ea04ef318"
+    "mtime": 1790470536.3864074,
+    "seen": 1790471013.7242088,
+    "ast_hash": "63e75df316ab31c032192ac3483ab084",
+    "semantic_hash": ""
   },
   "web/src/pages/Settings.jsx": {
     "mtime": 1777788771.0560582,
@@ -450,10 +450,10 @@
     "semantic_hash": "1f7548b9c016fd8cb10fb401fa90418d"
   },
   "web/tailwind.config.js": {
-    "mtime": 1777786429.3264194,
-    "seen": 1790220686.5526645,
-    "ast_hash": "f550b71c75677af1882e914766734645",
-    "semantic_hash": "f550b71c75677af1882e914766734645"
+    "mtime": 1790470516.6624944,
+    "seen": 1790471013.7242117,
+    "ast_hash": "d62a261b11bbdf75b791716bcec0555e",
+    "semantic_hash": ""
   },
   "web/vite.config.js": {
     "mtime": 1777055086.1454492,
@@ -831,6 +831,12 @@
     "mtime": 1790369420.353416,
     "seen": 1790369475.5712972,
     "ast_hash": "7a3661a421b8095123c0890cbe07321e",
+    "semantic_hash": ""
+  },
+  "plan-design-system-web.md": {
+    "mtime": 1790370117.3746576,
+    "seen": 1790471013.7242324,
+    "ast_hash": "0f9baf89fcc5284ab45c2ba7a3e35eb7",
     "semantic_hash": ""
   }
 }
