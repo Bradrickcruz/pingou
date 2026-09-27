@@ -20,6 +20,6 @@ export const tokens = {
   },
   font: {
     sans: "'Inter', system-ui, sans-serif",
-    mono: "'JetBrains Mono', monospace",
+    mono: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
   },
 };

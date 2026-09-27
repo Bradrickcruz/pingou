@@ -3,8 +3,6 @@ import { tokens as t } from "./tokens";
 export function injectGlobalStyles() {
   const style = document.createElement("style");
   style.textContent = `
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
