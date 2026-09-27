@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { tokens as t } from "../theme/tokens";
 import { Button } from "../components/ui/Button";
+import logo from "../assets/brand/pingou-simbolo.svg";
 
 export function Login({ onLogin }) {
   const [key, setKey] = useState("");
@@ -52,7 +53,7 @@ export function Login({ onLogin }) {
         }}
       >
         <div className="text-center mb-8">
-          <div className="text-[40px] mb-2">🏓</div>
+          <img src={logo} alt="" width={40} height={40} className="mx-auto mb-2" />
           <h1
             className="text-[22px] font-bold"
             style={{

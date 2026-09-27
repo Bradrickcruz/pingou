@@ -1,11 +1,18 @@
 import { NavLink } from "react-router-dom";
+import {
+  LayoutDashboard,
+  TriangleAlert,
+  Settings as SettingsIcon,
+  LogOut,
+} from "lucide-react";
 import { tokens as t } from "../../theme/tokens";
 import { Button } from "../ui/Button";
+import logo from "../../assets/brand/pingou-simbolo.svg";
 
 const nav = [
-  { to: "/", label: "⬡  Dashboard" },
-  { to: "/incidents", label: "⚠  Incidents" },
-  { to: "/settings", label: "⚙  Settings" },
+  { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/incidents", label: "Incidents", icon: TriangleAlert },
+  { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 
 export function Shell({ children, onLogout }) {
@@ -24,13 +31,16 @@ export function Shell({ children, onLogout }) {
             borderColor: t.colors.border,
           }}
         >
-          <div
-            className="font-bold text-base"
-            style={{
-              color: t.colors.primary,
-            }}
-          >
-            🏓 Pingou
+          <div className="flex items-center gap-2">
+            <img src={logo} alt="" width={28} height={28} />
+            <span
+              className="font-bold text-base"
+              style={{
+                color: t.colors.primary,
+              }}
+            >
+              Pingou
+            </span>
           </div>
           <div
             className="text-[11px] mt-0.5"
@@ -43,13 +53,13 @@ export function Shell({ children, onLogout }) {
         </div>
 
         <nav className="py-4 px-3 flex-1">
-          {nav.map(({ to, label }) => (
+          {nav.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
               end={to === "/"}
               className={({ isActive }) =>
-                `block py-2 px-3 rounded mb-1 text-[13px] transition-all duration-150 ${
+                `flex items-center gap-2 py-2 px-3 rounded mb-1 text-[13px] transition-all duration-150 ${
                   isActive
                     ? "bg-[var(--social-bg)] font-semibold"
                     : "text-[var(--text)] font-normal"
@@ -61,6 +71,7 @@ export function Shell({ children, onLogout }) {
                 fontWeight: isActive ? 600 : 400,
               })}
             >
+              <Icon size={16} aria-hidden="true" />
               {label}
             </NavLink>
           ))}
@@ -75,9 +86,10 @@ export function Shell({ children, onLogout }) {
           <Button
             variant="ghost"
             onClick={onLogout}
-            className="text-[12px] py-1.5 px-3 text-left"
+            className="text-[12px] py-1.5 px-3 text-left inline-flex items-center gap-2"
           >
-            ⎋ Logout
+            <LogOut size={16} aria-hidden="true" />
+            Logout
           </Button>
           <span
             className="text-[11px]"

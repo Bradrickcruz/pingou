@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { CircleAlert, Check } from "lucide-react";
 import { incidentsApi } from "../api/incidents";
 import { Spinner } from "../components/ui/Spinner";
 import { tokens as t } from "../theme/tokens";
@@ -53,7 +54,7 @@ export function Incidents() {
             color: t.colors.textMuted,
           }}
         >
-          No incidents found 🎉
+          No incidents found
         </p>
       )}
 
@@ -72,19 +73,23 @@ export function Incidents() {
               <span className="font-semibold text-sm">
                 {i.open ? (
                   <span
+                    className="inline-flex items-center gap-1"
                     style={{
                       color: t.colors.danger,
                     }}
                   >
-                    ● OPEN
+                    <CircleAlert size={14} aria-hidden="true" />
+                    OPEN
                   </span>
                 ) : (
                   <span
+                    className="inline-flex items-center gap-1"
                     style={{
                       color: t.colors.success,
                     }}
                   >
-                    ✓ RESOLVED
+                    <Check size={14} aria-hidden="true" />
+                    RESOLVED
                   </span>
                 )}
                 <span

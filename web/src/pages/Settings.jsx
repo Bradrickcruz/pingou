@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Check, Download } from "lucide-react";
 import { useSettings } from "../hooks/useSettings";
 import { Button } from "../components/ui/Button";
 import { Spinner } from "../components/ui/Spinner";
@@ -164,12 +165,13 @@ export function Settings() {
             </Button>
             {saved && (
               <span
-                className="text-sm"
+                className="text-sm inline-flex items-center gap-1"
                 style={{
                   color: t.colors.success,
                 }}
               >
-                ✓ Saved
+                <Check size={14} aria-hidden="true" />
+                Saved
               </span>
             )}
           </div>
@@ -195,14 +197,15 @@ export function Settings() {
         </p>
         <button
           onClick={handleExport}
-          className="inline-block px-4 py-2 rounded text-sm font-semibold border cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded text-sm font-semibold border cursor-pointer"
           style={{
             background: t.colors.surfaceAlt,
             color: t.colors.textPrimary,
             borderColor: t.colors.border,
           }}
         >
-          ↓ Download dump
+          <Download size={16} aria-hidden="true" />
+          Download dump
         </button>
       </div>
     </div>

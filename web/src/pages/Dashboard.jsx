@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Plus, RefreshCw } from "lucide-react";
 import { useMonitors } from "../hooks/useMonitors";
 import { monitorsApi } from "../api/monitors";
 import { MonitorCard } from "../components/monitors/MonitorCard";
@@ -7,6 +8,7 @@ import { Modal } from "../components/ui/Modal";
 import { Button } from "../components/ui/Button";
 import { Spinner } from "../components/ui/Spinner";
 import { tokens as t } from "../theme/tokens";
+import logo from "../assets/brand/pingou-simbolo.svg";
 
 export function Dashboard() {
   const { monitors, loading, error, refetch, isFetching } = useMonitors();
@@ -95,14 +97,19 @@ export function Dashboard() {
               background: t.colors.surface,
             }}
           >
-            <span
-              className={`text-lg ${isFetching ? "animate-spin" : ""}`}
-              style={{ display: "inline-block" }}
-            >
-              🔄
-            </span>
+            <RefreshCw
+              size={16}
+              aria-hidden="true"
+              className={isFetching ? "animate-spin motion-reduce:animate-none" : ""}
+            />
           </button>
-          <Button onClick={() => setModal("create")}>+ Add Monitor</Button>
+          <Button
+            onClick={() => setModal("create")}
+            className="inline-flex items-center gap-1.5"
+          >
+            <Plus size={16} aria-hidden="true" />
+            Add Monitor
+          </Button>
         </div>
       </div>
 
@@ -171,10 +178,16 @@ export function Dashboard() {
             borderRadius: t.radius.lg,
           }}
         >
-          <p className="text-[32px] mb-3">🏓</p>
+          <img src={logo} alt="" width={40} height={40} className="mx-auto mb-3" />
           <p className="font-semibold mb-1.5">No monitors yet</p>
           <p className="text-sm mb-5">Add your first URL to start monitoring</p>
-          <Button onClick={() => setModal("create")}>+ Add Monitor</Button>
+          <Button
+            onClick={() => setModal("create")}
+            className="inline-flex items-center gap-1.5"
+          >
+            <Plus size={16} aria-hidden="true" />
+            Add Monitor
+          </Button>
         </div>
       )}
 

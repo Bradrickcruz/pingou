@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { X } from "lucide-react";
 import { tokens as t } from "../../theme/tokens";
 
 export function Modal({ title, onClose, children }) {
@@ -26,12 +27,13 @@ export function Modal({ title, onClose, children }) {
           <h2 className="text-base font-semibold text-[var(--text-h)]">{title}</h2>
           <button
             onClick={onClose}
-            className="text-[var(--text)] text-xl leading-none hover:text-[var(--text-h)]"
+            aria-label="Fechar"
+            className="text-[var(--text)] leading-none hover:text-[var(--text-h)]"
             style={{
               color: t.colors.textMuted,
             }}
           >
-            ×
+            <X size={18} aria-hidden="true" />
           </button>
         </div>
         {children}
