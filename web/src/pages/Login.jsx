@@ -38,7 +38,7 @@ export function Login({ onLogin }) {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center"
+      className="min-h-screen flex items-center justify-center bg-pg-nuvem"
       style={{
         background: t.colors.bg,
       }}

@@ -30,6 +30,28 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+:root {
+  /* marca */
+  --pg-ciano: #1E9BB3;
+  --pg-ciano-fundo: #146E80;
+  --pg-ciano-nevoa: #E3F2F5;
+
+  /* neutros */
+  --pg-ardosia: #1E2B33;
+  --pg-neblina: #5B6B75;
+  --pg-nuvem: #F3F7F8;
+  --pg-branco: #FFFFFF;
+  --pg-borda: #D9E3E6;
+
+  /* status — uso exclusivo para estado */
+  --pg-up: #1F8456;
+  --pg-up-bg: #E4F3EC;
+  --pg-down: #C93A46;
+  --pg-down-bg: #F8E6E8;
+  --pg-unknown: #5B6B75;
+  --pg-unknown-bg: #EDF1F3;
+}
+
 @media (max-width: 1024px) {
   :root {
     font-size: 16px;
