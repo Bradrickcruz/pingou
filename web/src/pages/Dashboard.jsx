@@ -67,22 +67,22 @@ export function Dashboard() {
 
   return (
     <div>
-      {/* header */}
-      <div className="flex justify-between items-center mb-7">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-7">
         <div>
-          <h1 className="text-pg-h1 font-medium text-pg-ardosia my-0">Dashboard</h1>
+          <h1 className="text-pg-h1 font-medium text-pg-ardosia my-0">Painel</h1>
           <p className="text-pg-ui text-pg-neblina mt-0.5">
-            {monitors.length} monitors · {up} up · {down} down · {unknown}{" "}
-            unknown
+            {monitors.length} monitores · {up} no ar · {down} fora do ar · {unknown}{" "}
+            desconhecidos
           </p>
         </div>
         <div className="flex gap-2">
           <button
+            type="button"
             onClick={refetch}
             disabled={isFetching}
             aria-label="Atualizar lista de monitores"
             aria-busy={isFetching}
-            className={`flex items-center justify-center w-9 h-9 rounded-pg-control border border-pg-borda bg-pg-branco transition-colors ${
+            className={`flex items-center justify-center w-11 h-11 rounded-pg-control border border-pg-borda bg-pg-branco transition-colors ${
               isFetching ? "opacity-50 cursor-not-allowed" : "hover:bg-pg-nuvem"
             }`}
           >
@@ -97,22 +97,21 @@ export function Dashboard() {
             className="inline-flex items-center gap-1.5"
           >
             <Plus size={16} aria-hidden="true" />
-            Add Monitor
+            Criar monitor
           </Button>
         </div>
       </div>
 
-      {/* stats */}
       {monitors.length > 0 && (
-        <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
           {[
-            { label: "Up", value: up, tone: "text-pg-up" },
-            { label: "Down", value: down, tone: "text-pg-down" },
-            { label: "Unknown", value: unknown, tone: "text-pg-unknown" },
+            { label: "No ar", value: up, tone: "text-pg-up" },
+            { label: "Fora do ar", value: down, tone: "text-pg-down" },
+            { label: "Desconhecido", value: unknown, tone: "text-pg-unknown" },
           ].map(({ label, value, tone }) => (
             <div
               key={label}
-              className="p-4 rounded-pg-card border border-pg-borda bg-pg-branco"
+              className="p-3 sm:p-4 rounded-pg-card border border-pg-borda bg-pg-branco min-w-0"
             >
               <div className={`text-pg-h1 font-medium tabular-nums ${tone}`}>
                 {value}
@@ -123,30 +122,25 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* list */}
       {loading && (
         <div className="flex justify-center py-12">
           <Spinner />
         </div>
       )}
 
-      {error && (
-        <p className="text-pg-ui text-pg-down">
-          {error}
-        </p>
-      )}
+      {error && <p className="text-pg-ui text-pg-down" role="alert">{error}</p>}
 
       {!loading && monitors.length === 0 && (
         <div className="text-center py-16 px-4 rounded-pg-card border border-dashed border-pg-borda text-pg-neblina">
           <img src={logo} alt="" width={40} height={40} className="mx-auto mb-3" />
-          <p className="font-medium text-pg-ardosia mb-1.5">No monitors yet</p>
-          <p className="text-pg-ui mb-5">Add your first URL to start monitoring</p>
+          <p className="font-medium text-pg-ardosia mb-1.5">Nenhum monitor ainda</p>
+          <p className="text-pg-ui mb-5">Adicione a primeira URL para começar o monitoramento.</p>
           <Button
             onClick={() => setModal("create")}
             className="inline-flex items-center gap-1.5"
           >
             <Plus size={16} aria-hidden="true" />
-            Add Monitor
+            Criar monitor
           </Button>
         </div>
       )}
@@ -162,9 +156,8 @@ export function Dashboard() {
         ))}
       </div>
 
-      {/* modais */}
       {modal === "create" && (
-        <Modal title="Add Monitor" onClose={closeModal}>
+        <Modal title="Criar monitor" onClose={closeModal}>
           <MonitorForm
             onSubmit={handleCreate}
             onCancel={closeModal}
@@ -174,7 +167,7 @@ export function Dashboard() {
       )}
 
       {modal === "edit" && selected && (
-        <Modal title="Edit Monitor" onClose={closeModal}>
+        <Modal title="Editar monitor" onClose={closeModal}>
           <MonitorForm
             initial={selected}
             onSubmit={handleEdit}
@@ -185,20 +178,17 @@ export function Dashboard() {
       )}
 
       {modal === "delete" && selected && (
-        <Modal title="Delete Monitor" onClose={closeModal}>
+        <Modal title="Excluir monitor" onClose={closeModal}>
           <p className="mb-5 text-pg-neblina">
-            Delete{" "}
-            <strong className="font-medium text-pg-ardosia">
-              {selected.name}
-            </strong>
-            ? This action cannot be undone.
+            Excluir <strong className="font-medium text-pg-ardosia">{selected.name}</strong>?
+            Esta ação não pode ser desfeita.
           </p>
           <div className="flex gap-2.5 justify-end">
             <Button variant="ghost" onClick={closeModal}>
-              Cancel
+              Cancelar
             </Button>
             <Button variant="danger" onClick={handleDelete} disabled={saving}>
-              {saving ? "Deleting..." : "Delete"}
+              {saving ? "Excluindo..." : "Excluir"}
             </Button>
           </div>
         </Modal>

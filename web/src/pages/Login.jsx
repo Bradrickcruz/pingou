@@ -18,19 +18,19 @@ export function Login({ onLogin }) {
       });
 
       if (res.status === 401) {
-        setError("Invalid API key.");
+        setError("Chave de API inválida.");
         return;
       }
 
       if (!res.ok) {
-        setError("Could not connect to the API.");
+        setError("Não foi possível conectar à API.");
         return;
       }
 
       localStorage.setItem("pingou_api_key", key);
       onLogin(key);
     } catch {
-      setError("Could not connect to the API.");
+      setError("Não foi possível conectar à API.");
     } finally {
       setLoading(false);
     }
@@ -43,7 +43,7 @@ export function Login({ onLogin }) {
           <h1 className="my-0">
             <img src={marca} alt="Pingou" className="h-10 w-auto mx-auto" />
           </h1>
-          <p className="text-pg-caption text-pg-neblina mt-2">health checker</p>
+          <p className="text-pg-caption text-pg-neblina mt-2">monitor de saúde</p>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -52,24 +52,24 @@ export function Login({ onLogin }) {
               htmlFor="api-key"
               className="block mb-1.5 text-pg-caption font-medium text-pg-neblina"
             >
-              API Key
+              Chave de API
             </label>
             <input
               id="api-key"
               type="password"
               value={key}
               onChange={(e) => setKey(e.target.value)}
-              placeholder="Enter your API key"
+              placeholder="Digite sua chave de API"
               required
               autoFocus
               className="w-full px-3 py-2 rounded-pg-control text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda"
             />
           </div>
 
-          {error && <p className="text-pg-ui text-pg-down mb-3.5">{error}</p>}
+          {error && <p role="alert" className="text-pg-ui text-pg-down mb-3.5">{error}</p>}
 
           <Button type="submit" disabled={loading || !key} className="w-full">
-            {loading ? "Verifying..." : "Enter"}
+            {loading ? "Verificando..." : "Entrar"}
           </Button>
         </form>
       </div>

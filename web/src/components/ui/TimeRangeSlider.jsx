@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 function formatTime(seconds) {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -13,12 +15,14 @@ function formatTime(seconds) {
 }
 
 export function TimeRangeSlider({ label, value, onChange, min, max, step = 1 }) {
+  const id = useId();
   return (
     <div className="mb-3.5">
-      <label className="block mb-1.5 text-pg-caption font-medium text-pg-neblina">
+      <label htmlFor={id} className="block mb-1.5 text-pg-caption font-medium text-pg-neblina">
         {label}
       </label>
       <input
+        id={id}
         type="range"
         min={min}
         max={max}
