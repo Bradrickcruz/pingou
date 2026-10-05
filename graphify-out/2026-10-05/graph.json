@@ -311,6 +311,28 @@
       "source_location": "L1"
     },
     {
+      "id": "cmd_pingou_commands_serve_acquirelock",
+      "label": "acquireLock()",
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "serve.go",
+      "file_type": "code",
+      "norm_label": "acquirelock()",
+      "source_file": "cmd/pingou/commands/serve.go",
+      "source_location": "L141"
+    },
+    {
+      "id": "cmd_pingou_commands_serve_checkexistinglock",
+      "label": "checkExistingLock()",
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "serve.go",
+      "file_type": "code",
+      "norm_label": "checkexistinglock()",
+      "source_file": "cmd/pingou/commands/serve.go",
+      "source_location": "L171"
+    },
+    {
       "id": "cmd_pingou_commands_serve_init",
       "label": "init()",
       "_origin": "ast",
@@ -660,6 +682,17 @@
       "file_type": "code",
       "norm_label": "state_machine.go",
       "source_file": "internal/service/state_machine.go",
+      "source_location": "L1"
+    },
+    {
+      "id": "internal_service_state_machine_test",
+      "label": "state_machine_test.go",
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "serve.go",
+      "file_type": "code",
+      "norm_label": "state_machine_test.go",
+      "source_file": "internal/service/state_machine_test.go",
       "source_location": "L1"
     },
     {
@@ -1147,17 +1180,6 @@
       "source_location": "L15"
     },
     {
-      "id": "ref_react_dom",
-      "label": "react-dom",
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "main.jsx",
-      "file_type": "concept",
-      "norm_label": "react-dom",
-      "source_file": "web/package.json",
-      "source_location": "L16"
-    },
-    {
       "id": "ref_react_router_dom",
       "label": "react-router-dom",
       "_origin": "ast",
@@ -1378,17 +1400,6 @@
       "source_location": "L15"
     },
     {
-      "id": "domain_checkrepository_deleteolderthan",
-      "label": ".DeleteOlderThan()",
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "Check",
-      "file_type": "code",
-      "norm_label": ".deleteolderthan()",
-      "source_file": "internal/domain/repository.go",
-      "source_location": "L17"
-    },
-    {
       "id": "domain_checkrepository_findbymonitor",
       "label": ".FindByMonitor()",
       "_origin": "ast",
@@ -1400,15 +1411,15 @@
       "source_location": "L16"
     },
     {
-      "id": "handler_checkresponse",
-      "label": "checkResponse",
+      "id": "go_type_database_sql_tx",
+      "label": "database/sql.Tx",
       "_origin": "ast",
       "community": 11,
       "community_name": "Check",
       "file_type": "code",
-      "norm_label": "checkresponse",
-      "source_file": "internal/handler/checks.go",
-      "source_location": "L10"
+      "norm_label": "database/sql.tx",
+      "source_file": "",
+      "source_location": ""
     },
     {
       "id": "internal_domain_check_go_domain_check",
@@ -1422,72 +1433,6 @@
       "source_location": "L5"
     },
     {
-      "id": "internal_domain_repository_go_domain_checkrepository",
-      "label": "CheckRepository",
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "Check",
-      "file_type": "code",
-      "norm_label": "checkrepository",
-      "source_file": "internal/domain/repository.go",
-      "source_location": "L14"
-    },
-    {
-      "id": "internal_handler_checks_tocheckresponse",
-      "label": "toCheckResponse()",
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "Check",
-      "file_type": "code",
-      "norm_label": "tocheckresponse()",
-      "source_file": "internal/handler/checks.go",
-      "source_location": "L45"
-    },
-    {
-      "id": "internal_scheduler_retention_newretentionworker",
-      "label": "NewRetentionWorker()",
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "Check",
-      "file_type": "code",
-      "norm_label": "newretentionworker()",
-      "source_file": "internal/scheduler/retention.go",
-      "source_location": "L18"
-    },
-    {
-      "id": "repository_checkrepo",
-      "label": "CheckRepo",
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "Check",
-      "file_type": "code",
-      "norm_label": "checkrepo",
-      "source_file": "internal/repository/check_repo.go",
-      "source_location": "L11"
-    },
-    {
-      "id": "repository_checkrepo_create",
-      "label": ".Create()",
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "Check",
-      "file_type": "code",
-      "norm_label": ".create()",
-      "source_file": "internal/repository/check_repo.go",
-      "source_location": "L15"
-    },
-    {
-      "id": "repository_checkrepo_deleteolderthan",
-      "label": ".DeleteOlderThan()",
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "Check",
-      "file_type": "code",
-      "norm_label": ".deleteolderthan()",
-      "source_file": "internal/repository/check_repo.go",
-      "source_location": "L59"
-    },
-    {
       "id": "repository_checkrepo_findbymonitor",
       "label": ".FindByMonitor()",
       "_origin": "ast",
@@ -1497,6 +1442,17 @@
       "norm_label": ".findbymonitor()",
       "source_file": "internal/repository/check_repo.go",
       "source_location": "L25"
+    },
+    {
+      "id": "repository_checkrepotx_createwithtx",
+      "label": ".CreateWithTx()",
+      "_origin": "ast",
+      "community": 11,
+      "community_name": "Check",
+      "file_type": "code",
+      "norm_label": ".createwithtx()",
+      "source_file": "internal/repository/check_repo_tx.go",
+      "source_location": "L22"
     },
     {
       "id": "repository_checkrepotx_findbymonitor",
@@ -1510,48 +1466,15 @@
       "source_location": "L33"
     },
     {
-      "id": "scheduler_retentionworker",
-      "label": "RetentionWorker",
+      "id": "repository_incidentrepotx_close",
+      "label": ".Close()",
       "_origin": "ast",
       "community": 11,
       "community_name": "Check",
       "file_type": "code",
-      "norm_label": "retentionworker",
-      "source_file": "internal/scheduler/retention.go",
-      "source_location": "L13"
-    },
-    {
-      "id": "scheduler_retentionworker_purge",
-      "label": ".purge()",
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "Check",
-      "file_type": "code",
-      "norm_label": ".purge()",
-      "source_file": "internal/scheduler/retention.go",
-      "source_location": "L45"
-    },
-    {
-      "id": "scheduler_retentionworker_run",
-      "label": ".run()",
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "Check",
-      "file_type": "code",
-      "norm_label": ".run()",
-      "source_file": "internal/scheduler/retention.go",
-      "source_location": "L26"
-    },
-    {
-      "id": "scheduler_retentionworker_start",
-      "label": ".Start()",
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "Check",
-      "file_type": "code",
-      "norm_label": ".start()",
-      "source_file": "internal/scheduler/retention.go",
-      "source_location": "L22"
+      "norm_label": ".close()",
+      "source_file": "internal/repository/incident_repo_tx.go",
+      "source_location": "L41"
     },
     {
       "id": "service_checkrepositorytx",
@@ -1587,15 +1510,70 @@
       "source_location": "L38"
     },
     {
-      "id": "service_sqliteunitofwork_checkrepo",
-      "label": ".CheckRepo()",
+      "id": "service_checkrepowithtx",
+      "label": "checkRepoWithTx",
       "_origin": "ast",
       "community": 11,
       "community_name": "Check",
       "file_type": "code",
-      "norm_label": ".checkrepo()",
+      "norm_label": "checkrepowithtx",
       "source_file": "internal/service/unit_of_work_impl.go",
-      "source_location": "L61"
+      "source_location": "L74"
+    },
+    {
+      "id": "service_checkrepowithtx_createwithtx",
+      "label": ".CreateWithTx()",
+      "_origin": "ast",
+      "community": 11,
+      "community_name": "Check",
+      "file_type": "code",
+      "norm_label": ".createwithtx()",
+      "source_file": "internal/service/unit_of_work_impl.go",
+      "source_location": "L79"
+    },
+    {
+      "id": "service_checkrepowithtx_findbymonitor",
+      "label": ".FindByMonitor()",
+      "_origin": "ast",
+      "community": 11,
+      "community_name": "Check",
+      "file_type": "code",
+      "norm_label": ".findbymonitor()",
+      "source_file": "internal/service/unit_of_work_impl.go",
+      "source_location": "L83"
+    },
+    {
+      "id": "service_monitorrepowithtx",
+      "label": "monitorRepoWithTx",
+      "_origin": "ast",
+      "community": 11,
+      "community_name": "Check",
+      "file_type": "code",
+      "norm_label": "monitorrepowithtx",
+      "source_file": "internal/service/unit_of_work_impl.go",
+      "source_location": "L88"
+    },
+    {
+      "id": "service_monitorrepowithtx_findbyid",
+      "label": ".FindByID()",
+      "_origin": "ast",
+      "community": 11,
+      "community_name": "Check",
+      "file_type": "code",
+      "norm_label": ".findbyid()",
+      "source_file": "internal/service/unit_of_work_impl.go",
+      "source_location": "L97"
+    },
+    {
+      "id": "service_monitorrepowithtx_updatewithtx",
+      "label": ".UpdateWithTx()",
+      "_origin": "ast",
+      "community": 11,
+      "community_name": "Check",
+      "file_type": "code",
+      "norm_label": ".updatewithtx()",
+      "source_file": "internal/service/unit_of_work_impl.go",
+      "source_location": "L93"
     },
     {
       "id": "service_unitofwork_checkrepo",
@@ -1607,17 +1585,6 @@
       "norm_label": ".checkrepo()",
       "source_file": "internal/service/unit_of_work.go",
       "source_location": "L25"
-    },
-    {
-      "id": "go_type_database_sql_tx",
-      "label": "database/sql.Tx",
-      "_origin": "ast",
-      "community": 12,
-      "community_name": "boolToInt",
-      "file_type": "code",
-      "norm_label": "database/sql.tx",
-      "source_file": "",
-      "source_location": ""
     },
     {
       "id": "internal_repository_monitor_repo_booltoint",
@@ -1642,15 +1609,26 @@
       "source_location": "L146"
     },
     {
-      "id": "repository_checkrepotx_createwithtx",
-      "label": ".CreateWithTx()",
+      "id": "repository_checkrepo_create",
+      "label": ".Create()",
       "_origin": "ast",
       "community": 12,
       "community_name": "boolToInt",
       "file_type": "code",
-      "norm_label": ".createwithtx()",
-      "source_file": "internal/repository/check_repo_tx.go",
-      "source_location": "L22"
+      "norm_label": ".create()",
+      "source_file": "internal/repository/check_repo.go",
+      "source_location": "L15"
+    },
+    {
+      "id": "repository_incidentrepo_create",
+      "label": ".Create()",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "boolToInt",
+      "file_type": "code",
+      "norm_label": ".create()",
+      "source_file": "internal/repository/incident_repo.go",
+      "source_location": "L16"
     },
     {
       "id": "repository_incidentrepotx_createwithtx",
@@ -1662,6 +1640,50 @@
       "norm_label": ".createwithtx()",
       "source_file": "internal/repository/incident_repo_tx.go",
       "source_location": "L22"
+    },
+    {
+      "id": "repository_monitorrepo",
+      "label": "MonitorRepo",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "boolToInt",
+      "file_type": "code",
+      "norm_label": "monitorrepo",
+      "source_file": "internal/repository/monitor_repo.go",
+      "source_location": "L12"
+    },
+    {
+      "id": "repository_monitorrepo_count",
+      "label": ".Count()",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "boolToInt",
+      "file_type": "code",
+      "norm_label": ".count()",
+      "source_file": "internal/repository/monitor_repo.go",
+      "source_location": "L97"
+    },
+    {
+      "id": "repository_monitorrepo_create",
+      "label": ".Create()",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "boolToInt",
+      "file_type": "code",
+      "norm_label": ".create()",
+      "source_file": "internal/repository/monitor_repo.go",
+      "source_location": "L18"
+    },
+    {
+      "id": "repository_monitorrepo_delete",
+      "label": ".Delete()",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "boolToInt",
+      "file_type": "code",
+      "norm_label": ".delete()",
+      "source_file": "internal/repository/monitor_repo.go",
+      "source_location": "L92"
     },
     {
       "id": "repository_monitorrepo_update",
@@ -1686,116 +1708,6 @@
       "source_location": "L22"
     },
     {
-      "id": "service_checkrepowithtx",
-      "label": "checkRepoWithTx",
-      "_origin": "ast",
-      "community": 12,
-      "community_name": "boolToInt",
-      "file_type": "code",
-      "norm_label": "checkrepowithtx",
-      "source_file": "internal/service/unit_of_work_impl.go",
-      "source_location": "L74"
-    },
-    {
-      "id": "service_checkrepowithtx_createwithtx",
-      "label": ".CreateWithTx()",
-      "_origin": "ast",
-      "community": 12,
-      "community_name": "boolToInt",
-      "file_type": "code",
-      "norm_label": ".createwithtx()",
-      "source_file": "internal/service/unit_of_work_impl.go",
-      "source_location": "L79"
-    },
-    {
-      "id": "service_checkrepowithtx_findbymonitor",
-      "label": ".FindByMonitor()",
-      "_origin": "ast",
-      "community": 12,
-      "community_name": "boolToInt",
-      "file_type": "code",
-      "norm_label": ".findbymonitor()",
-      "source_file": "internal/service/unit_of_work_impl.go",
-      "source_location": "L83"
-    },
-    {
-      "id": "service_incidentrepowithtx",
-      "label": "incidentRepoWithTx",
-      "_origin": "ast",
-      "community": 12,
-      "community_name": "boolToInt",
-      "file_type": "code",
-      "norm_label": "incidentrepowithtx",
-      "source_file": "internal/service/unit_of_work_impl.go",
-      "source_location": "L102"
-    },
-    {
-      "id": "service_incidentrepowithtx_close",
-      "label": ".Close()",
-      "_origin": "ast",
-      "community": 12,
-      "community_name": "boolToInt",
-      "file_type": "code",
-      "norm_label": ".close()",
-      "source_file": "internal/service/unit_of_work_impl.go",
-      "source_location": "L115"
-    },
-    {
-      "id": "service_incidentrepowithtx_createwithtx",
-      "label": ".CreateWithTx()",
-      "_origin": "ast",
-      "community": 12,
-      "community_name": "boolToInt",
-      "file_type": "code",
-      "norm_label": ".createwithtx()",
-      "source_file": "internal/service/unit_of_work_impl.go",
-      "source_location": "L107"
-    },
-    {
-      "id": "service_incidentrepowithtx_findopenbymonitor",
-      "label": ".FindOpenByMonitor()",
-      "_origin": "ast",
-      "community": 12,
-      "community_name": "boolToInt",
-      "file_type": "code",
-      "norm_label": ".findopenbymonitor()",
-      "source_file": "internal/service/unit_of_work_impl.go",
-      "source_location": "L111"
-    },
-    {
-      "id": "service_monitorrepowithtx",
-      "label": "monitorRepoWithTx",
-      "_origin": "ast",
-      "community": 12,
-      "community_name": "boolToInt",
-      "file_type": "code",
-      "norm_label": "monitorrepowithtx",
-      "source_file": "internal/service/unit_of_work_impl.go",
-      "source_location": "L88"
-    },
-    {
-      "id": "service_monitorrepowithtx_findbyid",
-      "label": ".FindByID()",
-      "_origin": "ast",
-      "community": 12,
-      "community_name": "boolToInt",
-      "file_type": "code",
-      "norm_label": ".findbyid()",
-      "source_file": "internal/service/unit_of_work_impl.go",
-      "source_location": "L97"
-    },
-    {
-      "id": "service_monitorrepowithtx_updatewithtx",
-      "label": ".UpdateWithTx()",
-      "_origin": "ast",
-      "community": 12,
-      "community_name": "boolToInt",
-      "file_type": "code",
-      "norm_label": ".updatewithtx()",
-      "source_file": "internal/service/unit_of_work_impl.go",
-      "source_location": "L93"
-    },
-    {
       "id": "checker_httpchecker",
       "label": "HTTPChecker",
       "_origin": "ast",
@@ -1805,17 +1717,6 @@
       "norm_label": "httpchecker",
       "source_file": "internal/checker/http_checker.go",
       "source_location": "L12"
-    },
-    {
-      "id": "checker_httpchecker_check",
-      "label": ".Check()",
-      "_origin": "ast",
-      "community": 13,
-      "community_name": "WebhookNotifier",
-      "file_type": "code",
-      "norm_label": ".check()",
-      "source_file": "internal/checker/http_checker.go",
-      "source_location": "L36"
     },
     {
       "id": "go_type_net_http_client",
@@ -1838,17 +1739,6 @@
       "norm_label": "newhttpchecker()",
       "source_file": "internal/checker/http_checker.go",
       "source_location": "L16"
-    },
-    {
-      "id": "internal_service_notifier_newwebhooknotifier",
-      "label": "NewWebhookNotifier()",
-      "_origin": "ast",
-      "community": 13,
-      "community_name": "WebhookNotifier",
-      "file_type": "code",
-      "norm_label": "newwebhooknotifier()",
-      "source_file": "internal/service/notifier.go",
-      "source_location": "L25"
     },
     {
       "id": "service_webhooknotifier",
@@ -1994,17 +1884,6 @@
       "source_location": "L43"
     },
     {
-      "id": "service_sqliteunitofwork_monitorrepo",
-      "label": ".MonitorRepo()",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "UnitOfWork",
-      "file_type": "code",
-      "norm_label": ".monitorrepo()",
-      "source_file": "internal/service/unit_of_work_impl.go",
-      "source_location": "L65"
-    },
-    {
       "id": "service_unitofwork",
       "label": "UnitOfWork",
       "_origin": "ast",
@@ -2071,26 +1950,312 @@
       "source_location": "L22"
     },
     {
-      "id": "tailwindcss",
-      "label": "tailwindcss",
+      "id": "domain_checkrepository_deleteolderthan",
+      "label": ".DeleteOlderThan()",
       "_origin": "ast",
-      "community": 18,
-      "community_name": "tailwindcss",
-      "confidence": "EXTRACTED",
+      "community": 16,
+      "community_name": "Server",
       "file_type": "code",
-      "norm_label": "tailwindcss",
-      "source_file": "tailwindcss"
+      "norm_label": ".deleteolderthan()",
+      "source_file": "internal/domain/repository.go",
+      "source_location": "L17"
+    },
+    {
+      "id": "go_type_net_http_servemux",
+      "label": "net/http.ServeMux",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": "net/http.servemux",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "go_type_net_http_server",
+      "label": "net/http.Server",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": "net/http.server",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "handler_server_registerroutes",
+      "label": ".registerRoutes()",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": ".registerroutes()",
+      "source_file": "internal/handler/server.go",
+      "source_location": "L66"
+    },
+    {
+      "id": "handler_server_shutdown",
+      "label": ".Shutdown()",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": ".shutdown()",
+      "source_file": "internal/handler/server.go",
+      "source_location": "L59"
+    },
+    {
+      "id": "handler_updatesettingsrequest",
+      "label": "updateSettingsRequest",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": "updatesettingsrequest",
+      "source_file": "internal/handler/settings.go",
+      "source_location": "L10"
+    },
+    {
+      "id": "internal_domain_repository_go_domain_checkrepository",
+      "label": "CheckRepository",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": "checkrepository",
+      "source_file": "internal/domain/repository.go",
+      "source_location": "L14"
+    },
+    {
+      "id": "internal_handler_server_go_handler_server",
+      "label": "Server",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": "server",
+      "source_file": "internal/handler/server.go",
+      "source_location": "L14"
+    },
+    {
+      "id": "internal_handler_server_newserver",
+      "label": "NewServer()",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": "newserver()",
+      "source_file": "internal/handler/server.go",
+      "source_location": "L24"
+    },
+    {
+      "id": "internal_handler_settings_toupdatesettingsinput",
+      "label": "toUpdateSettingsInput()",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": "toupdatesettingsinput()",
+      "source_file": "internal/handler/settings.go",
+      "source_location": "L40"
+    },
+    {
+      "id": "internal_repository_settings_repo_go_repository_settingsrepo",
+      "label": "SettingsRepo",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": "settingsrepo",
+      "source_file": "internal/repository/settings_repo.go",
+      "source_location": "L9"
+    },
+    {
+      "id": "internal_scheduler_retention_newretentionworker",
+      "label": "NewRetentionWorker()",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": "newretentionworker()",
+      "source_file": "internal/scheduler/retention.go",
+      "source_location": "L18"
+    },
+    {
+      "id": "internal_service_incident_service_go_service_incidentservice",
+      "label": "IncidentService",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": "incidentservice",
+      "source_file": "internal/service/incident_service.go",
+      "source_location": "L9"
+    },
+    {
+      "id": "internal_service_incident_service_newincidentservice",
+      "label": "NewIncidentService()",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": "newincidentservice()",
+      "source_file": "internal/service/incident_service.go",
+      "source_location": "L13"
+    },
+    {
+      "id": "internal_service_settings_service_go_service_settingsservice",
+      "label": "SettingsService",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": "settingsservice",
+      "source_file": "internal/service/settings_service.go",
+      "source_location": "L11"
+    },
+    {
+      "id": "internal_service_settings_service_go_service_updatesettingsinput",
+      "label": "UpdateSettingsInput",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": "updatesettingsinput",
+      "source_file": "internal/service/settings_service.go",
+      "source_location": "L24"
+    },
+    {
+      "id": "internal_service_settings_service_newsettingsservice",
+      "label": "NewSettingsService()",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": "newsettingsservice()",
+      "source_file": "internal/service/settings_service.go",
+      "source_location": "L15"
+    },
+    {
+      "id": "repository_settingsrepo_get",
+      "label": ".Get()",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": ".get()",
+      "source_file": "internal/repository/settings_repo.go",
+      "source_location": "L13"
+    },
+    {
+      "id": "repository_settingsrepo_set",
+      "label": ".Set()",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": ".set()",
+      "source_file": "internal/repository/settings_repo.go",
+      "source_location": "L22"
+    },
+    {
+      "id": "scheduler_retentionworker",
+      "label": "RetentionWorker",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": "retentionworker",
+      "source_file": "internal/scheduler/retention.go",
+      "source_location": "L13"
+    },
+    {
+      "id": "scheduler_retentionworker_purge",
+      "label": ".purge()",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": ".purge()",
+      "source_file": "internal/scheduler/retention.go",
+      "source_location": "L45"
+    },
+    {
+      "id": "scheduler_retentionworker_run",
+      "label": ".run()",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": ".run()",
+      "source_file": "internal/scheduler/retention.go",
+      "source_location": "L26"
+    },
+    {
+      "id": "scheduler_retentionworker_start",
+      "label": ".Start()",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": ".start()",
+      "source_file": "internal/scheduler/retention.go",
+      "source_location": "L22"
+    },
+    {
+      "id": "service_settings",
+      "label": "Settings",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": "settings",
+      "source_file": "internal/service/settings_service.go",
+      "source_location": "L19"
+    },
+    {
+      "id": "service_settingsservice_get",
+      "label": ".Get()",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": ".get()",
+      "source_file": "internal/service/settings_service.go",
+      "source_location": "L29"
+    },
+    {
+      "id": "service_settingsservice_update",
+      "label": ".Update()",
+      "_origin": "ast",
+      "community": 16,
+      "community_name": "Server",
+      "file_type": "code",
+      "norm_label": ".update()",
+      "source_file": "internal/service/settings_service.go",
+      "source_location": "L49"
     },
     {
       "id": "web_tailwind_config",
       "label": "tailwind.config.js",
       "_origin": "ast",
       "community": 18,
-      "community_name": "tailwindcss",
+      "community_name": "tailwind.config.js",
       "file_type": "code",
       "norm_label": "tailwind.config.js",
       "source_file": "web/tailwind.config.js",
       "source_location": "L1"
+    },
+    {
+      "id": "checkrepositorytx",
+      "label": "CheckRepositoryTx",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "database/sql.DB",
+      "file_type": "code",
+      "norm_label": "checkrepositorytx",
+      "source_file": "",
+      "source_location": ""
     },
     {
       "id": "cmd_pingou_commands_add_runadd",
@@ -2214,28 +2379,6 @@
       "source_location": "L39"
     },
     {
-      "id": "cmd_pingou_commands_serve_acquirelock",
-      "label": "acquireLock()",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "database/sql.DB",
-      "file_type": "code",
-      "norm_label": "acquirelock()",
-      "source_file": "cmd/pingou/commands/serve.go",
-      "source_location": "L141"
-    },
-    {
-      "id": "cmd_pingou_commands_serve_checkexistinglock",
-      "label": "checkExistingLock()",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "database/sql.DB",
-      "file_type": "code",
-      "norm_label": "checkexistinglock()",
-      "source_file": "cmd/pingou/commands/serve.go",
-      "source_location": "L171"
-    },
-    {
       "id": "cmd_pingou_commands_serve_releaselock",
       "label": "releaseLock()",
       "_origin": "ast",
@@ -2291,6 +2434,17 @@
       "source_location": ""
     },
     {
+      "id": "go_type_testing_t",
+      "label": "testing.T",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "database/sql.DB",
+      "file_type": "code",
+      "norm_label": "testing.t",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
       "id": "handler_exporthandler",
       "label": "ExportHandler",
       "_origin": "ast",
@@ -2300,6 +2454,17 @@
       "norm_label": "exporthandler",
       "source_file": "internal/handler/export.go",
       "source_location": "L13"
+    },
+    {
+      "id": "incidentrepositorytx",
+      "label": "IncidentRepositoryTx",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "database/sql.DB",
+      "file_type": "code",
+      "norm_label": "incidentrepositorytx",
+      "source_file": "",
+      "source_location": ""
     },
     {
       "id": "internal_config_config",
@@ -2577,17 +2742,6 @@
       "source_location": "L17"
     },
     {
-      "id": "internal_repository_settings_repo_go_repository_settingsrepo",
-      "label": "SettingsRepo",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "database/sql.DB",
-      "file_type": "code",
-      "norm_label": "settingsrepo",
-      "source_file": "internal/repository/settings_repo.go",
-      "source_location": "L9"
-    },
-    {
       "id": "internal_repository_settings_repo_newsettingsrepo",
       "label": "NewSettingsRepo()",
       "_origin": "ast",
@@ -2621,15 +2775,37 @@
       "source_location": "L24"
     },
     {
-      "id": "internal_service_settings_service_newsettingsservice",
-      "label": "NewSettingsService()",
+      "id": "internal_service_notifier_newwebhooknotifier",
+      "label": "NewWebhookNotifier()",
       "_origin": "ast",
       "community": 2,
       "community_name": "database/sql.DB",
       "file_type": "code",
-      "norm_label": "newsettingsservice()",
-      "source_file": "internal/service/settings_service.go",
-      "source_location": "L15"
+      "norm_label": "newwebhooknotifier()",
+      "source_file": "internal/service/notifier.go",
+      "source_location": "L25"
+    },
+    {
+      "id": "internal_service_state_machine_test_testfailingmonitorgoesdown",
+      "label": "TestFailingMonitorGoesDown()",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "database/sql.DB",
+      "file_type": "code",
+      "norm_label": "testfailingmonitorgoesdown()",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L22"
+    },
+    {
+      "id": "internal_service_unit_of_work_impl_go_unitofwork",
+      "label": "UnitOfWork",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "database/sql.DB",
+      "file_type": "code",
+      "norm_label": "unitofwork",
+      "source_file": "",
+      "source_location": ""
     },
     {
       "id": "internal_service_unit_of_work_impl_newunitofwork",
@@ -2643,37 +2819,37 @@
       "source_location": "L22"
     },
     {
-      "id": "repository_incidentrepotx_close",
-      "label": ".Close()",
+      "id": "monitorrepositorytx",
+      "label": "MonitorRepositoryTx",
       "_origin": "ast",
       "community": 2,
       "community_name": "database/sql.DB",
       "file_type": "code",
-      "norm_label": ".close()",
-      "source_file": "internal/repository/incident_repo_tx.go",
-      "source_location": "L41"
+      "norm_label": "monitorrepositorytx",
+      "source_file": "",
+      "source_location": ""
     },
     {
-      "id": "repository_settingsrepo_get",
-      "label": ".Get()",
+      "id": "repository_checkrepo",
+      "label": "CheckRepo",
       "_origin": "ast",
       "community": 2,
       "community_name": "database/sql.DB",
       "file_type": "code",
-      "norm_label": ".get()",
-      "source_file": "internal/repository/settings_repo.go",
-      "source_location": "L13"
+      "norm_label": "checkrepo",
+      "source_file": "internal/repository/check_repo.go",
+      "source_location": "L11"
     },
     {
-      "id": "repository_settingsrepo_set",
-      "label": ".Set()",
+      "id": "repository_checkrepo_deleteolderthan",
+      "label": ".DeleteOlderThan()",
       "_origin": "ast",
       "community": 2,
       "community_name": "database/sql.DB",
       "file_type": "code",
-      "norm_label": ".set()",
-      "source_file": "internal/repository/settings_repo.go",
-      "source_location": "L22"
+      "norm_label": ".deleteolderthan()",
+      "source_file": "internal/repository/check_repo.go",
+      "source_location": "L59"
     },
     {
       "id": "service_sqliteunitofwork",
@@ -2698,6 +2874,17 @@
       "source_location": "L31"
     },
     {
+      "id": "service_sqliteunitofwork_checkrepo",
+      "label": ".CheckRepo()",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "database/sql.DB",
+      "file_type": "code",
+      "norm_label": ".checkrepo()",
+      "source_file": "internal/service/unit_of_work_impl.go",
+      "source_location": "L61"
+    },
+    {
       "id": "service_sqliteunitofwork_commit",
       "label": ".Commit()",
       "_origin": "ast",
@@ -2707,6 +2894,28 @@
       "norm_label": ".commit()",
       "source_file": "internal/service/unit_of_work_impl.go",
       "source_location": "L43"
+    },
+    {
+      "id": "service_sqliteunitofwork_incidentrepo",
+      "label": ".IncidentRepo()",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "database/sql.DB",
+      "file_type": "code",
+      "norm_label": ".incidentrepo()",
+      "source_file": "internal/service/unit_of_work_impl.go",
+      "source_location": "L69"
+    },
+    {
+      "id": "service_sqliteunitofwork_monitorrepo",
+      "label": ".MonitorRepo()",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "database/sql.DB",
+      "file_type": "code",
+      "norm_label": ".monitorrepo()",
+      "source_file": "internal/service/unit_of_work_impl.go",
+      "source_location": "L65"
     },
     {
       "id": "service_sqliteunitofwork_rollback",
@@ -3162,6 +3371,17 @@
       "source_location": "L29"
     },
     {
+      "id": "ref_react_dom",
+      "label": "react-dom",
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "package.json",
+      "file_type": "concept",
+      "norm_label": "react-dom",
+      "source_file": "web/package.json",
+      "source_location": "L16"
+    },
+    {
       "id": "ref_tailwindcss",
       "label": "tailwindcss",
       "_origin": "ast",
@@ -3481,26 +3701,15 @@
       "source_location": ""
     },
     {
-      "id": "internal_service_notifier_go_service_notifier",
-      "label": "Notifier",
+      "id": "internal_domain_checker_go_domain_checker",
+      "label": "Checker",
       "_origin": "ast",
       "community": 4,
       "community_name": "Scheduler",
       "file_type": "code",
-      "norm_label": "notifier",
-      "source_file": "internal/service/notifier.go",
-      "source_location": "L14"
-    },
-    {
-      "id": "internal_service_state_machine_newstatemachine",
-      "label": "NewStateMachine()",
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "Scheduler",
-      "file_type": "code",
-      "norm_label": "newstatemachine()",
-      "source_file": "internal/service/state_machine.go",
-      "source_location": "L16"
+      "norm_label": "checker",
+      "source_file": "internal/domain/checker.go",
+      "source_location": "L12"
     },
     {
       "id": "scheduler_job",
@@ -3600,28 +3809,6 @@
       "norm_label": ".stopjob()",
       "source_file": "internal/scheduler/scheduler.go",
       "source_location": "L101"
-    },
-    {
-      "id": "service_notifier_notifydown",
-      "label": ".NotifyDown()",
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "Scheduler",
-      "file_type": "code",
-      "norm_label": ".notifydown()",
-      "source_file": "internal/service/notifier.go",
-      "source_location": "L15"
-    },
-    {
-      "id": "service_notifier_notifyrecovery",
-      "label": ".NotifyRecovery()",
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "Scheduler",
-      "file_type": "code",
-      "norm_label": ".notifyrecovery()",
-      "source_file": "internal/service/notifier.go",
-      "source_location": "L16"
     },
     {
       "id": "design",
@@ -3886,6 +4073,17 @@
       "source_location": ""
     },
     {
+      "id": "handler_checkresponse",
+      "label": "checkResponse",
+      "_origin": "ast",
+      "community": 6,
+      "community_name": "net/http.ResponseWriter",
+      "file_type": "code",
+      "norm_label": "checkresponse",
+      "source_file": "internal/handler/checks.go",
+      "source_location": "L10"
+    },
+    {
       "id": "handler_incidentresponse",
       "label": "incidentResponse",
       "_origin": "ast",
@@ -4051,6 +4249,17 @@
       "source_location": "L20"
     },
     {
+      "id": "internal_handler_checks_tocheckresponse",
+      "label": "toCheckResponse()",
+      "_origin": "ast",
+      "community": 6,
+      "community_name": "net/http.ResponseWriter",
+      "file_type": "code",
+      "norm_label": "tocheckresponse()",
+      "source_file": "internal/handler/checks.go",
+      "source_location": "L45"
+    },
+    {
       "id": "internal_handler_export_go_handler_server",
       "label": "Server",
       "_origin": "ast",
@@ -4194,28 +4403,6 @@
       "source_location": ""
     },
     {
-      "id": "go_type_net_http_servemux",
-      "label": "net/http.ServeMux",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": "net/http.servemux",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "go_type_net_http_server",
-      "label": "net/http.Server",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": "net/http.server",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
       "id": "handler_responsewriter",
       "label": "responseWriter",
       "_origin": "ast",
@@ -4260,28 +4447,6 @@
       "source_location": "L98"
     },
     {
-      "id": "handler_server_registerroutes",
-      "label": ".registerRoutes()",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": ".registerroutes()",
-      "source_file": "internal/handler/server.go",
-      "source_location": "L66"
-    },
-    {
-      "id": "handler_server_shutdown",
-      "label": ".Shutdown()",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": ".shutdown()",
-      "source_file": "internal/handler/server.go",
-      "source_location": "L59"
-    },
-    {
       "id": "handler_server_start",
       "label": ".Start()",
       "_origin": "ast",
@@ -4291,17 +4456,6 @@
       "norm_label": ".start()",
       "source_file": "internal/handler/server.go",
       "source_location": "L43"
-    },
-    {
-      "id": "handler_updatesettingsrequest",
-      "label": "updateSettingsRequest",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": "updatesettingsrequest",
-      "source_file": "internal/handler/settings.go",
-      "source_location": "L10"
     },
     {
       "id": "internal_handler_middleware",
@@ -4370,39 +4524,6 @@
       "source_location": "L72"
     },
     {
-      "id": "internal_handler_server_go_handler_server",
-      "label": "Server",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": "server",
-      "source_file": "internal/handler/server.go",
-      "source_location": "L14"
-    },
-    {
-      "id": "internal_handler_server_newserver",
-      "label": "NewServer()",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": "newserver()",
-      "source_file": "internal/handler/server.go",
-      "source_location": "L24"
-    },
-    {
-      "id": "internal_handler_settings_toupdatesettingsinput",
-      "label": "toUpdateSettingsInput()",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": "toupdatesettingsinput()",
-      "source_file": "internal/handler/settings.go",
-      "source_location": "L40"
-    },
-    {
       "id": "internal_handler_spa",
       "label": "spa.go",
       "_origin": "ast",
@@ -4425,59 +4546,15 @@
       "source_location": "L12"
     },
     {
-      "id": "internal_service_settings_service_go_service_settingsservice",
-      "label": "SettingsService",
+      "id": "checker_httpchecker_check",
+      "label": ".Check()",
       "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
+      "community": 8,
+      "community_name": "Monitor",
       "file_type": "code",
-      "norm_label": "settingsservice",
-      "source_file": "internal/service/settings_service.go",
-      "source_location": "L11"
-    },
-    {
-      "id": "internal_service_settings_service_go_service_updatesettingsinput",
-      "label": "UpdateSettingsInput",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": "updatesettingsinput",
-      "source_file": "internal/service/settings_service.go",
-      "source_location": "L24"
-    },
-    {
-      "id": "service_settings",
-      "label": "Settings",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": "settings",
-      "source_file": "internal/service/settings_service.go",
-      "source_location": "L19"
-    },
-    {
-      "id": "service_settingsservice_get",
-      "label": ".Get()",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": ".get()",
-      "source_file": "internal/service/settings_service.go",
-      "source_location": "L29"
-    },
-    {
-      "id": "service_settingsservice_update",
-      "label": ".Update()",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "middleware.go",
-      "file_type": "code",
-      "norm_label": ".update()",
-      "source_file": "internal/service/settings_service.go",
-      "source_location": "L49"
+      "norm_label": ".check()",
+      "source_file": "internal/checker/http_checker.go",
+      "source_location": "L36"
     },
     {
       "id": "domain_checker_check",
@@ -4511,17 +4588,6 @@
       "norm_label": "time.time",
       "source_file": "",
       "source_location": ""
-    },
-    {
-      "id": "internal_domain_checker_go_domain_checker",
-      "label": "Checker",
-      "_origin": "ast",
-      "community": 8,
-      "community_name": "Monitor",
-      "file_type": "code",
-      "norm_label": "checker",
-      "source_file": "internal/domain/checker.go",
-      "source_location": "L12"
     },
     {
       "id": "internal_domain_checker_go_domain_checkresult",
@@ -4579,48 +4645,37 @@
       "source_location": "L109"
     },
     {
-      "id": "repository_monitorrepo",
-      "label": "MonitorRepo",
+      "id": "internal_service_state_machine_go_unitofwork",
+      "label": "UnitOfWork",
       "_origin": "ast",
       "community": 8,
       "community_name": "Monitor",
       "file_type": "code",
-      "norm_label": "monitorrepo",
-      "source_file": "internal/repository/monitor_repo.go",
-      "source_location": "L12"
+      "norm_label": "unitofwork",
+      "source_file": "",
+      "source_location": ""
     },
     {
-      "id": "repository_monitorrepo_count",
-      "label": ".Count()",
+      "id": "internal_service_state_machine_newstatemachine",
+      "label": "NewStateMachine()",
       "_origin": "ast",
       "community": 8,
       "community_name": "Monitor",
       "file_type": "code",
-      "norm_label": ".count()",
-      "source_file": "internal/repository/monitor_repo.go",
-      "source_location": "L97"
+      "norm_label": "newstatemachine()",
+      "source_file": "internal/service/state_machine.go",
+      "source_location": "L16"
     },
     {
-      "id": "repository_monitorrepo_create",
-      "label": ".Create()",
+      "id": "notifier",
+      "label": "Notifier",
       "_origin": "ast",
       "community": 8,
       "community_name": "Monitor",
       "file_type": "code",
-      "norm_label": ".create()",
-      "source_file": "internal/repository/monitor_repo.go",
-      "source_location": "L18"
-    },
-    {
-      "id": "repository_monitorrepo_delete",
-      "label": ".Delete()",
-      "_origin": "ast",
-      "community": 8,
-      "community_name": "Monitor",
-      "file_type": "code",
-      "norm_label": ".delete()",
-      "source_file": "internal/repository/monitor_repo.go",
-      "source_location": "L92"
+      "norm_label": "notifier",
+      "source_file": "",
+      "source_location": ""
     },
     {
       "id": "repository_monitorrepo_findall",
@@ -4843,26 +4898,15 @@
       "source_location": "L89"
     },
     {
-      "id": "internal_service_incident_service_go_service_incidentservice",
-      "label": "IncidentService",
+      "id": "internal_service_notifier_go_service_notifier",
+      "label": "Notifier",
       "_origin": "ast",
       "community": 9,
       "community_name": "context.Context",
       "file_type": "code",
-      "norm_label": "incidentservice",
-      "source_file": "internal/service/incident_service.go",
-      "source_location": "L9"
-    },
-    {
-      "id": "internal_service_incident_service_newincidentservice",
-      "label": "NewIncidentService()",
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "context.Context",
-      "file_type": "code",
-      "norm_label": "newincidentservice()",
-      "source_file": "internal/service/incident_service.go",
-      "source_location": "L13"
+      "norm_label": "notifier",
+      "source_file": "internal/service/notifier.go",
+      "source_location": "L14"
     },
     {
       "id": "repository_incidentrepo",
@@ -4885,17 +4929,6 @@
       "norm_label": ".close()",
       "source_file": "internal/repository/incident_repo.go",
       "source_location": "L33"
-    },
-    {
-      "id": "repository_incidentrepo_create",
-      "label": ".Create()",
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "context.Context",
-      "file_type": "code",
-      "norm_label": ".create()",
-      "source_file": "internal/repository/incident_repo.go",
-      "source_location": "L16"
     },
     {
       "id": "repository_incidentrepo_findall",
@@ -4997,6 +5030,50 @@
       "source_location": "L50"
     },
     {
+      "id": "service_incidentrepowithtx",
+      "label": "incidentRepoWithTx",
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "context.Context",
+      "file_type": "code",
+      "norm_label": "incidentrepowithtx",
+      "source_file": "internal/service/unit_of_work_impl.go",
+      "source_location": "L102"
+    },
+    {
+      "id": "service_incidentrepowithtx_close",
+      "label": ".Close()",
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "context.Context",
+      "file_type": "code",
+      "norm_label": ".close()",
+      "source_file": "internal/service/unit_of_work_impl.go",
+      "source_location": "L115"
+    },
+    {
+      "id": "service_incidentrepowithtx_createwithtx",
+      "label": ".CreateWithTx()",
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "context.Context",
+      "file_type": "code",
+      "norm_label": ".createwithtx()",
+      "source_file": "internal/service/unit_of_work_impl.go",
+      "source_location": "L107"
+    },
+    {
+      "id": "service_incidentrepowithtx_findopenbymonitor",
+      "label": ".FindOpenByMonitor()",
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "context.Context",
+      "file_type": "code",
+      "norm_label": ".findopenbymonitor()",
+      "source_file": "internal/service/unit_of_work_impl.go",
+      "source_location": "L111"
+    },
+    {
       "id": "service_incidentservice_list",
       "label": ".List()",
       "_origin": "ast",
@@ -5019,15 +5096,59 @@
       "source_location": "L21"
     },
     {
-      "id": "service_sqliteunitofwork_incidentrepo",
-      "label": ".IncidentRepo()",
+      "id": "service_noopnotifier",
+      "label": "noopNotifier",
       "_origin": "ast",
       "community": 9,
       "community_name": "context.Context",
       "file_type": "code",
-      "norm_label": ".incidentrepo()",
-      "source_file": "internal/service/unit_of_work_impl.go",
-      "source_location": "L69"
+      "norm_label": "noopnotifier",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L15"
+    },
+    {
+      "id": "service_noopnotifier_notifydown",
+      "label": ".NotifyDown()",
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "context.Context",
+      "file_type": "code",
+      "norm_label": ".notifydown()",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L17"
+    },
+    {
+      "id": "service_noopnotifier_notifyrecovery",
+      "label": ".NotifyRecovery()",
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "context.Context",
+      "file_type": "code",
+      "norm_label": ".notifyrecovery()",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L18"
+    },
+    {
+      "id": "service_notifier_notifydown",
+      "label": ".NotifyDown()",
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "context.Context",
+      "file_type": "code",
+      "norm_label": ".notifydown()",
+      "source_file": "internal/service/notifier.go",
+      "source_location": "L15"
+    },
+    {
+      "id": "service_notifier_notifyrecovery",
+      "label": ".NotifyRecovery()",
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "context.Context",
+      "file_type": "code",
+      "norm_label": ".notifyrecovery()",
+      "source_file": "internal/service/notifier.go",
+      "source_location": "L16"
     },
     {
       "id": "divergencias_prd_implementacao",
@@ -5579,6 +5700,17 @@
       "external": true,
       "file_type": "concept",
       "norm_label": "go_pkg_runtime_debug",
+      "source_file": "",
+      "type": "external"
+    },
+    {
+      "id": "go_pkg_testing",
+      "label": "go_pkg_testing",
+      "community": 0,
+      "community_name": "serve.go",
+      "external": true,
+      "file_type": "concept",
+      "norm_label": "go_pkg_testing",
       "source_file": "",
       "type": "external"
     }
@@ -6482,6 +6614,90 @@
       "context": "call",
       "source_file": "internal/repository/monitor_repo.go",
       "source_location": "L128",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test_testfailingmonitorgoesdown",
+      "target": "internal_database_database_open",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test_testfailingmonitorgoesdown",
+      "target": "internal_repository_monitor_repo_newmonitorrepo",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test_testfailingmonitorgoesdown",
+      "target": "internal_repository_check_repo_tx_newcheckrepotx",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test_testfailingmonitorgoesdown",
+      "target": "internal_repository_incident_repo_tx_newincidentrepotx",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test_testfailingmonitorgoesdown",
+      "target": "internal_repository_monitor_repo_tx_newmonitorrepotx",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test_testfailingmonitorgoesdown",
+      "target": "internal_service_unit_of_work_impl_newunitofwork",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test_testfailingmonitorgoesdown",
+      "target": "internal_service_state_machine_newstatemachine",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L43",
       "weight": 1.0
     },
     {
@@ -7782,7 +7998,7 @@
     },
     {
       "source": "service_statemachine",
-      "target": "service_unitofwork",
+      "target": "internal_service_state_machine_go_unitofwork",
       "relation": "references",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -7794,7 +8010,7 @@
     },
     {
       "source": "service_statemachine",
-      "target": "internal_service_notifier_go_service_notifier",
+      "target": "notifier",
       "relation": "references",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -12989,6 +13205,330 @@
       "weight": 1.0
     },
     {
+      "source": "internal_service_state_machine_test",
+      "target": "internal_domain_check",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "internal_domain_checker",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "internal_domain_incident",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "internal_domain_monitor",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "internal_domain_repository",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "internal_repository_check_repo",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "internal_repository_check_repo_tx",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "internal_repository_incident_repo",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "internal_repository_incident_repo_tx",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "internal_repository_monitor_repo",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "internal_repository_monitor_repo_tx",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "internal_repository_settings_repo",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "internal_service_errors",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "internal_service_incident_service",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "internal_service_monitor_service",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "internal_service_notifier",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "internal_service_settings_service",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "internal_service_state_machine",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "internal_service_unit_of_work",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "internal_service_unit_of_work_impl",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "internal_service_uuid",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "internal_service_validate",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "go_pkg_context",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "go_pkg_path_filepath",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "go_pkg_testing",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "go_pkg_time",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "internal_database_database",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
       "source": "internal_service_unit_of_work",
       "target": "go_pkg_context",
       "relation": "imports_from",
@@ -15318,7 +15858,7 @@
     },
     {
       "source": "internal_service_state_machine_newstatemachine",
-      "target": "internal_service_notifier_go_service_notifier",
+      "target": "internal_service_state_machine_go_unitofwork",
       "relation": "references",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -15330,7 +15870,7 @@
     },
     {
       "source": "internal_service_state_machine_newstatemachine",
-      "target": "service_unitofwork",
+      "target": "notifier",
       "relation": "references",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -15338,6 +15878,18 @@
       "context": "parameter_type",
       "source_file": "internal/service/state_machine.go",
       "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test_testfailingmonitorgoesdown",
+      "target": "go_type_testing_t",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "parameter_type",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L22",
       "weight": 1.0
     },
     {
@@ -15521,6 +16073,18 @@
       "weight": 1.0
     },
     {
+      "source": "repository_checkrepotx_findbymonitor",
+      "target": "go_type_database_sql_tx",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "parameter_type",
+      "source_file": "internal/repository/check_repo_tx.go",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
       "source": "repository_incidentrepo_close",
       "target": "go_type_context_context",
       "relation": "references",
@@ -15617,6 +16181,18 @@
       "weight": 1.0
     },
     {
+      "source": "repository_incidentrepotx_close",
+      "target": "go_type_database_sql_tx",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "parameter_type",
+      "source_file": "internal/repository/incident_repo_tx.go",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
       "source": "repository_incidentrepotx_createwithtx",
       "target": "go_type_context_context",
       "relation": "references",
@@ -15655,6 +16231,18 @@
     {
       "source": "repository_incidentrepotx_findopenbymonitor",
       "target": "go_type_context_context",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "parameter_type",
+      "source_file": "internal/repository/incident_repo_tx.go",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "repository_incidentrepotx_findopenbymonitor",
+      "target": "go_type_database_sql_tx",
       "relation": "references",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -16370,6 +16958,78 @@
       "context": "parameter_type",
       "source_file": "internal/service/monitor_service.go",
       "source_location": "L110",
+      "weight": 1.0
+    },
+    {
+      "source": "service_noopnotifier_notifydown",
+      "target": "go_type_context_context",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "parameter_type",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "service_noopnotifier_notifydown",
+      "target": "internal_domain_incident_go_domain_incident",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "parameter_type",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "service_noopnotifier_notifydown",
+      "target": "internal_domain_monitor_go_domain_monitor",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "parameter_type",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "service_noopnotifier_notifyrecovery",
+      "target": "go_type_context_context",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "parameter_type",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "service_noopnotifier_notifyrecovery",
+      "target": "internal_domain_incident_go_domain_incident",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "parameter_type",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "service_noopnotifier_notifyrecovery",
+      "target": "internal_domain_monitor_go_domain_monitor",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "parameter_type",
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L18",
       "weight": 1.0
     },
     {
@@ -17250,7 +17910,7 @@
     },
     {
       "source": "internal_service_unit_of_work_impl_newunitofwork",
-      "target": "service_unitofwork",
+      "target": "internal_service_unit_of_work_impl_go_unitofwork",
       "relation": "references",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -17562,7 +18222,7 @@
     },
     {
       "source": "service_sqliteunitofwork_checkrepo",
-      "target": "service_checkrepositorytx",
+      "target": "checkrepositorytx",
       "relation": "references",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -17574,7 +18234,7 @@
     },
     {
       "source": "service_sqliteunitofwork_incidentrepo",
-      "target": "service_incidentrepositorytx",
+      "target": "incidentrepositorytx",
       "relation": "references",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -17586,7 +18246,7 @@
     },
     {
       "source": "service_sqliteunitofwork_monitorrepo",
-      "target": "service_monitorrepositorytx",
+      "target": "monitorrepositorytx",
       "relation": "references",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -19195,6 +19855,28 @@
       "weight": 1.0
     },
     {
+      "source": "internal_service_state_machine_test",
+      "target": "service_noopnotifier",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "internal_service_state_machine_test",
+      "target": "internal_service_state_machine_test_testfailingmonitorgoesdown",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
       "source": "internal_service_unit_of_work",
       "target": "service_unitofwork",
       "relation": "contains",
@@ -20062,15 +20744,6 @@
       "source_file": "web/src/theme/globalStyles.js",
       "source_location": "L1",
       "weight": 1.0
-    },
-    {
-      "source": "web_tailwind_config",
-      "target": "tailwindcss",
-      "relation": "dynamic_import",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "web/tailwind.config.js"
     },
     {
       "source": "handler_responsewriter",
@@ -21151,6 +21824,28 @@
       "weight": 1.0
     },
     {
+      "source": "service_noopnotifier",
+      "target": "service_noopnotifier_notifydown",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "service_noopnotifier",
+      "target": "service_noopnotifier_notifyrecovery",
+      "relation": "method",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "internal/service/state_machine_test.go",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
       "source": "service_reloader",
       "target": "service_reloader_reload",
       "relation": "method",
@@ -21886,5 +22581,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "c8b5863a686b60b5c1597e1554a54630c306bf08"
+  "built_at_commit": "136084996f74b55461545c9d1a05427f4cbee3b9"
 }

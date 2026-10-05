@@ -80,14 +80,14 @@
   "internal/database/migrations/0001_init.sql": {
     "mtime": 1777012405.3893824,
     "seen": 1790220686.5525844,
-    "ast_hash": "cdf3d4043c780543a27d4cc148cf5555",
-    "semantic_hash": "cdf3d4043c780543a27d4cc148cf5555"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "internal/database/migrations/0002_add_duration_seconds_to_incidents.sql": {
     "mtime": 1777061129.9355462,
     "seen": 1790220686.5525858,
-    "ast_hash": "ab52761c5aed638df004b2cddba66e83",
-    "semantic_hash": "ab52761c5aed638df004b2cddba66e83"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "internal/domain/check.go": {
     "mtime": 1777013550.7437289,
