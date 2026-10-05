@@ -1,58 +1,80 @@
+@font-face {
+  font-family: 'Inter';
+  src: url('./assets/fonts/inter-latin-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('./assets/fonts/inter-latin-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Rubik';
+  src: url('./assets/fonts/rubik-latin-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Rubik';
+  src: url('./assets/fonts/rubik-latin-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
-
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --sans: Inter, system-ui, sans-serif;
+  --heading: Rubik, system-ui, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
+  color-scheme: light;
+  color: var(--pg-ardosia);
+  background: var(--pg-nuvem);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+:root {
+  /* marca */
+  --pg-ciano: #1E9BB3;
+  --pg-ciano-fundo: #146E80;
+  --pg-ciano-nevoa: #E3F2F5;
+
+  /* neutros */
+  --pg-ardosia: #1E2B33;
+  --pg-neblina: #5B6B75;
+  --pg-nuvem: #F3F7F8;
+  --pg-branco: #FFFFFF;
+  --pg-borda: #D9E3E6;
+
+  /* status — uso exclusivo para estado */
+  --pg-up: #1F8456;
+  --pg-up-bg: #E4F3EC;
+  --pg-down: #C93A46;
+  --pg-down-bg: #F8E6E8;
+  --pg-unknown: #5B6B75;
+  --pg-unknown-bg: #EDF1F3;
+}
+
 @media (max-width: 1024px) {
   :root {
     font-size: 16px;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
   }
 }
 
@@ -66,35 +88,22 @@
   }
 
   h1, h2 {
-    @apply font-[var(--heading)] font-medium text-[var(--text-h)];
+    @apply font-[var(--heading)] font-medium text-pg-ardosia;
   }
 
   h1 {
-    @apply text-[56px] tracking-[-1.68px] my-8;
+    @apply text-pg-h1;
   }
 
   h2 {
-    @apply text-[24px] leading-[118%] tracking-[-0.24px] mb-2;
+    @apply text-pg-h2;
   }
 
   p {
     @apply m-0;
   }
 
-  code, .counter {
-    @apply font-[var(--mono)] inline-flex rounded text-[var(--text-h)];
-  }
-
   code {
-    @apply text-[15px] leading-[135%] py-1 px-2 bg-[var(--code-bg)];
-  }
-}
-
-@media (max-width: 1024px) {
-  h1 {
-    @apply text-[36px] my-5;
-  }
-  h2 {
-    @apply text-[20px];
+    @apply font-mono inline-flex rounded text-pg-ciano-fundo text-pg-ui leading-[135%] py-1 px-2 bg-pg-ciano-nevoa;
   }
 }

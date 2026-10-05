@@ -1,8 +1,8 @@
 import { useState } from "react";
+import { Check, Download } from "lucide-react";
 import { useSettings } from "../hooks/useSettings";
 import { Button } from "../components/ui/Button";
 import { Spinner } from "../components/ui/Spinner";
-import { tokens as t } from "../theme/tokens";
 import { client } from "../api/client";
 
 export function Settings() {
@@ -59,151 +59,88 @@ export function Settings() {
 
   return (
     <div className="max-w-[480px]">
-      <h1 className="text-xl font-bold mb-6">Settings</h1>
+      <h1 className="text-pg-h1 font-medium text-pg-ardosia mb-6 my-0">Configurações</h1>
 
       <form onSubmit={handleSubmit}>
-        <div
-          className="p-6 rounded-md border flex flex-col gap-4.5"
-          style={{
-            background: t.colors.surface,
-            borderColor: t.colors.border,
-            borderRadius: t.radius.md,
-          }}
-        >
+        <div className="p-6 rounded-pg-card border border-pg-borda bg-pg-branco flex flex-col gap-4">
           <div>
-            <label
-              className="block mb-1.5 text-xs font-medium"
-              style={{
-                color: t.colors.textMuted,
-              }}
-            >
-              Webhook URL
+            <label htmlFor="webhook-url" className="block mb-1.5 text-pg-caption font-medium text-pg-neblina">
+              URL do webhook
             </label>
             <input
+              id="webhook-url"
               type="url"
               value={current.webhook_url ?? ""}
               onChange={(e) => set("webhook_url", e.target.value)}
-              placeholder="https://hooks.example.com/..."
-              className="w-full px-3 py-2 rounded text-sm bg-[var(--bg)] border border-[var(--border)] text-[var(--text-h)] focus:outline-none focus:border-[var(--accent)]"
+              placeholder="https://hooks.exemplo.com/..."
+              className="w-full px-3 py-2 rounded-pg-control text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda"
             />
-            <p
-              className="text-[11px] mt-1"
-              style={{
-                color: t.colors.textMuted,
-              }}
-            >
-              Receives <code>down</code> and <code>up</code> events.
+            <p className="text-pg-caption text-pg-neblina mt-1">
+              Recebe eventos <code>down</code> (fora do ar) e <code>up</code> (no ar).
             </p>
           </div>
 
-          <div>
-            <label
-              className="block mb-1.5 text-xs font-medium"
-              style={{
-                color: t.colors.textMuted,
-              }}
-            >
-              Retention (days)
-            </label>
+          <fieldset className="min-w-0 border-0 p-0 m-0">
+            <legend className="block mb-1.5 text-pg-caption font-medium text-pg-neblina">
+              Retenção (dias)
+            </legend>
             <div className="grid grid-cols-5 gap-2">
-              {[7, 14, 30, 60, 90].map((days) => (
-                <label
-                  key={days}
-                  className="flex items-center justify-center gap-2 py-2 rounded cursor-pointer border transition-colors"
-                  style={{
-                    background:
-                      current.retention_days === days
-                        ? t.colors.primary
-                        : t.colors.surface,
-                    borderColor:
-                      current.retention_days === days
-                        ? t.colors.primary
-                        : t.colors.border,
-                    color:
-                      current.retention_days === days
-                        ? "#fff"
-                        : t.colors.textPrimary,
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="retention_days"
-                    value={days}
-                    checked={current.retention_days === days}
-                    onChange={() => set("retention_days", days)}
-                    className="sr-only"
-                  />
-                  <span className="text-sm font-medium">{days}</span>
-                </label>
-              ))}
+              {[7, 14, 30, 60, 90].map((days) => {
+                const selected = current.retention_days === days;
+                return (
+                  <label
+                    key={days}
+                    className={`flex items-center justify-center py-2 rounded-pg-control border cursor-pointer transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline has-[:focus-visible]:outline-pg-ciano ${
+                      selected
+                        ? "bg-pg-ciano-nevoa border-pg-ciano-fundo text-pg-ciano-fundo font-medium"
+                        : "bg-pg-branco border-pg-borda text-pg-ardosia"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="retention_days"
+                      value={days}
+                      checked={selected}
+                      onChange={() => set("retention_days", days)}
+                      className="sr-only"
+                    />
+                    <span className="text-pg-ui">{days}</span>
+                  </label>
+                );
+              })}
             </div>
-            <p
-              className="text-[11px] mt-1.5"
-              style={{
-                color: t.colors.textMuted,
-              }}
-            >
-              Checks older than this are automatically deleted.
+            <p className="text-pg-caption text-pg-neblina mt-1.5">
+              Verificações mais antigas que isso são apagadas automaticamente.
             </p>
-          </div>
+          </fieldset>
 
-          {error && (
-            <p
-              className="text-sm"
-              style={{
-                color: t.colors.danger,
-              }}
-            >
-              {error}
-            </p>
-          )}
+          {error && <p role="alert" className="text-pg-ui text-pg-down">{error}</p>}
 
           <div className="flex items-center gap-3">
             <Button type="submit" disabled={saving}>
-              {saving ? "Saving..." : "Save Settings"}
+              {saving ? "Salvando..." : "Salvar configurações"}
             </Button>
-            {saved && (
-              <span
-                className="text-sm"
-                style={{
-                  color: t.colors.success,
-                }}
-              >
-                ✓ Saved
-              </span>
-            )}
+            <span role="status" className="text-pg-ui inline-flex items-center gap-1 text-pg-up">
+              {saved && (
+                <>
+                  <Check size={14} aria-hidden="true" />
+                  Salvo
+                </>
+              )}
+            </span>
           </div>
         </div>
       </form>
 
-      <div
-        className="mt-6 p-5 rounded-md border"
-        style={{
-          background: t.colors.surface,
-          borderColor: t.colors.border,
-          borderRadius: t.radius.md,
-        }}
-      >
-        <p className="font-semibold mb-3 text-sm">Database Export</p>
-        <p
-          className="text-xs mb-3.5"
-          style={{
-            color: t.colors.textMuted,
-          }}
-        >
-          Download a full SQLite dump of all monitors, checks and incidents.
+      <div className="mt-6 p-5 rounded-pg-card border border-pg-borda bg-pg-branco">
+        <p className="font-medium mb-3 text-pg-ui text-pg-ardosia">Exportação do banco</p>
+        <p className="text-pg-caption text-pg-neblina mb-3.5">
+          Baixe um dump SQLite completo de monitores, verificações e incidentes.
         </p>
-        <button
-          onClick={handleExport}
-          className="inline-block px-4 py-2 rounded text-sm font-semibold border cursor-pointer"
-          style={{
-            background: t.colors.surfaceAlt,
-            color: t.colors.textPrimary,
-            borderColor: t.colors.border,
-          }}
-        >
-          ↓ Download dump
-        </button>
+        <Button variant="ghost" onClick={handleExport} className="gap-1.5">
+          <Download size={16} aria-hidden="true" />
+          Baixar dump
+        </Button>
       </div>
     </div>
   );

@@ -1,7 +1,6 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { client } from "../api/client";
-
-const ConnectionContext = createContext();
+import { ConnectionContext } from "./connectionContext";
 
 export function ConnectionProvider({ children }) {
   const [online, setOnline] = useState(true);
@@ -38,8 +37,4 @@ export function ConnectionProvider({ children }) {
       {children}
     </ConnectionContext.Provider>
   );
-}
-
-export function useConnection() {
-  return useContext(ConnectionContext);
 }

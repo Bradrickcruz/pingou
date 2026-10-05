@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Plus, RefreshCw } from "lucide-react";
 import { useMonitors } from "../hooks/useMonitors";
 import { monitorsApi } from "../api/monitors";
 import { MonitorCard } from "../components/monitors/MonitorCard";
@@ -6,7 +7,7 @@ import { MonitorForm } from "../components/monitors/MonitorForm";
 import { Modal } from "../components/ui/Modal";
 import { Button } from "../components/ui/Button";
 import { Spinner } from "../components/ui/Spinner";
-import { tokens as t } from "../theme/tokens";
+import logo from "../assets/brand/pingou-simbolo.svg";
 
 export function Dashboard() {
   const { monitors, loading, error, refetch, isFetching } = useMonitors();
@@ -66,115 +67,81 @@ export function Dashboard() {
 
   return (
     <div>
-      {/* header */}
-      <div className="flex justify-between items-center mb-7">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-7">
         <div>
-          <h1 className="text-xl font-bold">Dashboard</h1>
-          <p
-            className="text-sm mt-0.5"
-            style={{
-              color: t.colors.textMuted,
-            }}
-          >
-            {monitors.length} monitors · {up} up · {down} down · {unknown}{" "}
-            unknown
+          <h1 className="text-pg-h1 font-medium text-pg-ardosia my-0">Painel</h1>
+          <p className="text-pg-ui text-pg-neblina mt-0.5">
+            {monitors.length} monitores · {up} no ar · {down} fora do ar · {unknown}{" "}
+            desconhecidos
           </p>
         </div>
         <div className="flex gap-2">
           <button
+            type="button"
             onClick={refetch}
             disabled={isFetching}
             aria-label="Atualizar lista de monitores"
             aria-busy={isFetching}
-            className={`
-              flex items-center justify-center w-9 h-9 rounded-md border transition-all
-              ${isFetching ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50 cursor-pointer"}
-            `}
-            style={{
-              borderColor: t.colors.border,
-              background: t.colors.surface,
-            }}
+            className={`flex items-center justify-center w-11 h-11 rounded-pg-control border border-pg-borda bg-pg-branco transition-colors ${
+              isFetching ? "opacity-50 cursor-not-allowed" : "hover:bg-pg-nuvem"
+            }`}
           >
-            <span
-              className={`text-lg ${isFetching ? "animate-spin" : ""}`}
-              style={{ display: "inline-block" }}
-            >
-              🔄
-            </span>
+            <RefreshCw
+              size={16}
+              aria-hidden="true"
+              className={isFetching ? "animate-spin motion-reduce:animate-none" : ""}
+            />
           </button>
-          <Button onClick={() => setModal("create")}>+ Add Monitor</Button>
+          <Button
+            onClick={() => setModal("create")}
+            className="inline-flex items-center gap-1.5"
+          >
+            <Plus size={16} aria-hidden="true" />
+            Criar monitor
+          </Button>
         </div>
       </div>
 
-      {/* stats */}
       {monitors.length > 0 && (
-        <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
           {[
-            { label: "Up", value: up, color: t.colors.success },
-            { label: "Down", value: down, color: t.colors.danger },
-            { label: "Unknown", value: unknown, color: t.colors.unknown },
-          ].map(({ label, value, color }) => (
+            { label: "No ar", value: up, tone: "text-pg-up" },
+            { label: "Fora do ar", value: down, tone: "text-pg-down" },
+            { label: "Desconhecido", value: unknown, tone: "text-pg-unknown" },
+          ].map(({ label, value, tone }) => (
             <div
               key={label}
-              className="p-4 rounded-md border"
-              style={{
-                background: t.colors.surface,
-                borderColor: t.colors.border,
-                borderRadius: t.radius.md,
-              }}
+              className="p-3 sm:p-4 rounded-pg-card border border-pg-borda bg-pg-branco min-w-0"
             >
-              <div
-                className="text-[28px] font-bold"
-                style={{
-                  color,
-                }}
-              >
+              <div className={`text-pg-h1 font-medium tabular-nums ${tone}`}>
                 {value}
               </div>
-              <div
-                className="text-xs mt-0.5"
-                style={{
-                  color: t.colors.textMuted,
-                }}
-              >
-                {label}
-              </div>
+              <div className="text-pg-caption text-pg-neblina mt-0.5">{label}</div>
             </div>
           ))}
         </div>
       )}
 
-      {/* list */}
       {loading && (
         <div className="flex justify-center py-12">
           <Spinner />
         </div>
       )}
 
-      {error && (
-        <p
-          className="text-sm"
-          style={{
-            color: t.colors.danger,
-          }}
-        >
-          {error}
-        </p>
-      )}
+      {error && <p className="text-pg-ui text-pg-down" role="alert">{error}</p>}
 
       {!loading && monitors.length === 0 && (
-        <div
-          className="text-center py-16 px-4 rounded-lg border border-dashed"
-          style={{
-            color: t.colors.textMuted,
-            borderColor: t.colors.border,
-            borderRadius: t.radius.lg,
-          }}
-        >
-          <p className="text-[32px] mb-3">🏓</p>
-          <p className="font-semibold mb-1.5">No monitors yet</p>
-          <p className="text-sm mb-5">Add your first URL to start monitoring</p>
-          <Button onClick={() => setModal("create")}>+ Add Monitor</Button>
+        <div className="text-center py-16 px-4 rounded-pg-card border border-dashed border-pg-borda text-pg-neblina">
+          <img src={logo} alt="" width={40} height={40} className="mx-auto mb-3" />
+          <p className="font-medium text-pg-ardosia mb-1.5">Nenhum monitor ainda</p>
+          <p className="text-pg-ui mb-5">Adicione a primeira URL para começar o monitoramento.</p>
+          <Button
+            onClick={() => setModal("create")}
+            className="inline-flex items-center gap-1.5"
+          >
+            <Plus size={16} aria-hidden="true" />
+            Criar monitor
+          </Button>
         </div>
       )}
 
@@ -189,9 +156,8 @@ export function Dashboard() {
         ))}
       </div>
 
-      {/* modais */}
       {modal === "create" && (
-        <Modal title="Add Monitor" onClose={closeModal}>
+        <Modal title="Criar monitor" onClose={closeModal}>
           <MonitorForm
             onSubmit={handleCreate}
             onCancel={closeModal}
@@ -201,7 +167,7 @@ export function Dashboard() {
       )}
 
       {modal === "edit" && selected && (
-        <Modal title="Edit Monitor" onClose={closeModal}>
+        <Modal title="Editar monitor" onClose={closeModal}>
           <MonitorForm
             initial={selected}
             onSubmit={handleEdit}
@@ -212,29 +178,17 @@ export function Dashboard() {
       )}
 
       {modal === "delete" && selected && (
-        <Modal title="Delete Monitor" onClose={closeModal}>
-          <p
-            className="mb-5"
-            style={{
-              color: t.colors.textMuted,
-            }}
-          >
-            Delete{" "}
-            <strong
-              style={{
-                color: t.colors.textPrimary,
-              }}
-            >
-              {selected.name}
-            </strong>
-            ? This action cannot be undone.
+        <Modal title="Excluir monitor" onClose={closeModal}>
+          <p className="mb-5 text-pg-neblina">
+            Excluir <strong className="font-medium text-pg-ardosia">{selected.name}</strong>?
+            Esta ação não pode ser desfeita.
           </p>
           <div className="flex gap-2.5 justify-end">
             <Button variant="ghost" onClick={closeModal}>
-              Cancel
+              Cancelar
             </Button>
             <Button variant="danger" onClick={handleDelete} disabled={saving}>
-              {saving ? "Deleting..." : "Delete"}
+              {saving ? "Excluindo..." : "Excluir"}
             </Button>
           </div>
         </Modal>
