@@ -186,10 +186,10 @@
     "semantic_hash": "6f8c21bc19d7234deefc1d45f07744ff"
   },
   "internal/repository/check_repo_tx.go": {
-    "mtime": 1777837137.9677799,
-    "seen": 1790220686.5526094,
-    "ast_hash": "29824e24308bb8eff81b5ac8b8addc05",
-    "semantic_hash": "29824e24308bb8eff81b5ac8b8addc05"
+    "mtime": 1791228156.4709656,
+    "seen": 1791233877.9925776,
+    "ast_hash": "6611fa2c62aaa107e3f09bf7514ef2e4",
+    "semantic_hash": ""
   },
   "internal/repository/incident_repo.go": {
     "mtime": 1777061129.9875455,
@@ -198,10 +198,10 @@
     "semantic_hash": "a0738221158772f58abc469fdc5cb253"
   },
   "internal/repository/incident_repo_tx.go": {
-    "mtime": 1777837137.9667797,
-    "seen": 1790220686.5526116,
-    "ast_hash": "70ce6a70df6b01f43679ab2acf914b91",
-    "semantic_hash": "70ce6a70df6b01f43679ab2acf914b91"
+    "mtime": 1791228156.4709656,
+    "seen": 1791233877.992582,
+    "ast_hash": "02e7da4fab3f0d03aef6f4efed0ece66",
+    "semantic_hash": ""
   },
   "internal/repository/monitor_repo.go": {
     "mtime": 1777015445.078274,
@@ -264,10 +264,10 @@
     "semantic_hash": "9ee0d39798abc249af80e35d92918f04"
   },
   "internal/service/state_machine.go": {
-    "mtime": 1777837137.9647799,
-    "seen": 1790220686.552625,
-    "ast_hash": "893387a1f200568694ed2cde9a5f529b",
-    "semantic_hash": "893387a1f200568694ed2cde9a5f529b"
+    "mtime": 1791228156.4709656,
+    "seen": 1791233877.9926105,
+    "ast_hash": "609eb9514bed312ef29027a5ed75234a",
+    "semantic_hash": ""
   },
   "internal/service/unit_of_work.go": {
     "mtime": 1777837137.9647799,
@@ -276,10 +276,10 @@
     "semantic_hash": "eeecc574511e6afc5407c65b1da72983"
   },
   "internal/service/unit_of_work_impl.go": {
-    "mtime": 1777837137.9657798,
-    "seen": 1790220686.5526268,
-    "ast_hash": "4e10f49621e484e188a5f2f4a961dfac",
-    "semantic_hash": "4e10f49621e484e188a5f2f4a961dfac"
+    "mtime": 1791228156.4709656,
+    "seen": 1791233877.9926195,
+    "ast_hash": "527eff2dc663b96807a6197e7365de91",
+    "semantic_hash": ""
   },
   "internal/service/uuid.go": {
     "mtime": 1777061670.0995963,
@@ -300,8 +300,8 @@
     "semantic_hash": "3aa4b57d7f08181d86bde52a4dcb7f22"
   },
   "web/package.json": {
-    "mtime": 1790471205.9905076,
-    "seen": 1790471885.4872952,
+    "mtime": 1791233856.912317,
+    "seen": 1791233877.9926293,
     "ast_hash": "f6921b4450c33c4c12e79b2dcd0df964",
     "semantic_hash": ""
   },
@@ -336,62 +336,62 @@
     "semantic_hash": "9f17f988455370bfd577c6f328dcf251"
   },
   "web/src/components/layout/Shell.jsx": {
-    "mtime": 1791226646.9865093,
-    "seen": 1791227322.2036185,
+    "mtime": 1791233856.913317,
+    "seen": 1791233877.9926445,
     "ast_hash": "ae178b0feac1ac033ea3ae6eea94505a",
     "semantic_hash": ""
   },
   "web/src/components/monitors/MonitorCard.jsx": {
-    "mtime": 1791226649.0504732,
-    "seen": 1791227322.2036195,
+    "mtime": 1791233856.913317,
+    "seen": 1791233877.992647,
     "ast_hash": "c16a3274139547880039de25ae965da8",
     "semantic_hash": ""
   },
   "web/src/components/monitors/MonitorForm.jsx": {
-    "mtime": 1791226654.1913836,
-    "seen": 1791227322.203621,
+    "mtime": 1791233856.913317,
+    "seen": 1791233877.992649,
     "ast_hash": "5111a400125ba5de67f84d1fb592c178",
     "semantic_hash": ""
   },
   "web/src/components/ui/Badge.jsx": {
-    "mtime": 1791226651.1024375,
-    "seen": 1791227322.2036216,
+    "mtime": 1791233856.913317,
+    "seen": 1791233877.9926512,
     "ast_hash": "a1323d703ca4eccd9cb1356f55c660be",
     "semantic_hash": ""
   },
   "web/src/components/ui/Button.jsx": {
-    "mtime": 1791225982.0801535,
-    "seen": 1791226175.5137556,
+    "mtime": 1791233856.913317,
+    "seen": 1791233877.9926534,
     "ast_hash": "ba6c915c04acbefc789138805fdb8ba9",
     "semantic_hash": ""
   },
   "web/src/components/ui/ConnectionOverlay.jsx": {
-    "mtime": 1791226653.1604016,
-    "seen": 1791227322.2036235,
+    "mtime": 1791233856.913317,
+    "seen": 1791233877.9926553,
     "ast_hash": "35ca12c0ececd1ee45ea8ddadb6b86db",
     "semantic_hash": ""
   },
   "web/src/components/ui/Modal.jsx": {
-    "mtime": 1791226747.0498118,
-    "seen": 1791227322.203624,
+    "mtime": 1791233856.914317,
+    "seen": 1791233877.9926577,
     "ast_hash": "1ef2cebe731860f16dbc2d0e1daac698",
     "semantic_hash": ""
   },
   "web/src/components/ui/Spinner.jsx": {
-    "mtime": 1791225857.8025742,
-    "seen": 1791226175.5137582,
+    "mtime": 1791233856.914317,
+    "seen": 1791233877.9926596,
     "ast_hash": "115826d1d911be9857317665f252d7b6",
     "semantic_hash": ""
   },
   "web/src/components/ui/TimeRangeSlider.jsx": {
-    "mtime": 1791226652.1304195,
-    "seen": 1791227322.2036254,
+    "mtime": 1791233856.914317,
+    "seen": 1791233877.9926615,
     "ast_hash": "3d51f3c6959487ed1bc5be82a95926c4",
     "semantic_hash": ""
   },
   "web/src/hooks/useConnection.jsx": {
-    "mtime": 1791225914.1564803,
-    "seen": 1791226175.5137622,
+    "mtime": 1791233856.914317,
+    "seen": 1791233877.992666,
     "ast_hash": "2888f35964cc29ec3645632692849f9c",
     "semantic_hash": ""
   },
@@ -414,38 +414,38 @@
     "semantic_hash": "53704bf8333550a67c09d096f87d5954"
   },
   "web/src/pages/Dashboard.jsx": {
-    "mtime": 1791226648.0204911,
-    "seen": 1791227322.2036295,
+    "mtime": 1791233856.914317,
+    "seen": 1791233877.9926765,
     "ast_hash": "31e6bb31bdf6614eba8dd336ca1da5ed",
     "semantic_hash": ""
   },
   "web/src/pages/Incidents.jsx": {
-    "mtime": 1791226668.7421315,
-    "seen": 1791227322.2036304,
+    "mtime": 1791233856.914317,
+    "seen": 1791233877.9926789,
     "ast_hash": "d8f28019979ebe07aaad8e3c5920809f",
     "semantic_hash": ""
   },
   "web/src/pages/Login.jsx": {
-    "mtime": 1791226679.4399476,
-    "seen": 1791227322.203631,
+    "mtime": 1791233856.914317,
+    "seen": 1791233877.9926815,
     "ast_hash": "230e91138795b523b5c6883da2d16401",
     "semantic_hash": ""
   },
   "web/src/pages/Settings.jsx": {
-    "mtime": 1791226669.7721136,
-    "seen": 1791227322.2036314,
+    "mtime": 1791233856.914317,
+    "seen": 1791233877.992684,
     "ast_hash": "c392ba8242ba60b85d178c3d2f59901e",
     "semantic_hash": ""
   },
   "web/src/theme/globalStyles.js": {
-    "mtime": 1791225982.0161557,
-    "seen": 1791226175.5137694,
+    "mtime": 1791233856.914317,
+    "seen": 1791233877.992686,
     "ast_hash": "63aa37e11ee720f6aab6e392ef0653e2",
     "semantic_hash": ""
   },
   "web/tailwind.config.js": {
-    "mtime": 1790470516.6624944,
-    "seen": 1790471013.7242117,
+    "mtime": 1791233856.914317,
+    "seen": 1791233877.9926887,
     "ast_hash": "d62a261b11bbdf75b791716bcec0555e",
     "semantic_hash": ""
   },
@@ -624,8 +624,8 @@
     "semantic_hash": ""
   },
   "DESIGN.md": {
-    "mtime": 1790472731.6780725,
-    "seen": 1790472758.5968904,
+    "mtime": 1791233856.902317,
+    "seen": 1791233877.9927552,
     "ast_hash": "7d819991a5d7c6d1f07120040a0990ee",
     "semantic_hash": ""
   },
@@ -666,8 +666,8 @@
     "semantic_hash": ""
   },
   "web/index.html": {
-    "mtime": 1791226670.8870945,
-    "seen": 1791227322.2036593,
+    "mtime": 1791233856.9113169,
+    "seen": 1791233877.9927914,
     "ast_hash": "a4e2ddabf890c5984ddceb91c046d564",
     "semantic_hash": ""
   },
@@ -828,45 +828,51 @@
     "semantic_hash": ""
   },
   "plan-design-system-web.md": {
-    "mtime": 1790370117.3746576,
-    "seen": 1790471013.7242324,
-    "ast_hash": "0f9baf89fcc5284ab45c2ba7a3e35eb7",
+    "mtime": 1791227461.1519291,
+    "seen": 1791233877.9927764,
+    "ast_hash": "caae05d9c66d599b7d6da732366af398",
     "semantic_hash": ""
   },
   "web/src/assets/brand/pingou-simbolo.svg": {
-    "mtime": 1790471209.0844717,
-    "seen": 1790471885.4873629,
+    "mtime": 1791233856.912317,
+    "seen": 1791233877.9928524,
     "ast_hash": "bd2d80625558194c2a4b9a6ff5c88bc4",
     "semantic_hash": ""
   },
   "web/src/assets/fonts/OFL-Inter.txt": {
-    "mtime": 1790472019.593066,
-    "seen": 1790472730.3413136,
+    "mtime": 1791233856.912317,
+    "seen": 1791233877.9927933,
     "ast_hash": "2eeb2b3ada55f38ae966db32bcb1f92a",
     "semantic_hash": ""
   },
   "web/src/assets/fonts/OFL-Rubik.txt": {
-    "mtime": 1790472019.594066,
-    "seen": 1790472730.341315,
+    "mtime": 1791233856.912317,
+    "seen": 1791233877.9927957,
     "ast_hash": "e2ec5b5c772e95c499c2bc81cad065ed",
     "semantic_hash": ""
   },
   "web/src/hooks/connectionContext.js": {
-    "mtime": 1791225905.0118096,
-    "seen": 1791226175.513761,
+    "mtime": 1791233856.914317,
+    "seen": 1791233877.9926639,
     "ast_hash": "2ccd3954cd8b3012ddddac908b5f3d1f",
     "semantic_hash": ""
   },
   "plan-tema-claro.md": {
-    "mtime": 1791225617.4026327,
-    "seen": 1791226175.5138035,
-    "ast_hash": "526b37964f7010b2177578fa6f879807",
+    "mtime": 1791227495.2883425,
+    "seen": 1791233877.9927783,
+    "ast_hash": "c583a302f5869cf767b95df56b9a128e",
     "semantic_hash": ""
   },
   "web/src/assets/brand/pingou-marca-horizontal.svg": {
-    "mtime": 1791225747.925154,
-    "seen": 1791226175.5138445,
+    "mtime": 1791233856.912317,
+    "seen": 1791233877.9928508,
     "ast_hash": "29923e2b2941c7e24c439cba3ec2c0ae",
+    "semantic_hash": ""
+  },
+  "internal/service/state_machine_test.go": {
+    "mtime": 1791228152.0679698,
+    "seen": 1791233877.992614,
+    "ast_hash": "45b4632e309fa6ee89fab60b889354f1",
     "semantic_hash": ""
   }
 }
