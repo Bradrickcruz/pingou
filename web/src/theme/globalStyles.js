@@ -1,37 +1,36 @@
-import { tokens as t } from "./tokens";
-
 export function injectGlobalStyles() {
   const style = document.createElement("style");
   style.textContent = `
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: ${t.colors.bg};
-      color: ${t.colors.textPrimary};
-      font-family: ${t.font.sans};
+      background: var(--pg-nuvem);
+      color: var(--pg-ardosia);
+      font-family: Inter, system-ui, sans-serif;
       font-size: 14px;
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
     }
 
     ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: ${t.colors.bg}; }
-    ::-webkit-scrollbar-thumb { background: ${t.colors.border}; border-radius: 3px; }
+    ::-webkit-scrollbar-track { background: var(--pg-nuvem); }
+    ::-webkit-scrollbar-thumb { background: var(--pg-borda); border-radius: 3px; }
 
     a { color: inherit; text-decoration: none; }
-    button { cursor: pointer; border: none; background: none; font: inherit; }
+    button { cursor: pointer; font: inherit; }
     input, textarea, select {
       font: inherit;
-      background: ${t.colors.surfaceAlt};
-      color: ${t.colors.textPrimary};
-      border: 1px solid ${t.colors.border};
-      border-radius: ${t.radius.sm};
+      background: var(--pg-branco);
+      color: var(--pg-ardosia);
+      border: 1px solid var(--pg-borda);
+      border-radius: 8px;
       padding: 8px 12px;
-      outline: none;
       width: 100%;
     }
-    input:focus, textarea:focus, select:focus {
-      border-color: ${t.colors.primary};
+    input:focus-visible, textarea:focus-visible, select:focus-visible {
+      border-color: var(--pg-ciano);
+      outline: 2px solid var(--pg-ciano);
+      outline-offset: 1px;
     }
   `;
   document.head.appendChild(style);

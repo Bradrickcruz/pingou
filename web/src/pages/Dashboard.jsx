@@ -7,7 +7,6 @@ import { MonitorForm } from "../components/monitors/MonitorForm";
 import { Modal } from "../components/ui/Modal";
 import { Button } from "../components/ui/Button";
 import { Spinner } from "../components/ui/Spinner";
-import { tokens as t } from "../theme/tokens";
 import logo from "../assets/brand/pingou-simbolo.svg";
 
 export function Dashboard() {
@@ -71,13 +70,8 @@ export function Dashboard() {
       {/* header */}
       <div className="flex justify-between items-center mb-7">
         <div>
-          <h1 className="text-xl font-bold">Dashboard</h1>
-          <p
-            className="text-sm mt-0.5"
-            style={{
-              color: t.colors.textMuted,
-            }}
-          >
+          <h1 className="text-pg-h1 font-medium text-pg-ardosia my-0">Dashboard</h1>
+          <p className="text-pg-ui text-pg-neblina mt-0.5">
             {monitors.length} monitors · {up} up · {down} down · {unknown}{" "}
             unknown
           </p>
@@ -88,14 +82,9 @@ export function Dashboard() {
             disabled={isFetching}
             aria-label="Atualizar lista de monitores"
             aria-busy={isFetching}
-            className={`
-              flex items-center justify-center w-9 h-9 rounded-md border transition-all
-              ${isFetching ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50 cursor-pointer"}
-            `}
-            style={{
-              borderColor: t.colors.border,
-              background: t.colors.surface,
-            }}
+            className={`flex items-center justify-center w-9 h-9 rounded-pg-control border border-pg-borda bg-pg-branco transition-colors ${
+              isFetching ? "opacity-50 cursor-not-allowed" : "hover:bg-pg-nuvem"
+            }`}
           >
             <RefreshCw
               size={16}
@@ -117,35 +106,18 @@ export function Dashboard() {
       {monitors.length > 0 && (
         <div className="grid grid-cols-3 gap-3 mb-6">
           {[
-            { label: "Up", value: up, color: t.colors.success },
-            { label: "Down", value: down, color: t.colors.danger },
-            { label: "Unknown", value: unknown, color: t.colors.unknown },
-          ].map(({ label, value, color }) => (
+            { label: "Up", value: up, tone: "text-pg-up" },
+            { label: "Down", value: down, tone: "text-pg-down" },
+            { label: "Unknown", value: unknown, tone: "text-pg-unknown" },
+          ].map(({ label, value, tone }) => (
             <div
               key={label}
-              className="p-4 rounded-md border"
-              style={{
-                background: t.colors.surface,
-                borderColor: t.colors.border,
-                borderRadius: t.radius.md,
-              }}
+              className="p-4 rounded-pg-card border border-pg-borda bg-pg-branco"
             >
-              <div
-                className="text-[28px] font-bold"
-                style={{
-                  color,
-                }}
-              >
+              <div className={`text-pg-h1 font-medium tabular-nums ${tone}`}>
                 {value}
               </div>
-              <div
-                className="text-xs mt-0.5"
-                style={{
-                  color: t.colors.textMuted,
-                }}
-              >
-                {label}
-              </div>
+              <div className="text-pg-caption text-pg-neblina mt-0.5">{label}</div>
             </div>
           ))}
         </div>
@@ -159,28 +131,16 @@ export function Dashboard() {
       )}
 
       {error && (
-        <p
-          className="text-sm"
-          style={{
-            color: t.colors.danger,
-          }}
-        >
+        <p className="text-pg-ui text-pg-down">
           {error}
         </p>
       )}
 
       {!loading && monitors.length === 0 && (
-        <div
-          className="text-center py-16 px-4 rounded-lg border border-dashed"
-          style={{
-            color: t.colors.textMuted,
-            borderColor: t.colors.border,
-            borderRadius: t.radius.lg,
-          }}
-        >
+        <div className="text-center py-16 px-4 rounded-pg-card border border-dashed border-pg-borda text-pg-neblina">
           <img src={logo} alt="" width={40} height={40} className="mx-auto mb-3" />
-          <p className="font-semibold mb-1.5">No monitors yet</p>
-          <p className="text-sm mb-5">Add your first URL to start monitoring</p>
+          <p className="font-medium text-pg-ardosia mb-1.5">No monitors yet</p>
+          <p className="text-pg-ui mb-5">Add your first URL to start monitoring</p>
           <Button
             onClick={() => setModal("create")}
             className="inline-flex items-center gap-1.5"
@@ -226,18 +186,9 @@ export function Dashboard() {
 
       {modal === "delete" && selected && (
         <Modal title="Delete Monitor" onClose={closeModal}>
-          <p
-            className="mb-5"
-            style={{
-              color: t.colors.textMuted,
-            }}
-          >
+          <p className="mb-5 text-pg-neblina">
             Delete{" "}
-            <strong
-              style={{
-                color: t.colors.textPrimary,
-              }}
-            >
+            <strong className="font-medium text-pg-ardosia">
               {selected.name}
             </strong>
             ? This action cannot be undone.

@@ -1,5 +1,3 @@
-import { tokens as t } from "../../theme/tokens";
-
 function formatTime(seconds) {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -14,15 +12,10 @@ function formatTime(seconds) {
   }
 }
 
-export function TimeRangeSlider({ label, value, onChange, min, max, step = 1, unit = "s" }) {
+export function TimeRangeSlider({ label, value, onChange, min, max, step = 1 }) {
   return (
     <div className="mb-3.5">
-      <label
-        className="block mb-1.5 text-xs font-medium"
-        style={{
-          color: t.colors.textMuted,
-        }}
-      >
+      <label className="block mb-1.5 text-pg-caption font-medium text-pg-neblina">
         {label}
       </label>
       <input
@@ -32,21 +25,12 @@ export function TimeRangeSlider({ label, value, onChange, min, max, step = 1, un
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-        style={{
-          background: t.colors.surface,
-        }}
+        className="w-full cursor-pointer accent-pg-ciano-fundo"
       />
       <div className="flex justify-between mt-1">
-        <span className="text-xs" style={{ color: t.colors.textMuted }}>
-          {formatTime(min)}
-        </span>
-        <span className="text-sm font-medium" style={{ color: t.colors.primary }}>
-          {formatTime(value)}
-        </span>
-        <span className="text-xs" style={{ color: t.colors.textMuted }}>
-          {formatTime(max)}
-        </span>
+        <span className="text-pg-caption text-pg-neblina">{formatTime(min)}</span>
+        <span className="text-pg-ui font-medium text-pg-ciano-fundo">{formatTime(value)}</span>
+        <span className="text-pg-caption text-pg-neblina">{formatTime(max)}</span>
       </div>
     </div>
   );

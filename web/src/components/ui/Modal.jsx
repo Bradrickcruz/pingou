@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { X } from "lucide-react";
-import { tokens as t } from "../../theme/tokens";
 
 export function Modal({ title, onClose, children }) {
   useEffect(() => {
@@ -11,27 +10,19 @@ export function Modal({ title, onClose, children }) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 flex items-center justify-center z-[1000]"
+      className="fixed inset-0 bg-[rgba(30,43,51,0.5)] flex items-center justify-center z-[1000]"
       onClick={onClose}
     >
       <div
-        className="bg-[var(--bg)] border border-[var(--border)] rounded-lg p-7 w-full max-w-[520px] max-h-[90vh] overflow-y-auto"
-        style={{
-          background: t.colors.surface,
-          borderColor: t.colors.border,
-          borderRadius: t.radius.lg,
-        }}
+        className="w-full max-w-[520px] max-h-[90vh] overflow-y-auto p-7 rounded-pg-card border border-pg-borda bg-pg-branco"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-5">
-          <h2 className="text-base font-semibold text-[var(--text-h)]">{title}</h2>
+          <h2 className="text-pg-h3 font-medium text-pg-ardosia my-0">{title}</h2>
           <button
             onClick={onClose}
             aria-label="Fechar"
-            className="text-[var(--text)] leading-none hover:text-[var(--text-h)]"
-            style={{
-              color: t.colors.textMuted,
-            }}
+            className="text-pg-neblina hover:text-pg-ardosia leading-none rounded-pg-control focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano"
           >
             <X size={18} aria-hidden="true" />
           </button>

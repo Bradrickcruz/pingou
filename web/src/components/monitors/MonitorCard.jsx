@@ -1,6 +1,10 @@
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
-import { tokens as t } from "../../theme/tokens";
+
+const dotColor = {
+  UP: "bg-pg-up",
+  DOWN: "bg-pg-down",
+};
 
 export function MonitorCard({ monitor, onEdit, onDelete }) {
   const {
@@ -12,68 +16,25 @@ export function MonitorCard({ monitor, onEdit, onDelete }) {
     enabled,
   } = monitor;
 
-  const stateColor =
-    current_state === "UP"
-      ? t.colors.success
-      : current_state === "DOWN"
-        ? t.colors.danger
-        : t.colors.unknown;
-
-  const stateGlow =
-    current_state === "UP"
-      ? `0 0 6px ${t.colors.success}`
-      : current_state === "DOWN"
-        ? `0 0 6px ${t.colors.danger}`
-        : "none";
-
   return (
-    <div
-      className="flex items-center gap-4 p-4 rounded-md border"
-      style={{
-        background: t.colors.surface,
-        borderColor: t.colors.border,
-        borderRadius: t.radius.md,
-      }}
-    >
-      {/* state dot */}
+    <div className="flex items-center gap-4 p-4 rounded-pg-card border border-pg-borda bg-pg-branco">
       <div
-        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-        style={{
-          background: stateColor,
-          boxShadow: stateGlow,
-        }}
+        className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${dotColor[current_state] ?? "bg-pg-unknown"}`}
       />
 
-      {/* info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
-          <span className="font-semibold text-sm">{name}</span>
+          <span className="font-medium text-pg-ui text-pg-ardosia">{name}</span>
           {!enabled && (
-            <span
-              className="text-[10px] px-1.5 py-0.5 rounded"
-              style={{
-                color: t.colors.textMuted,
-                background: t.colors.surfaceAlt,
-              }}
-            >
+            <span className="text-pg-caption px-1.5 py-0.5 rounded-full bg-pg-unknown-bg text-pg-neblina">
               PAUSED
             </span>
           )}
         </div>
-        <div
-          className="text-xs overflow-hidden text-ellipsis whitespace-nowrap"
-          style={{
-            color: t.colors.textMuted,
-          }}
-        >
+        <div className="text-pg-caption text-pg-neblina overflow-hidden text-ellipsis whitespace-nowrap">
           {url}
         </div>
-        <div
-          className="text-[11px] mt-1"
-          style={{
-            color: t.colors.textMuted,
-          }}
-        >
+        <div className="text-pg-caption text-pg-neblina mt-1">
           every {interval_seconds}s
           {last_checked_at &&
             ` · last check ${new Date(last_checked_at).toLocaleTimeString()}`}
@@ -86,14 +47,14 @@ export function MonitorCard({ monitor, onEdit, onDelete }) {
         <Button
           variant="ghost"
           onClick={() => onEdit(monitor)}
-          className="py-1.5 px-3 text-xs"
+          className="py-1.5 px-3 text-pg-caption"
         >
           Edit
         </Button>
         <Button
-          variant="danger"
+          variant="destructive"
           onClick={() => onDelete(monitor)}
-          className="py-1.5 px-3 text-xs"
+          className="py-1.5 px-3 text-pg-caption"
         >
           Delete
         </Button>
