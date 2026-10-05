@@ -81,7 +81,7 @@ func (r *checkRepoWithTx) CreateWithTx(ctx context.Context, c *domain.Check) err
 }
 
 func (r *checkRepoWithTx) FindByMonitor(ctx context.Context, monitorID string, limit, offset int) ([]*domain.Check, int, error) {
-	return r.repo.FindByMonitor(ctx, monitorID, limit, offset)
+	return r.repo.FindByMonitor(ctx, r.tx, monitorID, limit, offset)
 }
 
 // monitorRepoWithTx envolve MonitorRepoTx com uma transação ativa
@@ -109,11 +109,11 @@ func (r *incidentRepoWithTx) CreateWithTx(ctx context.Context, i *domain.Inciden
 }
 
 func (r *incidentRepoWithTx) FindOpenByMonitor(ctx context.Context, monitorID string) (*domain.Incident, error) {
-	return r.repo.FindOpenByMonitor(ctx, monitorID)
+	return r.repo.FindOpenByMonitor(ctx, r.tx, monitorID)
 }
 
 func (r *incidentRepoWithTx) Close(ctx context.Context, id string, endedAt string, durationSeconds int) error {
-	return r.repo.Close(ctx, id, endedAt, durationSeconds)
+	return r.repo.Close(ctx, r.tx, id, endedAt, durationSeconds)
 }
 
 // Erros específicos de UnitOfWork.

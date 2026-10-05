@@ -29,17 +29,17 @@ func (r *IncidentRepoTx) CreateWithTx(ctx context.Context, tx *sql.Tx, i *domain
 	return err
 }
 
-// FindOpenByMonitor retorna o incidente aberto de um monitor (lê do DB principal).
-func (r *IncidentRepoTx) FindOpenByMonitor(ctx context.Context, monitorID string) (*domain.Incident, error) {
-	row := r.db.QueryRowContext(ctx, `
+// FindOpenByMonitor retorna o incidente aberto de um monitor, usando a transação.
+func (r *IncidentRepoTx) FindOpenByMonitor(ctx context.Context, tx *sql.Tx, monitorID string) (*domain.Incident, error) {
+	row := tx.QueryRowContext(ctx, `
 		SELECT id, monitor_id, started_at, ended_at, last_error, notification_sent, duration_seconds
 		FROM incidents WHERE monitor_id = ? AND ended_at IS NULL`, monitorID)
 	return scanIncident(row)
 }
 
-// Close fecha um incidente (lê do DB principal).
-func (r *IncidentRepoTx) Close(ctx context.Context, id string, endedAt string, durationSeconds int) error {
-	_, err := r.db.ExecContext(
+// Close fecha um incidente usando a transação.
+func (r *IncidentRepoTx) Close(ctx context.Context, tx *sql.Tx, id string, endedAt string, durationSeconds int) error {
+	_, err := tx.ExecContext(
 		ctx,
 		`UPDATE incidents SET ended_at = ?, duration_seconds = ? WHERE id = ?`,
 		endedAt,

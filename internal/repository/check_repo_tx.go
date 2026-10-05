@@ -29,12 +29,12 @@ func (r *CheckRepoTx) CreateWithTx(ctx context.Context, tx *sql.Tx, c *domain.Ch
 	return err
 }
 
-// FindByMonitor retorna checks de um monitor (lê do DB principal, não da transação).
-func (r *CheckRepoTx) FindByMonitor(ctx context.Context, monitorID string, limit, offset int) ([]*domain.Check, int, error) {
+// FindByMonitor retorna checks de um monitor usando a transação (SQLite tem 1 conexão: ler via r.db com tx aberta trava).
+func (r *CheckRepoTx) FindByMonitor(ctx context.Context, tx *sql.Tx, monitorID string, limit, offset int) ([]*domain.Check, int, error) {
 	if limit <= 0 || limit > 200 {
 		limit = 50
 	}
-	rows, err := r.db.QueryContext(ctx, `
+	rows, err := tx.QueryContext(ctx, `
 		SELECT id, monitor_id, success, status_code, latency_ms, error_message, checked_at
 		FROM checks WHERE monitor_id = ?
 		ORDER BY checked_at DESC LIMIT ? OFFSET ?`,
@@ -59,7 +59,7 @@ func (r *CheckRepoTx) FindByMonitor(ctx context.Context, monitorID string, limit
 	}
 
 	var total int
-	r.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM checks WHERE monitor_id = ?`, monitorID).Scan(&total)
+	tx.QueryRowContext(ctx, `SELECT COUNT(*) FROM checks WHERE monitor_id = ?`, monitorID).Scan(&total)
 
 	return checks, total, nil
 }
