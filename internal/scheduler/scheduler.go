@@ -18,16 +18,18 @@ type job struct {
 }
 
 type Scheduler struct {
-	monitors         domain.MonitorRepository
-	checker          domain.Checker
-	db               *sql.DB
-	checkRepoTx      *repository.CheckRepoTx
-	monitorRepoTx    *repository.MonitorRepoTx
-	incidentRepoTx   *repository.IncidentRepoTx
-	notifier        service.Notifier
-	jobs            map[string]*job
-	dbMu            sync.Mutex // serializa acesso ao DB (SQLite com MaxOpenConns=1)
-	mu              sync.Mutex
+	monitors       domain.MonitorRepository
+	checker        domain.Checker
+	db             *sql.DB
+	checkRepoTx    *repository.CheckRepoTx
+	monitorRepoTx  *repository.MonitorRepoTx
+	incidentRepoTx *repository.IncidentRepoTx
+	notifier       service.Notifier
+	jobs           map[string]*job
+	dbMu           sync.Mutex // serializa acesso ao DB (SQLite com MaxOpenConns=1)
+	mu             sync.Mutex
+	intervalUnit   time.Duration   // unidade de interval_seconds; testes reduzem para rodar rápido
+	rootCtx        context.Context // contexto de vida dos jobs (definido em Start)
 }
 
 func NewScheduler(
@@ -40,19 +42,25 @@ func NewScheduler(
 	notifier service.Notifier,
 ) *Scheduler {
 	return &Scheduler{
-		monitors:         monitors,
-		checker:          checker,
-		db:               db,
-		checkRepoTx:      checkRepoTx,
-		monitorRepoTx:    monitorRepoTx,
-		incidentRepoTx:   incidentRepoTx,
-		notifier:        notifier,
-		jobs:            make(map[string]*job),
+		monitors:       monitors,
+		checker:        checker,
+		db:             db,
+		checkRepoTx:    checkRepoTx,
+		monitorRepoTx:  monitorRepoTx,
+		incidentRepoTx: incidentRepoTx,
+		notifier:       notifier,
+		jobs:           make(map[string]*job),
+		intervalUnit:   time.Second,
+		rootCtx:        context.Background(),
 	}
 }
 
 // Start carrega todos os monitors ativos e inicia os jobs
 func (s *Scheduler) Start(ctx context.Context) error {
+	s.mu.Lock()
+	s.rootCtx = ctx
+	s.mu.Unlock()
+
 	enabled := true
 	monitors, _, err := s.monitors.FindAll(ctx, domain.MonitorFilter{
 		Enabled: &enabled,
@@ -63,7 +71,7 @@ func (s *Scheduler) Start(ctx context.Context) error {
 	}
 
 	for _, m := range monitors {
-		s.startJob(ctx, m)
+		s.startJob(m)
 	}
 
 	slog.Info("scheduler started", "jobs", len(monitors))
@@ -71,7 +79,9 @@ func (s *Scheduler) Start(ctx context.Context) error {
 }
 
 // Reload sincroniza os jobs com o estado atual do banco
-// chamado após create/update/delete de monitors
+// chamado após create/update/delete de monitors.
+// ctx é usado só para a leitura do banco: o job NÃO herda esse contexto,
+// pois normalmente é o de uma requisição HTTP, cancelado ao fim da resposta.
 func (s *Scheduler) Reload(ctx context.Context, monitorID string) error {
 	m, err := s.monitors.FindByID(ctx, monitorID)
 	if err != nil {
@@ -81,16 +91,18 @@ func (s *Scheduler) Reload(ctx context.Context, monitorID string) error {
 	s.stopJob(monitorID)
 
 	if m != nil && m.Enabled {
-		s.startJob(ctx, m)
+		s.startJob(m)
 	}
 
 	return nil
 }
 
-func (s *Scheduler) startJob(ctx context.Context, m *domain.Monitor) {
-	jobCtx, cancel := context.WithCancel(ctx)
-
+func (s *Scheduler) startJob(m *domain.Monitor) {
 	s.mu.Lock()
+	if old, ok := s.jobs[m.ID]; ok {
+		old.cancelFn()
+	}
+	jobCtx, cancel := context.WithCancel(s.rootCtx)
 	s.jobs[m.ID] = &job{monitor: m, cancelFn: cancel}
 	s.mu.Unlock()
 
@@ -115,7 +127,7 @@ func (s *Scheduler) runLoop(ctx context.Context, m *domain.Monitor) {
 	s.runCheck(checkCtx, m)
 	cancel()
 
-	ticker := time.NewTicker(time.Duration(m.IntervalSeconds) * time.Second)
+	ticker := time.NewTicker(time.Duration(m.IntervalSeconds) * s.intervalUnit)
 	defer ticker.Stop()
 
 	for {
@@ -135,10 +147,6 @@ func (s *Scheduler) runLoop(ctx context.Context, m *domain.Monitor) {
 }
 
 func (s *Scheduler) runCheck(ctx context.Context, m *domain.Monitor) {
-	// Serializar TODA a operação (HTTP + DB) para evitar conflito com SQLite
-	s.dbMu.Lock()
-	defer s.dbMu.Unlock()
-
 	slog.Debug("running check", "monitor_id", m.ID, "name", m.Name, "url", m.URL)
 
 	result := s.checker.Check(ctx, m)
@@ -150,6 +158,11 @@ func (s *Scheduler) runCheck(ctx context.Context, m *domain.Monitor) {
 		"status_code", result.StatusCode,
 	)
 
+	// Serializa só a parte de banco (SQLite com MaxOpenConns=1); o check HTTP
+	// fica fora do lock para um site lento não atrasar os outros monitores
+	s.dbMu.Lock()
+	defer s.dbMu.Unlock()
+
 	// Criar nova UnitOfWork para este check
 	uow := service.NewUnitOfWork(s.db, s.checkRepoTx, s.monitorRepoTx, s.incidentRepoTx)
 	sm := service.NewStateMachine(uow, s.notifier)
@@ -157,6 +170,13 @@ func (s *Scheduler) runCheck(ctx context.Context, m *domain.Monitor) {
 	if err := sm.Process(ctx, m, result); err != nil {
 		slog.Error("state machine error", "monitor_id", m.ID, "err", err)
 	}
+}
+
+func (s *Scheduler) hasJob(id string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, ok := s.jobs[id]
+	return ok
 }
 
 // Stop encerra todos os jobs
