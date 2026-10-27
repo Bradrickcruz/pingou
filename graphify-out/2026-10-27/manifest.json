@@ -80,13 +80,13 @@
   "internal/database/migrations/0001_init.sql": {
     "mtime": 1777012405.3893824,
     "seen": 1793113886.0386677,
-    "ast_hash": "cdf3d4043c780543a27d4cc148cf5555",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "internal/database/migrations/0002_add_duration_seconds_to_incidents.sql": {
     "mtime": 1777061129.9355462,
     "seen": 1793113886.038669,
-    "ast_hash": "ab52761c5aed638df004b2cddba66e83",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "internal/domain/check.go": {
@@ -426,9 +426,9 @@
     "semantic_hash": ""
   },
   "web/src/pages/Login.jsx": {
-    "mtime": 1793113838.4919107,
-    "seen": 1793113886.0387275,
-    "ast_hash": "9f263b6932e8da5c50b1ba126f8ca4c7",
+    "mtime": 1793114278.3245754,
+    "seen": 1793114283.5247629,
+    "ast_hash": "f52c84d6e0232288ea2e43d96d166914",
     "semantic_hash": ""
   },
   "web/src/pages/Settings.jsx": {
@@ -618,9 +618,9 @@
     "semantic_hash": ""
   },
   "DESIGN.md": {
-    "mtime": 1793113642.9907928,
-    "seen": 1793113647.3743896,
-    "ast_hash": "7d819991a5d7c6d1f07120040a0990ee",
+    "mtime": 1793113968.6297164,
+    "seen": 1793114002.4552467,
+    "ast_hash": "b63e33ae6fbbc958d0e5bed6c6ae38f0",
     "semantic_hash": ""
   },
   "PRD-divergencias-implementacao.md": {
@@ -846,9 +846,9 @@
     "semantic_hash": ""
   },
   "plan-tema-claro.md": {
-    "mtime": 1793113856.6997688,
-    "seen": 1793113886.0387576,
-    "ast_hash": "7bbb210bb63562821ffc811211b3055a",
+    "mtime": 1793113968.6297164,
+    "seen": 1793114002.455251,
+    "ast_hash": "6313597ffd37a33f38b3b94f49ee2a2d",
     "semantic_hash": ""
   },
   "web/src/assets/fonts/OFL-Inter.txt": {
@@ -879,6 +879,24 @@
     "mtime": 1793113643.0047927,
     "seen": 1793113886.0387993,
     "ast_hash": "bd2d80625558194c2a4b9a6ff5c88bc4",
+    "semantic_hash": ""
+  },
+  "login-Desktop.png": {
+    "mtime": 1793114024.8790839,
+    "seen": 1793114283.5286891,
+    "ast_hash": "5c4b753f37274b0158719adb586fd925",
+    "semantic_hash": ""
+  },
+  "login-mobile.png": {
+    "mtime": 1793114024.872084,
+    "seen": 1793114283.5286913,
+    "ast_hash": "376f900d9c3a7c638a8312744ef0907a",
+    "semantic_hash": ""
+  },
+  "web/src/assets/brand/pingou-marca-horizontal-negativa.svg": {
+    "mtime": 1793114256.9829054,
+    "seen": 1793114283.5287633,
+    "ast_hash": "7413fafe978a80b551ec528a51e14554",
     "semantic_hash": ""
   }
 }
