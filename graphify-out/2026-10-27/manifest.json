@@ -79,14 +79,14 @@
   },
   "internal/database/migrations/0001_init.sql": {
     "mtime": 1777012405.3893824,
-    "seen": 1793113886.0386677,
-    "ast_hash": "",
+    "seen": 1793114391.4247203,
+    "ast_hash": "cdf3d4043c780543a27d4cc148cf5555",
     "semantic_hash": ""
   },
   "internal/database/migrations/0002_add_duration_seconds_to_incidents.sql": {
     "mtime": 1777061129.9355462,
-    "seen": 1793113886.038669,
-    "ast_hash": "",
+    "seen": 1793114391.424722,
+    "ast_hash": "ab52761c5aed638df004b2cddba66e83",
     "semantic_hash": ""
   },
   "internal/domain/check.go": {
@@ -300,9 +300,9 @@
     "semantic_hash": "3aa4b57d7f08181d86bde52a4dcb7f22"
   },
   "web/package.json": {
-    "mtime": 1793113643.0037928,
-    "seen": 1793113647.3720183,
-    "ast_hash": "f6921b4450c33c4c12e79b2dcd0df964",
+    "mtime": 1793114360.1502645,
+    "seen": 1793114391.4247723,
+    "ast_hash": "c289d2aee9019a98a6bbd553126a0a6d",
     "semantic_hash": ""
   },
   "web/postcss.config.js": {
@@ -426,9 +426,9 @@
     "semantic_hash": ""
   },
   "web/src/pages/Login.jsx": {
-    "mtime": 1793114278.3245754,
-    "seen": 1793114283.5247629,
-    "ast_hash": "f52c84d6e0232288ea2e43d96d166914",
+    "mtime": 1793114490.9020367,
+    "seen": 1793114511.4122589,
+    "ast_hash": "6aa3ac21a5bbfc86953f5d16ed9ac86c",
     "semantic_hash": ""
   },
   "web/src/pages/Settings.jsx": {
