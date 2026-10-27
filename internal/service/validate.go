@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/Bradrickcruz/pingou/internal/domain"
 )
@@ -52,9 +53,25 @@ func validateName(name string) error {
 	return nil
 }
 
+// Limites de intervalo: http/tcp até 1 dia; heartbeat de 1 min até 1 semana.
+const (
+	maxCheckInterval     = 86400
+	minHeartbeatInterval = 60
+	maxHeartbeatInterval = 604800
+	maxGraceSeconds      = 86400
+	defaultGraceSeconds  = 60
+)
+
 func validateInterval(interval int) error {
-	if interval < 10 || interval > 86400 {
+	if interval < 10 || interval > maxCheckInterval {
 		return fmt.Errorf("%w: interval_seconds must be between 10 and 86400", ErrValidation)
+	}
+	return nil
+}
+
+func validateHeartbeatInterval(interval int) error {
+	if interval < minHeartbeatInterval || interval > maxHeartbeatInterval {
+		return fmt.Errorf("%w: interval_seconds must be between 60 and 604800 for heartbeat", ErrValidation)
 	}
 	return nil
 }
@@ -73,69 +90,72 @@ func validateThreshold(threshold int) error {
 	return nil
 }
 
+func validateType(t domain.MonitorType) error {
+	switch t {
+	case domain.TypeHTTP, domain.TypeTCP, domain.TypeHeartbeat:
+		return nil
+	}
+	return fmt.Errorf("%w: type must be http, tcp or heartbeat", ErrValidation)
+}
+
+// validateHost aceita nome ou IP, sem esquema, caminho ou porta embutida.
+func validateHost(host string) error {
+	if len(host) < 1 || len(host) > 253 {
+		return fmt.Errorf("%w: host must be between 1 and 253 characters", ErrValidation)
+	}
+	if strings.Contains(host, "://") || strings.ContainsAny(host, "/ \t[]") {
+		return fmt.Errorf("%w: host must be a hostname or IP, without scheme or path", ErrValidation)
+	}
+	return nil
+}
+
+func validatePort(port int) error {
+	if port < 1 || port > 65535 {
+		return fmt.Errorf("%w: port must be between 1 and 65535", ErrValidation)
+	}
+	return nil
+}
+
+func validateGrace(grace int) error {
+	if grace < 0 || grace > maxGraceSeconds {
+		return fmt.Errorf("%w: grace_seconds must be between 0 and 86400", ErrValidation)
+	}
+	return nil
+}
+
+// validateMonitor valida o monitor completo, com as regras do seu tipo.
 func validateMonitor(m *domain.Monitor) error {
 	if err := validateName(m.Name); err != nil {
 		return err
 	}
-	if err := validateURL(m.URL); err != nil {
+	if err := validateType(m.Type); err != nil {
 		return err
 	}
+
+	switch m.Type {
+	case domain.TypeHTTP:
+		if err := validateURL(m.URL); err != nil {
+			return err
+		}
+	case domain.TypeTCP:
+		if err := validateHost(m.Config.Host); err != nil {
+			return err
+		}
+		if err := validatePort(m.Config.Port); err != nil {
+			return err
+		}
+	case domain.TypeHeartbeat:
+		if err := validateHeartbeatInterval(m.IntervalSeconds); err != nil {
+			return err
+		}
+		return validateGrace(m.Config.GraceSeconds)
+	}
+
 	if err := validateInterval(m.IntervalSeconds); err != nil {
 		return err
 	}
 	if err := validateTimeout(m.TimeoutSeconds); err != nil {
 		return err
 	}
-	if err := validateThreshold(m.FailureThreshold); err != nil {
-		return err
-	}
-	return nil
-}
-
-func validateCreateInput(in CreateMonitorInput) error {
-	if err := validateName(in.Name); err != nil {
-		return err
-	}
-	if err := validateURL(in.URL); err != nil {
-		return err
-	}
-	if err := validateInterval(in.IntervalSeconds); err != nil {
-		return err
-	}
-	if err := validateTimeout(in.TimeoutSeconds); err != nil {
-		return err
-	}
-	if err := validateThreshold(in.FailureThreshold); err != nil {
-		return err
-	}
-	return nil
-}
-
-func validateUpdateInput(in UpdateMonitorInput) error {
-	if in.Name != nil {
-		if err := validateName(*in.Name); err != nil {
-			return err
-		}
-	}
-	if in.URL != nil {
-		if err := validateURL(*in.URL); err != nil {
-			return err
-		}
-	}
-	if in.IntervalSeconds != nil {
-		if err := validateInterval(*in.IntervalSeconds); err != nil {
-			return err
-		}
-	}
-	if in.TimeoutSeconds != nil {
-		if err := validateTimeout(*in.TimeoutSeconds); err != nil {
-			return err
-		}
-	}
-	if in.FailureThreshold != nil {
-		if err := validateThreshold(*in.FailureThreshold); err != nil {
-			return err
-		}
-	}
-	return nil
+	return validateThreshold(m.FailureThreshold)
 }

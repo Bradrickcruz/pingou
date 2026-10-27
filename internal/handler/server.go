@@ -19,6 +19,7 @@ type Server struct {
 	monitorService  *service.MonitorService
 	incidentService *service.IncidentService
 	settingsService *service.SettingsService
+	pingLimiter     *rateLimiter
 }
 
 func NewServer(
@@ -35,6 +36,7 @@ func NewServer(
 		monitorService:  monitorService,
 		incidentService: incidentService,
 		settingsService: settingsService,
+		pingLimiter:     newRateLimiter(pingRateLimit, time.Minute),
 	}
 	s.registerRoutes()
 	return s
@@ -66,6 +68,9 @@ func (s *Server) Shutdown(ctx context.Context) error {
 func (s *Server) registerRoutes() {
 	s.router.HandleFunc("GET /healthz", s.handleHealthz)
 
+	// ping de heartbeat: público (sem API Key), protegido por limite por IP
+	s.router.Handle("/ping/{token}", s.pingLimiter.middleware(http.HandlerFunc(s.handlePing)))
+
 	api := http.NewServeMux()
 
 	// monitors
@@ -74,6 +79,7 @@ func (s *Server) registerRoutes() {
 	api.HandleFunc("GET /monitors/{id}", s.handleGetMonitor)
 	api.HandleFunc("PATCH /monitors/{id}", s.handleUpdateMonitor)
 	api.HandleFunc("DELETE /monitors/{id}", s.handleDeleteMonitor)
+	api.HandleFunc("POST /monitors/{id}/token", s.handleRegenerateToken)
 	api.HandleFunc("GET /monitors/{id}/checks", s.handleListMonitorChecks)
 	api.HandleFunc("GET /monitors/{id}/incidents", s.handleListMonitorIncidents)
 

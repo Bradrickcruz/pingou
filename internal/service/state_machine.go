@@ -130,7 +130,7 @@ func (sm *StateMachine) handleFailure(ctx context.Context, m *domain.Monitor, pr
 	}
 
 	// threshold ainda não atingido — mantém estado atual
-	if consecutiveFails < m.FailureThreshold {
+	if consecutiveFails < effectiveThreshold(m) {
 		return nil, sm.uow.MonitorRepo().UpdateWithTx(ctx, m)
 	}
 
@@ -166,7 +166,7 @@ func (sm *StateMachine) handleFailure(ctx context.Context, m *domain.Monitor, pr
 // Lê dentro da transação (SQLite tem 1 conexão; ler fora dela trava)
 func (sm *StateMachine) countConsecutiveFails(ctx context.Context, m *domain.Monitor) (int, error) {
 	// busca os últimos N checks (N = failure_threshold + 1 para ter margem)
-	checks, _, err := sm.uow.CheckRepo().FindByMonitor(ctx, m.ID, m.FailureThreshold+1, 0)
+	checks, _, err := sm.uow.CheckRepo().FindByMonitor(ctx, m.ID, effectiveThreshold(m)+1, 0)
 	if err != nil {
 		return 0, err
 	}
@@ -180,4 +180,13 @@ func (sm *StateMachine) countConsecutiveFails(ctx context.Context, m *domain.Mon
 		}
 	}
 	return count, nil
+}
+
+// effectiveThreshold: heartbeat vira DOWN na primeira falha (prazo perdido);
+// a tolerância (grace_seconds) já cumpre o papel do threshold.
+func effectiveThreshold(m *domain.Monitor) int {
+	if m.Type == domain.TypeHeartbeat {
+		return 1
+	}
+	return m.FailureThreshold
 }

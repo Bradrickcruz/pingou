@@ -142,3 +142,36 @@ func TestNotifierRunsAfterCommit(t *testing.T) {
 		t.Fatalf("banco: state=%s last_checked_at=%v", stored.CurrentState, stored.LastCheckedAt)
 	}
 }
+
+// Heartbeat ignora failure_threshold: a primeira falha (prazo perdido) já abre incidente.
+func TestHeartbeatGoesDownOnFirstFailure(t *testing.T) {
+	db, err := database.Open(filepath.Join(t.TempDir(), "t.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	ctx := context.Background()
+	now := time.Now().UTC()
+	token := "tok"
+	m := &domain.Monitor{
+		ID: "hb", Name: "backup", Type: domain.TypeHeartbeat, PingToken: &token, IntervalSeconds: 3600,
+		TimeoutSeconds: 10, FailureThreshold: 5, Enabled: true, CurrentState: domain.StateUp, CreatedAt: now, UpdatedAt: now,
+	}
+	if err := repository.NewMonitorRepo(db).Create(ctx, m); err != nil {
+		t.Fatal(err)
+	}
+
+	uow := service.NewUnitOfWork(db, repository.NewCheckRepoTx(db), repository.NewMonitorRepoTx(db), repository.NewIncidentRepoTx(db))
+	msg := "no ping"
+	if err := service.NewStateMachine(uow, noopNotifier{}).Process(ctx, m, domain.CheckResult{ErrorMessage: &msg}); err != nil {
+		t.Fatal(err)
+	}
+	if m.CurrentState != domain.StateDown {
+		t.Fatalf("state = %s, want DOWN", m.CurrentState)
+	}
+	open, err := repository.NewIncidentRepo(db).FindOpenByMonitor(ctx, m.ID)
+	if err != nil || open == nil {
+		t.Fatalf("incidente aberto esperado, err=%v", err)
+	}
+}

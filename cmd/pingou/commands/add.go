@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/Bradrickcruz/pingou/internal/database"
+	"github.com/Bradrickcruz/pingou/internal/domain"
 	"github.com/Bradrickcruz/pingou/internal/repository"
 	"github.com/Bradrickcruz/pingou/internal/service"
 )
@@ -18,8 +19,10 @@ var addCmd = &cobra.Command{
 	Short: "Adiciona um novo monitor",
 	Long: `Cria um novo monitor de health check.
 
-Exemplo:
+Exemplos:
   pingou add --name "Meu Servico" --url "https://api.exemplo.com/health"
+  pingou add --name "Postgres" --type tcp --host db.interno --port 5432
+  pingou add --name "Backup diario" --type heartbeat -i 86400 --grace 3600
 
 Para proteger o comando, use a flag --key:
   pingou add --name "Meu Servico" --url "https://api.exemplo.com/health" --key SUA_API_KEY`,
@@ -31,7 +34,11 @@ Para proteger o comando, use a flag --key:
 // flags do comando add
 var (
 	flagName             string
+	flagType             string
 	flagURL              string
+	flagHost             string
+	flagPort             int
+	flagGraceSeconds     int
 	flagIntervalSeconds  int
 	flagTimeoutSeconds   int
 	flagFailureThreshold int
@@ -42,21 +49,25 @@ const (
 	defaultInterval  = 60
 	defaultTimeout   = 5
 	defaultThreshold = 3
+	defaultGrace     = 60
 )
 
 func init() {
 	addCmd.Flags().StringVarP(&flagName, "name", "n", "", "nome do monitor (obrigatorio)")
-	addCmd.Flags().StringVarP(&flagURL, "url", "u", "", "URL para verificar health (obrigatorio)")
+	addCmd.Flags().StringVar(&flagType, "type", "http", "tipo do monitor: http, tcp ou heartbeat")
+	addCmd.Flags().StringVarP(&flagURL, "url", "u", "", "URL para verificar health (obrigatorio para http)")
+	addCmd.Flags().StringVar(&flagHost, "host", "", "host (obrigatorio para tcp)")
+	addCmd.Flags().IntVar(&flagPort, "port", 0, "porta (obrigatorio para tcp)")
+	addCmd.Flags().IntVar(&flagGraceSeconds, "grace", defaultGrace, "tolerancia em segundos (heartbeat)")
 	addCmd.Flags().IntVarP(&flagIntervalSeconds, "interval", "i", defaultInterval,
 		"intervalo em segundos entre checagens")
 	addCmd.Flags().IntVarP(&flagTimeoutSeconds, "timeout", "t", defaultTimeout,
-		"timeout em segundos para cada checagem")
+		"timeout em segundos para cada checagem (nao se aplica a heartbeat)")
 	addCmd.Flags().IntVarP(&flagFailureThreshold, "threshold", "K", defaultThreshold,
-		"numero de falhas antes de marcar como down")
+		"numero de falhas antes de marcar como down (nao se aplica a heartbeat)")
 
-	// Requerer explicitamente estas flags
+	// url/host/port dependem do tipo: o service valida
 	addCmd.MarkFlagRequired("name")
-	addCmd.MarkFlagRequired("url")
 }
 
 func runAdd(cmd *cobra.Command, args []string) error {
@@ -89,7 +100,11 @@ func runAdd(cmd *cobra.Command, args []string) error {
 	// Validar entrada usando servico existente
 	input := service.CreateMonitorInput{
 		Name:             flagName,
+		Type:             flagType,
 		URL:              flagURL,
+		Host:             flagHost,
+		Port:             flagPort,
+		GraceSeconds:     &flagGraceSeconds,
 		IntervalSeconds:  flagIntervalSeconds,
 		TimeoutSeconds:   flagTimeoutSeconds,
 		FailureThreshold: flagFailureThreshold,
@@ -105,7 +120,16 @@ func runAdd(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Monitor criado com sucesso!\n")
 	fmt.Printf("  ID:     %s\n", m.ID)
 	fmt.Printf("  Nome:  %s\n", m.Name)
-	fmt.Printf("  URL:    %s\n", m.URL)
+	fmt.Printf("  Tipo:   %s\n", m.Type)
+	switch m.Type {
+	case domain.TypeHTTP:
+		fmt.Printf("  URL:    %s\n", m.URL)
+	case domain.TypeTCP:
+		fmt.Printf("  Alvo:   %s:%d\n", m.Config.Host, m.Config.Port)
+	case domain.TypeHeartbeat:
+		// so o caminho: o endereco publico do Pingou depende de onde ele roda
+		fmt.Printf("  Ping:   /ping/%s\n", *m.PingToken)
+	}
 	fmt.Printf("  Estado: %s\n", m.CurrentState)
 
 	return nil
