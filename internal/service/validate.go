@@ -32,7 +32,7 @@ var urlRegexp = regexp.MustCompile(`^https?://` +
 	`|([0-9a-fA-F]{1,4}:){1,7}(:[0-9a-fA-F]{1,4})` +
 	`|:` +
 	`)` +
-	`(:[0-9]{1,4})?` +
+	`(:[0-9]{1,5})?` +
 	`(/[a-zA-Z0-9._~:/?#\[\]@!$&'()*+,;=%-]*)?$`)
 
 func validateURL(url string) error {

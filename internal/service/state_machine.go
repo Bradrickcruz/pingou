@@ -54,11 +54,15 @@ func (sm *StateMachine) Process(ctx context.Context, m *domain.Monitor, result d
 	// 2. aplica transição de estado
 	prevState := m.CurrentState
 
-	var notificationErr error
+	var notify func()
+	var err error
 	if result.Success {
-		notificationErr = sm.handleSuccess(ctx, m, prevState, now)
+		notify, err = sm.handleSuccess(ctx, m, prevState, now)
 	} else {
-		notificationErr = sm.handleFailure(ctx, m, prevState, result, now)
+		notify, err = sm.handleFailure(ctx, m, prevState, result, now)
+	}
+	if err != nil {
+		return err
 	}
 
 	// Commit da transação antes de notificar
@@ -68,28 +72,30 @@ func (sm *StateMachine) Process(ctx context.Context, m *domain.Monitor, result d
 
 	success = true
 
-	// Notificações APÓS commit (fora da transação)
-	if notificationErr != nil {
-		return notificationErr
+	// Notificações APÓS commit: o notifier lê settings no banco, e com
+	// MaxOpenConns=1 isso travaria esperando a conexão presa na transação
+	if notify != nil {
+		notify()
 	}
 
 	return nil
 }
 
-func (sm *StateMachine) handleSuccess(ctx context.Context, m *domain.Monitor, prevState domain.MonitorState, now time.Time) error {
+// handleSuccess aplica a transição e devolve a notificação a enviar após o commit (ou nil).
+func (sm *StateMachine) handleSuccess(ctx context.Context, m *domain.Monitor, prevState domain.MonitorState, now time.Time) (func(), error) {
 	m.CurrentState = domain.StateUp
 	m.LastCheckedAt = &now
 	m.UpdatedAt = now
 
 	if err := sm.uow.MonitorRepo().UpdateWithTx(ctx, m); err != nil {
-		return err
+		return nil, err
 	}
 
 	// DOWN→UP: fecha incidente (dentro da transação)
 	if prevState == domain.StateDown {
 		incident, err := sm.uow.IncidentRepo().FindOpenByMonitor(ctx, m.ID)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if incident != nil {
 			endedAt := now.Format(time.RFC3339)
@@ -98,46 +104,47 @@ func (sm *StateMachine) handleSuccess(ctx context.Context, m *domain.Monitor, pr
 				durationSeconds = 0
 			}
 			if err := sm.uow.IncidentRepo().Close(ctx, incident.ID, endedAt, durationSeconds); err != nil {
-				return err
+				return nil, err
 			}
 			d := int64(durationSeconds)
 			incident.DurationSeconds = &d
+			incident.EndedAt = &now
 			slog.Info("monitor recovered", "monitor_id", m.ID, "name", m.Name)
-			// Notificação fora da transação (após commit)
-			sm.notifier.NotifyRecovery(ctx, m, incident)
+			return func() { sm.notifier.NotifyRecovery(ctx, m, incident) }, nil
 		}
 	}
 	// UNKNOWN→UP: não notifica (D na PRD)
 
-	return nil
+	return nil, nil
 }
 
-func (sm *StateMachine) handleFailure(ctx context.Context, m *domain.Monitor, prevState domain.MonitorState, result domain.CheckResult, now time.Time) error {
+// handleFailure aplica a transição e devolve a notificação a enviar após o commit (ou nil).
+func (sm *StateMachine) handleFailure(ctx context.Context, m *domain.Monitor, prevState domain.MonitorState, result domain.CheckResult, now time.Time) (func(), error) {
 	m.LastCheckedAt = &now
 	m.UpdatedAt = now
 
-	// conta falhas consecutivas recentes 
+	// conta falhas consecutivas recentes
 	consecutiveFails, err := sm.countConsecutiveFails(ctx, m)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// threshold ainda não atingido — mantém estado atual
 	if consecutiveFails < m.FailureThreshold {
-		return sm.uow.MonitorRepo().UpdateWithTx(ctx, m)
+		return nil, sm.uow.MonitorRepo().UpdateWithTx(ctx, m)
 	}
 
 	// threshold atingido — vai pra DOWN
 	m.CurrentState = domain.StateDown
 	if err := sm.uow.MonitorRepo().UpdateWithTx(ctx, m); err != nil {
-		return err
+		return nil, err
 	}
 
 	// só abre incidente na transição →DOWN (não repete se já estava DOWN)
 	if prevState != domain.StateDown {
 		id, err := newUUIDv7()
 		if err != nil {
-			return err
+			return nil, err
 		}
 		incident := &domain.Incident{
 			ID:        id,
@@ -146,14 +153,13 @@ func (sm *StateMachine) handleFailure(ctx context.Context, m *domain.Monitor, pr
 			LastError: result.ErrorMessage,
 		}
 		if err := sm.uow.IncidentRepo().CreateWithTx(ctx, incident); err != nil {
-			return err
+			return nil, err
 		}
 		slog.Warn("monitor down", "monitor_id", m.ID, "name", m.Name, "error", result.ErrorMessage)
-		// Notificação fora da transação (após commit)
-		sm.notifier.NotifyDown(ctx, m, incident)
+		return func() { sm.notifier.NotifyDown(ctx, m, incident) }, nil
 	}
 
-	return nil
+	return nil, nil
 }
 
 // countConsecutiveFails conta checks recentes até encontrar um sucesso

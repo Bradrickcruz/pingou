@@ -228,10 +228,10 @@
     "semantic_hash": "91917164a8437ca9474cfcbdb0b7196d"
   },
   "internal/scheduler/scheduler.go": {
-    "mtime": 1777837837.1297731,
-    "seen": 1790220686.5526166,
-    "ast_hash": "ad91304f5e4818e72f8dd62db2693e89",
-    "semantic_hash": "ad91304f5e4818e72f8dd62db2693e89"
+    "mtime": 1793112008.984387,
+    "seen": 1793112067.4363823,
+    "ast_hash": "f22eb3f88aff44aabbdd5d079c23cc34",
+    "semantic_hash": ""
   },
   "internal/service/errors.go": {
     "mtime": 1777014726.2054646,
@@ -264,9 +264,9 @@
     "semantic_hash": "9ee0d39798abc249af80e35d92918f04"
   },
   "internal/service/state_machine.go": {
-    "mtime": 1791228156.4709656,
-    "seen": 1791233877.9926105,
-    "ast_hash": "609eb9514bed312ef29027a5ed75234a",
+    "mtime": 1793112008.984387,
+    "seen": 1793112067.4363883,
+    "ast_hash": "0226e6691e84bf0b7b06a9b41422ea96",
     "semantic_hash": ""
   },
   "internal/service/unit_of_work.go": {
@@ -288,10 +288,10 @@
     "semantic_hash": "56821682fc6e4d3953754a33a486a4e7"
   },
   "internal/service/validate.go": {
-    "mtime": 1777764107.3689015,
-    "seen": 1790220686.552629,
-    "ast_hash": "4d7b21286248b59efc1079683bd3b1cb",
-    "semantic_hash": "4d7b21286248b59efc1079683bd3b1cb"
+    "mtime": 1793112008.984387,
+    "seen": 1793112067.4364011,
+    "ast_hash": "7d0a54bb4d060c2e47e29a8e0ec8d64f",
+    "semantic_hash": ""
   },
   "web/eslint.config.js": {
     "mtime": 1777051783.7957969,
@@ -467,12 +467,6 @@
     "ast_hash": "fc257487faa3fffff8b22ed6c906bd19",
     "semantic_hash": "fc257487faa3fffff8b22ed6c906bd19"
   },
-  "DIVERGENCIAS-PRD-IMPLEMENTACAO.md": {
-    "mtime": 1790367790.122209,
-    "seen": 1790368292.851064,
-    "ast_hash": "5e1699eb1b4de06e84e38890d9aa4d99",
-    "semantic_hash": ""
-  },
   "PRD.md": {
     "mtime": 1790367101.4237103,
     "seen": 1790368292.8510656,
@@ -480,8 +474,8 @@
     "semantic_hash": "c7cbb47765f8248e3137599f24de44e0"
   },
   "README.md": {
-    "mtime": 1791225471.511594,
-    "seen": 1791226175.5138004,
+    "mtime": 1793112054.364537,
+    "seen": 1793112067.4364576,
     "ast_hash": "55ef4a66e8eb1219a3d31095ec07625d",
     "semantic_hash": ""
   },
@@ -828,8 +822,8 @@
     "semantic_hash": ""
   },
   "plan-design-system-web.md": {
-    "mtime": 1791227461.1519291,
-    "seen": 1791233877.9927764,
+    "mtime": 1793112054.370537,
+    "seen": 1793112067.4364595,
     "ast_hash": "caae05d9c66d599b7d6da732366af398",
     "semantic_hash": ""
   },
@@ -858,8 +852,8 @@
     "semantic_hash": ""
   },
   "plan-tema-claro.md": {
-    "mtime": 1791227495.2883425,
-    "seen": 1791233877.9927783,
+    "mtime": 1793112054.370537,
+    "seen": 1793112067.4364605,
     "ast_hash": "c583a302f5869cf767b95df56b9a128e",
     "semantic_hash": ""
   },
@@ -870,9 +864,21 @@
     "semantic_hash": ""
   },
   "internal/service/state_machine_test.go": {
-    "mtime": 1791228152.0679698,
-    "seen": 1791233877.992614,
-    "ast_hash": "45b4632e309fa6ee89fab60b889354f1",
+    "mtime": 1793112008.984387,
+    "seen": 1793112067.4363973,
+    "ast_hash": "0c01d0275ca17875bcbf7dd661d1dc80",
+    "semantic_hash": ""
+  },
+  "internal/scheduler/scheduler_test.go": {
+    "mtime": 1793112008.984387,
+    "seen": 1793112067.4363835,
+    "ast_hash": "b6e26b2f61d9752ee5f8986fedf08111",
+    "semantic_hash": ""
+  },
+  "internal/service/validate_test.go": {
+    "mtime": 1793112008.984387,
+    "seen": 1793112067.436402,
+    "ast_hash": "05dfb80af2434fc1398d56edec863582",
     "semantic_hash": ""
   }
 }
