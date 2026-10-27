@@ -881,22 +881,46 @@
     "ast_hash": "bd2d80625558194c2a4b9a6ff5c88bc4",
     "semantic_hash": ""
   },
-  "login-Desktop.png": {
-    "mtime": 1793114024.8790839,
-    "seen": 1793114283.5286891,
-    "ast_hash": "5c4b753f37274b0158719adb586fd925",
-    "semantic_hash": ""
-  },
-  "login-mobile.png": {
-    "mtime": 1793114024.872084,
-    "seen": 1793114283.5286913,
-    "ast_hash": "376f900d9c3a7c638a8312744ef0907a",
-    "semantic_hash": ""
-  },
   "web/src/assets/brand/pingou-marca-horizontal-negativa.svg": {
     "mtime": 1793114256.9829054,
     "seen": 1793114283.5287633,
     "ast_hash": "7413fafe978a80b551ec528a51e14554",
+    "semantic_hash": ""
+  },
+  "plan-check-types.md": {
+    "mtime": 1793115661.464159,
+    "seen": 1793115669.6076708,
+    "ast_hash": "df7a260695e1e0e3ccf6c6c0f71320de",
+    "semantic_hash": ""
+  },
+  "concept-design/Editar-monitor.png": {
+    "mtime": 1793115346.0102928,
+    "seen": 1793115669.6077082,
+    "ast_hash": "8aec87a29a82f299b9d1722af4d49a95",
+    "semantic_hash": ""
+  },
+  "concept-design/Novo-monitor.png": {
+    "mtime": 1793115346.0172925,
+    "seen": 1793115669.607709,
+    "ast_hash": "20db294b7c35af243146f7e4a0e31fd9",
+    "semantic_hash": ""
+  },
+  "concept-design/Painel.png": {
+    "mtime": 1793115346.034292,
+    "seen": 1793115669.6077096,
+    "ast_hash": "14b565b5159618460450f3b99a700d07",
+    "semantic_hash": ""
+  },
+  "concept-design/login-Desktop.png": {
+    "mtime": 1793114024.8790839,
+    "seen": 1793115669.6077104,
+    "ast_hash": "5c4b753f37274b0158719adb586fd925",
+    "semantic_hash": ""
+  },
+  "concept-design/login-mobile.png": {
+    "mtime": 1793114024.872084,
+    "seen": 1793115669.6077113,
+    "ast_hash": "376f900d9c3a7c638a8312744ef0907a",
     "semantic_hash": ""
   }
 }

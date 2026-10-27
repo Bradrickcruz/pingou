@@ -839,18 +839,6 @@
     "ast_hash": "2ccd3954cd8b3012ddddac908b5f3d1f",
     "semantic_hash": ""
   },
-  "plan-design-system-web.md": {
-    "mtime": 1793113643.0037928,
-    "seen": 1793113886.0387557,
-    "ast_hash": "caae05d9c66d599b7d6da732366af398",
-    "semantic_hash": ""
-  },
-  "plan-tema-claro.md": {
-    "mtime": 1793113968.6297164,
-    "seen": 1793114002.455251,
-    "ast_hash": "6313597ffd37a33f38b3b94f49ee2a2d",
-    "semantic_hash": ""
-  },
   "web/src/assets/fonts/OFL-Inter.txt": {
     "mtime": 1793113643.0047927,
     "seen": 1793113886.0387647,
