@@ -37,7 +37,7 @@ export function Login({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-pg-nuvem">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-pg-nuvem">
       <div className="p-10 rounded-pg-card border border-pg-borda bg-pg-branco w-full max-w-[380px]">
         <div className="text-center mb-8">
           <h1 className="my-0">
