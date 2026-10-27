@@ -618,9 +618,9 @@
     "semantic_hash": ""
   },
   "DESIGN.md": {
-    "mtime": 1793113642.9907928,
-    "seen": 1793113647.3743896,
-    "ast_hash": "7d819991a5d7c6d1f07120040a0990ee",
+    "mtime": 1793113968.6297164,
+    "seen": 1793114002.4552467,
+    "ast_hash": "b63e33ae6fbbc958d0e5bed6c6ae38f0",
     "semantic_hash": ""
   },
   "PRD-divergencias-implementacao.md": {
@@ -846,9 +846,9 @@
     "semantic_hash": ""
   },
   "plan-tema-claro.md": {
-    "mtime": 1793113856.6997688,
-    "seen": 1793113886.0387576,
-    "ast_hash": "7bbb210bb63562821ffc811211b3055a",
+    "mtime": 1793113968.6297164,
+    "seen": 1793114002.455251,
+    "ast_hash": "6313597ffd37a33f38b3b94f49ee2a2d",
     "semantic_hash": ""
   },
   "web/src/assets/fonts/OFL-Inter.txt": {

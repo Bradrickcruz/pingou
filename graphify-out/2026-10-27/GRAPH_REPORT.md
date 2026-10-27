@@ -1,17 +1,17 @@
 # Graph Report - pingou-health-checker  (2026-10-27)
 
 ## Corpus Check
-- 861 files · ~567,841 words
+- 112 files · ~92,480 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 45 file(s) not represented in the graph (top: (none) 27, .mjml 5, .css 3)
+- Unclassified: 15 file(s) not represented in the graph (top: (none) 9, .woff2 4, .example 1)
 
 ## Summary
-- 6291 nodes · 16740 edges · 251 communities (211 shown, 40 thin omitted)
+- 6286 nodes · 16711 edges · 247 communities (205 shown, 42 thin omitted)
 - Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 391 edges (avg confidence: 0.84)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `7d04b03d`
+- Built from commit: `f8445e4f`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -28,10 +28,10 @@
 - Monitor.ts
 - info.go
 - context.Context
-- @mui/material
+- inputs/index.tsx
 - Check.ts
 - Pingou Health Checker - Project Vision & Goals
-- EditUser/index.tsx
+- Proxies/create/index.tsx
 - SettingsRepo
 - MVP Plan: Pingou
 - Vite Logo
@@ -54,7 +54,7 @@
 - Settings.jsx
 - main.jsx
 - 🧩 Tarefa: Melhorias na página de Incidentes
-- tokens.js
+- Button
 - 🧩 Tarefa: Tela de detalhe do monitor com checks e incidentes
 - 🧩 Tarefa: Sistema WebSocket para atualização em tempo real dos monitores
 - graphify reference: extra exports and benchmark
@@ -101,38 +101,38 @@
 - services.api.ts
 - DockerProvider.ts
 - ILogger
-- ref_mongoose
+- worker.interface.ts
 - routes.ts
 - requireTeamId
-- DateRange
+- monitor.service.ts
 - ref_jest_globals
-- AppError
+- monitorService.test.ts
 - ChartsNetwork.tsx
 - monitorValidation.ts
 - monitor.type.ts
 - egress.type.ts
-- MaintenanceWindow
+- maintenanceWindowService.test.ts
 - Proxy
-- NotificationMessage
-- buildShared
+- Notification
+- ref_mongoose
 - Settings/index.tsx
 - server/package.json
 - IJobsRepository
+- user.model.ts
 - user.service.ts
-- UserService
 - modern/styles.ts
-- IJobScheduler
+- src/index.ts
 - DockerProvider
 - client/package.json
-- uiSlice.ts
+- @mui/material
 - authController.ts
-- settingsController.ts
+- ref_zod
 - dependencies
-- ISettingsRepository
+- app-settings.service.ts
 - dependencies
 - devDependencies
-- worker.interface.ts
-- statusService.test.ts
+- worker.job-scheduler.ts
+- Check
 - BasePage.tsx
 - services.shared.ts
 - Monitor
@@ -141,21 +141,21 @@
 - StatusPage.ts
 - EncryptionService
 - MongoJobsRepository
-- MongoMonitorsRepository
+- AppError
 - Theme.ts
 - Utils/logger.ts
-- Maintenance/create/index.tsx
-- DBQueueWorker
-- Notification
+- EditUser/index.tsx
+- evaluateCursorMultiWorker.test.ts
+- User
 - Status/index.tsx
 - How do I...
-- WorkerPipeline
+- worker.geo-pipeline.ts
 - INSTALLATION.md
 - compilerOptions
 - controllerUtils.ts
 - statusPageValidation.ts
 - migration/index.ts
-- store.ts
+- main.tsx
 - HeaderMonitorsSummary.tsx
 - StatusPageThemeProvider.tsx
 - Checkmate/package.json
@@ -179,12 +179,12 @@
 - scripts
 - vite.config.ts
 - proxyController.ts
-- monitor.model.ts
+- TabQueue.tsx
 - teams.ts
 - Checkmate/CLAUDE.md
 - devDependencies
 - StatusPageService
-- emailService.test.ts
+- MongoChecksRepository
 - Infrastructure Monitoring - Disk Selection
 - README.ar.md
 - README.ca.md
@@ -217,22 +217,22 @@
 - migrate-locales.ts
 - compilerOptions
 - Part 2 — Backend (`server/src`)
-- 0002_convertChecksToTimeSeries.ts
-- statusPageService.test.ts
-- server/eslint.config.js
-- download-translations.js
+- EgressService
+- MaintenanceWindow
+- web/eslint.config.js
+- ApiClient.ts
 - POEditor Translation Synchronization
-- upload.test.ts
-- 0009_recomputeResponseTimeFromTimings.ts
-- team.repository.model.ts
+- MongoIncidentsRepository
+- IJobScheduler
+- EmailProvider
 - Logger
 - The Importance of Small Pull Requests
-- monitor-stats.model.ts
+- DockerLogsService
 - MongoNotificationsRepository
 - NtfyProvider
 - checksRepositoryDailyStatusBuckets.test.ts
 - compilerOptions
-- i18nLoader/index.tsx
+- MongoMaintenanceWindowsRepository
 - mui.d.ts
 - seed-monitors.js
 - RocketChatProvider
@@ -243,21 +243,17 @@
 - generate-checks.js
 - .eslintrc.cjs
 - renovate.json
-- Dot.tsx
+- MongoEgressStateRepository
 - env.d.ts
 - checkmate.so hosting (demo + staging)
-- .getPublicStatusPagePayload
+- dbQueueWorker.test.ts
 - ssl-checker.d.ts
-- toastUtils.jsx
+- geoChecksPipeline.test.ts
 - pull_request_template.md
-- monitorRepository.test.ts
-- jest.config.ts
-- engines
 - server/README.md
 - pre-commit
 - SECURITY.md
 - UoWError
-- web_src_assets_brand_pingou_marca_horizontal
 - web_src_assets_brand_pingou_simbolo
 
 ## God Nodes (most connected - your core abstractions)
@@ -273,29 +269,29 @@
 10. `Notification` - 56 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `Task T5: Ícones no `Shell` ✅` --references--> `Shell()`  [INFERRED]
-  plan-design-system-web.md → web/src/components/layout/Shell.jsx
-- `Notes` --references--> `Shell()`  [INFERRED]
-  plan-tema-claro.md → web/src/components/layout/Shell.jsx
+- `Task T3: Smoke test dos tokens ✅` --references--> `Login()`  [INFERRED]
+  plan-design-system-web.md → web/src/pages/Login.jsx
+- `Task T6: Ícones em `Dashboard`, `Modal`, `Login` ✅` --references--> `Login()`  [INFERRED]
+  plan-design-system-web.md → web/src/pages/Login.jsx
 - `Por task` --references--> `MonitorCard()`  [INFERRED]
   plan-tema-claro.md → web/src/components/monitors/MonitorCard.jsx
-- `Overview` --references--> `Badge()`  [INFERRED]
-  plan-design-system-web.md → web/src/components/ui/Badge.jsx
-- `Success Criteria` --references--> `Badge()`  [INFERRED]
-  plan-design-system-web.md → web/src/components/ui/Badge.jsx
+- `🔍 Contexto` --references--> `useMonitors()`  [INFERRED]
+  tasks/tarefa-sistema-websocket-tempo-real.md → web/src/hooks/useMonitors.js
+- `Task Breakdown` --references--> `Dashboard()`  [INFERRED]
+  plan-design-system-web.md → web/src/pages/Dashboard.jsx
 
 ## Import Cycles
 - 3-file cycle: `inspiration/Checkmate/client/src/Components/design-elements/StatusCodeLabel.tsx -> inspiration/Checkmate/client/src/Components/design-elements/StatusLabel.tsx -> inspiration/Checkmate/client/src/Components/design-elements/index.tsx -> inspiration/Checkmate/client/src/Components/design-elements/StatusCodeLabel.tsx`
 
-## Communities (251 total, 40 thin omitted)
+## Communities (247 total, 42 thin omitted)
 
 ### Community 0 - "serve.go"
 Cohesion: 0.21
 Nodes (21): MonitorEnabled, go_pkg_bytes, go_pkg_context, go_pkg_database_sql, go_pkg_encoding_json, go_pkg_errors, go_pkg_fmt, go_pkg_github_com_google_uuid (+13 more)
 
 ### Community 1 - "Dashboard.jsx"
-Cohesion: 0.43
-Nodes (5): Task T10: `Dashboard.jsx` + `MonitorCard.jsx` ✅, monitorsApi, MonitorCard(), useMonitors(), Dashboard()
+Cohesion: 0.33
+Nodes (7): Task T6: Ícones em `Dashboard`, `Modal`, `Login` ✅, Task T11: `MonitorForm.jsx` + `Modal.jsx` em classes ✅, monitorsApi, MonitorForm(), Modal(), useMonitors(), Dashboard()
 
 ### Community 2 - "middleware.go"
 Cohesion: 0.08
@@ -311,7 +307,7 @@ Nodes (6): context.CancelFunc, sync.Mutex, Checker, Monitor, job, Scheduler
 
 ### Community 5 - "Plano de Desenvolvimento: Design system no front (tokens, ícones, fontes)"
 Cohesion: 0.09
-Nodes (23): Alternativas consideradas e descartadas, Concluído, Cronograma Sugerido, Definition of Done (DoD), Desvios em relação ao plano, Em andamento, Entregas, File Structure (+15 more)
+Nodes (24): Alternativas consideradas e descartadas, Concluído, Cronograma Sugerido, Definition of Done (DoD), Desvios em relação ao plano, Em andamento, Entregas, File Structure (+16 more)
 
 ### Community 6 - "net/http.ResponseWriter"
 Cohesion: 0.17
@@ -323,11 +319,11 @@ Nodes (42): 1. Unit Testing, 2. Integration Testing, 3. End-to-End Testing, Back
 
 ### Community 8 - "services.worker.ts"
 Cohesion: 0.03
-Nodes (78): Coding conventions (mandatory), 7. Provider conventions for `service/infrastructure/network/*`, 9. Test conventions for `server/test/unit/providers/network/*`, Hard rules, buildWorker(), CheckCaptureInfo, GotTimings, ILighthouseAudit (+70 more)
+Nodes (69): Coding conventions (mandatory), 7. Provider conventions for `service/infrastructure/network/*`, 9. Test conventions for `server/test/unit/providers/network/*`, Hard rules, buildWorker(), MonitorType, AdvancedMatcher, IAdvancedMatcher (+61 more)
 
 ### Community 9 - "Monitor.ts"
-Cohesion: 0.02
-Nodes (147): BaseBox, inspiration_checkmate_client_src_components_design_elements_index_basebox, inspiration_checkmate_client_src_components_design_elements_index_tooltipwithinfo, MonitorStatus(), GradientBox, StatBoxProps, StatusCodeLabelProps, DockerStateLabel() (+139 more)
+Cohesion: 0.03
+Nodes (114): ValueType, AutocompleteOption, GeoChecksMap(), GeoChecksMapProps, HeaderGeoTabsProps, inspiration_checkmate_client_src_components_monitors_index_geochecksmap, inspiration_checkmate_client_src_components_monitors_index_headerdeletecontrols, inspiration_checkmate_client_src_components_monitors_index_headergeotabs (+106 more)
 
 ### Community 10 - "info.go"
 Cohesion: 0.10
@@ -337,21 +333,21 @@ Nodes (21): copyFile(), runExportDB(), getEnvInt(), getEnvList(), getEnvOr(), ru
 Cohesion: 0.05
 Nodes (33): HTTPChecker, context.Context, database/sql.Tx, net/http.Client, time.Time, NewHTTPChecker(), Check, CheckResult (+25 more)
 
-### Community 12 - "@mui/material"
+### Community 12 - "inputs/index.tsx"
 Cohesion: 0.03
-Nodes (108): BaseChartProps, Dot(), inspiration_checkmate_client_src_components_design_elements_index_dot, inspiration_checkmate_client_src_components_design_elements_index_pulsedot, inspiration_checkmate_client_src_components_design_elements_index_stepprogress, inspiration_checkmate_client_src_components_design_elements_index_strategybadge, NoticeBanner(), NoticeBannerProps (+100 more)
+Nodes (97): MonitorBasePageWithStates(), inspiration_checkmate_client_src_components_design_elements_index_monitorbasepagewithstates, inspiration_checkmate_client_src_components_design_elements_index_stepprogress, StepProgress(), AutoCompleteInput(), AutoCompleteInputProps, CheckboxInput, CheckboxInputProps (+89 more)
 
 ### Community 13 - "Check.ts"
 Cohesion: 0.02
-Nodes (126): HeatmapResponseTime(), HeatmapResponseTimeProps, PlaceholderCheck, HeatmapCheck, HeatmapResponseTimeTooltip(), calculateResponseTimeStats(), HistogramResponseTime(), HistogramResponseTimeProps (+118 more)
+Nodes (147): HeatmapResponseTime(), HeatmapResponseTimeProps, PlaceholderCheck, HeatmapCheck, HeatmapResponseTimeTooltip(), calculateResponseTimeStats(), HistogramResponseTime(), HistogramResponseTimeProps (+139 more)
 
 ### Community 14 - "Pingou Health Checker - Project Vision & Goals"
 Cohesion: 0.05
 Nodes (42): 1. Convention Over Configuration, 1. Simplicity First, 2. Batteries Included, 2. Reliability & Performance, 3. Extensibility by Design, 3. Self-Hosted Independence, 4. Developer Experience, 5. Extensibility (+34 more)
 
-### Community 15 - "EditUser/index.tsx"
-Cohesion: 0.03
-Nodes (104): BaseAuthPage(), BulletPointCheck(), inspiration_checkmate_client_src_components_design_elements_index_baseauthpage, inspiration_checkmate_client_src_components_design_elements_index_bulletpointcheck, inspiration_checkmate_client_src_components_design_elements_index_configbox, inspiration_checkmate_client_src_components_design_elements_index_textlink, ConfigBox(), TextLink() (+96 more)
+### Community 15 - "Proxies/create/index.tsx"
+Cohesion: 0.04
+Nodes (83): BaseAuthPage(), BulletPointCheck(), inspiration_checkmate_client_src_components_design_elements_index_baseauthpage, inspiration_checkmate_client_src_components_design_elements_index_bulletpointcheck, inspiration_checkmate_client_src_components_design_elements_index_configbox, inspiration_checkmate_client_src_components_design_elements_index_textlink, ConfigBox(), TextLink() (+75 more)
 
 ### Community 16 - "SettingsRepo"
 Cohesion: 0.13
@@ -390,28 +386,28 @@ Cohesion: 0.12
 Nodes (15): MonitorRepository, Monitor, MonitorService, newUUIDv7(), validateCreateInput(), validateInterval(), validateMonitor(), validateName() (+7 more)
 
 ### Community 35 - "Task Breakdown"
-Cohesion: 0.11
-Nodes (27): Fase 1: Tokens do DESIGN.md no Tailwind, Fase 2: Ícones com lucide-react, Fase 3: Fontes locais, Task Breakdown, Task T10: `@font-face` + ativar fontes nos tokens ✅, Task T11: Remover Google Fonts do `globalStyles.js` ✅, Task T12: Atualizar `DESIGN.md` §5 ✅, Task T1: Variáveis `--pg-*` em `:root` ✅ (+19 more)
+Cohesion: 0.12
+Nodes (23): Fase 1: Tokens do DESIGN.md no Tailwind, Fase 2: Ícones com lucide-react, Fase 3: Fontes locais, Task Breakdown, Task T10: `@font-face` + ativar fontes nos tokens ✅, Task T11: Remover Google Fonts do `globalStyles.js` ✅, Task T12: Atualizar `DESIGN.md` §5 ✅, Task T1: Variáveis `--pg-*` em `:root` ✅ (+15 more)
 
 ### Community 36 - "Task Breakdown"
 Cohesion: 0.11
-Nodes (20): Fase 4A: Troca centralizada para o tema claro, Fase 4B: Migração gradual dos componentes, Fase 4C: Limpeza e verificação, Task Breakdown, Task T0: Commitar Fases 1–3 ✅, Task T12: `Incidents.jsx` ✅, Task T14: `Login.jsx`, `Spinner`, `ConnectionOverlay`, `TimeRangeSlider` ✅, Task T15: Remover `tokens.js` e legados sem uso ✅ (exceto `darkMode: 'class'`, pendente) (+12 more)
+Nodes (19): Fase 4A: Troca centralizada para o tema claro, Fase 4B: Migração gradual dos componentes, Fase 4C: Limpeza e verificação, Task Breakdown, Task T0: Commitar Fases 1–3 ✅, Task T10: `Dashboard.jsx` + `MonitorCard.jsx` ✅, Task T12: `Incidents.jsx` ✅, Task T15: Remover `tokens.js` e legados sem uso ✅ (exceto `darkMode: 'class'`, pendente) (+11 more)
 
 ### Community 37 - "Settings.jsx"
-Cohesion: 0.26
-Nodes (5): base, client, incidentsApi, settingsApi, useSettings()
+Cohesion: 0.23
+Nodes (7): Task T7: Verificação visual da troca de tema (4A) ✅, base, client, incidentsApi, settingsApi, Spinner(), useSettings()
 
 ### Community 38 - "main.jsx"
-Cohesion: 0.29
-Nodes (6): ConnectionOverlay(), ConnectionContext, ConnectionProvider(), useConnection(), web_src_index, injectGlobalStyles()
+Cohesion: 0.26
+Nodes (7): Task T14: `Login.jsx`, `Spinner`, `ConnectionOverlay`, `TimeRangeSlider` ✅, ConnectionOverlay(), ConnectionContext, ConnectionProvider(), useConnection(), web_src_index, injectGlobalStyles()
 
 ### Community 39 - "🧩 Tarefa: Melhorias na página de Incidentes"
 Cohesion: 0.15
 Nodes (12): 🔍 Contexto, Detalhamento, 📦 Escopo inicial, 🚧 Fora de escopo, Funcionalidades de visualização, 💡 Ideia, Informações adicionais, 🎯 Objetivo (+4 more)
 
-### Community 40 - "tokens.js"
-Cohesion: 0.19
-Nodes (12): Risk Areas, Rollback Strategy, Task T13: `Settings.jsx` ✅, Tech Stack, nav, defaults, stateColors, Button() (+4 more)
+### Community 40 - "Button"
+Cohesion: 0.17
+Nodes (11): Risk Areas, Rollback Strategy, Task T13: `Settings.jsx` ✅, Tech Stack, web_src_assets_brand_pingou_marca_horizontal, nav, defaults, Button() (+3 more)
 
 ### Community 41 - "🧩 Tarefa: Tela de detalhe do monitor com checks e incidentes"
 Cohesion: 0.20
@@ -430,8 +426,8 @@ Cohesion: 0.08
 Nodes (43): runAdd(), runMigrateDown(), runMigrateStatus(), runMigrateUp(), runRM(), acquireLock(), checkExistingLock(), releaseLock() (+35 more)
 
 ### Community 45 - "ref_react"
-Cohesion: 0.05
-Nodes (102): HeaderCreate(), HeaderCreateProps, HeaderTimeRange(), MonitorTimeFrameHeaderProps, inspiration_checkmate_client_src_components_common_index_headercreate, inspiration_checkmate_client_src_components_common_index_headertimerange, BasePage(), BasePageWithStates() (+94 more)
+Cohesion: 0.03
+Nodes (106): HeaderCreate(), HeaderCreateProps, HeaderTimeRange(), MonitorTimeFrameHeaderProps, inspiration_checkmate_client_src_components_common_index_headercreate, inspiration_checkmate_client_src_components_common_index_headertimerange, BaseBox, BasePageWithStates() (+98 more)
 
 ### Community 46 - "graphify reference: query, path, explain"
 Cohesion: 0.33
@@ -554,140 +550,136 @@ Cohesion: 0.67
 Nodes (3): Current Team, Resource Needs, Team & Resources
 
 ### Community 81 - "react-i18next"
-Cohesion: 0.06
-Nodes (87): ActionMenuItem, ActionsMenu(), AvatarProps, IconProps, inspiration_checkmate_client_src_components_design_elements_index_coloredlabel, inspiration_checkmate_client_src_components_design_elements_index_header, inspiration_checkmate_client_src_components_design_elements_index_pagination, inspiration_checkmate_client_src_components_design_elements_index_statuscodelabel (+79 more)
+Cohesion: 0.07
+Nodes (68): ActionMenuItem, ActionsMenu(), IconProps, inspiration_checkmate_client_src_components_design_elements_index_coloredlabel, inspiration_checkmate_client_src_components_design_elements_index_header, inspiration_checkmate_client_src_components_design_elements_index_pagination, inspiration_checkmate_client_src_components_design_elements_index_statuscodelabel, inspiration_checkmate_client_src_components_design_elements_index_statuslabel (+60 more)
 
 ### Community 82 - "check.type.ts"
-Cohesion: 0.03
-Nodes (83): DateRange, getDockerContainerLatestCheck(), getDockerContainerStats(), getDockerLatestCheck(), getDockerStats(), getDockerTotalChecks(), getDockerUpChecks(), DateRange (+75 more)
+Cohesion: 0.04
+Nodes (96): DateRange, getDockerContainerLatestCheck(), getDockerContainerStats(), getDockerLatestCheck(), getDockerStats(), getDockerTotalChecks(), getDockerUpChecks(), DateRange (+88 more)
 
 ### Community 83 - "Monitor"
-Cohesion: 0.04
-Nodes (33): Check, CheckSnapshot, describeContainerBreach(), DockerAlertReason, DockerAlertReasons, DockerContainerBreach, findContainerBreaches(), isContainerStopped() (+25 more)
+Cohesion: 0.06
+Nodes (15): CheckSnapshot, IMonitorsRepository, RecentChecksMode, SummaryConfig, TeamQueryConfig, MAX_RECENT_CHECKS, Monitor, MonitorScheduleFields (+7 more)
 
 ### Community 84 - "services.api.ts"
-Cohesion: 0.04
-Nodes (24): AuthController, Handler, requireUserRoles(), DiagnosticController, IDiagnosticController, GeoCheckController, IncidentController, InviteController (+16 more)
+Cohesion: 0.03
+Nodes (28): AuthController, Handler, DiagnosticController, IDiagnosticController, GeoCheckController, IncidentController, InviteController, ILogController (+20 more)
 
 ### Community 85 - "DockerProvider.ts"
-Cohesion: 0.04
-Nodes (54): DockerStats, DockerLogDocument, DockerLogDocumentBase, dockerLogLineSchema, DockerLogMetadataDocument, dockerLogMetadataSchema, DockerLogModel, DockerLogSchema (+46 more)
+Cohesion: 0.06
+Nodes (43): DockerStats, DOCKER_LOG_PAGE_DEFAULT, DOCKER_LOG_PAGE_MAX, DOCKER_LOG_RETENTION_DAYS, DockerLog, DockerLogPage, DOCKER_LOG_TAIL_LINES, DockerContainerInfo (+35 more)
 
 ### Community 86 - "ILogger"
-Cohesion: 0.05
-Nodes (30): SharedServices, WorkerServices, MongoDB, CachedSettings, EnvConfig, ISettingsService, IChecksRepository, CheckService (+22 more)
+Cohesion: 0.04
+Nodes (26): SharedServices, WorkerServices, ISettingsService, IChecksRepository, CheckService, ICheckService, CHECK_TTL_SENTINEL, IDockerLogsRepository (+18 more)
 
-### Community 87 - "ref_mongoose"
-Cohesion: 0.05
-Nodes (27): EgressStatus, IncidentDocument, IncidentDocumentBase, IncidentModel, IncidentSchema, IIncidentsRepository, IIncidentService, IncidentService (+19 more)
+### Community 87 - "worker.interface.ts"
+Cohesion: 0.04
+Nodes (32): Monitoring Flow: From Check to Notification, EgressStatus, IIncidentService, IncidentService, Incident, IncidentResolutionType, IncidentSummary, IncidentSummaryItem (+24 more)
 
 ### Community 88 - "routes.ts"
 Cohesion: 0.06
-Nodes (58): API, Architecture, Backend Layers, Frontend Structure, Key Technologies, Monorepo Structure, registerRoutes(), registry (+50 more)
+Nodes (49): API, getOpenApiSpec(), __dirname, outPath, ICheckController, IGeoCheckController, IInviteController, IJobQueueController (+41 more)
 
 ### Community 89 - "requireTeamId"
-Cohesion: 0.05
-Nodes (10): CheckController, fetchMonitorCertificate(), requireTeamId(), requireUserEmail(), requireUserId(), IMonitorController, MonitorController, NotificationController (+2 more)
+Cohesion: 0.04
+Nodes (14): CheckController, fetchMonitorCertificate(), requireTeamId(), requireUserEmail(), requireUserId(), IMonitorController, MonitorController, NotificationController (+6 more)
 
-### Community 90 - "DateRange"
+### Community 90 - "monitor.service.ts"
 Cohesion: 0.06
-Nodes (38): GeoCheckDocument, GeoCheckDocumentBase, geoCheckLocationSchema, GeoCheckMetadataDocument, geoCheckMetadataSchema, GeoCheckModel, geoCheckResultSchema, GeoCheckSchema (+30 more)
+Nodes (44): GeoCheckDocument, GeoCheckDocumentBase, geoCheckLocationSchema, GeoCheckMetadataDocument, geoCheckMetadataSchema, GeoCheckModel, geoCheckResultSchema, GeoCheckSchema (+36 more)
 
 ### Community 91 - "ref_jest_globals"
-Cohesion: 0.08
-Nodes (48): createMockLogger(), makeMessage(), makeMessageWithIncident(), makeMessageWithThresholds(), makeNotification(), makeMessage(), testNotificationProviderContract(), createMockGameDig() (+40 more)
+Cohesion: 0.09
+Nodes (44): createMockLogger(), makeMessage(), makeMessageWithIncident(), makeMessageWithThresholds(), makeNotification(), makeMessage(), testNotificationProviderContract(), logger (+36 more)
 
-### Community 92 - "AppError"
-Cohesion: 0.05
-Nodes (20): Backend (`server/src`), DailyCheckBucket, MonitorService, GamesMap, IEncryptionService, KeyEntry, V1Segments, ISecretsRotationService (+12 more)
+### Community 92 - "monitorService.test.ts"
+Cohesion: 0.11
+Nodes (13): IEncryptionService, ISecretsRotationService, SecretsRotationService, createChecksRepositoryMock(), createDockerLogsRepositoryMock(), createEncryptionServiceMock(), createGeoChecksRepositoryMock(), createIncidentsRepositoryMock() (+5 more)
 
 ### Community 93 - "ChartsNetwork.tsx"
-Cohesion: 0.06
-Nodes (48): inspiration_checkmate_client_src_components_design_elements_index_detailgauge, inspiration_checkmate_client_src_components_design_elements_index_gauge, inspiration_checkmate_client_src_components_design_elements_index_noticebanner, inspiration_checkmate_client_src_components_design_elements_index_statbox, inspiration_checkmate_client_src_components_design_elements_index_tooltip, StatBox(), inspiration_checkmate_client_src_components_monitors_index_histograminfrastructure, DockerStatusBoxes() (+40 more)
+Cohesion: 0.11
+Nodes (24): DetailGauge(), inspiration_checkmate_client_src_components_design_elements_index_detailgauge, inspiration_checkmate_client_src_components_design_elements_index_noticebanner, inspiration_checkmate_client_src_components_monitors_index_histograminfrastructure, formatPercent(), formatTemp(), getChartConfigs(), InfraDetailsCharts() (+16 more)
 
 ### Community 94 - "monitorValidation.ts"
-Cohesion: 0.06
-Nodes (51): bulkPauseMonitorBodyValidation, containerSummaryResponseSchema, createMonitorBodyValidation, dockerContainerDetailsResponseSchema, dockerContainerLogsResponseSchema, dockerContainerMountResponseSchema, dockerContainerPortResponseSchema, dockerContainerResponseSchema (+43 more)
+Cohesion: 0.05
+Nodes (66): bulkPauseMonitorBodyValidation, containerSummaryResponseSchema, createMonitorBodyValidation, dockerContainerDetailsResponseSchema, dockerContainerLogsResponseSchema, dockerContainerMountResponseSchema, dockerContainerPortResponseSchema, dockerContainerResponseSchema (+58 more)
 
 ### Community 95 - "monitor.type.ts"
 Cohesion: 0.05
-Nodes (46): refineCaptureSecret(), refineDockerUrl(), DockerChecksResult, DockerContainerStats, DockerContainerStatsBucket, HardwareChecksResult, HardwareStats, PageSpeedChecksResult (+38 more)
+Nodes (40): KEEP_KEYS, containerSummarySchema, CheckSnapshotDocument, checkSnapshotSchema, MonitorDocument, MonitorDocumentBase, MonitorModel, MonitorSchema (+32 more)
 
 ### Community 96 - "egress.type.ts"
-Cohesion: 0.07
-Nodes (23): EgressService, EgressStateDocument, EgressStateModel, EgressStateSchema, probeResultSchema, IEgressStateRepository, MongoEgressStateRepository, EgressStateService (+15 more)
+Cohesion: 0.11
+Nodes (17): EgressStateDocument, EgressStateModel, EgressStateSchema, probeResultSchema, IEgressStateRepository, EgressStateService, EGRESS_RECOVERY_POLL_SECONDS, EgressAssessment (+9 more)
 
-### Community 97 - "MaintenanceWindow"
-Cohesion: 0.07
-Nodes (21): GroupResult, migrateMaintenanceWindowMonitorIdToArray(), MaintenanceWindowDocument, MaintenanceWindowDocumentBase, MaintenanceWindowModel, MaintenanceWindowSchema, IMaintenanceWindowsRepository, MongoMaintenanceWindowsRepository (+13 more)
+### Community 97 - "maintenanceWindowService.test.ts"
+Cohesion: 0.18
+Nodes (10): MaintenanceWindowService, isWindowActive(), createJobsRepo(), createMaintenanceWindowsRepo(), createMonitorsRepo(), createService(), createWorker(), defaultCreateParams (+2 more)
 
 ### Community 98 - "Proxy"
-Cohesion: 0.07
-Nodes (20): ProxyDocument, ProxyDocumentBase, ProxyModel, ProxySchema, IProxiesRepository, MongoProxiesRepository, ProxiesService, Proxy (+12 more)
-
-### Community 99 - "NotificationMessage"
-Cohesion: 0.11
-Nodes (23): AlertDiscordPayload, AlertMatrixPayload, AlertPagerDutyPayload, DiscordEmbedField, IncidentInfo, MonitorInfo, NotificationMessage, NotificationSeverity (+15 more)
-
-### Community 100 - "buildShared"
 Cohesion: 0.06
-Nodes (10): buildShared(), MongoDockerLogsRepository, MongoGeoChecksRepository, MongoIncidentsRepository, MongoInvitesRepository, MongoMonitorStatsRepository, TwilioProvider, MongoTeamsRepository (+2 more)
+Nodes (21): ProxyDocument, ProxyDocumentBase, ProxyModel, ProxySchema, IProxiesRepository, MongoProxiesRepository, IProxiesService, ProxiesService (+13 more)
+
+### Community 99 - "Notification"
+Cohesion: 0.09
+Nodes (28): INotificationsRepository, AlertDiscordPayload, AlertMatrixPayload, AlertPagerDutyPayload, DiscordEmbedField, IncidentInfo, MonitorInfo, Notification (+20 more)
+
+### Community 100 - "ref_mongoose"
+Cohesion: 0.05
+Nodes (37): GroupResult, DockerLogDocument, DockerLogDocumentBase, dockerLogLineSchema, DockerLogMetadataDocument, dockerLogMetadataSchema, DockerLogModel, DockerLogSchema (+29 more)
 
 ### Community 101 - "Settings/index.tsx"
 Cohesion: 0.07
-Nodes (41): FormNumberField(), FormNumberFieldProps, FormSelectField(), FormSelectOption, FormSelectProps, FormSliderField(), FormSliderProps, inspiration_checkmate_client_src_components_inputs_index_fieldlabel (+33 more)
+Nodes (32): FormSliderField(), FormSliderProps, inspiration_checkmate_client_src_components_inputs_index_sliderwithlabel, languageNames, LanguageSelector(), SliderWithLabel, langMap, inspiration_checkmate_client_src_features_ui_uislice_setcharttype (+24 more)
 
 ### Community 102 - "server/package.json"
-Cohesion: 0.04
-Nodes (51): author, description, axios, @csstools/css-tokenizer, dayjs, eslint, @eslint/js, globals (+43 more)
+Cohesion: 0.03
+Nodes (57): config, author, description, engines, node, npm, axios, @csstools/css-tokenizer (+49 more)
 
 ### Community 103 - "IJobsRepository"
 Cohesion: 0.08
 Nodes (15): JobDocument, JobModel, JobSchema, IJobsRepository, JobPage, JobPageQuery, BACKOFF_MS, Job (+7 more)
 
-### Community 104 - "user.service.ts"
-Cohesion: 0.08
-Nodes (23): createVerifyJWT(), isUser(), profileImageSchema, UserDocument, UserDocumentBase, UserModel, UserSchema, IUsersRepository (+15 more)
+### Community 104 - "user.model.ts"
+Cohesion: 0.11
+Nodes (14): TeamDocument, TeamDocumentBase, TeamModel, TeamSchema, Team, profileImageSchema, UserDocument, UserDocumentBase (+6 more)
 
-### Community 105 - "UserService"
-Cohesion: 0.08
-Nodes (13): InviteDocument, InviteDocumentBase, InviteModel, InviteSchema, IInvitesRepository, IInviteService, InviteService, Invite (+5 more)
+### Community 105 - "user.service.ts"
+Cohesion: 0.07
+Nodes (22): InviteDocument, InviteDocumentBase, InviteModel, InviteSchema, IInvitesRepository, IInviteService, InviteService, Invite (+14 more)
 
 ### Community 106 - "modern/styles.ts"
 Cohesion: 0.09
 Nodes (36): BoldHero(), BoldBarKind, BoldGaugeFill, BoldHeatCell, boldStyles, EditorialHeader(), EditorialBarKind, EditorialGaugeFill (+28 more)
 
-### Community 107 - "IJobScheduler"
-Cohesion: 0.07
-Nodes (15): validateEnv(), buildApi(), startApp(), initShutdownListener(), ShutdownTargets, gauge(), HealthServer, IHealthServer (+7 more)
-
-### Community 108 - "DockerProvider"
-Cohesion: 0.09
-Nodes (11): refineDockerTls(), DockerProvider, keyMatchesCertificate(), parseCertificates(), parsePrivateKey(), splitCertificateBundle(), CA, CLIENT_CERT (+3 more)
+### Community 107 - "src/index.ts"
+Cohesion: 0.11
+Nodes (14): validateEnv(), buildApi(), startApp(), initShutdownListener(), ShutdownTargets, gauge(), HealthServer, IHealthServer (+6 more)
 
 ### Community 109 - "client/package.json"
 Cohesion: 0.05
 Nodes (42): engines, node, npm, axios, @csstools/css-tokenizer, dayjs, eslint, eslint-plugin-react-hooks (+34 more)
 
-### Community 110 - "uiSlice.ts"
-Cohesion: 0.09
-Nodes (30): Avatar(), Icon(), inspiration_checkmate_client_src_components_design_elements_index_avatar, inspiration_checkmate_client_src_components_design_elements_index_icon, RootLayout(), BulkActionsBar(), BulkActionsBarProps, AuthFooter() (+22 more)
+### Community 110 - "@mui/material"
+Cohesion: 0.03
+Nodes (106): Avatar(), AvatarProps, BaseChartProps, Icon(), inspiration_checkmate_client_src_components_design_elements_index_avatar, inspiration_checkmate_client_src_components_design_elements_index_gauge, inspiration_checkmate_client_src_components_design_elements_index_icon, inspiration_checkmate_client_src_components_design_elements_index_statbox (+98 more)
 
 ### Community 111 - "authController.ts"
 Cohesion: 0.11
-Nodes (31): IAuthController, authPayloadResponseSchema, loginValidation, newPasswordValidation, recoveryTokenBodyValidation, recoveryValidation, registerInviteTokenValidation, registrationBodyValidation (+23 more)
+Nodes (32): IAuthController, authPayloadResponseSchema, loginValidation, newPasswordValidation, recoveryTokenBodyValidation, recoveryValidation, registerInviteTokenValidation, registrationBodyValidation (+24 more)
 
-### Community 112 - "settingsController.ts"
-Cohesion: 0.08
-Nodes (14): ISettingsController, SettingsController, sendTestEmailBodyValidation, egressTargetValidation, updateAppSettingsBodyValidation, dnsHostnameRegex, IEgressStateService, MAX_EGRESS_TARGETS (+6 more)
+### Community 112 - "ref_zod"
+Cohesion: 0.11
+Nodes (26): registerRoutes(), registry, ISettingsController, bearer, errorEnvelope, errorJson(), json(), multipart() (+18 more)
 
 ### Community 113 - "dependencies"
 Cohesion: 0.05
 Nodes (39): dependencies, axios, @csstools/css-tokenizer, dayjs, @emotion/react, @emotion/styled, @fontsource-variable/geist, @hello-pangea/dnd (+31 more)
 
-### Community 114 - "ISettingsRepository"
-Cohesion: 0.09
-Nodes (15): ValidatedEnv, AppSettingsDocument, AppSettingsModel, AppSettingsSchema, thresholdsSchema, ISettingsRepository, MongoSettingsRepository, SettingsService (+7 more)
+### Community 114 - "app-settings.service.ts"
+Cohesion: 0.08
+Nodes (21): ValidatedEnv, AppSettingsDocument, AppSettingsModel, AppSettingsSchema, thresholdsSchema, ISettingsRepository, MongoSettingsRepository, CachedSettings (+13 more)
 
 ### Community 115 - "dependencies"
 Cohesion: 0.05
@@ -697,25 +689,25 @@ Nodes (38): dependencies, axios, bcryptjs, cacheable-lookup, compression, cookie
 Cohesion: 0.05
 Nodes (38): devDependencies, @asteasolutions/zod-to-openapi, eslint, @eslint/js, eslint-plugin-mocha, esm, globals, jest (+30 more)
 
-### Community 117 - "worker.interface.ts"
+### Community 117 - "worker.job-scheduler.ts"
 Cohesion: 0.12
-Nodes (25): ClientRuntimeConfig, DbType, LogLevel, QueueMode, QueueModes, SettingsThresholds, inspiration_checkmate_server_src_domain_queue_workers_queue_worker_model_queueworkerdocument, QueueWorkerModel (+17 more)
+Nodes (17): QueueMode, inspiration_checkmate_server_src_domain_queue_workers_queue_worker_model_queueworkerdocument, QueueWorkerModel, QueueWorkerSchema, WORKER_STALE_MS, IQueueWorkersRepository, MongoQueueWorkersRepository, QueueWorker (+9 more)
 
-### Community 118 - "statusService.test.ts"
-Cohesion: 0.08
-Nodes (10): IMonitorStatsRepository, CheckResultInput, MonitorStats, DockerDetailsResult, MAX_RECENT_CHECKS, StatusService, createMonitorsRepo(), createMonitorStatsRepo() (+2 more)
+### Community 118 - "Check"
+Cohesion: 0.09
+Nodes (19): Check, describeContainerBreach(), DockerAlertReason, DockerAlertReasons, DockerContainerBreach, findContainerBreaches(), isContainerStopped(), isContainerUnhealthy() (+11 more)
 
 ### Community 119 - "BasePage.tsx"
-Cohesion: 0.08
-Nodes (28): BaseAuthPageProps, BasePageProps, BasePageWithStatesProps, MonitorBasePageWithStates(), MonitorBasePageWithStatesProps, PageSpeedKeyPriorityFallback(), actionSegments, Breadcrumb() (+20 more)
+Cohesion: 0.07
+Nodes (27): BaseAuthPageProps, BasePage(), BasePageProps, BasePageWithStatesProps, MonitorBasePageWithStatesProps, actionSegments, Breadcrumb(), isId() (+19 more)
 
 ### Community 120 - "services.shared.ts"
-Cohesion: 0.08
-Nodes (22): getOpenApiSpec(), __dirname, outPath, EmailTransportConfig, NotificationProviderRegistry, EmailProvider, buildTestEmail(), __dirname (+14 more)
+Cohesion: 0.09
+Nodes (24): buildShared(), NotificationProviderRegistry, WebhookProvider, __dirname, EmailService, __filename, FileSystem, Mailer (+16 more)
 
 ### Community 121 - "Monitor"
 Cohesion: 0.08
-Nodes (29): inspiration_checkmate_client_src_components_design_elements_index_monitorstatus, BaseHeaderProps, HeaderDeleteControlsProps, HeaderMonitorControlsProps, CurrentlyDownCardProps, UptimeCardProps, CardDetails(), CardDetailsProps (+21 more)
+Nodes (36): inspiration_checkmate_client_src_components_design_elements_index_monitorstatus, inspiration_checkmate_client_src_components_inputs_index_dialog, BaseHeaderProps, HeaderDeleteControls(), HeaderDeleteControlsProps, HeaderMonitorControls(), HeaderMonitorControlsProps, usePost() (+28 more)
 
 ### Community 122 - "dlq.repository.mongo.ts"
 Cohesion: 0.10
@@ -726,48 +718,48 @@ Cohesion: 0.12
 Nodes (11): TagDocument, TagDocumentBase, TagModel, TagSchema, ITagsRepository, MongoTagsRepository, TagsService, Tag (+3 more)
 
 ### Community 124 - "StatusPage.ts"
-Cohesion: 0.10
-Nodes (29): inspiration_checkmate_client_src_components_inputs_index_radiowithdescription, generateDefaultUrl(), transformLogo(), useStatusPageForm(), UseStatusPageFormOptions, Props, ThemePicker(), HeaderStatusPageControlsProps (+21 more)
+Cohesion: 0.11
+Nodes (24): inspiration_checkmate_client_src_components_inputs_index_radiowithdescription, generateDefaultUrl(), transformLogo(), useStatusPageForm(), UseStatusPageFormOptions, ThemePicker(), HeaderStatusPageControlsProps, Props (+16 more)
 
 ### Community 125 - "EncryptionService"
-Cohesion: 0.09
-Nodes (10): encryptionKeyList, EncryptionCryptoLib, EncryptionService, isV1Segments(), setup(), encryptionServiceFor(), Row, setup() (+2 more)
+Cohesion: 0.10
+Nodes (10): encryptionKeyList, EncryptionCryptoLib, EncryptionService, isV1Segments(), KeyEntry, V1Segments, setup(), Row (+2 more)
 
-### Community 126 - "MongoJobsRepository"
-Cohesion: 0.07
-Nodes (4): MongoJobsRepository, jobId(), MongoQueueWorkersRepository, makeScheduler()
+### Community 127 - "AppError"
+Cohesion: 0.04
+Nodes (8): MongoInvitesRepository, MongoMonitorStatsRepository, MongoMonitorsRepository, computeRestartsInRange(), MonitorService, AppError, makeSnapshot(), seedMonitorWithChecks()
 
 ### Community 128 - "Theme.ts"
-Cohesion: 0.08
-Nodes (26): swrConfig, inspiration_checkmate_client_src_components_design_elements_index_offlinebanner, langMap, AppLayout(), AppLayoutProps, inspiration_checkmate_client_src_features_ui_uislice_setlanguage, Routes(), get() (+18 more)
+Cohesion: 0.10
+Nodes (18): App(), swrConfig, SCROLLBAR_SIZE, darkPalette, lightPalette, darkTheme, lightTheme, @mui/material/styles (+10 more)
 
 ### Community 129 - "Utils/logger.ts"
 Cohesion: 0.14
 Nodes (22): LOG_LEVEL_OPTIONS, LOG_LEVELS, LogLevel, LogLevelOption, createLogData(), debug(), error(), ErrorLogData (+14 more)
 
-### Community 130 - "Maintenance/create/index.tsx"
-Cohesion: 0.13
-Nodes (22): DayjsPickerProps, FormDatePickerField(), FormDayjsPickerFieldProps, FormPickerFieldProps, FormTimePickerField(), inspiration_checkmate_client_src_components_inputs_index_datepicker, inspiration_checkmate_client_src_components_inputs_index_timepicker, getRepeatId() (+14 more)
+### Community 130 - "EditUser/index.tsx"
+Cohesion: 0.09
+Nodes (36): inspiration_checkmate_client_src_components_inputs_index_select, SelectInput, ProtectedRoute(), ProtectedRouteProps, RoleProtectedRoute(), RoleProtectedRouteProps, AuthState, useAddTeamMemberForm() (+28 more)
 
-### Community 131 - "DBQueueWorker"
-Cohesion: 0.10
-Nodes (7): IBufferService, DBQueueWorker, createWorker(), makeEvaluateJob(), makeHandlers(), makeJob(), makeMonitor()
+### Community 131 - "evaluateCursorMultiWorker.test.ts"
+Cohesion: 0.12
+Nodes (7): DBQueueWorker, MONITOR_ID, stubDockerLogsService, stubGeoChecksService, stubSettingsService, T0, TEAM_ID
 
-### Community 132 - "Notification"
-Cohesion: 0.14
-Nodes (11): NotificationDocument, NotificationModel, NotificationSchema, INotificationsRepository, INotificationsService, Notification, NotificationChannel, NotificationChannels (+3 more)
+### Community 132 - "User"
+Cohesion: 0.11
+Nodes (6): requireFirstName(), requireUserRoles(), IUsersRepository, User, Express, Request
 
 ### Community 133 - "Status/index.tsx"
 Cohesion: 0.14
-Nodes (21): inspiration_checkmate_client_src_components_design_elements_index_basefallback, HeaderStatusPageControls(), StatusPageView(), THEME_CONFIGS, EditorialHero(), RefinedHero(), Props, StatusPagesTable() (+13 more)
+Nodes (21): inspiration_checkmate_client_src_components_design_elements_index_basefallback, HeaderStatusPageControls(), StatusPageView(), THEME_CONFIGS, EditorialHero(), RefinedHero(), StatusPagesTable(), Routes() (+13 more)
 
 ### Community 134 - "How do I..."
 Cohesion: 0.08
 Nodes (24): Branching model, Code guidelines, Contributing to Checkmate, Get help or ask a question?, Help with translations?, How do I..., Improve the documentation?, Managing Docker Containers (+16 more)
 
-### Community 135 - "WorkerPipeline"
-Cohesion: 0.12
-Nodes (10): isHttpStatusCode(), isEgressAttributable(), isLocalDockerSocket(), StatusChangeResult, WorkerPipeline, createPipeline(), makeEvaluateJob(), makeJob() (+2 more)
+### Community 135 - "worker.geo-pipeline.ts"
+Cohesion: 0.07
+Nodes (11): IBufferService, GeoChecksPipeline, IGeoChecksPipeline, JobHandler, IWorkerPipeline, WorkerPipeline, createPipeline(), makeEvaluateJob() (+3 more)
 
 ### Community 136 - "INSTALLATION.md"
 Cohesion: 0.08
@@ -778,44 +770,44 @@ Cohesion: 0.08
 Nodes (23): compilerOptions, allowImportingTsExtensions, allowJs, checkJs, erasableSyntaxOnly, jsx, lib, module (+15 more)
 
 ### Community 138 - "controllerUtils.ts"
-Cohesion: 0.12
-Nodes (17): ApiEnvelope, createDomainExpiryCache(), DomainExpiryCache, DomainExpiryCacheEntry, DomainExpiryResult, extractDomainExpiryDate(), extractString(), fetchMonitorDomain() (+9 more)
+Cohesion: 0.16
+Nodes (14): ApiEnvelope, createDomainExpiryCache(), DomainExpiryCache, DomainExpiryCacheEntry, DomainExpiryResult, extractDomainExpiryDate(), extractString(), fetchMonitorDomain() (+6 more)
 
 ### Community 139 - "statusPageValidation.ts"
-Cohesion: 0.17
-Nodes (17): IStatusPageController, checkSnapshotResponseSchema, createStatusPageBodyValidation, dailyCheckBucketResponseSchema, getPublicMonitorIncidentsParamValidation, getPublicMonitorIncidentsQueryValidation, getStatusPageParamValidation, getStatusPageQueryValidation (+9 more)
+Cohesion: 0.11
+Nodes (24): IStatusPageController, imageUpload, checkSnapshotResponseSchema, createStatusPageBodyValidation, dailyCheckBucketResponseSchema, getPublicMonitorIncidentsParamValidation, getPublicMonitorIncidentsQueryValidation, getStatusPageParamValidation (+16 more)
 
 ### Community 140 - "migration/index.ts"
-Cohesion: 0.13
-Nodes (14): migrateStatusWindowThreshold(), fixInfrastructureThresholds(), migrateStatusPageTypeToArray(), backfillMonitorLastEvaluatedAt(), KEEP_KEYS, slimRecentChecks(), backfillMonitorProxyMode(), migrateDockerMonitorUrls() (+6 more)
+Cohesion: 0.09
+Nodes (34): migrateStatusWindowThreshold(), backupAndDropExistingCollection(), convertChecksToTimeSeries(), createTimeSeriesCollection(), getDb(), migrateBackupData(), MigrationStats, restoreFromBackup() (+26 more)
 
-### Community 141 - "store.ts"
-Cohesion: 0.10
-Nodes (20): App(), inspiration_checkmate_client_src_index, authTransform, persistConfig, persistedReducer, persistor, rootReducer, store (+12 more)
+### Community 141 - "main.tsx"
+Cohesion: 0.22
+Nodes (8): inspiration_checkmate_client_src_index, persistor, store, initApiClient(), ref_components_i18nloader_index_js, @fontsource-variable/geist, ref_react_dom, redux-persist
 
 ### Community 142 - "HeaderMonitorsSummary.tsx"
 Cohesion: 0.11
 Nodes (18): inspiration_checkmate_client_src_components_design_elements_index_breachedstatusbox, inspiration_checkmate_client_src_components_design_elements_index_downstatusbox, inspiration_checkmate_client_src_components_design_elements_index_initializingstatusbox, inspiration_checkmate_client_src_components_design_elements_index_pausedstatusbox, inspiration_checkmate_client_src_components_design_elements_index_upstatusbox, BreachedStatusBox(), DownChecksBox(), DownStatusBox() (+10 more)
 
 ### Community 143 - "StatusPageThemeProvider.tsx"
-Cohesion: 0.13
-Nodes (20): BrowserFrame(), Props, ThemeConfig, resolveBrandTokens(), ResolvedMode, resolveSystemMode(), StatusPageThemeContext, StatusPageThemeContextValue (+12 more)
+Cohesion: 0.12
+Nodes (23): Props, BrowserFrame(), Props, ThemeConfig, Props, resolveBrandTokens(), ResolvedMode, resolveSystemMode() (+15 more)
 
 ### Community 144 - "Checkmate/package.json"
 Cohesion: 0.09
 Nodes (22): author, bugs, url, description, devDependencies, husky, directories, doc (+14 more)
 
 ### Community 146 - "status-page.type.ts"
-Cohesion: 0.13
-Nodes (18): logoSchema, StatusPageDocument, StatusPageDocumentBase, StatusPageModel, StatusPageSchema, StatusPageUpdateData, PublicStatusPageMonitor, STATUS_PAGE_RANGE_DAYS (+10 more)
+Cohesion: 0.10
+Nodes (26): logoSchema, StatusPageDocument, StatusPageDocumentBase, StatusPageSchema, DEFAULT_STATUS_PAGE_THEME, DEFAULT_STATUS_PAGE_THEME_MODE, PublicStatusPageMonitor, STATUS_PAGE_RANGE_DAYS (+18 more)
 
 ### Community 147 - "DESIGN.md — Design system do Pingou"
 Cohesion: 0.09
 Nodes (20): 0. Como usar este arquivo, 10. Pendências (não definidas na v1.0), 11. Checklist antes de entregar, 1. Conceito, 2. Marca, 3.1 Tokens, 3.2 Tailwind, 3.3 Proporção (+12 more)
 
 ### Community 148 - "app.ts"
-Cohesion: 0.16
-Nodes (15): authApiLimiter, generalApiLimiter(), sanitizeBody(), sanitizeInput(), sanitizeObject(), sanitizeQuery(), isPublicStatusPageApiPath(), createApp() (+7 more)
+Cohesion: 0.17
+Nodes (14): authApiLimiter, generalApiLimiter(), sanitizeBody(), sanitizeInput(), sanitizeObject(), sanitizeQuery(), isPublicStatusPageApiPath(), createApp() (+6 more)
 
 ### Community 149 - "IStatusPagesRepository"
 Cohesion: 0.16
@@ -826,8 +818,8 @@ Cohesion: 0.13
 Nodes (7): NotificationsService, createMessageBuilder(), createMonitorsRepo(), createNotificationsRepo(), createProvider(), createService(), createSettingsService()
 
 ### Community 151 - "notifications.ts"
-Cohesion: 0.11
-Nodes (19): buildDefaults(), useNotificationForm(), UseNotificationFormOptions, baseSchema, discordSchema, emailSchema, matrixSchema, NotificationFormData (+11 more)
+Cohesion: 0.12
+Nodes (16): baseSchema, discordSchema, emailSchema, matrixSchema, NotificationFormData, notificationSchema, ntfySchema, pagerDutySchema (+8 more)
 
 ### Community 152 - "validation.js"
 Cohesion: 0.10
@@ -838,8 +830,8 @@ Cohesion: 0.10
 Nodes (20): compilerOptions, allowImportingTsExtensions, allowJs, checkJs, erasableSyntaxOnly, lib, module, moduleDetection (+12 more)
 
 ### Community 154 - "diagnostic.service.ts"
-Cohesion: 0.13
-Nodes (9): IDb, CollectionDiagnostics, Diagnostics, DiagnosticService, MongoDiagnostics, MongoOpsPerSecond, MongoStats, ref_os (+1 more)
+Cohesion: 0.10
+Nodes (12): IDb, MongoDB, runMigrations(), EnvConfig, CollectionDiagnostics, Diagnostics, DiagnosticService, MongoDiagnostics (+4 more)
 
 ### Community 155 - "Custom Certificate Authority Trust"
 Cohesion: 0.10
@@ -858,8 +850,8 @@ Cohesion: 0.22
 Nodes (15): ITagsController, inspiration_checkmate_server_src_api_validation_index_createtagbodyvalidation, inspiration_checkmate_server_src_api_validation_index_deletetagparamvalidation, inspiration_checkmate_server_src_api_validation_index_edittagbodyvalidation, inspiration_checkmate_server_src_api_validation_index_edittagparamvalidation, inspiration_checkmate_server_src_api_validation_index_gettagbyidparamvalidation, inspiration_checkmate_server_src_api_validation_index_taglistresponseschema, inspiration_checkmate_server_src_api_validation_index_tagresponseschema (+7 more)
 
 ### Community 159 - "recovery-token.repository.mongo.ts"
-Cohesion: 0.19
-Nodes (8): RecoveryTokenDocument, RecoveryTokenDocumentBase, RecoveryTokenModel, RecoveryTokenSchema, IRecoveryTokensRepository, MongoRecoveryTokensRepository, RecoveryToken, ref_crypto
+Cohesion: 0.20
+Nodes (7): RecoveryTokenDocument, RecoveryTokenDocumentBase, RecoveryTokenModel, RecoveryTokenSchema, IRecoveryTokensRepository, MongoRecoveryTokensRepository, RecoveryToken
 
 ### Community 160 - "compilerOptions"
 Cohesion: 0.11
@@ -874,32 +866,32 @@ Cohesion: 0.11
 Nodes (18): scripts, build, build:openapi, clean, dev, format, format-check, lint (+10 more)
 
 ### Community 163 - "vite.config.ts"
-Cohesion: 0.13
-Nodes (14): __dirname, __filename, flattenKeys(), fs, inputPath, localesDir, outputPath, path (+6 more)
+Cohesion: 0.09
+Nodes (21): __dirname, __filename, downloadTranslations(), LANGUAGES, main(), normalizeLanguageCode(), flattenKeys(), fs (+13 more)
 
 ### Community 164 - "proxyController.ts"
 Cohesion: 0.23
 Nodes (13): IProxiesController, inspiration_checkmate_server_src_api_validation_index_createproxybodyvalidation, inspiration_checkmate_server_src_api_validation_index_deleteproxyparamvalidation, inspiration_checkmate_server_src_api_validation_index_editproxybodyvalidation, inspiration_checkmate_server_src_api_validation_index_editproxyparamvalidation, inspiration_checkmate_server_src_api_validation_index_getproxybyidparamvalidation, createProxyBodyValidation, deleteProxyParamValidation (+5 more)
 
-### Community 165 - "monitor.model.ts"
-Cohesion: 0.12
-Nodes (16): containerSummarySchema, CheckSnapshotDocument, checkSnapshotSchema, MonitorDocument, MonitorDocumentBase, MonitorSchema, snapshotAuditsSchema, snapshotCpuSchema (+8 more)
+### Community 165 - "TabQueue.tsx"
+Cohesion: 0.15
+Nodes (19): inspiration_checkmate_client_src_components_design_elements_index_emptystate, Metrics(), MetricsProps, QueueJobFailureWithId, QueueJobWithId, TableFailedJobs(), TableFailedJobsProps, TableJobs() (+11 more)
 
 ### Community 166 - "teams.ts"
 Cohesion: 0.14
 Nodes (9): Action, AdaptiveCard, ColumnSet, Fact, FactSet, TeamsMessage, TeamsProvider, TextBlock (+1 more)
 
 ### Community 167 - "Checkmate/CLAUDE.md"
-Cohesion: 0.12
-Nodes (14): Branching, Client `.env`, Client (React/Vite), Code Conventions, Database Models, Development Commands, Docker Development, Environment Setup (+6 more)
+Cohesion: 0.10
+Nodes (19): Architecture, Backend Layers, Branching, Client `.env`, Client (React/Vite), Code Conventions, Database Models, Development Commands (+11 more)
 
 ### Community 168 - "devDependencies"
 Cohesion: 0.12
 Nodes (16): devDependencies, eslint, eslint-plugin-react, eslint-plugin-react-hooks, eslint-plugin-react-refresh, lint-staged, mongoose, prettier (+8 more)
 
-### Community 170 - "emailService.test.ts"
-Cohesion: 0.21
-Nodes (11): describeSmtpFailure(), EmailService, createMockCompile(), createMockFs(), createMockMjml(), createMockNodemailer(), createMockPath(), createMockSettingsService() (+3 more)
+### Community 170 - "MongoChecksRepository"
+Cohesion: 0.14
+Nodes (3): MongoChecksRepository, getDateForRange(), findGrouped()
 
 ### Community 171 - "Infrastructure Monitoring - Disk Selection"
 Cohesion: 0.13
@@ -978,8 +970,8 @@ Cohesion: 0.30
 Nodes (10): IMaintenanceWindowController, createMaintenanceWindowBodyValidation, dateToString, deleteMaintenanceWindowByIdParamValidation, editMaintenanceByIdWindowBodyValidation, editMaintenanceWindowByIdParamValidation, getMaintenanceWindowByIdParamValidation, getMaintenanceWindowsByMonitorIdParamValidation (+2 more)
 
 ### Community 190 - "notificationValidation.ts"
-Cohesion: 0.28
-Nodes (10): INotificationController, createNotificationBodyValidation, decoratedVariants, deleteNotificationParamValidation, editNotificationParamValidation, getNotificationByIdParamValidation, notificationChannelVariants, notificationVariantMeta (+2 more)
+Cohesion: 0.25
+Nodes (11): INotificationController, createNotificationBodyValidation, decoratedVariants, deleteNotificationParamValidation, editNotificationParamValidation, getNotificationByIdParamValidation, notificationChannelVariants, notificationVariantMeta (+3 more)
 
 ### Community 191 - "ChartCells.tsx"
 Cohesion: 0.31
@@ -990,8 +982,8 @@ Cohesion: 0.30
 Nodes (11): IIncidentController, getIncidentsByTeamQueryValidation, getIncidentSummaryQueryValidation, incidentDetailResponseSchema, incidentIdParamValidation, incidentListResponseSchema, incidentResponseSchema, incidentSummaryItemResponseSchema (+3 more)
 
 ### Community 193 - "handleErrors.ts"
-Cohesion: 0.21
-Nodes (10): Backend Architecture Patterns, Monitoring Flow: From Check to Notification, Queue System (BullMQ + Redis), Repository Pattern & Separation of Concerns, describeError(), ErrorReport, formatZodIssues(), handleErrors() (+2 more)
+Cohesion: 0.23
+Nodes (9): Backend Architecture Patterns, Queue System (BullMQ + Redis), Repository Pattern & Separation of Concerns, describeError(), ErrorReport, formatZodIssues(), handleErrors(), logger (+1 more)
 
 ### Community 194 - "ThemedHistogram.tsx"
 Cohesion: 0.28
@@ -1022,48 +1014,32 @@ Cohesion: 0.18
 Nodes (10): compilerOptions, allowJs, checkJs, module, moduleResolution, paths, skipLibCheck, types (+2 more)
 
 ### Community 202 - "Part 2 — Backend (`server/src`)"
+Cohesion: 0.17
+Nodes (11): 0. Look at existing implementations and follow the established pattern, 10. Validation: centralize, don't inline, 11. OpenAPI: response schemas live in the validator file, 6. Layering: Controller → Service → Repository → Mongoose, 8. Mongoose schema fields with closed value sets, Backend (`server/src`), Coding conventions, Frontend (`client/src`) (+3 more)
+
+### Community 203 - "EgressService"
 Cohesion: 0.18
-Nodes (10): 0. Look at existing implementations and follow the established pattern, 10. Validation: centralize, don't inline, 11. OpenAPI: response schemas live in the validator file, 6. Layering: Controller → Service → Repository → Mongoose, 8. Mongoose schema fields with closed value sets, Coding conventions, Frontend (`client/src`), Part 2 — Backend (`server/src`) (+2 more)
+Nodes (6): EgressService, createService(), degradedRepository(), makeSettings(), makeState(), statusFor()
 
-### Community 203 - "0002_convertChecksToTimeSeries.ts"
-Cohesion: 0.40
-Nodes (10): backupAndDropExistingCollection(), convertChecksToTimeSeries(), createTimeSeriesCollection(), getDb(), migrateBackupData(), MigrationStats, restoreFromBackup(), storeFailedDocument() (+2 more)
-
-### Community 204 - "statusPageService.test.ts"
-Cohesion: 0.31
-Nodes (10): DEFAULT_STATUS_PAGE_THEME, DEFAULT_STATUS_PAGE_THEME_MODE, createChecksRepo(), createIncidentsRepo(), createMonitorsRepo(), createRepo(), createService(), createSettingsService() (+2 more)
-
-### Community 205 - "server/eslint.config.js"
+### Community 204 - "MaintenanceWindow"
 Cohesion: 0.22
+Nodes (4): IMaintenanceWindowsRepository, DurationUnit, DurationUnits, MaintenanceWindow
+
+### Community 205 - "web/eslint.config.js"
+Cohesion: 0.25
 Nodes (7): ref_eslint, ref_eslint_js, eslint-plugin-mocha, ref_eslint_plugin_react_hooks, ref_eslint_plugin_react_refresh, ref_globals, typescript-eslint
 
-### Community 206 - "download-translations.js"
-Cohesion: 0.27
-Nodes (7): downloadTranslations(), LANGUAGES, main(), normalizeLanguageCode(), ref_axios, ref_form_data, ref_fs_extra
+### Community 206 - "ApiClient.ts"
+Cohesion: 0.17
+Nodes (13): inspiration_checkmate_client_src_components_design_elements_index_offlinebanner, OfflineBanner(), AppLayout(), AppLayoutProps, api, deleteOp(), get(), patch() (+5 more)
 
 ### Community 207 - "POEditor Translation Synchronization"
 Cohesion: 0.20
 Nodes (9): Created Files, How It Works, Manual Execution, Output, POEditor Translation Synchronization, POEditor Upload Workflow, Required Settings, Summary of Implemented Translation Workflow (+1 more)
 
-### Community 208 - "upload.test.ts"
-Cohesion: 0.33
-Nodes (7): imageUpload, ImageMimeType, ImageMimeTypes, MAX_IMAGE_SIZE_BYTES, config, makeFile(), runFilter()
-
-### Community 209 - "0009_recomputeResponseTimeFromTimings.ts"
-Cohesion: 0.51
-Nodes (9): createTimeSeriesCollection(), getDb(), MigrationStats, recomputeResponseTime(), recomputeResponseTimeFromTimings(), restoreFromBackup(), storeFailedDocument(), streamBackupIntoChecks() (+1 more)
-
-### Community 210 - "team.repository.model.ts"
-Cohesion: 0.38
-Nodes (5): TeamDocument, TeamDocumentBase, TeamModel, TeamSchema, Team
-
 ### Community 212 - "The Importance of Small Pull Requests"
 Cohesion: 0.22
 Nodes (8): Format your PRs for better readability, Keep PRs focused, Smaller PRs are easier to review, Smaller PRs get better reviews, Smaller PRs get reviewed faster and merged faster, Smaller PRs lead to better quality code, Smaller PRs make you spend more time thinking about your code before you write it, The Importance of Small Pull Requests
-
-### Community 213 - "monitor-stats.model.ts"
-Cohesion: 0.31
-Nodes (6): cleanupDuplicateMonitorStats(), cleanupDuplicateMonitorStatsForUniqueIndex(), MonitorStatsDocument, MonitorStatsDocumentBase, MonitorStatsModel, MonitorStatsSchema
 
 ### Community 216 - "checksRepositoryDailyStatusBuckets.test.ts"
 Cohesion: 0.22
@@ -1072,10 +1048,6 @@ Nodes (5): MONITOR_A, MONITOR_B, ONE_DAY_AGO, TEAM_ID, TODAY
 ### Community 217 - "compilerOptions"
 Cohesion: 0.22
 Nodes (8): compilerOptions, noEmit, resolveJsonModule, rootDir, types, extends, include, ./tsconfig.json
-
-### Community 218 - "i18nLoader/index.tsx"
-Cohesion: 0.25
-Nodes (5): RootState, resources, TranslationModule, translations, i18next
 
 ### Community 219 - "mui.d.ts"
 Cohesion: 0.25
@@ -1109,10 +1081,6 @@ Nodes (4): FRONTEND_CONVENTION_RULES, SX_HOISTABLE_COMPONENTS, SX_NATIVE_EQUIVAL
 Cohesion: 0.40
 Nodes (4): extends, labels, $schema, config:recommended
 
-### Community 229 - "Dot.tsx"
-Cohesion: 0.40
-Nodes (4): DOT_SIZE_PX, DotProps, DotSize, DotSizes
-
 ### Community 230 - "env.d.ts"
 Cohesion: 0.40
 Nodes (4): *.css, ImportMeta, ImportMetaEnv, *.svg?react
@@ -1121,35 +1089,39 @@ Nodes (4): *.css, ImportMeta, ImportMetaEnv, *.svg?react
 Cohesion: 0.40
 Nodes (4): checkmate.so hosting (demo + staging), Host-local files (not committed), How deploys work, One-time migration from docker/unified
 
+### Community 232 - "dbQueueWorker.test.ts"
+Cohesion: 0.43
+Nodes (5): createWorker(), makeEvaluateJob(), makeHandlers(), makeJob(), makeMonitor()
+
 ### Community 233 - "ssl-checker.d.ts"
 Cohesion: 0.40
 Nodes (4): ssl-checker, SSLDetails, SSLOptions, ref_https
+
+### Community 234 - "geoChecksPipeline.test.ts"
+Cohesion: 0.40
+Nodes (3): createGeoPipeline(), geoMonitor(), makeMonitor()
 
 ### Community 235 - "pull_request_template.md"
 Cohesion: 0.50
 Nodes (3): Describe your changes, Please ensure all items are checked off before requesting a review. "Checked off" means you need to add an "x" character between brackets so they turn into checkmarks., Write your issue number after "Fixes "
 
-### Community 238 - "engines"
-Cohesion: 0.67
-Nodes (3): engines, node, npm
-
 ## Knowledge Gaps
-- **1783 isolated node(s):** `github.com/Bradrickcruz/pingou`, `LANGUAGES`, `SX_NATIVE_EQUIVALENT_KEYS`, `SX_HOISTABLE_COMPONENTS`, `sxKeySelector` (+1778 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 2278 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **40 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **1783 isolated node(s):** `FormNumberFieldProps`, `FormSelectOption`, `FormSelectProps`, `FormSliderProps`, `FieldErrorLeaf` (+1778 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 2275 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **42 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `AppError` connect `AppError` to `Notification`, `WorkerPipeline`, `services.worker.ts`, `controllerUtils.ts`, `statusPageValidation.ts`, `status-page.type.ts`, `IStatusPagesRepository`, `diagnostic.service.ts`, `recovery-token.repository.mongo.ts`, `StatusPageService`, `emailService.test.ts`, `notificationValidation.ts`, `handleErrors.ts`, `MongoStatusPagesRepository`, `Part 2 — Backend (`server/src`)`, `upload.test.ts`, `check.type.ts`, `Monitor`, `services.api.ts`, `DockerProvider.ts`, `ILogger`, `ref_mongoose`, `routes.ts`, `requireTeamId`, `DateRange`, `MongoNotificationsRepository`, `ref_jest_globals`, `monitorValidation.ts`, `monitor.type.ts`, `MaintenanceWindow`, `Proxy`, `NotificationMessage`, `buildShared`, `.getPublicStatusPagePayload`, `user.service.ts`, `UserService`, `DockerProvider`, `authController.ts`, `settingsController.ts`, `ISettingsRepository`, `statusService.test.ts`, `services.shared.ts`, `dlq.repository.mongo.ts`, `Tag`, `EncryptionService`, `MongoMonitorsRepository`?**
-  _High betweenness centrality (0.059) - this node is a cross-community bridge._
-- **Why does `Monitor` connect `Monitor` to `DBQueueWorker`, `Notification`, `WorkerPipeline`, `services.worker.ts`, `controllerUtils.ts`, `status-page.type.ts`, `notificationsService.test.ts`, `monitor.model.ts`, `statusPageService.test.ts`, `check.type.ts`, `DockerProvider.ts`, `ILogger`, `ref_mongoose`, `requireTeamId`, `DateRange`, `ref_jest_globals`, `AppError`, `monitor.type.ts`, `Proxy`, `IJobScheduler`, `worker.interface.ts`, `statusService.test.ts`?**
-  _High betweenness centrality (0.041) - this node is a cross-community bridge._
-- **Why does `Task Breakdown` connect `Task Breakdown` to `Dashboard.jsx`, `Plano de Desenvolvimento: Design system no front (tokens, ícones, fontes)`?**
+- **Why does `AppError` connect `AppError` to `User`, `worker.geo-pipeline.ts`, `services.worker.ts`, `controllerUtils.ts`, `statusPageValidation.ts`, `IStatusPagesRepository`, `diagnostic.service.ts`, `recovery-token.repository.mongo.ts`, `StatusPageService`, `MongoChecksRepository`, `DockerProvider.ts`, `notificationValidation.ts`, `handleErrors.ts`, `MongoStatusPagesRepository`, `Part 2 — Backend (`server/src`)`, `MaintenanceWindow`, `MongoIncidentsRepository`, `EmailProvider`, `check.type.ts`, `services.api.ts`, `Monitor`, `ILogger`, `worker.interface.ts`, `routes.ts`, `requireTeamId`, `monitor.service.ts`, `MongoMaintenanceWindowsRepository`, `MongoNotificationsRepository`, `monitorService.test.ts`, `monitorValidation.ts`, `ref_jest_globals`, `maintenanceWindowService.test.ts`, `Proxy`, `Notification`, `ref_mongoose`, `user.model.ts`, `user.service.ts`, `DockerProvider`, `authController.ts`, `app-settings.service.ts`, `services.shared.ts`, `dlq.repository.mongo.ts`, `Tag`, `EncryptionService`?**
+  _High betweenness centrality (0.070) - this node is a cross-community bridge._
+- **Why does `@mui/material` connect `@mui/material` to `Theme.ts`, `EditUser/index.tsx`, `Status/index.tsx`, `Monitor.ts`, `inputs/index.tsx`, `Check.ts`, `HeaderMonitorsSummary.tsx`, `Proxies/create/index.tsx`, `StatusPageThemeProvider.tsx`, `BaseStatusPage.tsx`, `TabQueue.tsx`, `ref_react`, `ThemedHistogram.tsx`, `ApiClient.ts`, `react-i18next`, `mui.d.ts`, `ChartsNetwork.tsx`, `ThemedInfrastructure.tsx`, `Settings/index.tsx`, `modern/styles.ts`, `client/package.json`, `BasePage.tsx`, `Monitor`, `StatusPage.ts`?**
   _High betweenness centrality (0.037) - this node is a cross-community bridge._
+- **Why does `Monitor` connect `Monitor` to `evaluateCursorMultiWorker.test.ts`, `User`, `worker.geo-pipeline.ts`, `services.worker.ts`, `controllerUtils.ts`, `status-page.type.ts`, `notificationsService.test.ts`, `StatusPageService`, `IJobScheduler`, `check.type.ts`, `services.api.ts`, `DockerProvider.ts`, `ILogger`, `worker.interface.ts`, `requireTeamId`, `monitor.service.ts`, `ref_jest_globals`, `monitor.type.ts`, `Proxy`, `dbQueueWorker.test.ts`, `geoChecksPipeline.test.ts`, `worker.job-scheduler.ts`, `Check`?**
+  _High betweenness centrality (0.028) - this node is a cross-community bridge._
 - **Are the 5 inferred relationships involving `AppError` (e.g. with `Coding conventions (mandatory)` and `Repository Pattern & Separation of Concerns`) actually correct?**
   _`AppError` has 5 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `github.com/Bradrickcruz/pingou`, `LANGUAGES`, `SX_NATIVE_EQUIVALENT_KEYS` to the rest of the system?**
+- **What connects `FormNumberFieldProps`, `FormSelectOption`, `FormSelectProps` to the rest of the system?**
   _1783 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `middleware.go` be split into smaller, more focused modules?**
   _Cohesion score 0.0773109243697479 - nodes in this community are weakly interconnected._
