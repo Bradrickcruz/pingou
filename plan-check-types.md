@@ -34,27 +34,27 @@ Fonte das regras de comportamento: [README.md](README.md) (seções "Tipos de mo
 
 Este plano está concluído quando:
 
-- [ ] Todos os Success Criteria estão marcados
-- [ ] Build, lint e type-check passam
-- [ ] Nenhum item pendente no Status de Execução
-- [ ] Evidências de verificação registradas
+- [x] Todos os Success Criteria estão marcados
+- [x] Build, lint e type-check passam
+- [x] Nenhum item pendente no Status de Execução
+- [x] Evidências de verificação registradas
 
 > Revisar o plano se: escopo mudar, nova dependência for descoberta, ou mais de 2 tasks forem bloqueadas.
 
 ## Success Criteria
 
-- [ ] Monitores existentes continuam funcionando sem alteração (migration preserva checks e incidentes)
-- [ ] `POST /api/monitors` cria `http`, `tcp` e `heartbeat`; sem `type` cria `http`
-- [ ] TCP vira `UP`/`DOWN` conforme a porta, com erro legível em `last_error` e latência = tempo de conexão
-- [ ] `/ping/{token}` válido → 200 e check `UP`; token inválido → 404; pausado → 200 sem registrar; excesso por IP → 429
-- [ ] Heartbeat sem ping além de `interval + grace` vira `DOWN` **uma vez** (um incidente, sem checks `DOWN` repetidos) e volta a `UP` no próximo ping
-- [ ] Heartbeat antes do primeiro ping fica `UNKNOWN`
-- [ ] Webhook traz `type` e `target`, mantém `url` só para HTTP e **nunca** contém o token
-- [ ] Regenerar token invalida o antigo imediatamente
-- [ ] `GET /api/monitors` devolve `history` (últimos 30), `uptime_24h` e `last_latency_ms` sem N+1
-- [ ] CLI `add` aceita `--type/--host/--port/--grace`
-- [ ] Painel, Novo monitor e Editar monitor batem com os 3 PNGs (itens da Fase 4)
-- [ ] README: remover os marcadores "(em desenvolvimento)" ao fim de cada fase
+- [x] Monitores existentes continuam funcionando sem alteração (migration preserva checks e incidentes)
+- [x] `POST /api/monitors` cria `http`, `tcp` e `heartbeat`; sem `type` cria `http`
+- [x] TCP vira `UP`/`DOWN` conforme a porta, com erro legível em `last_error` e latência = tempo de conexão
+- [x] `/ping/{token}` válido → 200 e check `UP`; token inválido → 404; pausado → 200 sem registrar; excesso por IP → 429
+- [x] Heartbeat sem ping além de `interval + grace` vira `DOWN` **uma vez** (um incidente, sem checks `DOWN` repetidos) e volta a `UP` no próximo ping
+- [x] Heartbeat antes do primeiro ping fica `UNKNOWN`
+- [x] Webhook traz `type` e `target`, mantém `url` só para HTTP e **nunca** contém o token
+- [x] Regenerar token invalida o antigo imediatamente
+- [x] `GET /api/monitors` devolve `history` (últimos 30), `uptime_24h` e `last_latency_ms` sem N+1
+- [x] CLI `add` aceita `--type/--host/--port/--grace`
+- [x] Painel, Novo monitor e Editar monitor batem com os 3 PNGs (itens da Fase 4)
+- [x] README: remover os marcadores "(em desenvolvimento)" ao fim de cada fase
 
 ## Tech Stack
 
@@ -442,17 +442,18 @@ make dev   # e criar um monitor de cada tipo; curl no /ping/<token>
 
 | Fase                               | Tarefas | Complexity | Esforço | Target                                            | Status      |
 | ---------------------------------- | ------- | ---------- | ------- | ------------------------------------------------- | ----------- |
-| Fase 1 — Base + refatoração (PR 1) | T1–T5   | L          | ~2 h    | HTTP idêntico, schema novo                        | ⬜ Pendente |
-| Fase 2 — TCP (PR 2)                | T6–T8   | M          | ~1 h    | TCP via API/CLI                                   | ⬜ Pendente |
-| Fase 3 — Heartbeat (PR 3)          | T9–T16  | XL         | ~3 h    | Ping, prazo, webhook, segurança                   | ⬜ Pendente |
-| Fase 4 — API de resumo + Frontend  | T17–T22 | XL         | ~4 h    | Telas dos 3 PNGs (pode iniciar T17 após a Fase 1) | ⬜ Pendente |
-| Fase 5 — QA e docs                 | T23–T24 | M          | ~1 h    | Divergências fechadas                             | ⬜ Pendente |
+| Fase 1 — Base + refatoração (PR 1) | T1–T5   | L          | ~2 h    | HTTP idêntico, schema novo                        | ✅ Concluído |
+| Fase 2 — TCP (PR 2)                | T6–T8   | M          | ~1 h    | TCP via API/CLI                                   | ✅ Concluído |
+| Fase 3 — Heartbeat (PR 3)          | T9–T16  | XL         | ~3 h    | Ping, prazo, webhook, segurança                   | ✅ Concluído |
+| Fase 4 — API de resumo + Frontend  | T17–T22 | XL         | ~4 h    | Telas dos 3 PNGs (pode iniciar T17 após a Fase 1) | ✅ Concluído |
+| Fase 5 — QA e docs                 | T23–T24 | M          | ~1 h    | Divergências fechadas                             | ✅ Concluído |
 
 ## Status de Execução
 
 ### Concluído
 
 - Levantamento do código e escopo aprovado no README
+- T1–T24 na branch `feat/check-types` (um commit de backend e um de frontend/docs, em vez de 3 PRs)
 
 ### Em andamento
 
@@ -460,7 +461,14 @@ make dev   # e criar um monitor de cada tipo; curl no /ping/<token>
 
 ### Pendente
 
-- T1–T24
+- Rodar a migration numa cópia do `pingou.db` real (só testada em banco de teste: `internal/database/migrations_test.go`)
+
+### Evidências de verificação
+
+- `go test -race ./...` verde, incluindo: migration preserva checks/incidents e falha sem `foreign_keys=OFF`; TCP up/refused/timeout/no such host; heartbeat `UNKNOWN → UP → DOWN → UP` com um único check DOWN; ping 200/404/405/429/pausado; token regenerado invalida o antigo; token fora do log e do webhook; resumo com 30 itens em 2 queries
+- `npm run lint` e `npm run build` verdes
+- Smoke com o binário: TCP aberto UP, fechado DOWN; `/ping/<token>` 200, inválido 404; log com `/ping/[redacted]`; CLI `add --type tcp|heartbeat`
+- QA no navegador (Playwright, 1440 px e 390 px): painel, menu ⋮ (mouse e teclado), filtros, pausar, novo monitor dos 3 tipos, erro de validação no form, editar heartbeat, gerar nova URL (antiga 404, nova 200); sem rolagem horizontal no celular
 
 ## Notes
 
@@ -471,6 +479,22 @@ make dev   # e criar um monitor de cada tipo; curl no /ping/<token>
 - **Aberto:** o item "Ver histórico" do menu ⋮ não tem tela no design. Aponta para a tela de detalhe de [tarefa-detalhe-monitor-checks-incidentes.md](tasks/tarefa-detalhe-monitor-checks-incidentes.md) se já existir; senão, ocultar o item até lá.
 - **Limitação conhecida:** uptime 24 h de heartbeat é calculado sobre checks gravados (1 por ping + 1 por queda), não sobre tempo. Aceitável para o painel; documentar se confundir.
 - Ao terminar cada fase, rodar `graphify update .` (regra do CLAUDE.md do projeto).
+
+### Decisões tomadas na implementação
+
+- **Down da migration 0003:** falha (sem alterar nada) se existir monitor `tcp` ou `heartbeat`. Apagar em silêncio seria pior; o backup continua sendo o rollback de verdade.
+- **Heartbeat retomado:** ao sair da pausa, `last_ping_at` passa a ser "agora", então o prazo recomeça. Sem isso, o monitor cairia logo após retomar, porque os pings da pausa não foram registrados.
+- **Quem grava o quê:** `UpdateWithTx` (state machine) grava só estado (`current_state`, `last_checked_at`, `last_ping_at`, `updated_at`); `Update` (API) grava só campos editáveis. Assim um check não desfaz uma edição, nem uma edição desfaz um check.
+- **Desempate dos checks:** `checked_at` tem resolução de segundos; a ordenação agora usa `checked_at DESC, id DESC`. Antes, dois checks no mesmo segundo podiam contar falhas seguidas errado.
+- **`enabled` ausente na criação = `true`.** Antes era `false`, e um heartbeat criado pelo `curl` do README ficaria pausado ignorando os pings.
+- **Erros da API no front:** o interceptor do `client.js` estava num axios que ninguém usava; agora a mensagem da API chega ao formulário.
+- **"Ver histórico"** oculto no menu ⋮ (a tela de detalhe ainda não existe).
+
+### Divergências do QA contra os PNGs (registradas, não corrigidas)
+
+- Borda da faixa vermelha usa `--pg-down` (o PNG tem um rosa mais suave, que não existe nos tokens).
+- No celular, a tabela esconde as colunas de histórico, uptime, resposta e último check; o PNG só cobre desktop.
+- Mensagens de validação vindas da API continuam em inglês (com o prefixo "Verifique os campos:"). O caso mais comum (host com `http://`) é validado no próprio formulário, em português.
 
 ### Alternativas consideradas e descartadas
 

@@ -13,8 +13,6 @@ O projeto tem quatro objetivos:
 - **leve**: roda numa VPS mínima ou num Raspberry Pi
 - **focado**: faz uma coisa só (dizer se algo está no ar) e faz bem
 
-> **Legenda deste README:** itens marcados com **(em desenvolvimento)** fazem parte do escopo aprovado, mas ainda não estão disponíveis na versão atual.
-
 ---
 
 ## Tipos de monitor
@@ -22,8 +20,8 @@ O projeto tem quatro objetivos:
 | Tipo        | O que verifica                                  | Direção          | Status                   |
 | ----------- | ----------------------------------------------- | ---------------- | ------------------------ |
 | `http`      | Uma URL responde com sucesso                    | Pingou → serviço | Disponível               |
-| `tcp`       | Uma porta aceita conexões                       | Pingou → serviço | **(em desenvolvimento)** |
-| `heartbeat` | Um serviço avisou que está vivo dentro do prazo | Serviço → Pingou | **(em desenvolvimento)** |
+| `tcp`       | Uma porta aceita conexões                       | Pingou → serviço | Disponível               |
+| `heartbeat` | Um serviço avisou que está vivo dentro do prazo | Serviço → Pingou | Disponível               |
 
 Os três tipos usam os mesmos estados (`UNKNOWN`, `UP`, `DOWN`), o mesmo registro de incidentes e o mesmo webhook. Só muda **como** o check é feito.
 
@@ -34,7 +32,7 @@ Faz uma requisição para a URL configurada. Considera `UP` quando a resposta ch
 - Segue até `PINGOU_MAX_REDIRECTS` redirects.
 - Vira `DOWN` depois de `threshold` falhas seguidas.
 
-### TCP (em desenvolvimento)
+### TCP
 
 Tenta abrir uma conexão TCP com `host:porta`. Útil para bancos de dados, filas, SMTP, SSH e qualquer serviço que não fala HTTP.
 
@@ -43,7 +41,7 @@ Tenta abrir uma conexão TCP com `host:porta`. Útil para bancos de dados, filas
 - O tempo de resposta registrado é o tempo para conectar.
 - Vira `DOWN` depois de `threshold` falhas seguidas, igual ao HTTP.
 
-### Heartbeat (em desenvolvimento)
+### Heartbeat
 
 O inverso dos outros tipos: **o serviço pinga o Pingou**. Ideal para cron jobs, backups, workers e qualquer tarefa que roda em horário marcado.
 
@@ -57,11 +55,12 @@ Como funciona:
 
 Regras:
 
-- `interval` é o período esperado entre pings (ex.: `86400` para uma tarefa diária).
+- `interval_seconds` é o período esperado entre pings (ex.: `86400` para uma tarefa diária), de 1 minuto a 1 semana.
 - `grace_seconds` é a tolerância para atrasos. Padrão: `60`.
 - O `threshold` **não se aplica**: perdeu o prazo + tolerância, vira `DOWN`. A tolerância já cumpre esse papel.
 - O `timeout` também não se aplica.
-- Monitor pausado aceita o ping, mas não registra nada.
+- Monitor pausado aceita o ping, mas não registra nada. Ao retomar, o prazo recomeça a contar a partir da retomada (os pings da pausa não foram registrados).
+- O avaliador de prazos roda a cada 10 segundos e gera **um** check `DOWN` por queda, não um por rodada.
 - A URL de ping fica sempre visível no dashboard e pode ser **regenerada** a qualquer momento (o token antigo deixa de funcionar na hora).
 
 Exemplo com cron:
@@ -88,7 +87,7 @@ Um novo tipo de check só entra no Pingou se passar nas quatro perguntas:
 
 ## Funcionalidades
 
-- Monitores dos tipos HTTP, TCP **(em desenvolvimento)** e Heartbeat **(em desenvolvimento)**
+- Monitores dos tipos HTTP, TCP e Heartbeat
 - Intervalo, timeout e threshold configuráveis por monitor
 - Detecção de transições de estado:
   - `UNKNOWN → UP`
@@ -130,17 +129,17 @@ Um novo tipo de check só entra no Pingou se passar nas quatro perguntas:
 
 ## Arquitetura
 
-### Checkers (em desenvolvimento)
+### Checkers
 
 Cada tipo de monitor é implementado por um **checker**: um arquivo que cumpre uma interface pequena.
 
 ```go
 type Checker interface {
-    Check(ctx context.Context, m domain.Monitor) Result
+    Check(ctx context.Context, m *domain.Monitor) CheckResult
 }
 ```
 
-O agendador escolhe o checker pelo campo `type` do monitor e entrega o `Result` para a state machine. A state machine **não conhece o tipo do check**: ela só recebe "deu certo" ou "deu errado". Por isso, adicionar um tipo novo não mexe em incidentes, transações nem webhook.
+O `checker.Registry` escolhe o checker pelo campo `type` do monitor e o agendador entrega o `CheckResult` para a state machine. A state machine **não conhece o tipo do check**: ela só recebe "deu certo" ou "deu errado". Por isso, adicionar um tipo novo não mexe em incidentes, transações nem webhook.
 
 O Heartbeat é o único caso diferente:
 
@@ -184,7 +183,7 @@ Garantias:
 | `MonitorRepoTx`    | `internal/repository/monitor_repo_tx.go`  | Monitors com suporte a Tx  |
 | `IncidentRepoTx`   | `internal/repository/incident_repo_tx.go` | Incidents com suporte a Tx |
 
-### Modelo de dados do monitor (em desenvolvimento)
+### Modelo de dados do monitor
 
 Os monitores ganham três campos:
 
@@ -387,9 +386,12 @@ PINGOU_CORS_ALLOWED_ORIGINS=http://localhost:5173
 
 O middleware responde ao preflight `OPTIONS`, permite o header `X-API-Key` e valida a origem contra a lista.
 
-### Limite de requisições na rota de ping (em desenvolvimento)
+### Limite de requisições na rota de ping
 
-Como `/ping/{token}` é pública, ela terá limite de requisições por IP.
+Como `/ping/{token}` é pública, ela tem limite de **60 requisições por minuto por IP** (janela fixa, em memória). Acima disso, responde `429` com o header `Retry-After`. Tokens inválidos também contam, o que dificulta tentar adivinhar tokens.
+
+- O IP considerado é o da conexão (`RemoteAddr`). Atrás de um proxy reverso, todos os clientes aparecem com o IP do proxy e dividem o mesmo limite. Suporte a `X-Forwarded-For` fica para uma versão futura.
+- O caminho `/ping/<token>` aparece como `/ping/[redacted]` nos logs: o token é um segredo.
 
 ---
 
@@ -400,7 +402,7 @@ Como `/ping/{token}` é pública, ela terá limite de requisições por IP.
 | Método              | Rota            | Descrição                                                      |
 | ------------------- | --------------- | -------------------------------------------------------------- |
 | `GET`               | `/healthz`      | Status básico da aplicação                                     |
-| `GET` `POST` `HEAD` | `/ping/{token}` | Recebe o ping de um monitor Heartbeat **(em desenvolvimento)** |
+| `GET` `POST` `HEAD` | `/ping/{token}` | Recebe o ping de um monitor Heartbeat |
 
 Sobre `/ping/{token}`:
 
@@ -417,7 +419,7 @@ Sobre `/ping/{token}`:
 | `GET`    | `/api/monitors/:id`           | Busca um monitor                                                 |
 | `PATCH`  | `/api/monitors/:id`           | Atualiza um monitor                                              |
 | `DELETE` | `/api/monitors/:id`           | Remove um monitor                                                |
-| `POST`   | `/api/monitors/:id/token`     | Gera um novo token de ping (Heartbeat) **(em desenvolvimento)**  |
+| `POST`   | `/api/monitors/:id/token`     | Gera um novo token de ping (Heartbeat)  |
 | `GET`    | `/api/monitors/:id/checks`    | Histórico de checks, paginado (`limit`, `offset`)                |
 | `GET`    | `/api/monitors/:id/incidents` | Incidentes do monitor, paginado (`limit`, `offset`, `open=true`) |
 | `GET`    | `/api/incidents`              | Lista incidentes (mesma paginação e filtro `open`)               |
@@ -432,28 +434,32 @@ HTTP:
 ```bash
 curl -X POST http://localhost:8080/api/monitors \
   -H "X-API-Key: dev-api-key" -H "Content-Type: application/json" \
-  -d '{"name":"API","type":"http","url":"https://api.exemplo.com/health","interval":60,"timeout":5,"threshold":3}'
+  -d '{"name":"API","type":"http","url":"https://api.exemplo.com/health","interval_seconds":60,"timeout_seconds":5,"failure_threshold":3}'
 ```
 
-TCP **(em desenvolvimento)**:
+TCP:
 
 ```bash
 curl -X POST http://localhost:8080/api/monitors \
   -H "X-API-Key: dev-api-key" -H "Content-Type: application/json" \
-  -d '{"name":"Postgres","type":"tcp","config":{"host":"db.interno","port":5432},"interval":60,"timeout":5,"threshold":3}'
+  -d '{"name":"Postgres","type":"tcp","config":{"host":"db.interno","port":5432},"interval_seconds":60,"timeout_seconds":5,"failure_threshold":3}'
 ```
 
-Heartbeat **(em desenvolvimento)**:
+Heartbeat:
 
 ```bash
 curl -X POST http://localhost:8080/api/monitors \
   -H "X-API-Key: dev-api-key" -H "Content-Type: application/json" \
-  -d '{"name":"Backup diário","type":"heartbeat","interval":86400,"config":{"grace_seconds":3600}}'
+  -d '{"name":"Backup diário","type":"heartbeat","interval_seconds":86400,"config":{"grace_seconds":3600}}'
 ```
 
 A resposta do Heartbeat inclui o `ping_token` para montar a URL de ping.
 
-> Se `type` não for enviado, o monitor é criado como `http`.
+> Se `type` não for enviado, o monitor é criado como `http`. Se `enabled` não for enviado, o monitor é criado ativo.
+
+Limites de `interval_seconds`: 10 a 86400 para `http` e `tcp`; 60 a 604800 (1 semana) para `heartbeat`.
+
+`GET /api/monitors` também traz, por monitor, o resumo usado pelo painel: `history` (últimos 30 checks, `true` = sucesso, mais recente por último), `uptime_24h` (percentual, `null` sem checks) e `last_latency_ms`.
 
 ---
 
@@ -497,7 +503,7 @@ Evento de recuperação:
 }
 ```
 
-Campos `type` e `target` **(em desenvolvimento)**:
+Campos `type` e `target`:
 
 | Tipo        | `target`     | `url`                                |
 | ----------- | ------------ | ------------------------------------ |
@@ -572,21 +578,21 @@ PINGOU_PORT=9999 ./pingou serve
 # HTTP
 ./pingou add -n "API" -u "https://api.exemplo.com/health" -i 30 -t 10 -K 5 --key <API_KEY>
 
-# TCP (em desenvolvimento)
+# TCP
 ./pingou add -n "Postgres" --type tcp --host db.interno --port 5432 --key <API_KEY>
 
-# Heartbeat (em desenvolvimento)
+# Heartbeat
 ./pingou add -n "Backup diário" --type heartbeat -i 86400 --grace 3600 --key <API_KEY>
 ```
 
 | Flag          | Abrev | Padrão        | Descrição                                                     |
 | ------------- | ----- | ------------- | ------------------------------------------------------------- |
 | `--name`      | `-n`  | (obrigatório) | Nome do monitor                                               |
-| `--type`      |       | `http`        | `http`, `tcp` ou `heartbeat` **(em desenvolvimento)**         |
+| `--type`      |       | `http`        | `http`, `tcp` ou `heartbeat`         |
 | `--url`       | `-u`  |               | URL a verificar (obrigatório para `http`)                     |
-| `--host`      |       |               | Host (obrigatório para `tcp`) **(em desenvolvimento)**        |
-| `--port`      |       |               | Porta (obrigatório para `tcp`) **(em desenvolvimento)**       |
-| `--grace`     |       | `60`          | Tolerância em segundos (`heartbeat`) **(em desenvolvimento)** |
+| `--host`      |       |               | Host (obrigatório para `tcp`)        |
+| `--port`      |       |               | Porta (obrigatório para `tcp`)       |
+| `--grace`     |       | `60`          | Tolerância em segundos (`heartbeat`) |
 | `--interval`  | `-i`  | `60`          | Intervalo em segundos                                         |
 | `--timeout`   | `-t`  | `5`           | Timeout em segundos (não se aplica a `heartbeat`)             |
 | `--threshold` | `-K`  | `3`           | Falhas seguidas antes de `DOWN` (não se aplica a `heartbeat`) |
@@ -686,10 +692,10 @@ A ideia não é competir com ferramentas enterprise nem com plataformas completa
 
 ### Próxima versão
 
-- [ ] Interface `Checker` (refatoração, sem mudança de comportamento)
-- [ ] Monitor TCP
-- [ ] Monitor Heartbeat
-- [ ] Redesign do dashboard com a nova identidade visual (tema claro)
+- [x] Interface `Checker` (refatoração, sem mudança de comportamento)
+- [x] Monitor TCP
+- [x] Monitor Heartbeat
+- [x] Redesign do dashboard com a nova identidade visual (tema claro)
 
 ### Depois
 

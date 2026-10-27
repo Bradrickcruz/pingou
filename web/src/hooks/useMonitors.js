@@ -6,11 +6,14 @@ export function useMonitors() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isFetching, setIsFetching] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState(null);
 
   const loadMonitors = useCallback(async () => {
     try {
       const res = await monitorsApi.list({ limit: 100 });
       setMonitors(res.data);
+      setError(null);
+      setUpdatedAt(Date.now());
     } catch (e) {
       setError(e.message);
     } finally {
@@ -21,7 +24,6 @@ export function useMonitors() {
 
   const refetch = useCallback(async () => {
     setIsFetching(true);
-    setLoading(true);
     await loadMonitors();
   }, [loadMonitors]);
 
@@ -38,5 +40,5 @@ export function useMonitors() {
     };
   }, [loadMonitors]);
 
-  return { monitors, loading, error, refetch, isFetching };
+  return { monitors, loading, error, refetch, isFetching, updatedAt };
 }
