@@ -143,7 +143,7 @@ Tailwind v4: declare os mesmos valores em `@theme` (`--color-pg-ciano: #1E9BB3;`
 | UNKNOWN | `--pg-unknown` | `--pg-unknown-bg` | ? | `UNKNOWN` |
 
 - **SEMPRE** mostre status com **texto + ícone**, além da cor. **NUNCA** só a cor (daltonismo).
-- Badge de status: pílula (`border-radius: 9999px`), fundo `*-bg`, texto e ícone na cor forte, Inter Medium 12–13 px.
+- Badge de status: pílula (`border-radius: 9999px`), fundo `*-bg`, ícone na cor forte e texto em `--pg-ardosia` (o texto na cor forte dá 4,1:1 e 4,2:1 sobre `*-bg`, abaixo de AA), Inter Medium 12–13 px.
 - Bolinha de status (dot) pode acompanhar, mas nunca substitui o badge com texto.
 
 ## 5. Tipografia
@@ -178,7 +178,7 @@ Tailwind v4: declare os mesmos valores em `@theme` (`--color-pg-ciano: #1E9BB3;`
 
 ## 7. Componentes base
 
-- **Botão primário**: fundo `--pg-ciano-fundo`, texto branco, Inter 500 14 px, raio 8 px. No máximo **um** por tela.
+- **Botão primário**: fundo `--pg-ciano-fundo`, texto branco, Inter 500 14 px, raio 8 px. No máximo **um** por tela. Hover: `brightness-90` sobre a própria cor (sem token novo).
 - **Botão secundário**: fundo transparente, borda `--pg-borda`, texto `--pg-ardosia`.
 - **Botão destrutivo** (ex.: remover monitor): texto/borda `--pg-down`; fundo sólido só na confirmação.
 - **Link**: `--pg-ciano-fundo`, sublinhado no hover.
@@ -209,6 +209,7 @@ Tailwind v4: declare os mesmos valores em `@theme` (`--color-pg-ciano: #1E9BB3;`
 - Português, frases curtas, voz ativa, verbo primeiro: "Criar monitor", "Salvar".
 - Sem "por favor", sem "com sucesso", sem exclamação em mensagens do sistema.
 - Erros: o que aconteceu + o que fazer. Ex.: "Não foi possível conectar. Verifique a URL."
+- Estados de status ficam em inglês (`UP`, `DOWN`, `UNKNOWN`), por serem termos técnicos de monitoramento, mesmo com a interface em português.
 - Slogan oficial: **"Rodou, pingou."**
 
 ## 10. Pendências (não definidas na v1.0)

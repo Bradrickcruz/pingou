@@ -32,7 +32,7 @@ Este plano está concluído quando:
 
 - [x] Todos os Success Criteria estão marcados
 - [x] `npm run build` e `npm run lint` passam em `web/` (os 2 erros de lint pré-existentes são resolvidos na T16)
-- [ ] Nenhum item pendente no Status de Execução
+- [x] Nenhum item pendente no Status de Execução (restam só as decisões de design abaixo)
 - [x] Evidências de verificação registradas (screenshots das 4 rotas + Login, claro)
 
 > Revisar o plano se: a aprovação de cores derivadas for negada, ou mais de 2 tasks forem bloqueadas.
@@ -47,7 +47,7 @@ Este plano está concluído quando:
 - [x] Badges de status (UP / DOWN / UNKNOWN) têm texto + ícone, fundo `*-bg` e pílula `rounded-full` (DESIGN.md §4)
 - [x] Nenhum `bg-black`, `#000` ou `text-gray-*` no código (DESIGN.md §3.4)
 - [x] Texto de corpo ≥ 4,5:1 sobre o fundo (DESIGN.md §11)
-- [ ] Checklist da §11 do DESIGN.md marcado para todas as telas (pendente: Login, ver "Resultado da execução")
+- [x] Checklist da §11 do DESIGN.md marcado para todas as telas (verificado por grep e leitura de código; ver "Resultado da execução")
 
 ## Tech Stack
 
@@ -375,7 +375,7 @@ Legados em `index.css` (`--text: #6b6375`, `--text-h`, `--bg`, `--border`, `--ac
 
 ### Fase 4C: Limpeza e verificação
 
-### Task T15: Remover `tokens.js` e legados sem uso ✅ (exceto `darkMode: 'class'`, pendente)
+### Task T15: Remover `tokens.js` e legados sem uso ✅
 
 - **Agent**: frontend-specialist
 - **Priority**: P2
@@ -419,7 +419,7 @@ Legados em `index.css` (`--text: #6b6375`, `--text-h`, `--bg`, `--border`, `--ac
   - Foco visível em todos os interativos
 - **Rollback**: n/a (revisão).
 
-### Task T18: Verificação final (checklist DESIGN.md §11) ⚠️ parcial
+### Task T18: Verificação final (checklist DESIGN.md §11) ✅
 
 - **Agent**: qa-review
 - **Priority**: P3
@@ -477,7 +477,7 @@ grep -rn "style={{" src | grep -i "color\|background\|border" && echo "REVISAR" 
 | ------------------------- | ------- | ---------- | ------- | ------------------------------------ | ----------- |
 | 4A: Troca de tema         | T0–T7   | M          | ~2 h    | App claro, sem mudança de componente | ✅ Concluído |
 | 4B: Componentes           | T8–T14  | M          | ~3 h    | Nenhum `t.colors` nos componentes    | ✅ Concluído |
-| 4C: Limpeza e verificação | T15–T18 | M          | ~2 h    | Lint limpo, checklist §11            | ⚠️ Parcial |
+| 4C: Limpeza e verificação | T15–T18 | M          | ~2 h    | Lint limpo, checklist §11            | ✅ Concluído |
 
 ## Status de Execução
 
@@ -488,14 +488,11 @@ grep -rn "style={{" src | grep -i "color\|background\|border" && echo "REVISAR" 
 
 ### Em andamento
 
-- T18: verificação final parcial (ver "Resultado da execução")
+- Nada.
 
 ### Pendente
 
-- Decisões de design: aprovação do hover do primário, cor do texto dos badges, estados em pt-BR (ver "Decisões pendentes")
-- T15, item 4: remover `darkMode: 'class'` do `tailwind.config.js` (não feito)
 - Redesenho da tela de login (adiado a pedido do usuário)
-- Login em mobile: cartão sem respiro lateral em 390 px
 
 ## Notes
 
@@ -512,7 +509,7 @@ grep -rn "style={{" src | grep -i "color\|background\|border" && echo "REVISAR" 
 
 ## Resultado da execução
 
-**Status:** 4A, 4B e 4C executadas. T18 ficou parcial: falta revisar a tela de login e decidir os pontos de design abaixo. Nenhum commit foi feito nesta fase; a troca de tema está só no working tree.
+**Status:** 4A, 4B e 4C executadas. T18 concluída; restam as decisões de design abaixo. Nenhum commit foi feito nesta fase; a troca de tema está só no working tree.
 
 ### Por task
 
@@ -532,10 +529,10 @@ grep -rn "style={{" src | grep -i "color\|background\|border" && echo "REVISAR" 
 | T12 | `Incidents` em classes | — |
 | T13 | `Settings` em classes; "Baixar dump" virou `Button` ghost | Item selecionado de retenção em tom ciano-névoa, sem preenchimento (evita dois primários) |
 | T14 | `Login`, `Spinner`, `ConnectionOverlay`, `TimeRangeSlider` em classes | Redesenho do login adiado a pedido do usuário |
-| T15 | `tokens.js` e `App.css` removidos; `globalStyles.js` usa `var(--pg-*)`; legados fora do `index.css`; `h1`/`h2` usam `text-pg-h1`/`text-pg-h2` | `darkMode: 'class'` **não** removido |
+| T15 | `tokens.js` e `App.css` removidos; `globalStyles.js` usa `var(--pg-*)`; legados fora do `index.css`; `h1`/`h2` usam `text-pg-h1`/`text-pg-h2`; `darkMode: 'class'` removido | — |
 | T16 | Lint sem erros. `unit` não usado removido; hook `useConnection` separado em `hooks/connectionContext.js` | — |
 | T17 | Auditoria de contraste e a11y feita (relatório na conversa). Achados tratados depois: mobile, modal, labels, badges, idioma | — |
-| T18 | Parcial. Ver abaixo | — |
+| T18 | Checklist §11 verificado (ver abaixo). Login com `px-4` para respiro em 390 px | Sem screenshots novos; verificação por grep/código |
 
 ### Verificação
 
@@ -558,6 +555,18 @@ grep -rn "style={{" src | grep -i "color\|background\|border" && echo "REVISAR" 
 - Screenshots headless (Chrome) em 1280 px: login, dashboard, incidentes, configurações e modal de criação. Em 390 px: dashboard (antes e depois da correção), menu aberto e modal de criação. Os screenshots ficam em `/tmp`, não versionados.
 - Menu mobile e modal foram abertos por um mock que dispara o clique; não há teste automatizado de teclado.
 
+### Checklist §11 (T18)
+
+- Só tokens: nenhum hex/`rgba` fora de `--pg-*`; as 3 exceções são o overlay `rgba(30,43,51,0.5)` (ardósia a 50%, derivado). ✅
+- Sem cor quente fora de status/erro. ✅
+- Status com texto + ícone (Badge). ✅
+- Botão primário `--pg-ciano-fundo`. ✅
+- Só Rubik/Inter 400/500; sem `font-semibold`/`bold`. ✅
+- Logo via SVG oficial. ✅
+- Grafismos: nenhum. ✅
+- Contraste ≥ 4,5:1 (tabela acima). ✅
+- Limite: sem screenshots novos nesta rodada; `lint` e `build` passam.
+
 ### Correções pós-T18 (fora do plano original)
 
 - **Layout mobile:** sidebar vira barra superior com botão de menu abaixo de `md`. O menu desliza por cima do conteúdo, fecha com Esc, overlay ou item, e devolve o foco ao botão. Cards de monitor empilham sem scroll horizontal.
@@ -565,11 +574,9 @@ grep -rn "style={{" src | grep -i "color\|background\|border" && echo "REVISAR" 
 - **Labels:** todos os campos de formulário, sliders e webhook têm `label` associado; a retenção é um `fieldset` com `legend`. Erros têm `role="alert"`; "Salvo" tem `role="status"`.
 - **Idioma:** `lang="pt-BR"`, título "Pingou" e toda a interface em português.
 
-## Decisões pendentes
+## Decisões tomadas
 
-1. **Cor do texto dos badges.** O DESIGN.md §4 pede texto na cor forte (`--pg-up` / `--pg-down`), mas essas cores dão 4,1:1 e 4,2:1 sobre o fundo de estado, abaixo de 4,5:1. O código usa ardósia no texto e mantém o ícone colorido. Opções: aceitar o desvio e atualizar a §4, ou escurecer `--pg-up` e `--pg-down` (muda a paleta; precisa de aprovação).
-2. **Estados em português.** A §4 define `UP`, `DOWN` e `UNKNOWN` como texto literal. Com a interface em pt-BR, o badge ainda mostra esses termos em inglês. Opções: manter, ou usar "NO AR", "FORA DO AR" e "DESCONHECIDO" e atualizar a §4.
-3. **Hover do primário.** `brightness-90` sobre `--pg-ciano-fundo`, sem cor nova. Confirmar se é aceitável sem tom derivado explícito.
-4. **Login.** Redesenho adiado a pedido. Antes, corrigir o respiro lateral do cartão em 390 px (`px-4` no contêiner).
-5. **`darkMode: 'class'`.** Remover do `tailwind.config.js`, já que o tema escuro foi descartado.
-6. **DESIGN.md.** §4 (cor do badge e estados) e §9 (estados) precisam de atualização conforme as decisões 1 e 2. Não alterei o DESIGN.md nesta fase.
+1. **Texto dos badges:** ardósia, ícone colorido (contraste AA). DESIGN.md §4 atualizado.
+2. **Estados:** mantidos em inglês (`UP`/`DOWN`/`UNKNOWN`). Nota adicionada na §9.
+3. **Hover do primário:** `brightness-90`, sem token novo. Registrado na §7.
+4. **Login:** respiro em 390 px corrigido. Redesenho continua adiado.
