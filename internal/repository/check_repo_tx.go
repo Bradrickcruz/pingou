@@ -37,7 +37,7 @@ func (r *CheckRepoTx) FindByMonitor(ctx context.Context, tx *sql.Tx, monitorID s
 	rows, err := tx.QueryContext(ctx, `
 		SELECT id, monitor_id, success, status_code, latency_ms, error_message, checked_at
 		FROM checks WHERE monitor_id = ?
-		ORDER BY checked_at DESC LIMIT ? OFFSET ?`,
+		ORDER BY checked_at DESC, id DESC LIMIT ? OFFSET ?`,
 		monitorID, limit, offset,
 	)
 	if err != nil {

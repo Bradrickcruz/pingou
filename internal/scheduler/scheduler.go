@@ -29,7 +29,9 @@ type Scheduler struct {
 	dbMu           sync.Mutex // serializa acesso ao DB (SQLite com MaxOpenConns=1)
 	mu             sync.Mutex
 	intervalUnit   time.Duration   // unidade de interval_seconds; testes reduzem para rodar rápido
+	heartbeatTick  time.Duration   // frequência do avaliador de prazos do heartbeat
 	rootCtx        context.Context // contexto de vida dos jobs (definido em Start)
+	stopHeartbeats context.CancelFunc
 }
 
 func NewScheduler(
@@ -51,6 +53,7 @@ func NewScheduler(
 		notifier:       notifier,
 		jobs:           make(map[string]*job),
 		intervalUnit:   time.Second,
+		heartbeatTick:  10 * time.Second,
 		rootCtx:        context.Background(),
 	}
 }
@@ -59,7 +62,10 @@ func NewScheduler(
 func (s *Scheduler) Start(ctx context.Context) error {
 	s.mu.Lock()
 	s.rootCtx = ctx
+	hbCtx, cancel := context.WithCancel(ctx)
+	s.stopHeartbeats = cancel
 	s.mu.Unlock()
+	go s.runHeartbeats(hbCtx)
 
 	enabled := true
 	monitors, _, err := s.monitors.FindAll(ctx, domain.MonitorFilter{
@@ -74,7 +80,7 @@ func (s *Scheduler) Start(ctx context.Context) error {
 		s.startJob(m)
 	}
 
-	slog.Info("scheduler started", "jobs", len(monitors))
+	slog.Info("scheduler started", "monitors", len(monitors))
 	return nil
 }
 
@@ -98,6 +104,11 @@ func (s *Scheduler) Reload(ctx context.Context, monitorID string) error {
 }
 
 func (s *Scheduler) startJob(m *domain.Monitor) {
+	// heartbeat não tem loop ativo: os checks vêm do ping e do avaliador de prazos
+	if m.Type == domain.TypeHeartbeat {
+		return
+	}
+
 	s.mu.Lock()
 	if old, ok := s.jobs[m.ID]; ok {
 		old.cancelFn()
@@ -147,7 +158,7 @@ func (s *Scheduler) runLoop(ctx context.Context, m *domain.Monitor) {
 }
 
 func (s *Scheduler) runCheck(ctx context.Context, m *domain.Monitor) {
-	slog.Debug("running check", "monitor_id", m.ID, "name", m.Name, "url", m.URL)
+	slog.Debug("running check", "monitor_id", m.ID, "name", m.Name, "type", m.Type)
 
 	result := s.checker.Check(ctx, m)
 
@@ -158,18 +169,48 @@ func (s *Scheduler) runCheck(ctx context.Context, m *domain.Monitor) {
 		"status_code", result.StatusCode,
 	)
 
-	// Serializa só a parte de banco (SQLite com MaxOpenConns=1); o check HTTP
-	// fica fora do lock para um site lento não atrasar os outros monitores
+	if err := s.Record(ctx, m.ID, result, nil); err != nil {
+		slog.Error("state machine error", "monitor_id", m.ID, "err", err)
+	}
+}
+
+// Record grava um resultado de check pela state machine. pingedAt != nil indica
+// um ping de heartbeat e atualiza last_ping_at.
+func (s *Scheduler) Record(ctx context.Context, monitorID string, result domain.CheckResult, pingedAt *time.Time) error {
+	return s.withMonitor(ctx, monitorID, func(m *domain.Monitor) *domain.CheckResult {
+		if pingedAt != nil {
+			m.LastPingAt = pingedAt
+		}
+		return &result
+	})
+}
+
+// withMonitor serializa a parte de banco (SQLite com MaxOpenConns=1) e recarrega
+// o monitor dentro do lock, para não gravar por cima de uma versão mais nova
+// (ex.: last_ping_at de um ping que acabou de chegar). decide devolve nil para
+// não registrar nada. O check em si fica fora do lock, para um site lento não
+// atrasar os outros monitores.
+func (s *Scheduler) withMonitor(ctx context.Context, monitorID string, decide func(m *domain.Monitor) *domain.CheckResult) error {
 	s.dbMu.Lock()
 	defer s.dbMu.Unlock()
+
+	m, err := s.monitors.FindByID(ctx, monitorID)
+	if err != nil {
+		return err
+	}
+	if m == nil || !m.Enabled {
+		return nil // excluído ou pausado enquanto o check rodava
+	}
+
+	result := decide(m)
+	if result == nil {
+		return nil
+	}
 
 	// Criar nova UnitOfWork para este check
 	uow := service.NewUnitOfWork(s.db, s.checkRepoTx, s.monitorRepoTx, s.incidentRepoTx)
 	sm := service.NewStateMachine(uow, s.notifier)
-
-	if err := sm.Process(ctx, m, result); err != nil {
-		slog.Error("state machine error", "monitor_id", m.ID, "err", err)
-	}
+	return sm.Process(ctx, m, *result)
 }
 
 func (s *Scheduler) hasJob(id string) bool {
@@ -184,6 +225,10 @@ func (s *Scheduler) Stop() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if s.stopHeartbeats != nil {
+		s.stopHeartbeats()
+		s.stopHeartbeats = nil
+	}
 	for id, j := range s.jobs {
 		j.cancelFn()
 		delete(s.jobs, id)

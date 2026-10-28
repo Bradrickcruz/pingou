@@ -4,13 +4,13 @@ import { X } from "lucide-react";
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-export function Modal({ title, onClose, children }) {
+export function Modal({ title, subtitle, onClose, children }) {
   const titleId = useId();
   const dialogRef = useRef(null);
 
   useEffect(() => {
     const previous = document.activeElement;
-    const field = dialogRef.current?.querySelector("input:not([disabled]), textarea:not([disabled]), select:not([disabled])");
+    const field = dialogRef.current?.querySelector("input:not([disabled]):not([readonly]):not([type=radio]), textarea:not([disabled]), select:not([disabled])");
     (field ?? dialogRef.current?.querySelector(FOCUSABLE))?.focus();
     return () => previous?.focus?.();
   }, []);
@@ -48,13 +48,16 @@ export function Modal({ title, onClose, children }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="w-full max-w-[520px] max-h-[90vh] overflow-y-auto p-6 sm:p-7 rounded-pg-card border border-pg-borda bg-pg-branco"
+        className="w-full max-w-[560px] max-h-[90vh] overflow-y-auto p-6 sm:p-7 rounded-pg-card border border-pg-borda bg-pg-branco"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center mb-5">
-          <h2 id={titleId} className="text-pg-h3 font-medium text-pg-ardosia my-0">
-            {title}
-          </h2>
+        <div className="flex justify-between items-start mb-5">
+          <div>
+            <h2 id={titleId} className="text-pg-h3 font-medium text-pg-ardosia my-0">
+              {title}
+            </h2>
+            {subtitle && <div className="mt-1 text-pg-caption text-pg-neblina">{subtitle}</div>}
+          </div>
           <button
             type="button"
             onClick={onClose}

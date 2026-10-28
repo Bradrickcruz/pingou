@@ -5,7 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"net"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/Bradrickcruz/pingou/internal/domain"
@@ -37,10 +39,27 @@ type webhookPayload struct {
 	DowntimeDurationSeconds *int64                `json:"downtime_duration_seconds"`
 }
 
+// webhookPayloadMonitor nunca leva o ping_token: webhooks costumam ir para
+// terceiros (Slack, Discord) e o token é o segredo da URL de ping.
 type webhookPayloadMonitor struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	URL  string `json:"url"`
+	ID     string  `json:"id"`
+	Name   string  `json:"name"`
+	Type   string  `json:"type"`
+	Target *string `json:"target"` // URL (http), host:porta (tcp), null (heartbeat)
+	URL    *string `json:"url"`    // só http, mantido por compatibilidade
+}
+
+func toWebhookMonitor(m *domain.Monitor) webhookPayloadMonitor {
+	out := webhookPayloadMonitor{ID: m.ID, Name: m.Name, Type: string(m.Type)}
+	switch m.Type {
+	case domain.TypeHTTP:
+		url := m.URL
+		out.Target, out.URL = &url, &url
+	case domain.TypeTCP:
+		target := net.JoinHostPort(m.Config.Host, strconv.Itoa(m.Config.Port))
+		out.Target = &target
+	}
+	return out
 }
 
 func (n *WebhookNotifier) NotifyDown(ctx context.Context, m *domain.Monitor, i *domain.Incident) {
@@ -50,12 +69,8 @@ func (n *WebhookNotifier) NotifyDown(ctx context.Context, m *domain.Monitor, i *
 	}
 
 	payload := webhookPayload{
-		Event: "down",
-		Monitor: webhookPayloadMonitor{
-			ID:   m.ID,
-			Name: m.Name,
-			URL:  m.URL,
-		},
+		Event:                   "down",
+		Monitor:                 toWebhookMonitor(m),
 		Timestamp:               i.StartedAt.UTC().Format(time.RFC3339),
 		LastError:               i.LastError,
 		DowntimeDurationSeconds: nil,
@@ -87,12 +102,8 @@ func (n *WebhookNotifier) NotifyRecovery(ctx context.Context, m *domain.Monitor,
 	}
 
 	payload := webhookPayload{
-		Event: "up",
-		Monitor: webhookPayloadMonitor{
-			ID:   m.ID,
-			Name: m.Name,
-			URL:  m.URL,
-		},
+		Event:                   "up",
+		Monitor:                 toWebhookMonitor(m),
 		Timestamp:               timestamp.Format(time.RFC3339),
 		LastError:               nil,
 		DowntimeDurationSeconds: downtimeDurationSeconds,

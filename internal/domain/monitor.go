@@ -5,6 +5,7 @@ import "time"
 type (
 	MonitorState   string
 	MonitorEnabled bool
+	MonitorType    string
 )
 
 const (
@@ -13,16 +14,41 @@ const (
 	StateDown    MonitorState = "DOWN"
 )
 
+const (
+	TypeHTTP      MonitorType = "http"
+	TypeTCP       MonitorType = "tcp"
+	TypeHeartbeat MonitorType = "heartbeat"
+)
+
+// MonitorConfig guarda os campos específicos de cada tipo (coluna config, JSON).
+// http: nenhum (usa Monitor.URL); tcp: Host e Port; heartbeat: GraceSeconds.
+type MonitorConfig struct {
+	Host         string
+	Port         int
+	GraceSeconds int
+}
+
 type Monitor struct {
 	ID               string
 	Name             string
-	URL              string
+	Type             MonitorType
+	URL              string // vazio fora de http
+	Config           MonitorConfig
+	PingToken        *string // só heartbeat
 	IntervalSeconds  int
 	TimeoutSeconds   int
 	FailureThreshold int
 	Enabled          bool
 	CurrentState     MonitorState
 	LastCheckedAt    *time.Time
+	LastPingAt       *time.Time // só heartbeat
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
+}
+
+// MonitorSummary resume os checks recentes de um monitor para o painel.
+type MonitorSummary struct {
+	History       []bool   // últimos checks, mais antigo primeiro
+	Uptime24h     *float64 // nil sem checks nas últimas 24 h
+	LastLatencyMs *int64
 }

@@ -1,23 +1,60 @@
-import { useState } from "react";
-import { Plus, RefreshCw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Activity, Globe, Plus, RefreshCw, Search, Server } from "lucide-react";
 import { useMonitors } from "../hooks/useMonitors";
+import { useNow } from "../hooks/useNow";
 import { monitorsApi } from "../api/monitors";
-import { MonitorCard } from "../components/monitors/MonitorCard";
+import { MonitorRow } from "../components/monitors/MonitorRow";
 import { MonitorForm } from "../components/monitors/MonitorForm";
+import { StatusBanner } from "../components/monitors/StatusBanner";
 import { Modal } from "../components/ui/Modal";
 import { Button } from "../components/ui/Button";
 import { Spinner } from "../components/ui/Spinner";
+import { timeAgo } from "../lib/format";
+import { bySeverity, countByStatus, statusOf } from "../lib/monitors";
 import logo from "../assets/brand/pingou-simbolo.svg";
 
+// a busca só aparece quando a lista fica longa (decisão do plano)
+const SEARCH_FROM = 10;
+
+const FILTERS = [
+  { key: "all", label: "Todos", match: () => true },
+  { key: "down", label: "Fora do ar", match: (s) => s === "DOWN" },
+  { key: "up", label: "No ar", match: (s) => s === "UP" },
+  { key: "paused", label: "Pausados", match: (s) => s === "PAUSED" },
+];
+
+const typeLabel = { http: "HTTP", tcp: "TCP", heartbeat: "Heartbeat" };
+const typeIcon = { http: Globe, tcp: Server, heartbeat: Activity };
+
+function TypeNote({ type }) {
+  const Icon = typeIcon[type] ?? Globe;
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <Icon size={14} aria-hidden="true" />
+      {typeLabel[type]} · o tipo não pode ser alterado
+    </span>
+  );
+}
+
 export function Dashboard() {
-  const { monitors, loading, error, refetch, isFetching } = useMonitors();
+  const { monitors, loading, error, refetch, isFetching, updatedAt } = useMonitors();
+  const now = useNow(1000);
   const [modal, setModal] = useState(null);
   const [selected, setSelected] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [filter, setFilter] = useState("all");
+  const [query, setQuery] = useState("");
+  const [actionError, setActionError] = useState(null);
 
-  const up = monitors.filter((m) => m.current_state === "UP").length;
-  const down = monitors.filter((m) => m.current_state === "DOWN").length;
-  const unknown = monitors.filter((m) => m.current_state === "UNKNOWN").length;
+  const counts = useMemo(() => countByStatus(monitors), [monitors]);
+  const sorted = useMemo(() => [...monitors].sort(bySeverity), [monitors]);
+
+  const active = FILTERS.find((f) => f.key === filter);
+  const q = query.trim().toLocaleLowerCase("pt-BR");
+  const visible = sorted.filter(
+    (m) => active.match(statusOf(m)) && (!q || m.name.toLocaleLowerCase("pt-BR").includes(q)),
+  );
+  const filterCount = (f) => monitors.filter((m) => f.match(statusOf(m))).length;
 
   const openEdit = (m) => {
     setSelected(m);
@@ -32,10 +69,10 @@ export function Dashboard() {
     setSelected(null);
   };
 
-  const handleCreate = async (data) => {
+  const run = async (fn) => {
     setSaving(true);
     try {
-      await monitorsApi.create(data);
+      await fn();
       await refetch();
       closeModal();
     } finally {
@@ -43,39 +80,36 @@ export function Dashboard() {
     }
   };
 
-  const handleEdit = async (data) => {
-    setSaving(true);
+  const handleCreate = (data) => run(() => monitorsApi.create(data));
+  const handleEdit = (data) => run(() => monitorsApi.update(selected.id, data));
+  const handleDelete = () => run(() => monitorsApi.delete(selected.id));
+
+  const handleToggle = async (m) => {
+    setActionError(null);
     try {
-      await monitorsApi.update(selected.id, data);
+      await monitorsApi.update(m.id, { enabled: !m.enabled });
       await refetch();
-      closeModal();
-    } finally {
-      setSaving(false);
+    } catch (e) {
+      setActionError(e.message);
     }
   };
 
-  const handleDelete = async () => {
-    setSaving(true);
-    try {
-      await monitorsApi.delete(selected.id);
-      await refetch();
-      closeModal();
-    } finally {
-      setSaving(false);
-    }
+  const handleRegenerate = async () => {
+    const updated = await monitorsApi.regenerateToken(selected.id);
+    setSelected((s) => ({ ...s, ...updated }));
+    void refetch();
   };
 
   return (
-    <div>
+    <div className="max-w-[1180px]">
       <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-7">
-        <div>
-          <h1 className="text-pg-h1 font-medium text-pg-ardosia my-0">Painel</h1>
-          <p className="text-pg-ui text-pg-neblina mt-0.5">
-            {monitors.length} monitores · {up} no ar · {down} fora do ar · {unknown}{" "}
-            desconhecidos
-          </p>
-        </div>
-        <div className="flex gap-2">
+        <h1 className="text-pg-h1 font-medium text-pg-ardosia my-0">Monitores</h1>
+        <div className="flex items-center gap-3">
+          {updatedAt && (
+            <span className="text-pg-caption text-pg-neblina whitespace-nowrap" aria-live="off">
+              Atualizado {timeAgo(updatedAt, now)}
+            </span>
+          )}
           <button
             type="button"
             onClick={refetch}
@@ -92,35 +126,12 @@ export function Dashboard() {
               className={isFetching ? "animate-spin motion-reduce:animate-none" : ""}
             />
           </button>
-          <Button
-            onClick={() => setModal("create")}
-            className="inline-flex items-center gap-1.5"
-          >
+          <Button onClick={() => setModal("create")} className="inline-flex items-center gap-1.5 h-11">
             <Plus size={16} aria-hidden="true" />
-            Criar monitor
+            Novo monitor
           </Button>
         </div>
       </div>
-
-      {monitors.length > 0 && (
-        <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
-          {[
-            { label: "No ar", value: up, tone: "text-pg-up" },
-            { label: "Fora do ar", value: down, tone: "text-pg-down" },
-            { label: "Desconhecido", value: unknown, tone: "text-pg-unknown" },
-          ].map(({ label, value, tone }) => (
-            <div
-              key={label}
-              className="p-3 sm:p-4 rounded-pg-card border border-pg-borda bg-pg-branco min-w-0"
-            >
-              <div className={`text-pg-h1 font-medium tabular-nums ${tone}`}>
-                {value}
-              </div>
-              <div className="text-pg-caption text-pg-neblina mt-0.5">{label}</div>
-            </div>
-          ))}
-        </div>
-      )}
 
       {loading && (
         <div className="flex justify-center py-12">
@@ -128,50 +139,153 @@ export function Dashboard() {
         </div>
       )}
 
-      {error && <p className="text-pg-ui text-pg-down" role="alert">{error}</p>}
+      {error && (
+        <p className="text-pg-ui text-pg-down mb-4" role="alert">
+          {error}
+        </p>
+      )}
+      {actionError && (
+        <p className="text-pg-ui text-pg-down mb-4" role="alert">
+          {actionError}
+        </p>
+      )}
 
       {!loading && monitors.length === 0 && (
         <div className="text-center py-16 px-4 rounded-pg-card border border-dashed border-pg-borda text-pg-neblina">
           <img src={logo} alt="" width={40} height={40} className="mx-auto mb-3" />
           <p className="font-medium text-pg-ardosia mb-1.5">Nenhum monitor ainda</p>
-          <p className="text-pg-ui mb-5">Adicione a primeira URL para começar o monitoramento.</p>
-          <Button
-            onClick={() => setModal("create")}
-            className="inline-flex items-center gap-1.5"
-          >
+          <p className="text-pg-ui mb-5">
+            Monitore um site, uma porta TCP ou um job agendado.
+          </p>
+          <Button onClick={() => setModal("create")} className="inline-flex items-center gap-1.5">
             <Plus size={16} aria-hidden="true" />
-            Criar monitor
+            Novo monitor
           </Button>
         </div>
       )}
 
-      <div className="flex flex-col gap-2.5">
-        {monitors.map((m) => (
-          <MonitorCard
-            key={m.id}
-            monitor={m}
-            onEdit={openEdit}
-            onDelete={openDelete}
-          />
-        ))}
-      </div>
+      {monitors.length > 0 && (
+        <>
+          <StatusBanner monitors={monitors} counts={counts} />
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5">
+            <div role="group" aria-label="Filtrar monitores" className="flex flex-wrap gap-2">
+              {FILTERS.map((f) => {
+                const on = filter === f.key;
+                return (
+                  <button
+                    key={f.key}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => setFilter(f.key)}
+                    className={`px-4 py-2 rounded-full border text-pg-ui transition-colors duration-150 focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano ${
+                      on
+                        ? "bg-pg-ardosia border-pg-ardosia text-pg-branco"
+                        : "bg-pg-branco border-pg-borda text-pg-ardosia hover:bg-pg-nuvem"
+                    }`}
+                  >
+                    {f.label} ({filterCount(f)})
+                  </button>
+                );
+              })}
+            </div>
+            {monitors.length >= SEARCH_FROM && (
+              <div className="relative sm:w-[280px]">
+                <Search
+                  size={16}
+                  aria-hidden="true"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-pg-neblina"
+                />
+                <input
+                  type="search"
+                  aria-label="Buscar por nome"
+                  placeholder="Buscar por nome"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2.5 rounded-pg-control text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda placeholder:text-pg-neblina"
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-pg-card border border-pg-borda bg-pg-branco">
+            <table className="w-full border-collapse text-left">
+              <caption className="sr-only">Monitores, ordenados por gravidade</caption>
+              <thead>
+                <tr className="bg-pg-ciano-nevoa text-pg-caption text-pg-ciano-fundo">
+                  <th scope="col" className="px-5 py-3 font-medium rounded-tl-pg-card">Status</th>
+                  <th scope="col" className="px-5 py-3 font-medium">Monitor</th>
+                  <th scope="col" className="px-5 py-3 font-medium hidden lg:table-cell whitespace-nowrap">
+                    Últimos 30 checks
+                  </th>
+                  <th scope="col" className="px-5 py-3 font-medium hidden md:table-cell text-right whitespace-nowrap">
+                    Uptime 24 h
+                  </th>
+                  <th scope="col" className="px-5 py-3 font-medium hidden md:table-cell text-right">Resposta</th>
+                  <th scope="col" className="px-5 py-3 font-medium hidden sm:table-cell whitespace-nowrap">
+                    Último check
+                  </th>
+                  <th scope="col" className="px-5 py-3 rounded-tr-pg-card">
+                    <span className="sr-only">Ações</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map((m) => (
+                  <MonitorRow
+                    key={m.id}
+                    monitor={m}
+                    now={now}
+                    onEdit={openEdit}
+                    onToggle={handleToggle}
+                    onDelete={openDelete}
+                  />
+                ))}
+                {visible.length === 0 && (
+                  <tr className="border-t border-pg-borda">
+                    <td colSpan={7} className="px-5 py-10 text-center text-pg-ui text-pg-neblina">
+                      Nenhum monitor neste filtro.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-5 py-3 border-t border-pg-borda text-pg-caption text-pg-neblina">
+              <span>Ordenado por gravidade: fora do ar primeiro.</span>
+              <span className="flex gap-4" aria-hidden="true">
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="w-1.5 h-3 rounded-[1px] bg-pg-up" /> no ar
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="w-1.5 h-3 rounded-[1px] bg-pg-down" /> fora do ar
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="w-1.5 h-3 rounded-[1px] bg-pg-borda" /> sem dados
+                </span>
+              </span>
+            </div>
+          </div>
+        </>
+      )}
 
       {modal === "create" && (
-        <Modal title="Criar monitor" onClose={closeModal}>
-          <MonitorForm
-            onSubmit={handleCreate}
-            onCancel={closeModal}
-            loading={saving}
-          />
+        <Modal title="Novo monitor" onClose={closeModal}>
+          <MonitorForm onSubmit={handleCreate} onCancel={closeModal} loading={saving} />
         </Modal>
       )}
 
       {modal === "edit" && selected && (
-        <Modal title="Editar monitor" onClose={closeModal}>
+        <Modal
+          title="Editar monitor"
+          subtitle={<TypeNote type={selected.type} />}
+          onClose={closeModal}
+        >
           <MonitorForm
             initial={selected}
             onSubmit={handleEdit}
             onCancel={closeModal}
+            onDelete={() => setModal("delete")}
+            onRegenerate={handleRegenerate}
             loading={saving}
           />
         </Modal>
@@ -180,8 +294,8 @@ export function Dashboard() {
       {modal === "delete" && selected && (
         <Modal title="Excluir monitor" onClose={closeModal}>
           <p className="mb-5 text-pg-neblina">
-            Excluir <strong className="font-medium text-pg-ardosia">{selected.name}</strong>?
-            Esta ação não pode ser desfeita.
+            Excluir <strong className="font-medium text-pg-ardosia">{selected.name}</strong>? O histórico de
+            checks e incidentes também é apagado. Esta ação não pode ser desfeita.
           </p>
           <div className="flex gap-2.5 justify-end">
             <Button variant="ghost" onClick={closeModal}>

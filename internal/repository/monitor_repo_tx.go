@@ -18,17 +18,16 @@ func NewMonitorRepoTx(db *sql.DB) *MonitorRepoTx {
 	return &MonitorRepoTx{db: db}
 }
 
-// UpdateWithTx atualiza um monitor usando a transação fornecida.
+// UpdateWithTx grava o resultado da state machine usando a transação fornecida.
+// Só toca nos campos de estado: assim um check não desfaz uma edição feita
+// pela API enquanto ele rodava (nome, intervalo, token etc.).
 func (r *MonitorRepoTx) UpdateWithTx(ctx context.Context, tx *sql.Tx, m *domain.Monitor) error {
 	_, err := tx.ExecContext(ctx, `
 		UPDATE monitors SET
-			name=?, url=?, interval_seconds=?, timeout_seconds=?,
-			failure_threshold=?, enabled=?, current_state=?,
-			last_checked_at=?, updated_at=?
+			current_state=?, last_checked_at=?, last_ping_at=?, updated_at=?
 		WHERE id=?`,
-		m.Name, m.URL, m.IntervalSeconds, m.TimeoutSeconds,
-		m.FailureThreshold, boolToInt(m.Enabled), string(m.CurrentState),
-		nullableTime(m.LastCheckedAt), m.UpdatedAt.UTC().Format(time.RFC3339),
+		string(m.CurrentState), nullableTime(m.LastCheckedAt), nullableTime(m.LastPingAt),
+		m.UpdatedAt.UTC().Format(time.RFC3339),
 		m.ID,
 	)
 	return err
@@ -36,6 +35,6 @@ func (r *MonitorRepoTx) UpdateWithTx(ctx context.Context, tx *sql.Tx, m *domain.
 
 // FindByID retorna um monitor pelo ID (lê do DB principal, não da transação).
 func (r *MonitorRepoTx) FindByID(ctx context.Context, id string) (*domain.Monitor, error) {
-	row := r.db.QueryRowContext(ctx, `SELECT * FROM monitors WHERE id = ?`, id)
+	row := r.db.QueryRowContext(ctx, `SELECT `+monitorColumns+` FROM monitors WHERE id = ?`, id)
 	return scanMonitor(row)
 }

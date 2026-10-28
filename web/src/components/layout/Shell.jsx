@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   TriangleAlert,
@@ -9,6 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "../ui/Button";
+import { incidentsApi } from "../../api/incidents";
 import marca from "../../assets/brand/pingou-marca-horizontal.svg";
 
 const nav = [
@@ -17,8 +18,33 @@ const nav = [
   { to: "/settings", label: "Configurações", icon: SettingsIcon },
 ];
 
+// Contagem de incidentes abertos para o badge da sidebar. Atualiza junto com o
+// polling do painel (15 s) e ao trocar de página.
+function useOpenIncidents() {
+  const [count, setCount] = useState(0);
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    let alive = true;
+    const load = () =>
+      incidentsApi
+        .list({ open: true, limit: 1 })
+        .then((res) => alive && setCount(res.total ?? 0))
+        .catch(() => {}); // o overlay de conexão já avisa se a API caiu
+    load();
+    const id = setInterval(load, 15_000);
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
+  }, [pathname]);
+
+  return count;
+}
+
 export function Shell({ children, onLogout }) {
   const [open, setOpen] = useState(false);
+  const openIncidents = useOpenIncidents();
   const toggleRef = useRef(null);
   const asideRef = useRef(null);
 
@@ -102,6 +128,12 @@ export function Shell({ children, onLogout }) {
             >
               <Icon size={16} aria-hidden="true" />
               {label}
+              {to === "/incidents" && openIncidents > 0 && (
+                <span className="ml-auto min-w-[22px] px-1.5 rounded-full bg-pg-down-bg text-pg-down text-pg-caption font-medium text-center tabular-nums">
+                  {openIncidents}
+                  <span className="sr-only"> {openIncidents === 1 ? "incidente aberto" : "incidentes abertos"}</span>
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>
