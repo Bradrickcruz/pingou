@@ -1,4 +1,4 @@
-# Graph Report - pingou-health-checker  (2026-10-27)
+# Graph Report - pingou-health-checker  (2026-10-28)
 
 ## Corpus Check
 - 111 files · ~107,061 words
@@ -6,12 +6,12 @@
 - Unclassified: 15 file(s) not represented in the graph (top: (none) 9, .woff2 4, .example 1)
 
 ## Summary
-- 1172 nodes · 2054 edges · 228 communities (64 shown, 164 thin omitted)
+- 1173 nodes · 2055 edges · 228 communities (64 shown, 164 thin omitted)
 - Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 47 edges (avg confidence: 0.86)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `3744ada9`
+- Built from commit: `10620220`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -249,23 +249,23 @@
 3. `Task Breakdown` - 25 edges
 4. `Scheduler` - 22 edges
 5. `runServe()` - 21 edges
-6. `MonitorService` - 17 edges
-7. `newEnv()` - 17 edges
+6. `newEnv()` - 17 edges
+7. `MonitorService` - 17 edges
 8. `Check` - 14 edges
-9. `Plano de Desenvolvimento: {{Titulo}}` - 14 edges
+9. `writeError()` - 14 edges
 10. `react` - 14 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Tech Stack` --references--> `Modal()`  [INFERRED]
   plan-check-types.md → web/src/components/ui/Modal.jsx
-- `🔍 Contexto` --references--> `useMonitors()`  [INFERRED]
-  tasks/tarefa-sistema-websocket-tempo-real.md → web/src/hooks/useMonitors.js
-- `Tech Stack` --references--> `Button()`  [INFERRED]
-  plan-check-types.md → web/src/components/ui/Button.jsx
 - `Tech Stack` --references--> `Badge()`  [INFERRED]
   plan-check-types.md → web/src/components/ui/Badge.jsx
-- `runServe()` --calls--> `NewRetentionWorker()`  [EXTRACTED]
-  cmd/pingou/commands/serve.go → internal/scheduler/retention.go
+- `Tech Stack` --references--> `Button()`  [INFERRED]
+  plan-check-types.md → web/src/components/ui/Button.jsx
+- `🔍 Contexto` --references--> `useMonitors()`  [INFERRED]
+  tasks/tarefa-sistema-websocket-tempo-real.md → web/src/hooks/useMonitors.js
+- `runMigrateStatus()` --calls--> `ListMigrations()`  [EXTRACTED]
+  cmd/pingou/commands/migrate.go → internal/database/database.go
 
 ## Import Cycles
 - None detected.
@@ -529,20 +529,20 @@ Cohesion: 0.38
 Nodes (4): HTTPChecker, net/http.Client, NewHTTPChecker(), WebhookNotifier
 
 ## Knowledge Gaps
-- **411 isolated node(s):** `MonitorEnabled`, `createMonitorRequest`, `paginatedResponse`, `updateMonitorRequest`, `1. Convention Over Configuration` (+406 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 630 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **411 isolated node(s):** `github.com/Bradrickcruz/pingou`, `MonitorEnabled`, `Server`, `Server`, `Server` (+406 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 631 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **164 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Plano de Desenvolvimento: Tipos de check (HTTP, TCP, Heartbeat) + redesign do painel` connect `Task Breakdown` to `Login.jsx`, `DESIGN.md — Design system do Pingou`?**
-  _High betweenness centrality (0.012) - this node is a cross-community bridge._
+  _High betweenness centrality (0.015) - this node is a cross-community bridge._
 - **Why does `Tech Stack` connect `Login.jsx` to `Dashboard.jsx`, `Task Breakdown`?**
-  _High betweenness centrality (0.010) - this node is a cross-community bridge._
+  _High betweenness centrality (0.012) - this node is a cross-community bridge._
 - **Why does `Button()` connect `Login.jsx` to `MonitorForm.jsx`, `Settings.jsx`, `main.jsx`, `Dashboard.jsx`?**
-  _High betweenness centrality (0.008) - this node is a cross-community bridge._
-- **What connects `MonitorEnabled`, `createMonitorRequest`, `paginatedResponse` to the rest of the system?**
+  _High betweenness centrality (0.010) - this node is a cross-community bridge._
+- **What connects `github.com/Bradrickcruz/pingou`, `MonitorEnabled`, `Server` to the rest of the system?**
   _411 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `serve.go` be split into smaller, more focused modules?**
   _Cohesion score 0.11404151404151404 - nodes in this community are weakly interconnected._

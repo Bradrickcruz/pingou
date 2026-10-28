@@ -2304,11 +2304,22 @@
       "source_location": "L49"
     },
     {
+      "id": "tailwindcss",
+      "label": "tailwindcss",
+      "_origin": "ast",
+      "community": 18,
+      "community_name": "tailwindcss",
+      "confidence": "EXTRACTED",
+      "file_type": "code",
+      "norm_label": "tailwindcss",
+      "source_file": "tailwindcss"
+    },
+    {
       "id": "web_tailwind_config",
       "label": "tailwind.config.js",
       "_origin": "ast",
       "community": 18,
-      "community_name": "tailwind.config.js",
+      "community_name": "tailwindcss",
       "file_type": "code",
       "norm_label": "tailwind.config.js",
       "source_file": "web/tailwind.config.js",
@@ -35475,6 +35486,15 @@
       "weight": 1.0
     },
     {
+      "source": "web_tailwind_config",
+      "target": "tailwindcss",
+      "relation": "dynamic_import",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "web/tailwind.config.js"
+    },
+    {
       "source": "handler_responsewriter",
       "target": "go_type_net_http_responsewriter",
       "relation": "embeds",
@@ -37481,5 +37501,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "3744ada9bc269ad2bed07e5170c753013b765f68"
+  "built_at_commit": "10620220d80b72d75aa201c8c0678f70f7e7f059"
 }
