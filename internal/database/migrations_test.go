@@ -68,12 +68,12 @@ func TestMonitorTypesMigrationKeepsHistory(t *testing.T) {
 		VALUES ('m2','Backup','heartbeat','tok',604800,?,?)`, now, now)
 
 	// down bloqueia com monitor não-http e não altera nada
-	if err := Down(db); err == nil {
+	if err := goose.DownTo(db, "migrations", 2); err == nil {
 		t.Fatal("down com heartbeat deveria falhar")
 	}
 	mustExec(t, db, `DELETE FROM monitors WHERE id='m2'`)
 
-	if err := Down(db); err != nil {
+	if err := goose.DownTo(db, "migrations", 2); err != nil {
 		t.Fatal(err)
 	}
 	if c := countRows(t, db, "checks"); c != 3 {
@@ -86,6 +86,57 @@ func TestMonitorTypesMigrationKeepsHistory(t *testing.T) {
 	}
 	if c := countRows(t, db, "checks"); c != 3 {
 		t.Fatalf("após up de novo: checks=%d, want 3", c)
+	}
+}
+
+func TestIncidentsPageMigration(t *testing.T) {
+	db, err := OpenDB(filepath.Join(t.TempDir(), "t.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	setupGoose(t)
+
+	if err := goose.UpTo(db, "migrations", 3); err != nil {
+		t.Fatal(err)
+	}
+	mustExec(t, db, `INSERT INTO monitors (id, name, url, interval_seconds, created_at, updated_at)
+		VALUES ('m1','API','http://x',60,'2026-01-01T00:00:00Z','2026-01-01T00:00:00Z')`)
+	// 1 falha antes do incidente e 3 dentro dele
+	for _, at := range []string{"2026-01-01T09:00:00Z", "2026-01-01T10:00:00Z", "2026-01-01T10:01:00Z", "2026-01-01T10:02:00Z"} {
+		mustExec(t, db, `INSERT INTO checks (monitor_id, success, latency_ms, error_message, checked_at)
+			VALUES ('m1',0,10,'Get "http://x": dial tcp: connection refused',?)`, at)
+	}
+	mustExec(t, db, `INSERT INTO incidents (id, monitor_id, started_at, last_error)
+		VALUES ('i1','m1','2026-01-01T10:00:00Z','Get "http://x": dial tcp: connection refused')`)
+
+	if err := goose.UpTo(db, "migrations", 4); err != nil {
+		t.Fatal(err)
+	}
+	var count int
+	var lastError string
+	if err := db.QueryRow(`SELECT failure_count, last_error FROM incidents WHERE id='i1'`).Scan(&count, &lastError); err != nil {
+		t.Fatal(err)
+	}
+	if count != 3 || lastError != "dial tcp: connection refused" {
+		t.Fatalf("failure_count=%d last_error=%q, want 3 e sem prefixo", count, lastError)
+	}
+	var prefixed int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM checks WHERE error_message LIKE 'Get "%'`).Scan(&prefixed); err != nil {
+		t.Fatal(err)
+	}
+	if prefixed != 0 {
+		t.Fatalf("%d checks ainda com prefixo Get", prefixed)
+	}
+
+	if err := goose.DownTo(db, "migrations", 3); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`SELECT failure_count FROM incidents`); err == nil {
+		t.Fatal("coluna failure_count continua após down")
+	}
+	if c, i := countRows(t, db, "checks"), countRows(t, db, "incidents"); c != 4 || i != 1 {
+		t.Fatalf("após down: checks=%d incidents=%d, want 4 e 1", c, i)
 	}
 }
 

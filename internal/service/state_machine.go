@@ -129,9 +129,16 @@ func (sm *StateMachine) handleFailure(ctx context.Context, m *domain.Monitor, pr
 		return nil, err
 	}
 
-	// threshold ainda não atingido — mantém estado atual
+	// threshold ainda não atingido — mantém estado atual (se já estava DOWN,
+	// por ex. threshold aumentado durante a queda, a falha conta no incidente)
 	if consecutiveFails < effectiveThreshold(m) {
-		return nil, sm.uow.MonitorRepo().UpdateWithTx(ctx, m)
+		if err := sm.uow.MonitorRepo().UpdateWithTx(ctx, m); err != nil {
+			return nil, err
+		}
+		if prevState == domain.StateDown {
+			return nil, sm.uow.IncidentRepo().IncrementFailureCount(ctx, m.ID)
+		}
+		return nil, nil
 	}
 
 	// threshold atingido — vai pra DOWN
@@ -146,11 +153,13 @@ func (sm *StateMachine) handleFailure(ctx context.Context, m *domain.Monitor, pr
 		if err != nil {
 			return nil, err
 		}
+		// as falhas que atingiram o threshold já contam como "falhas seguidas"
 		incident := &domain.Incident{
-			ID:        id,
-			MonitorID: m.ID,
-			StartedAt: now,
-			LastError: result.ErrorMessage,
+			ID:           id,
+			MonitorID:    m.ID,
+			StartedAt:    now,
+			LastError:    result.ErrorMessage,
+			FailureCount: int64(consecutiveFails),
 		}
 		if err := sm.uow.IncidentRepo().CreateWithTx(ctx, incident); err != nil {
 			return nil, err
@@ -159,7 +168,9 @@ func (sm *StateMachine) handleFailure(ctx context.Context, m *domain.Monitor, pr
 		return func() { sm.notifier.NotifyDown(ctx, m, incident) }, nil
 	}
 
-	return nil, nil
+	// já estava DOWN: mais uma falha no incidente aberto (last_error segue
+	// sendo o motivo da queda)
+	return nil, sm.uow.IncidentRepo().IncrementFailureCount(ctx, m.ID)
 }
 
 // countConsecutiveFails conta checks recentes até encontrar um sucesso

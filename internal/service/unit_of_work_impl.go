@@ -116,6 +116,10 @@ func (r *incidentRepoWithTx) Close(ctx context.Context, id string, endedAt strin
 	return r.repo.Close(ctx, r.tx, id, endedAt, durationSeconds)
 }
 
+func (r *incidentRepoWithTx) IncrementFailureCount(ctx context.Context, monitorID string) error {
+	return r.repo.IncrementFailureCount(ctx, r.tx, monitorID)
+}
+
 // Erros específicos de UnitOfWork.
 var (
 	ErrTransactionAlreadyActive = &UoWError{Message: "transaction already active"}

@@ -175,3 +175,54 @@ func TestHeartbeatGoesDownOnFirstFailure(t *testing.T) {
 		t.Fatalf("incidente aberto esperado, err=%v", err)
 	}
 }
+
+// failure_count começa nas falhas do threshold, sobe enquanto DOWN e para ao fechar.
+func TestFailureCountFollowsOpenIncident(t *testing.T) {
+	db, err := database.Open(filepath.Join(t.TempDir(), "t.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	ctx := context.Background()
+	now := time.Now().UTC()
+	m := &domain.Monitor{
+		ID: "m1", Name: "x", URL: "http://x.invalid", IntervalSeconds: 60, TimeoutSeconds: 5,
+		FailureThreshold: 3, Enabled: true, CurrentState: domain.StateUnknown, CreatedAt: now, UpdatedAt: now,
+	}
+	if err := repository.NewMonitorRepo(db).Create(ctx, m); err != nil {
+		t.Fatal(err)
+	}
+	process := func(res domain.CheckResult) {
+		t.Helper()
+		uow := service.NewUnitOfWork(db, repository.NewCheckRepoTx(db), repository.NewMonitorRepoTx(db), repository.NewIncidentRepoTx(db))
+		if err := service.NewStateMachine(uow, noopNotifier{}).Process(ctx, m, res); err != nil {
+			t.Fatal(err)
+		}
+	}
+	failureCount := func() int64 {
+		t.Helper()
+		var n int64
+		if err := db.QueryRow(`SELECT failure_count FROM incidents WHERE monitor_id = ?`, m.ID).Scan(&n); err != nil {
+			t.Fatal(err)
+		}
+		return n
+	}
+	msg := "boom"
+	fail := domain.CheckResult{ErrorMessage: &msg}
+	code := 200
+	ok := domain.CheckResult{Success: true, StatusCode: &code}
+
+	for range 5 {
+		process(fail)
+	}
+	if n := failureCount(); n != 5 {
+		t.Fatalf("após 5 falhas (threshold 3): failure_count=%d, want 5", n)
+	}
+
+	process(ok)
+	process(fail) // nova falha após recuperar: não mexe no incidente fechado
+	if n := failureCount(); n != 5 {
+		t.Fatalf("incidente fechado mudou: failure_count=%d, want 5", n)
+	}
+}

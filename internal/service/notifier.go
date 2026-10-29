@@ -5,9 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
-	"net"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/Bradrickcruz/pingou/internal/domain"
@@ -50,14 +48,9 @@ type webhookPayloadMonitor struct {
 }
 
 func toWebhookMonitor(m *domain.Monitor) webhookPayloadMonitor {
-	out := webhookPayloadMonitor{ID: m.ID, Name: m.Name, Type: string(m.Type)}
-	switch m.Type {
-	case domain.TypeHTTP:
-		url := m.URL
-		out.Target, out.URL = &url, &url
-	case domain.TypeTCP:
-		target := net.JoinHostPort(m.Config.Host, strconv.Itoa(m.Config.Port))
-		out.Target = &target
+	out := webhookPayloadMonitor{ID: m.ID, Name: m.Name, Type: string(m.Type), Target: m.Target()}
+	if m.Type == domain.TypeHTTP {
+		out.URL = out.Target
 	}
 	return out
 }

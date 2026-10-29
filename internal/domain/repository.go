@@ -25,9 +25,9 @@ type CheckRepository interface {
 type IncidentRepository interface {
 	Create(ctx context.Context, i *Incident) error
 	FindOpenByMonitor(ctx context.Context, monitorID string) (*Incident, error)
-	FindByMonitor(ctx context.Context, monitorID string, onlyOpen bool, limit, offset int) ([]*Incident, int, error)
-	FindAll(ctx context.Context, onlyOpen bool, limit, offset int) ([]*Incident, int, error)
+	FindAll(ctx context.Context, filter IncidentFilter) ([]*Incident, int, error)
 	Close(ctx context.Context, id string, endedAt string, durationSeconds int) error
+	DeleteResolvedOlderThan(ctx context.Context, before string) (int64, error)
 }
 
 type MonitorFilter struct {

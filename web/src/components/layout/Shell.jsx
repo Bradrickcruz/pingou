@@ -28,7 +28,7 @@ function useOpenIncidents() {
     let alive = true;
     const load = () =>
       incidentsApi
-        .list({ open: true, limit: 1 })
+        .list({ status: "open", limit: 1 })
         .then((res) => alive && setCount(res.total ?? 0))
         .catch(() => {}); // o overlay de conexão já avisa se a API caiu
     load();
