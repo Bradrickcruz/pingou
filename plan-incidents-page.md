@@ -44,19 +44,19 @@ Este plano está concluído quando:
 
 ## Success Criteria
 
-- [ ] Migration 0004 sobe e desce num banco com dados reais, sem perder incidentes nem checks
-- [ ] `GET /api/incidents` devolve `total` real (`COUNT(*)`), independente de `limit`
-- [ ] Badge da sidebar mostra **2** com 2 incidentes abertos (hoje mostra 1)
-- [ ] Cada incidente traz `monitor.name`, `monitor.type`, `monitor.target` e `failure_count` numa consulta só (sem N+1)
-- [ ] `?status=open|resolved` e `?monitor_id=` funcionam e combinam entre si; `?open=true` continua funcionando
-- [ ] `failure_count` sobe a cada check com falha enquanto o incidente está aberto e para de subir ao fechar
-- [ ] Erros novos e já gravados não começam mais com `Get "<url>": `
-- [ ] Timeout aparece como `context deadline exceeded (timeout 10s)`
-- [ ] Retention apaga incidentes **resolvidos** mais antigos que `retention_days`; abertos nunca
-- [ ] Página bate com [Incidentes.png](concept-design/Incidentes.png) em desktop e é usável em 375 px
-- [ ] Estados vazio, carregando e erro existem para abertos e resolvidos
-- [ ] "Ver histórico" no menu ⋮ do painel abre `/incidents?monitor=<id>` já filtrado
-- [ ] README atualizado (endpoint `/api/incidents` e retenção de incidentes)
+- [ ] Migration 0004 sobe e desce num banco com dados reais, sem perder incidentes nem checks — coberto por teste (T2) e banco de QA; falta rodar no `pingou.db` de produção
+- [x] `GET /api/incidents` devolve `total` real (`COUNT(*)`), independente de `limit`
+- [x] Badge da sidebar mostra **2** com 2 incidentes abertos (hoje mostra 1)
+- [x] Cada incidente traz `monitor.name`, `monitor.type`, `monitor.target` e `failure_count` numa consulta só (sem N+1)
+- [x] `?status=open|resolved` e `?monitor_id=` funcionam e combinam entre si; `?open=true` continua funcionando
+- [x] `failure_count` sobe a cada check com falha enquanto o incidente está aberto e para de subir ao fechar
+- [x] Erros novos e já gravados não começam mais com `Get "<url>": `
+- [x] Timeout aparece como `context deadline exceeded (timeout 10s)`
+- [x] Retention apaga incidentes **resolvidos** mais antigos que `retention_days`; abertos nunca
+- [x] Página bate com [Incidentes.png](concept-design/Incidentes.png) em desktop e é usável em 375 px
+- [x] Estados vazio, carregando e erro existem para abertos e resolvidos
+- [x] "Ver histórico" no menu ⋮ do painel abre `/incidents?monitor=<id>` já filtrado
+- [x] README atualizado (endpoint `/api/incidents` e retenção de incidentes)
 
 ## Tech Stack
 
@@ -445,16 +445,16 @@ graphify update .
 
 | Fase                            | Tarefas                      | Complexity | Esforço | Target                                        | Status      |
 | ------------------------------- | ---------------------------- | ---------- | ------- | --------------------------------------------- | ----------- |
-| Fase 0 — Banco e origem do erro | T1, T2, T3                   | M          | ~1 h    | Migration sobe/desce; erros sem prefixo       | ⬜ Pendente |
-| Fase 1 — API                    | T4, T5, T6, T7, T8, T9       | L          | ~2 h    | Contrato da API pronto e testado; badge certo | ⬜ Pendente |
-| Fase 2 — Tela                   | T10, T11, T12, T13, T14, T15 | XL         | ~3 h    | Página igual ao PNG                           | ⬜ Pendente |
-| Fase 3 — Polimento              | T16, T17                     | M          | ~45 min | QA e README                                   | ⬜ Pendente |
+| Fase 0 — Banco e origem do erro | T1, T2, T3                   | M          | ~1 h    | Migration sobe/desce; erros sem prefixo       | ✅ Concluído |
+| Fase 1 — API                    | T4, T5, T6, T7, T8, T9       | L          | ~2 h    | Contrato da API pronto e testado; badge certo | ✅ Concluído |
+| Fase 2 — Tela                   | T10, T11, T12, T13, T14, T15 | XL         | ~3 h    | Página igual ao PNG                           | ✅ Concluído |
+| Fase 3 — Polimento              | T16, T17                     | M          | ~45 min | QA e README                                   | ✅ Concluído |
 
 ## Status de Execução
 
 ### Concluído
 
--
+- T1 a T17 (branch `feat/incidents-page`)
 
 ### Em andamento
 
@@ -462,9 +462,17 @@ graphify update .
 
 ### Pendente
 
-- T1 a T17
+- Rodar a 0004 no `pingou.db` real (backup antes) e conferir `failure_count` / `last_error`
 
 ## Notes
+
+### Evidências de verificação
+
+- `go build ./... && go vet ./... && go test ./...` verde; `npm run lint && npm run build` verde
+- Testes novos: migration 0004 (backfill, limpeza de prefixo, down), erro HTTP (connection refused, timeout), `total` com `limit=1`, ordem dos resolvidos, filtros combinados, `status` inválido, `open=true`, `failure_count` na state machine, retention de incidentes
+- QA com Playwright no binário real (banco semeado com http/tcp/heartbeat): badge da sidebar = 3 com 3 abertos; "Carregar mais" 20 → 28 sem duplicar; filtro e aba sobrevivem a F5; "Ver histórico" abre `/incidents?monitor=<id>`; sem scroll horizontal em 1440 px e 375 px; nenhum erro no console
+- Achado no QA (corrigido): queda de mais de 1 dia mostrava só as horas ("08:00 → 09:00"); agora leva a data do início ("26 out, 13:59 → 17:59")
+- Desvios pequenos do plano: meses/dias escritos à mão em vez de `Intl` (o Intl em pt-BR gera "28 de out."); a página busca a lista de monitores uma vez em vez de usar `useMonitors` (que faria um segundo polling de 15 s)
 
 - **Não é bug do Pingou, mas vale olhar:** o incidente do `c10` é certificado de outro domínio (`aps.develop.plantvision.app`) servido em `api.c10.site`. Provável proxy (Traefik/Nginx) roteando errado ou certificado não renovado.
 - `last_error` mantém o erro da **abertura** do incidente (motivo da queda). Se no futuro o card de aberto precisar do erro atual, ele já existe em `GET /monitors/{id}` (último check), sem mudar o schema.

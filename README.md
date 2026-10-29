@@ -98,7 +98,7 @@ Um novo tipo de check só entra no Pingou se passar nas quatro perguntas:
 - Dashboard web embutido no binário
 - Login com API Key
 - Webhook global para quedas e recuperações
-- Retenção de checks configurável
+- Retenção configurável: checks e incidentes resolvidos expiram após `retention_days` (incidentes abertos nunca)
 - Export do banco SQLite
 - Atomicidade na state machine (transações SQL)
 
@@ -421,11 +421,44 @@ Sobre `/ping/{token}`:
 | `DELETE` | `/api/monitors/:id`           | Remove um monitor                                                |
 | `POST`   | `/api/monitors/:id/token`     | Gera um novo token de ping (Heartbeat)  |
 | `GET`    | `/api/monitors/:id/checks`    | Histórico de checks, paginado (`limit`, `offset`)                |
-| `GET`    | `/api/monitors/:id/incidents` | Incidentes do monitor, paginado (`limit`, `offset`, `open=true`) |
-| `GET`    | `/api/incidents`              | Lista incidentes (mesma paginação e filtro `open`)               |
+| `GET`    | `/api/monitors/:id/incidents` | Incidentes do monitor (mesmos filtros de `/api/incidents`)       |
+| `GET`    | `/api/incidents`              | Lista incidentes (`status`, `monitor_id`, `limit`, `offset`)     |
 | `GET`    | `/api/settings`               | Busca as configurações globais                                   |
 | `PATCH`  | `/api/settings`               | Atualiza as configurações globais                                |
 | `GET`    | `/api/export`                 | Baixa um dump do SQLite gerado com `VACUUM INTO`                 |
+
+### Listando incidentes
+
+`GET /api/incidents` aceita:
+
+- `status=open|resolved` (vazio = todos; `open=true` continua aceito como `status=open`; outro valor → `400`)
+- `monitor_id=<id>`
+- `limit` (padrão 20, máximo 100) e `offset`
+
+Abertos vêm por `started_at` decrescente; resolvidos, por `ended_at` decrescente. `total` é a contagem real do filtro, independente de `limit`.
+
+```bash
+curl -H "X-API-Key: dev-api-key" "http://localhost:8080/api/incidents?status=open&limit=1"
+```
+
+Cada item traz o monitor e a contagem de falhas:
+
+```json
+{
+  "id": "0192…",
+  "monitor_id": "0191…",
+  "monitor": { "id": "0191…", "name": "API", "type": "http", "target": "https://api.exemplo.com/health" },
+  "started_at": "2026-10-27T14:43:00Z",
+  "ended_at": null,
+  "last_error": "dial tcp 10.0.0.5:443: connect: connection refused",
+  "failure_count": 42,
+  "duration_seconds": 3600,
+  "notification_sent": true,
+  "open": true
+}
+```
+
+`target` é a URL (http), `host:porta` (tcp) ou `null` (heartbeat). `last_error` é o erro que abriu o incidente; `failure_count` soma os checks com falha enquanto ele esteve aberto.
 
 ### Criando monitores de cada tipo
 
