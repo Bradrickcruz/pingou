@@ -1,6 +1,10 @@
 package domain
 
-import "time"
+import (
+	"net"
+	"strconv"
+	"time"
+)
 
 type (
 	MonitorState   string
@@ -44,6 +48,20 @@ type Monitor struct {
 	LastPingAt       *time.Time // só heartbeat
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
+}
+
+// Target é o alvo do check: URL (http), host:porta (tcp) ou nil (heartbeat,
+// que não tem alvo: quem chama é o job monitorado).
+func (m *Monitor) Target() *string {
+	switch m.Type {
+	case TypeHTTP:
+		url := m.URL
+		return &url
+	case TypeTCP:
+		target := net.JoinHostPort(m.Config.Host, strconv.Itoa(m.Config.Port))
+		return &target
+	}
+	return nil
 }
 
 // MonitorSummary resume os checks recentes de um monitor para o painel.

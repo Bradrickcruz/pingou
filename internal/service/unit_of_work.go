@@ -49,4 +49,5 @@ type IncidentRepositoryTx interface {
 	CreateWithTx(ctx context.Context, i *domain.Incident) error
 	FindOpenByMonitor(ctx context.Context, monitorID string) (*domain.Incident, error)
 	Close(ctx context.Context, id string, endedAt string, durationSeconds int) error
+	IncrementFailureCount(ctx context.Context, monitorID string) error
 }
