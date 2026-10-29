@@ -385,16 +385,17 @@ graphify update .
 
 | Fase | Tarefas | Complexity | Esforço | Target | Status |
 |---|---|---|---|---|---|
-| Fase 0: Contrato | T1 | XS | ~5 min | Contrato fechado | ⬜ Pendente |
-| Fase 1: API | T2, T3, T4, T5, T6, T7 | M | ~1 h 15 | Rotas novas com testes e `curl` | ⬜ Pendente |
-| Fase 2: Tela | T8, T9, T10 | M | ~1 h 15 | Página igual ao PNG | ⬜ Pendente |
-| Fase 3: Polimento | T11, T12, T13 | S | ~40 min | Segurança, QA e README | ⬜ Pendente |
+| Fase 0: Contrato | T1 | XS | ~5 min | Contrato fechado | ✅ Concluído |
+| Fase 1: API | T2, T3, T4, T5, T6, T7 | M | ~1 h 15 | Rotas novas com testes e `curl` | ✅ Concluído |
+| Fase 2: Tela | T8, T9, T10 | M | ~1 h 15 | Página igual ao PNG | ✅ Concluído |
+| Fase 3: Polimento | T11, T12, T13 | S | ~40 min | Segurança, QA e README | 🟡 T12 parcial |
 
 ## Status de Execução
 
 ### Concluído
 
--
+- T1 a T11, T13
+- T12 parcial (no binário, com Playwright): rotas novas via `curl`, `429` na 6ª chamada, tela em 1440 e 375 px (sem rolagem lateral), dirty state do "Salvar alterações"
 
 ### Em andamento
 
@@ -402,7 +403,26 @@ graphify update .
 
 ### Pendente
 
-- T1 a T13
+- T12 restante, manual: webhook.site real, destino que não responde (5 s), navegação só por teclado, conferir o nome do arquivo baixado no navegador
+
+### Evidências (2026-10-29)
+
+- `go build ./... && go vet ./... && go test ./...` verde; `npm run lint && npm run build` verde
+- `GET /api/info` → `{"version":"v1.0","commit":"abc1234","build_date":"unknown","database_size_bytes":230536}`
+- `POST /api/settings/webhook/test` → `{"ok":true,"status_code":200,"duration_ms":4,"error":null}`; `ftp://x` → `400`; sem URL → `400`; 6ª chamada → `429` com `Retry-After: 53`
+- `GET /api/export` → `Content-Disposition: attachment; filename="pingou-2026-10-29.db"`
+- Log do teste: `{"msg":"webhook test","host":"127.0.0.1:18080","status":200}` (só o host)
+
+### Revisão de segurança (T11)
+
+- [x] Rota dentro do mux com `authMiddleware` (exige API Key)
+- [x] Redirects desligados (`http.ErrUseLastResponse`), testado com 302
+- [x] Timeout de 5 s, testado com servidor lento
+- [x] Leitura limitada a 4 KB (`io.LimitReader`), testado com corpo de 1 MB
+- [x] Corpo do destino não é devolvido
+- [x] Log e mensagem de erro sem a URL completa (`TestWebhookTestURLNotLogged`)
+- [x] Rate limit de 5/min por IP (`TestWebhookTestRateLimit`)
+- SSRF para rede interna: aceito, como decidido acima
 
 ## Notes
 

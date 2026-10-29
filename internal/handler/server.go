@@ -20,6 +20,8 @@ type Server struct {
 	incidentService *service.IncidentService
 	settingsService *service.SettingsService
 	pingLimiter     *rateLimiter
+	// webhookTestLimiter: o teste faz uma requisição de saída por chamada
+	webhookTestLimiter *rateLimiter
 }
 
 func NewServer(
@@ -30,13 +32,14 @@ func NewServer(
 	settingsService *service.SettingsService,
 ) *Server {
 	s := &Server{
-		cfg:             cfg,
-		db:              db,
-		router:          http.NewServeMux(),
-		monitorService:  monitorService,
-		incidentService: incidentService,
-		settingsService: settingsService,
-		pingLimiter:     newRateLimiter(pingRateLimit, time.Minute),
+		cfg:                cfg,
+		db:                 db,
+		router:             http.NewServeMux(),
+		monitorService:     monitorService,
+		incidentService:    incidentService,
+		settingsService:    settingsService,
+		pingLimiter:        newRateLimiter(pingRateLimit, time.Minute),
+		webhookTestLimiter: newRateLimiter(webhookTestRateLimit, time.Minute),
 	}
 	s.registerRoutes()
 	return s
@@ -89,6 +92,10 @@ func (s *Server) registerRoutes() {
 	// settings
 	api.HandleFunc("GET /settings", s.handleGetSettings)
 	api.HandleFunc("PATCH /settings", s.handleUpdateSettings)
+	api.Handle("POST /settings/webhook/test", s.webhookTestLimiter.middleware(http.HandlerFunc(s.handleTestWebhook)))
+
+	// info
+	api.HandleFunc("GET /info", s.handleInfo)
 
 	// export
 	api.HandleFunc("GET /export", s.handleExportDB)

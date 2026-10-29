@@ -12,6 +12,10 @@ import (
 // pinga poucas vezes por hora, e atrás de um proxy todos dividem o mesmo IP.
 const pingRateLimit = 60
 
+// webhookTestRateLimit: testes de webhook por IP por minuto. Cada teste é uma
+// requisição de saída para uma URL qualquer, então o limite é baixo.
+const webhookTestRateLimit = 5
+
 // rateLimiter é uma janela fixa por IP, em memória (um binário só, sem Redis).
 // O map é zerado a cada janela, então a memória fica limitada aos IPs de um minuto.
 // ponytail: usa RemoteAddr; atrás de proxy reverso todos os clientes contam

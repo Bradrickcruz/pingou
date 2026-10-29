@@ -44,6 +44,25 @@ export function formatUptime(value) {
   return `${value.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
 }
 
+// formatBytes(13002342) → "12,4 MB"
+const BYTE_UNITS = ["B", "KB", "MB", "GB", "TB"];
+const bytesFormat = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 });
+export function formatBytes(bytes) {
+  if (bytes == null) return null;
+  let value = bytes;
+  let unit = 0;
+  while (value >= 1024 && unit < BYTE_UNITS.length - 1) {
+    value /= 1024;
+    unit++;
+  }
+  return `${bytesFormat.format(value)} ${BYTE_UNITS[unit]}`;
+}
+
+// backupFilename() → "pingou-2026-10-29.db" (data UTC, igual ao backend)
+export function backupFilename(now = new Date()) {
+  return `pingou-${now.toISOString().slice(0, 10)}.db`;
+}
+
 export function plural(n, one, many) {
   return `${n} ${n === 1 ? one : many}`;
 }

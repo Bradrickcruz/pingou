@@ -61,6 +61,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("config error: %w", err)
 	}
+	loadedConfig.Version, loadedConfig.Commit, loadedConfig.BuildDate = version, commit, date
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: loadedConfig.LogLevel,

@@ -10,10 +10,14 @@ export function createClient() {
       "Content-Type": "application/json",
     },
   });
-  // mensagem de erro da API (ex.: validação) no lugar do texto genérico do axios
+  // mensagem de erro da API (ex.: validação) no lugar do texto genérico do axios;
+  // status fica no erro para a tela tratar casos como 429
   instance.interceptors.response.use(
     (res) => res,
-    (err) => Promise.reject(new Error(err.response?.data?.error || err.message)),
+    (err) =>
+      Promise.reject(
+        Object.assign(new Error(err.response?.data?.error || err.message), { status: err.response?.status }),
+      ),
   );
   return instance;
 }

@@ -16,6 +16,11 @@ type Config struct {
 	CORSAllowedOrigins []string
 	MaxRedirects       int
 	GlobalTimeout      int
+
+	// Dados do build (-ldflags), preenchidos pelo comando serve. Expostos em /api/info.
+	Version   string
+	Commit    string
+	BuildDate string
 }
 
 // Load carrega configuracao completa (requer API key)
