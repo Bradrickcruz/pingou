@@ -98,7 +98,7 @@ Um novo tipo de check só entra no Pingou se passar nas quatro perguntas:
 - Dashboard web embutido no binário
 - Login com API Key
 - Webhook global para quedas e recuperações
-- Retenção configurável: checks e incidentes resolvidos expiram após `retention_days` (incidentes abertos nunca)
+- Retenção configurável: checks e incidentes resolvidos expiram após `retention_days` (incidentes abertos nunca). A limpeza roda na subida e a cada 1 h
 - Export do banco SQLite
 - Atomicidade na state machine (transações SQL)
 
@@ -424,8 +424,22 @@ Sobre `/ping/{token}`:
 | `GET`    | `/api/monitors/:id/incidents` | Incidentes do monitor (mesmos filtros de `/api/incidents`)       |
 | `GET`    | `/api/incidents`              | Lista incidentes (`status`, `monitor_id`, `limit`, `offset`)     |
 | `GET`    | `/api/settings`               | Busca as configurações globais                                   |
-| `PATCH`  | `/api/settings`               | Atualiza as configurações globais                                |
-| `GET`    | `/api/export`                 | Baixa um dump do SQLite gerado com `VACUUM INTO`                 |
+| `PATCH`  | `/api/settings`               | Atualiza as configurações globais (`webhook_url` só http/https)  |
+| `POST`   | `/api/settings/webhook/test`  | Envia um evento `test` ao webhook (5 por minuto por IP)          |
+| `GET`    | `/api/info`                   | Versão, commit, data do build e tamanho do banco                 |
+| `GET`    | `/api/export`                 | Baixa um dump do SQLite (`pingou-AAAA-MM-DD.db`, `VACUUM INTO`)  |
+
+### Info
+
+```bash
+curl -H "X-API-Key: dev-api-key" http://localhost:8080/api/info
+```
+
+```json
+{ "version": "v1.0", "commit": "abc1234", "build_date": "2026-10-29T12:00:00Z", "database_size_bytes": 13002342 }
+```
+
+`database_size_bytes` soma o arquivo do banco com o `-wal` e o `-shm`. O backup sai um pouco menor.
 
 ### Listando incidentes
 
@@ -545,6 +559,45 @@ Campos `type` e `target`:
 | `heartbeat` | `null`       | `null`                               |
 
 > A URL de ping do Heartbeat **nunca** é enviada no webhook, porque ela contém o token secreto e webhooks costumam ir para serviços de terceiros (Slack, Discord etc.).
+
+### Testando o webhook
+
+`POST /api/settings/webhook/test` envia um evento `test` sem gravar nada no banco. Com `{"url": "..."}` no corpo, testa essa URL (sem salvar). Sem corpo, testa a URL salva.
+
+```bash
+curl -X POST http://localhost:8080/api/settings/webhook/test \
+  -H "X-API-Key: dev-api-key" \
+  -d '{"url":"https://webhook.site/<id>"}'
+```
+
+```json
+{ "ok": false, "status_code": 404, "duration_ms": 142, "error": "unexpected status code: 404" }
+```
+
+- A resposta é sempre `200` quando o teste roda. `ok` diz se o destino respondeu 2xx.
+- `status_code` é `null` quando não houve resposta (ex.: `"error": "timeout após 5s"`).
+- Timeout de 5 s, redirects **não** são seguidos e o corpo do destino nunca é devolvido.
+- `400` sem URL (nem no corpo, nem salva) ou com esquema que não seja http/https. `429` com `Retry-After` depois de 5 testes por minuto.
+
+O payload tem o mesmo formato dos eventos reais:
+
+```json
+{
+  "event": "test",
+  "monitor": {
+    "id": "00000000-0000-0000-0000-000000000000",
+    "name": "Teste do Pingou",
+    "type": "http",
+    "target": "https://exemplo.com",
+    "url": "https://exemplo.com"
+  },
+  "timestamp": "2026-10-29T12:00:00Z",
+  "last_error": null,
+  "downtime_duration_seconds": null
+}
+```
+
+> Integrações que tratam `event` devem **ignorar valores desconhecidos**. Novos eventos podem surgir sem aviso.
 
 ---
 
