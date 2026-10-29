@@ -96,6 +96,7 @@ Um novo tipo de check só entra no Pingou se passar nas quatro perguntas:
   - `DOWN → UP`
 - Registro de incidentes abertos e resolvidos
 - Dashboard web embutido no binário
+- Página de detalhe por monitor (`/monitors/:id`): uptime, resposta média, incidentes e tempo fora do ar em 24h / 7 / 14 / 30 dias, gráfico de tempo de resposta, últimos checks e configuração
 - Login com API Key
 - Webhook global para quedas e recuperações
 - Retenção configurável: checks e incidentes resolvidos expiram após `retention_days` (incidentes abertos nunca). A limpeza roda na subida e a cada 1 h
@@ -422,6 +423,7 @@ Sobre `/ping/{token}`:
 | `POST`   | `/api/monitors/:id/token`     | Gera um novo token de ping (Heartbeat)  |
 | `GET`    | `/api/monitors/:id/checks`    | Histórico de checks, paginado (`limit`, `offset`)                |
 | `GET`    | `/api/monitors/:id/incidents` | Incidentes do monitor (mesmos filtros de `/api/incidents`)       |
+| `GET`    | `/api/monitors/:id/stats`     | Estatísticas numa janela (`range=24h\|7d\|14d\|30d`)            |
 | `GET`    | `/api/incidents`              | Lista incidentes (`status`, `monitor_id`, `limit`, `offset`)     |
 | `GET`    | `/api/settings`               | Busca as configurações globais                                   |
 | `PATCH`  | `/api/settings`               | Atualiza as configurações globais (`webhook_url` só http/https)  |
@@ -473,6 +475,42 @@ Cada item traz o monitor e a contagem de falhas:
 ```
 
 `target` é a URL (http), `host:porta` (tcp) ou `null` (heartbeat). `last_error` é o erro que abriu o incidente; `failure_count` soma os checks com falha enquanto ele esteve aberto.
+
+### Estatísticas de um monitor
+
+`GET /api/monitors/:id/stats?range=24h` resume o monitor numa janela. `range` aceita `24h` (padrão), `7d`, `14d` e `30d`; outro valor → `400`.
+
+| `range` | Balde  | Pontos em `series` |
+| ------- | ------ | ------------------ |
+| `24h`   | 10 min | 144                |
+| `7d`    | 1 h    | 168                |
+| `14d`   | 3 h    | 112                |
+| `30d`   | 6 h    | 120                |
+
+```bash
+curl -H "X-API-Key: dev-api-key" "http://localhost:8080/api/monitors/<id>/stats?range=7d"
+```
+
+```json
+{
+  "range": "24h",
+  "since": "2026-10-28T14:10:00Z",
+  "until": "2026-10-29T14:10:00Z",
+  "bucket_seconds": 600,
+  "uptime": 99.93,
+  "avg_latency_ms": 214,
+  "checks": 1440,
+  "incidents": 1,
+  "downtime_seconds": 60,
+  "series": [{ "t": "2026-10-28T14:10:00Z", "avg_latency_ms": 203, "checks": 10, "failures": 0 }],
+  "down": [{ "start": "2026-10-29T10:12:00Z", "end": "2026-10-29T10:13:00Z" }]
+}
+```
+
+- `since` e `until` ficam alinhados ao balde; o último balde é o corrente (parcial). `series` sempre tem o mesmo tamanho, com baldes vazios incluídos.
+- `avg_latency_ms` (total e por balde) usa só checks com sucesso; `null` quando não há nenhum. `uptime` é `null` sem checks na janela.
+- `down` são os incidentes que se sobrepõem à janela, recortados a ela; um incidente aberto termina no momento da consulta. `incidents` é o tamanho de `down` e `downtime_seconds` a soma das durações.
+- A API aceita qualquer dos 4 períodos; a tela desabilita os maiores que `retention_days`, já que não há dados para eles.
 
 ### Criando monitores de cada tipo
 
