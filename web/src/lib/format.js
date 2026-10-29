@@ -47,3 +47,57 @@ export function formatUptime(value) {
 export function plural(n, one, many) {
   return `${n} ${n === 1 ? one : many}`;
 }
+
+// ── datas dos incidentes ───────────────────────────────────────────────────
+// Meses e dias à mão: o Intl em pt-BR escreve "28 de out.", e a tela usa "28 out".
+const MONTHS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+const WEEKDAYS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+// dias de calendário (locais) entre a data e hoje: 0 = hoje, 1 = ontem
+function daysAgo(date, now) {
+  const start = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  return Math.round((start(new Date(now)) - start(date)) / 86_400_000);
+}
+
+function shortDate(date, now) {
+  const year = date.getFullYear() !== new Date(now).getFullYear() ? ` ${date.getFullYear()}` : "";
+  return `${date.getDate()} ${MONTHS[date.getMonth()]}${year}`;
+}
+
+// clock(iso) → "08:03"
+export function clock(iso) {
+  return new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+}
+
+// dayKey(iso) → "2026-10-28" no fuso local, para agrupar por dia
+export function dayKey(iso) {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+}
+
+// dayLabel → "Hoje · 28 out", "Ontem · 27 out", "Domingo · 26 out" (até 6 dias), "20 out"
+export function dayLabel(iso, now = Date.now()) {
+  const date = new Date(iso);
+  const diff = daysAgo(date, now);
+  const short = shortDate(date, now);
+  if (diff === 0) return `Hoje · ${short}`;
+  if (diff === 1) return `Ontem · ${short}`;
+  if (diff > 1 && diff < 7) return `${WEEKDAYS[date.getDay()]} · ${short}`;
+  return short;
+}
+
+// startedLabel → "hoje, 08:03", "ontem, 11:43", "26 out, 19:05"
+export function startedLabel(iso, now = Date.now()) {
+  const date = new Date(iso);
+  const diff = daysAgo(date, now);
+  const day = diff === 0 ? "hoje" : diff === 1 ? "ontem" : shortDate(date, now);
+  return `${day}, ${clock(iso)}`;
+}
+
+// timeRange → "23:58 → 00:04". Quedas de 1 dia ou mais levam a data do início,
+// senão "08:00 → 09:00" esconderia o dia que passou.
+export function timeRange(startIso, endIso, now = Date.now()) {
+  const long = new Date(endIso) - new Date(startIso) >= 86_400_000;
+  const start = long ? `${shortDate(new Date(startIso), now)}, ${clock(startIso)}` : clock(startIso);
+  return `${start} → ${clock(endIso)}`;
+}

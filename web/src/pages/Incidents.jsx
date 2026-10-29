@@ -1,85 +1,267 @@
-import { useState, useEffect } from "react";
-import { CircleAlert, Check } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { incidentsApi } from "../api/incidents";
+import { monitorsApi } from "../api/monitors";
+import { useNow } from "../hooks/useNow";
+import { useSettings } from "../hooks/useSettings";
+import { OpenIncidentCard } from "../components/incidents/OpenIncidentCard";
+import { ResolvedTable } from "../components/incidents/ResolvedTable";
+import { Button } from "../components/ui/Button";
 import { Spinner } from "../components/ui/Spinner";
 
-export function Incidents() {
-  const [incidents, setIncidents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [onlyOpen, setOnlyOpen] = useState(false);
+const PAGE_SIZE = 20;
 
-  const handleToggleOnlyOpen = (event) => {
-    setLoading(true);
-    setOnlyOpen(event.target.checked);
-  };
+// Abertos: uma busca só (até 100), recarregada a cada 15 s como o painel.
+function useOpenIncidents(monitorId) {
+  const [state, setState] = useState({ items: [], total: 0, loading: true, error: null });
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    incidentsApi
-      .list({ open: onlyOpen, limit: 50 })
-      .then((r) => setIncidents(r.data))
-      .finally(() => setLoading(false));
-  }, [onlyOpen]);
+    let alive = true; // descarta resposta atrasada de um filtro anterior
+    const load = () =>
+      incidentsApi
+        .list({ status: "open", monitor_id: monitorId || undefined, limit: 100 })
+        .then((res) => alive && setState({ items: res.data, total: res.total, loading: false, error: null }))
+        .catch((e) => alive && setState((s) => ({ ...s, loading: false, error: e.message })));
+    const first = setTimeout(() => {
+      setState((s) => ({ ...s, loading: true, error: null }));
+      void load();
+    }, 0);
+    const id = setInterval(load, 15_000);
+    return () => {
+      alive = false;
+      clearTimeout(first);
+      clearInterval(id);
+    };
+  }, [monitorId, attempt]);
+
+  return { ...state, retry: () => setAttempt((n) => n + 1) };
+}
+
+// Resolvidos: paginados com "Carregar mais"; não fazem polling.
+function useResolvedIncidents(monitorId) {
+  const [state, setState] = useState({ items: [], total: 0, loading: true, loadingMore: false, error: null });
+  const generation = useRef(0); // muda a cada filtro; respostas de outra geração são ignoradas
+
+  const load = useCallback(
+    async (offset) => {
+      const gen = generation.current;
+      setState((s) => (offset === 0 ? { ...s, loading: true, error: null } : { ...s, loadingMore: true, error: null }));
+      try {
+        const res = await incidentsApi.list({
+          status: "resolved",
+          monitor_id: monitorId || undefined,
+          limit: PAGE_SIZE,
+          offset,
+        });
+        if (gen !== generation.current) return;
+        setState((s) => {
+          // um incidente resolvido entre as páginas desloca o offset: evita repetir
+          const seen = new Set(offset === 0 ? [] : s.items.map((i) => i.id));
+          const items = [...(offset === 0 ? [] : s.items), ...res.data.filter((i) => !seen.has(i.id))];
+          return { items, total: res.total, loading: false, loadingMore: false, error: null };
+        });
+      } catch (e) {
+        if (gen !== generation.current) return;
+        setState((s) => ({ ...s, loading: false, loadingMore: false, error: e.message }));
+      }
+    },
+    [monitorId],
+  );
+
+  useEffect(() => {
+    generation.current++;
+    const first = setTimeout(() => void load(0), 0);
+    return () => clearTimeout(first);
+  }, [load]);
+
+  return {
+    ...state,
+    loadMore: () => load(state.items.length),
+    retry: () => load(0),
+  };
+}
+
+const TABS = [
+  { key: "all", label: "Todos" },
+  { key: "open", label: "Abertos" },
+  { key: "resolved", label: "Resolvidos" },
+];
+
+function LoadError({ message, onRetry }) {
+  return (
+    <div role="alert" className="flex flex-wrap items-center gap-3 p-4 rounded-pg-card border border-pg-borda bg-pg-branco">
+      <span className="text-pg-ui text-pg-down">Não foi possível carregar: {message}</span>
+      <Button variant="ghost" onClick={onRetry}>
+        Tentar de novo
+      </Button>
+    </div>
+  );
+}
+
+function Empty({ children }) {
+  return (
+    <p className="m-0 py-8 px-4 text-center text-pg-ui text-pg-neblina rounded-pg-card border border-dashed border-pg-borda">
+      {children}
+    </p>
+  );
+}
+
+export function Incidents() {
+  const [params, setParams] = useSearchParams();
+  const tab = TABS.some((t) => t.key === params.get("tab")) ? params.get("tab") : "all";
+  const monitorId = params.get("monitor") ?? "";
+
+  const now = useNow(1000);
+  const { settings } = useSettings();
+  const [monitors, setMonitors] = useState([]);
+  const open = useOpenIncidents(monitorId);
+  const resolved = useResolvedIncidents(monitorId);
+
+  useEffect(() => {
+    monitorsApi
+      .list({ limit: 100 })
+      .then((res) => setMonitors([...res.data].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))))
+      .catch(() => {}); // sem a lista, o filtro só mostra "Todos os monitores"
+  }, []);
+
+  const setParam = (key, value) =>
+    setParams(
+      (p) => {
+        const next = new URLSearchParams(p);
+        if (value) next.set(key, value);
+        else next.delete(key);
+        return next;
+      },
+      { replace: true },
+    );
+
+  const days = settings?.retention_days;
+  const selected = monitors.find((m) => m.id === monitorId);
+  const showOpen = tab !== "resolved";
+  const showResolved = tab !== "open";
 
   return (
-    <div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-6">
-        <h1 className="text-pg-h1 font-medium text-pg-ardosia my-0">Incidentes</h1>
-        <label className="inline-flex items-center gap-2 text-pg-ui text-pg-neblina">
-          <input
-            type="checkbox"
-            checked={onlyOpen}
-            onChange={handleToggleOnlyOpen}
-            className="w-auto"
-          />
-          Somente abertos
-        </label>
-      </div>
+    <div className="max-w-[1180px]">
+      <h1 className="text-pg-h1 font-medium text-pg-ardosia my-0">Incidentes</h1>
+      <p className="mt-2 mb-6 text-pg-ui text-pg-neblina">
+        Cada vez que um monitor caiu e quando voltou.
+        {days && (
+          <>
+            {" "}Guardados por {days} dias (
+            <Link to="/settings" className="text-pg-ciano-fundo underline">
+              mudar em Configurações
+            </Link>
+            ).
+          </>
+        )}
+      </p>
 
-      {loading && (
-        <div className="flex justify-center py-12">
-          <Spinner />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-7">
+        <div role="group" aria-label="Filtrar incidentes" className="flex flex-wrap gap-2">
+          {TABS.map((t) => {
+            const on = tab === t.key;
+            return (
+              <button
+                key={t.key}
+                type="button"
+                aria-pressed={on}
+                onClick={() => setParam("tab", t.key === "all" ? "" : t.key)}
+                className={`px-4 py-2 rounded-full border text-pg-ui transition-colors duration-150 focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano ${
+                  on
+                    ? "bg-pg-ardosia border-pg-ardosia text-pg-branco"
+                    : "bg-pg-branco border-pg-borda text-pg-ardosia hover:bg-pg-nuvem"
+                }`}
+              >
+                {t.label}
+                {t.key === "open" && !open.loading && !open.error && ` (${open.total})`}
+              </button>
+            );
+          })}
         </div>
-      )}
-
-      {!loading && incidents.length === 0 && (
-        <p className="text-center py-12 text-pg-neblina">Nenhum incidente encontrado</p>
-      )}
-
-      <div className="flex flex-col gap-2">
-        {incidents.map((i) => (
-          <div
-            key={i.id}
-            className={`p-3.5 rounded-pg-card border bg-pg-branco ${
-              i.open ? "border-pg-down" : "border-pg-borda"
-            }`}
+        <div className="flex items-center gap-3">
+          <label htmlFor="incident-monitor" className="text-pg-ui text-pg-neblina">
+            Monitor
+          </label>
+          <select
+            id="incident-monitor"
+            value={monitorId}
+            onChange={(e) => setParam("monitor", e.target.value)}
+            className="flex-1 sm:flex-none sm:w-[220px] px-3 py-2.5 rounded-pg-control text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano"
           >
-            <div className="flex flex-wrap justify-between items-center gap-x-3 gap-y-1">
-              <span className="font-medium text-pg-ui">
-                {i.open ? (
-                  <span className="inline-flex items-center gap-1 text-pg-down">
-                    <CircleAlert size={14} aria-hidden="true" />
-                    ABERTO
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 text-pg-up">
-                    <Check size={14} aria-hidden="true" />
-                    RESOLVIDO
-                  </span>
-                )}
-                <span className="font-normal ml-2.5 text-pg-neblina">{i.monitor_id}</span>
-              </span>
-              <span className="text-pg-caption text-pg-neblina">
-                {new Date(i.started_at).toLocaleString("pt-BR")}
-              </span>
-            </div>
-            {i.last_error && (
-              <p className="text-pg-caption mt-1.5 font-mono text-pg-neblina break-words">
-                {i.last_error}
-              </p>
-            )}
-          </div>
-        ))}
+            <option value="">Todos os monitores</option>
+            {monitors.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
+
+      {showOpen && (
+        <section aria-labelledby="open-title" className="mb-9">
+          <h2 id="open-title" className="flex items-center gap-2.5 text-pg-h3 font-medium text-pg-ardosia mt-0 mb-3">
+            Abertos agora
+            {open.total > 0 && (
+              <span className="min-w-[22px] px-1.5 rounded-full bg-pg-down-bg text-pg-down text-pg-caption font-medium text-center tabular-nums">
+                {open.total}
+              </span>
+            )}
+          </h2>
+          {open.loading ? (
+            <div className="flex justify-center py-8">
+              <Spinner />
+            </div>
+          ) : open.error ? (
+            <LoadError message={open.error} onRetry={open.retry} />
+          ) : open.items.length === 0 ? (
+            <Empty>
+              {selected ? `${selected.name} não tem incidente aberto.` : "Nenhum incidente aberto. Tudo no ar."}
+            </Empty>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {open.items.map((i) => (
+                <OpenIncidentCard key={i.id} incident={i} now={now} />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {showResolved && (
+        <section aria-labelledby="resolved-title">
+          <h2 id="resolved-title" className="text-pg-h3 font-medium text-pg-ardosia mt-0 mb-3">
+            Resolvidos
+          </h2>
+          {resolved.loading ? (
+            <div className="flex justify-center py-8">
+              <Spinner />
+            </div>
+          ) : resolved.error && resolved.items.length === 0 ? (
+            <LoadError message={resolved.error} onRetry={resolved.retry} />
+          ) : resolved.items.length === 0 ? (
+            <Empty>
+              {selected ? `${selected.name} não teve incidentes resolvidos` : "Nenhum incidente resolvido"}
+              {days ? ` nos últimos ${days} dias.` : "."}
+            </Empty>
+          ) : (
+            <>
+              <ResolvedTable
+                incidents={resolved.items}
+                total={resolved.total}
+                onLoadMore={resolved.loadMore}
+                loadingMore={resolved.loadingMore}
+              />
+              {resolved.error && (
+                <p role="alert" className="mt-3 text-pg-ui text-pg-down">
+                  Não foi possível carregar mais: {resolved.error}
+                </p>
+              )}
+            </>
+          )}
+        </section>
+      )}
     </div>
   );
 }
