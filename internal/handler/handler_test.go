@@ -30,7 +30,8 @@ func (noopNotifier) NotifyRecovery(context.Context, *domain.Monitor, *domain.Inc
 
 func newTestServer(t *testing.T) (*Server, http.Handler, func(id string) int) {
 	t.Helper()
-	db, err := database.Open(filepath.Join(t.TempDir(), "t.db"))
+	dbPath := filepath.Join(t.TempDir(), "t.db")
+	db, err := database.Open(dbPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,7 +47,7 @@ func newTestServer(t *testing.T) (*Server, http.Handler, func(id string) int) {
 		noopNotifier{})
 	svc.SetRecorder(sched)
 
-	s := NewServer(&config.Config{APIKey: testKey}, db, svc,
+	s := NewServer(&config.Config{APIKey: testKey, DatabaseURL: dbPath, Version: "v1.2.3", Commit: "abc1234", BuildDate: "2026-10-29"}, db, svc,
 		service.NewIncidentService(incidents), service.NewSettingsService(repository.NewSettingsRepo(db)))
 
 	countChecks := func(id string) int {

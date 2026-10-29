@@ -66,3 +66,72 @@ func eqPtr(a, b *string) bool {
 	}
 	return *a == *b
 }
+
+func TestSendTestWebhook(t *testing.T) {
+	prev := webhookTestTimeout
+	webhookTestTimeout = 100 * time.Millisecond
+	defer func() { webhookTestTimeout = prev }()
+
+	bodies := make(chan string, 10)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		bodies <- string(b)
+		switch r.URL.Path {
+		case "/404":
+			w.WriteHeader(http.StatusNotFound)
+		case "/302":
+			http.Redirect(w, r, "/redirected", http.StatusFound)
+		case "/redirected":
+			t.Error("o teste seguiu o redirect")
+		case "/slow":
+			time.Sleep(300 * time.Millisecond)
+		case "/big":
+			w.Write([]byte(strings.Repeat("x", 1<<20)))
+		}
+	}))
+	defer srv.Close()
+
+	cases := []struct {
+		path   string
+		ok     bool
+		status int // 0 = status_code null
+		errMsg string
+	}{
+		{"/", true, 200, ""},
+		{"/big", true, 200, ""},
+		{"/404", false, 404, "unexpected status code: 404"},
+		{"/302", false, 302, "unexpected status code: 302"},
+		{"/slow", false, 0, "timeout após 100ms"},
+	}
+	for _, c := range cases {
+		r := SendTestWebhook(t.Context(), srv.URL+c.path)
+		if r.OK != c.ok {
+			t.Fatalf("%s: ok=%v, want %v", c.path, r.OK, c.ok)
+		}
+		if (c.status == 0) != (r.StatusCode == nil) || (r.StatusCode != nil && *r.StatusCode != c.status) {
+			t.Fatalf("%s: status_code %v, want %d", c.path, r.StatusCode, c.status)
+		}
+		if (c.errMsg == "") != (r.Error == nil) || (r.Error != nil && *r.Error != c.errMsg) {
+			t.Fatalf("%s: error %v, want %q", c.path, r.Error, c.errMsg)
+		}
+
+		var p struct {
+			Event   string `json:"event"`
+			Monitor struct {
+				Name string `json:"name"`
+			} `json:"monitor"`
+		}
+		if err := json.Unmarshal([]byte(<-bodies), &p); err != nil {
+			t.Fatal(err)
+		}
+		if p.Event != "test" || p.Monitor.Name != "Teste do Pingou" {
+			t.Fatalf("%s: payload %+v", c.path, p)
+		}
+	}
+
+	// recusa de conexão: erro sem o prefixo com a URL
+	r := SendTestWebhook(t.Context(), "http://127.0.0.1:1/hook")
+	if r.OK || r.StatusCode != nil || r.Error == nil || strings.Contains(*r.Error, "127.0.0.1:1/hook") {
+		t.Fatalf("conexão recusada: %+v %v", r, *r.Error)
+	}
+}

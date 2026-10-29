@@ -49,8 +49,8 @@ func (s *SettingsService) Get(ctx context.Context) (*Settings, error) {
 func (s *SettingsService) Update(ctx context.Context, in UpdateSettingsInput) (*Settings, error) {
 	if in.WebhookURL != nil {
 		if *in.WebhookURL != "" {
-			if _, err := url.ParseRequestURI(*in.WebhookURL); err != nil {
-				return nil, fmt.Errorf("%w: webhook_url must be a valid URL", ErrValidation)
+			if err := validateWebhookURL(*in.WebhookURL); err != nil {
+				return nil, err
 			}
 		}
 		if err := s.repo.Set(ctx, "webhook_url", *in.WebhookURL); err != nil {
@@ -68,4 +68,38 @@ func (s *SettingsService) Update(ctx context.Context, in UpdateSettingsInput) (*
 	}
 
 	return s.Get(ctx)
+}
+
+// validateWebhookURL exige http/https e host. Vale para salvar e para testar.
+func validateWebhookURL(s string) error {
+	u, err := url.ParseRequestURI(s)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return fmt.Errorf("%w: webhook_url must be a valid http(s) URL", ErrValidation)
+	}
+	return nil
+}
+
+// TestWebhook envia o payload de teste para rawURL ou, se vier vazia, para a URL
+// salva. Não salva nada.
+func (s *SettingsService) TestWebhook(ctx context.Context, rawURL *string) (*WebhookTestResult, error) {
+	target := ""
+	if rawURL != nil {
+		target = *rawURL
+	}
+	if target == "" {
+		saved, err := s.repo.Get(ctx, "webhook_url")
+		if err != nil {
+			return nil, fmt.Errorf("get webhook_url: %w", err)
+		}
+		target = saved
+	}
+	if target == "" {
+		return nil, fmt.Errorf("%w: no webhook url to test", ErrValidation)
+	}
+	if err := validateWebhookURL(target); err != nil {
+		return nil, err
+	}
+
+	result := SendTestWebhook(ctx, target)
+	return &result, nil
 }
