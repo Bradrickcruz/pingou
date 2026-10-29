@@ -161,3 +161,28 @@ func scanIncidentWithMonitor(s scanner) (*domain.Incident, error) {
 	}
 	return &i, nil
 }
+
+// FindInWindow lista os incidentes do monitor ainda abertos ou encerrados
+// depois de `since`, do mais antigo ao mais recente.
+// ponytail: sem limite; um monitor com milhares de quedas em 30 d é patológico, pôr LIMIT 1000 se aparecer
+func (r *IncidentRepo) FindInWindow(ctx context.Context, monitorID string, since time.Time) ([]*domain.Incident, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT `+incidentColumns+`
+		FROM incidents WHERE monitor_id = ? AND (ended_at IS NULL OR ended_at > ?)
+		ORDER BY started_at`,
+		monitorID, since.UTC().Format(time.RFC3339))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []*domain.Incident
+	for rows.Next() {
+		i, err := scanIncident(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, i)
+	}
+	return out, rows.Err()
+}

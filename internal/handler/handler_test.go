@@ -307,3 +307,33 @@ func TestPingTokenNotLogged(t *testing.T) {
 		t.Fatalf("log sem o caminho redigido: %s", buf.String())
 	}
 }
+
+func TestMonitorStatsEndpoint(t *testing.T) {
+	_, h, _ := newTestServer(t)
+	rec := do(t, h, "POST", "/api/monitors", `{"name":"API","url":"https://x.test","interval_seconds":60,"timeout_seconds":5,"failure_threshold":3}`)
+	m := decode[monitorResponse](t, rec)
+
+	rec = do(t, h, "GET", "/api/monitors/"+m.ID+"/stats", "")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("stats: %d %s", rec.Code, rec.Body)
+	}
+	if !strings.Contains(rec.Body.String(), `"uptime":null`) || !strings.Contains(rec.Body.String(), `"avg_latency_ms":null`) {
+		t.Fatalf("sem checks, uptime e média devem ser null: %s", rec.Body)
+	}
+	st := decode[statsResponse](t, rec)
+	if st.Range != "24h" || len(st.Series) != 144 || st.Down == nil {
+		t.Fatalf("padrão: range=%s series=%d down=%v", st.Range, len(st.Series), st.Down)
+	}
+
+	st = decode[statsResponse](t, do(t, h, "GET", "/api/monitors/"+m.ID+"/stats?range=14d", ""))
+	if len(st.Series) != 112 || st.BucketSeconds != 10800 {
+		t.Fatalf("14d: series=%d bucket=%d", len(st.Series), st.BucketSeconds)
+	}
+
+	if rec := do(t, h, "GET", "/api/monitors/"+m.ID+"/stats?range=1y", ""); rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), "VALIDATION_ERROR") {
+		t.Fatalf("range inválido: %d %s", rec.Code, rec.Body)
+	}
+	if rec := do(t, h, "GET", "/api/monitors/nope/stats", ""); rec.Code != http.StatusNotFound {
+		t.Fatalf("inexistente: %d", rec.Code)
+	}
+}

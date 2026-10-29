@@ -133,3 +133,38 @@ func (r *CheckRepo) Summaries(ctx context.Context, monitorIDs []string, historyS
 	}
 	return out, rows.Err()
 }
+
+// Buckets agrupa os checks de [since, until) em baldes de bucketSeconds.
+// Devolve só os baldes com dados, em ordem; preencher os vazios é do service.
+func (r *CheckRepo) Buckets(ctx context.Context, monitorID string, since, until time.Time, bucketSeconds int) ([]domain.StatsBucket, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT CAST(strftime('%s', checked_at) AS INTEGER) / ? AS b,
+			COUNT(*), SUM(1 - success),
+			COALESCE(SUM(CASE WHEN success = 1 THEN latency_ms END), 0), SUM(success)
+		FROM checks
+		WHERE monitor_id = ? AND checked_at >= ? AND checked_at < ?
+		GROUP BY b ORDER BY b`,
+		bucketSeconds, monitorID,
+		since.UTC().Format(time.RFC3339), until.UTC().Format(time.RFC3339),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []domain.StatsBucket
+	for rows.Next() {
+		var b int64
+		var s domain.StatsBucket
+		if err := rows.Scan(&b, &s.Checks, &s.Failures, &s.SumLatencyMs, &s.Successes); err != nil {
+			return nil, err
+		}
+		s.Start = time.Unix(b*int64(bucketSeconds), 0).UTC()
+		if s.Successes > 0 {
+			avg := float64(s.SumLatencyMs) / float64(s.Successes)
+			s.AvgLatencyMs = &avg
+		}
+		out = append(out, s)
+	}
+	return out, rows.Err()
+}
