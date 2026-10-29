@@ -45,6 +45,7 @@ function useOpenIncidents() {
 export function Shell({ children, onLogout }) {
   const [open, setOpen] = useState(false);
   const openIncidents = useOpenIncidents();
+  const { pathname } = useLocation();
   const toggleRef = useRef(null);
   const asideRef = useRef(null);
 
@@ -120,7 +121,7 @@ export function Shell({ children, onLogout }) {
               onClick={() => setOpen(false)}
               className={({ isActive }) =>
                 `flex items-center gap-2 py-2 px-3 mb-1 rounded-pg-control text-pg-ui transition-colors duration-150 ${
-                  isActive
+                  isActive || (to === "/" && pathname.startsWith("/monitors/"))
                     ? "bg-pg-ciano-nevoa text-pg-ciano-fundo font-medium"
                     : "text-pg-neblina hover:bg-pg-nuvem hover:text-pg-ardosia"
                 }`

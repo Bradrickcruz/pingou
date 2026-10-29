@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Check } from "lucide-react";
 import { Button } from "../ui/Button";
 import { dayKey, dayLabel, formatDuration, timeRange } from "../../lib/format";
@@ -23,7 +24,16 @@ function MonitorCell({ incident }) {
         <Check size={14} aria-hidden="true" />
       </span>
       <div className="min-w-0">
-        <div className="text-pg-ui font-medium text-pg-ardosia truncate">{m?.name ?? "Monitor removido"}</div>
+        {m ? (
+          <Link
+            to={`/monitors/${m.id}`}
+            className="block text-pg-ui font-medium text-pg-ardosia truncate no-underline hover:underline"
+          >
+            {m.name}
+          </Link>
+        ) : (
+          <div className="text-pg-ui font-medium text-pg-ardosia truncate">Monitor removido</div>
+        )}
         {m?.target && (
           <div className="font-pg-mono text-pg-caption text-pg-neblina truncate" title={m.target}>
             {m.target}

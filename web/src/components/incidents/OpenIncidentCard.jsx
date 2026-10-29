@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { Link } from "react-router-dom";
 import { ExternalLink, X } from "lucide-react";
 import { formatDuration, startedLabel } from "../../lib/format";
 
@@ -21,7 +22,16 @@ export function OpenIncidentCard({ incident, now }) {
         </span>
         <div className="flex-1 min-w-0">
           <h3 id={titleId} className="flex flex-wrap items-baseline gap-x-3 my-0 text-pg-ui">
-            <span className="text-[17px] font-medium text-pg-ardosia break-words">{name}</span>
+            {monitor ? (
+              <Link
+                to={`/monitors/${monitor.id}`}
+                className="text-[17px] font-medium text-pg-ardosia break-words no-underline hover:underline"
+              >
+                {name}
+              </Link>
+            ) : (
+              <span className="text-[17px] font-medium text-pg-ardosia break-words">{name}</span>
+            )}
             <span className="text-pg-down">
               <span className="sr-only">, </span>Fora do ar há {down}
             </span>

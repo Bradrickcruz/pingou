@@ -9,6 +9,7 @@ import { Shell } from "./components/layout/Shell";
 import { Dashboard } from "./pages/Dashboard";
 import { Incidents } from "./pages/Incidents";
 import { Settings } from "./pages/Settings";
+import { MonitorDetail } from "./pages/MonitorDetail";
 import { Login } from "./pages/Login";
 
 injectGlobalStyles();
@@ -36,6 +37,7 @@ function App() {
           <Shell onLogout={handleLogout}>
             <Routes>
               <Route path="/" element={<Dashboard />} />
+              <Route path="/monitors/:id" element={<MonitorDetail />} />
               <Route path="/incidents" element={<Incidents />} />
               <Route path="/settings" element={<Settings />} />
             </Routes>
