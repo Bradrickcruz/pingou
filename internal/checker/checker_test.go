@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/Bradrickcruz/pingou/internal/domain"
@@ -111,5 +112,27 @@ func TestTCPCheckerNoSuchHost(t *testing.T) {
 	}
 	if *res.ErrorMessage != "no such host" {
 		t.Skipf("DNS do ambiente respondeu %q", *res.ErrorMessage)
+	}
+}
+
+// A mensagem não repete a URL (`Get "<url>": …`): ela já aparece ao lado do erro.
+func TestHTTPCheckerErrorMessage(t *testing.T) {
+	refused := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+	refused.Close()
+
+	res := NewHTTPChecker(5, 10).Check(context.Background(), &domain.Monitor{Type: domain.TypeHTTP, URL: refused.URL, TimeoutSeconds: 2})
+	if res.Success || res.ErrorMessage == nil || strings.HasPrefix(*res.ErrorMessage, "Get ") ||
+		!strings.Contains(*res.ErrorMessage, "connection refused") {
+		t.Fatalf("connection refused: %+v", res.ErrorMessage)
+	}
+
+	release := make(chan struct{})
+	slow := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { <-release }))
+	defer slow.Close()
+	defer close(release)
+
+	res = NewHTTPChecker(5, 10).Check(context.Background(), &domain.Monitor{Type: domain.TypeHTTP, URL: slow.URL, TimeoutSeconds: 1})
+	if res.ErrorMessage == nil || *res.ErrorMessage != "context deadline exceeded (timeout 1s)" {
+		t.Fatalf("timeout: %v, want 'context deadline exceeded (timeout 1s)'", res.ErrorMessage)
 	}
 }

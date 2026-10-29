@@ -2,8 +2,10 @@ package checker
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/Bradrickcruz/pingou/internal/domain"
@@ -50,7 +52,7 @@ func (c *HTTPChecker) Check(ctx context.Context, m *domain.Monitor) domain.Check
 	latency := time.Since(start).Milliseconds()
 
 	if err != nil {
-		msg := err.Error()
+		msg := requestErrorMessage(err, m.TimeoutSeconds)
 		return domain.CheckResult{Success: false, LatencyMs: latency, ErrorMessage: &msg}
 	}
 	defer resp.Body.Close()
@@ -70,4 +72,17 @@ func (c *HTTPChecker) Check(ctx context.Context, m *domain.Monitor) domain.Check
 		LatencyMs:    latency,
 		ErrorMessage: errMsg,
 	}
+}
+
+// requestErrorMessage tira o prefixo `Get "<url>": ` do *url.Error (a URL já
+// aparece ao lado do erro no painel e no webhook) e deixa o timeout explícito.
+func requestErrorMessage(err error, timeoutSeconds int) string {
+	if errors.Is(err, context.DeadlineExceeded) {
+		return fmt.Sprintf("context deadline exceeded (timeout %ds)", timeoutSeconds)
+	}
+	var urlErr *url.Error
+	if errors.As(err, &urlErr) {
+		return urlErr.Err.Error()
+	}
+	return err.Error()
 }
