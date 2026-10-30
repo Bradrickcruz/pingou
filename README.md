@@ -310,6 +310,28 @@ Ele complementa o `gofumpt` no backend e o ESLint/Vite no frontend.
 
 ## Como rodar com Docker
 
+A imagem está publicada no Docker Hub como [`bryanhcruz/pingou`](https://hub.docker.com/r/bryanhcruz/pingou):
+
+```bash
+docker run -d -p 8956:8956 -v pingou_data:/data \
+  -e PINGOU_DATABASE_URL=/data/pingou.db \
+  -e PINGOU_API_KEY=troque-esta-chave \
+  bryanhcruz/pingou
+```
+
+Tags disponíveis: `latest`, `1.3.1` e `1.3.0`. Para fixar uma versão, use `bryanhcruz/pingou:1.3.1`.
+
+A imagem publicada é multi-arquitetura (`linux/amd64` e `linux/arm64`) e é gerada e enviada ao Docker Hub com:
+
+```bash
+docker buildx build --platform linux/amd64,linux/arm64 \
+  --build-arg VERSION=1.3.1 --build-arg COMMIT=$(git rev-parse --short HEAD) \
+  --build-arg BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ) \
+  -t bryanhcruz/pingou:1.3.1 -t bryanhcruz/pingou:latest --push .
+```
+
+Para buildar localmente:
+
 O Dockerfile inclui um `HEALTHCHECK` que consulta o endpoint público `/healthz` a cada 30 segundos.
 
 ```bash
