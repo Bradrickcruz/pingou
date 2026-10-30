@@ -18,8 +18,8 @@
     "semantic_hash": "d5079c49904d26aa9ceeb40cedd723ff"
   },
   "cmd/pingou/commands/info.go": {
-    "mtime": 1793393019.1725307,
-    "seen": 1793393132.9832313,
+    "mtime": 1793394606.0622585,
+    "seen": 1793394610.100875,
     "ast_hash": "1c4697b481464383c27309db6b8ae8a6",
     "semantic_hash": ""
   },
@@ -66,8 +66,8 @@
     "semantic_hash": ""
   },
   "internal/config/config.go": {
-    "mtime": 1793393008.4045022,
-    "seen": 1793393132.9832432,
+    "mtime": 1793394606.0742586,
+    "seen": 1793394610.1008906,
     "ast_hash": "684b137abf39657c74f92ae1a97af310",
     "semantic_hash": ""
   },
@@ -300,9 +300,9 @@
     "semantic_hash": ""
   },
   "web/package.json": {
-    "mtime": 1793391650.2171128,
-    "seen": 1793393132.9832914,
-    "ast_hash": "a48f7e12e6c954966a1839daa97a46a0",
+    "mtime": 1793394606.0752585,
+    "seen": 1793394610.1009495,
+    "ast_hash": "a36c84574901666f3ebff4781164df14",
     "semantic_hash": ""
   },
   "web/postcss.config.js": {
@@ -438,8 +438,8 @@
     "semantic_hash": ""
   },
   "web/vite.config.js": {
-    "mtime": 1793393027.1285503,
-    "seen": 1793393132.9833307,
+    "mtime": 1793394606.0752585,
+    "seen": 1793394610.1010015,
     "ast_hash": "8cc0837f42424efb837bd8d34c3f1c4b",
     "semantic_hash": ""
   },
@@ -462,14 +462,14 @@
     "semantic_hash": "c7cbb47765f8248e3137599f24de44e0"
   },
   "README.md": {
-    "mtime": 1793393043.5165873,
-    "seen": 1793393132.9833508,
+    "mtime": 1793394606.0622585,
+    "seen": 1793394610.1010263,
     "ast_hash": "7e8a436c8eb67a3b725678eea10010a0",
     "semantic_hash": ""
   },
   "docker-compose.yml": {
-    "mtime": 1793393027.1275504,
-    "seen": 1793393132.9833512,
+    "mtime": 1793394606.0622585,
+    "seen": 1793394610.1010273,
     "ast_hash": "243def7c94a05e789b2b08c52636991e",
     "semantic_hash": ""
   },
