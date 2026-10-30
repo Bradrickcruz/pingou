@@ -68,6 +68,26 @@ function isDown(bucket, bucketSeconds, down) {
   );
 }
 
+// Índices dos baldes em trechos "sem dados": sequência de baldes sem média
+// (fora de queda) mais longa que 3 intervalos de check.
+const GAP_INTERVALS = 3;
+function gapBuckets(series, bucketSeconds, intervalSeconds, down) {
+  const gaps = new Set();
+  let run = [];
+  const flush = () => {
+    if (run.length * bucketSeconds > GAP_INTERVALS * intervalSeconds)
+      run.forEach((i) => gaps.add(i));
+    run = [];
+  };
+  series.forEach((b, i) => {
+    if (b.avg_latency_ms == null && !isDown(b, bucketSeconds, down))
+      run.push(i);
+    else flush();
+  });
+  flush();
+  return gaps;
+}
+
 function summary(series, down) {
   const values = series.map((b) => b.avg_latency_ms).filter((v) => v != null);
   if (values.length === 0) return "Tempo de resposta: sem dados neste período.";
@@ -80,9 +100,10 @@ function summary(series, down) {
 
 // Gráfico de tempo de resposta (SVG à mão) com tooltip por ponto: mouse,
 // toque (toque fixa o ponto, tocar fora limpa) e setas do teclado.
-export function ResponseChart({ stats, now }) {
+export function ResponseChart({ stats, now, intervalSeconds }) {
   const { series, down, since, until, bucket_seconds: bucketSeconds } = stats;
   const n = series.length;
+  const gaps = gapBuckets(series, bucketSeconds, intervalSeconds, down);
   const [active, setActive] = useState(null);
   const plotRef = useRef(null);
 
@@ -198,12 +219,11 @@ export function ResponseChart({ stats, now }) {
               vectorEffect="non-scaling-stroke"
             />
           ))}
-          {/* mobile: faixa cinza nos intervalos sem dados (legenda "sem dados") */}
+          {/* faixa cinza nos trechos sem dados (legenda "sem dados") */}
           {series.map((s, i) =>
-            s.avg_latency_ms == null && !isDown(s, bucketSeconds, down) ? (
+            gaps.has(i) ? (
               <rect
                 key={s.t}
-                className="md:hidden"
                 x={(i / n) * W}
                 y="0"
                 width={W / n}
@@ -342,7 +362,7 @@ export function ChartLegend({ bucketSeconds }) {
         <span className="w-3 h-3 rounded-[2px] border border-pg-down bg-pg-down-bg" />{" "}
         fora do ar
       </span>
-      <span className="md:hidden inline-flex items-center gap-1.5">
+      <span className="inline-flex items-center gap-1.5">
         <span className="w-3 h-3 rounded-[2px] border border-pg-neblina bg-pg-unknown-bg" />{" "}
         sem dados
       </span>

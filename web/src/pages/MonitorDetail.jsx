@@ -287,7 +287,11 @@ function Performance({
             <ChartLegend bucketSeconds={stats?.bucket_seconds} />
           </div>
           {stats ? (
-            <ResponseChart stats={stats} now={now} />
+            <ResponseChart
+              stats={stats}
+              now={now}
+              intervalSeconds={monitor.interval_seconds}
+            />
           ) : (
             <div className="flex justify-center items-center h-[200px]">
               {!statsError && <Spinner />}
