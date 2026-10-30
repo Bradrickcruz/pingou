@@ -8,6 +8,9 @@ import (
 	"strings"
 )
 
+// Port é fixa: o Pingou sempre escuta nela (mapeie outra porta no host, se precisar).
+const Port = "8956"
+
 type Config struct {
 	APIKey             string
 	DatabaseURL        string
@@ -45,11 +48,6 @@ func loadConfigWithAPIKey(apiKey string) (*Config, error) {
 		dbURL = "pingou.db"
 	}
 
-	port := os.Getenv("PINGOU_PORT")
-	if port == "" {
-		port = "8080"
-	}
-
 	logLevel := slog.LevelInfo
 	if os.Getenv("PINGOU_LOG_LEVEL") == "DEBUG" {
 		logLevel = slog.LevelDebug
@@ -85,7 +83,7 @@ func loadConfigWithAPIKey(apiKey string) (*Config, error) {
 	return &Config{
 		APIKey:             apiKey,
 		DatabaseURL:        dbURL,
-		Port:               port,
+		Port:               Port,
 		LogLevel:           logLevel,
 		CORSAllowedOrigins: corsOrigins,
 		MaxRedirects:       maxRedirects,

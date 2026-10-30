@@ -39,10 +39,10 @@ RUN apk add --no-cache ca-certificates tzdata
 WORKDIR /app
 COPY --from=go-builder /bin/pingou .
 
-EXPOSE 8080
+EXPOSE 8956
 
-# Health check via endpoint público /healthz (sem auth)
+# Health check via endpoint público /healthz (sem auth); porta fixa em internal/config
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD wget -qO- http://localhost:8080/healthz || exit 1
+  CMD wget -qO- http://localhost:8956/healthz || exit 1
 
 ENTRYPOINT ["./pingou"]

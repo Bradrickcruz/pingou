@@ -265,7 +265,6 @@ pingou/
 Crie um arquivo `.env` na raiz, com base no `.env.example`:
 
 ```env
-PINGOU_PORT=8080
 PINGOU_DATABASE_URL=./pingou.db
 PINGOU_API_KEY=dev-api-key
 PINGOU_LOG_LEVEL=info
@@ -332,9 +331,10 @@ PINGOU_API_KEY=...
 
 ## Variáveis de ambiente
 
+A porta HTTP é fixa em `8956` e não é configurável. Para expor em outra porta, mapeie no host (ex.: `-p 9000:8956`).
+
 | Variável                      | Obrigatória | Padrão      | Descrição                                                                                             |
 | ----------------------------- | :---------: | ----------- | ----------------------------------------------------------------------------------------------------- |
-| `PINGOU_PORT`                 |     não     | `8080`      | Porta HTTP da aplicação                                                                               |
 | `PINGOU_DATABASE_URL`         |     não     | `pingou.db` | Caminho do arquivo SQLite                                                                             |
 | `PINGOU_API_KEY`              |     sim     | -           | Chave que protege o dashboard e as rotas `/api/*`                                                     |
 | `PINGOU_LOG_LEVEL`            |     não     | `info`      | Nível de log (`DEBUG` habilita logs de debug)                                                         |
@@ -365,7 +365,7 @@ X-API-Key: sua-chave
 ```
 
 ```bash
-curl -H "X-API-Key: dev-api-key" http://localhost:8080/api/monitors
+curl -H "X-API-Key: dev-api-key" http://localhost:8956/api/monitors
 ```
 
 A rota de ping do Heartbeat (`/ping/{token}`) é a exceção: ela é pública, porque o próprio token é o segredo.
@@ -440,7 +440,7 @@ Sobre `/ping/{token}`:
 ### Info
 
 ```bash
-curl -H "X-API-Key: dev-api-key" http://localhost:8080/api/info
+curl -H "X-API-Key: dev-api-key" http://localhost:8956/api/info
 ```
 
 ```json
@@ -465,7 +465,7 @@ curl -H "X-API-Key: dev-api-key" http://localhost:8080/api/info
 Abertos vêm por `started_at` decrescente; resolvidos, por `ended_at` decrescente. `total` é a contagem real do filtro, independente de `limit`.
 
 ```bash
-curl -H "X-API-Key: dev-api-key" "http://localhost:8080/api/incidents?status=open&limit=1"
+curl -H "X-API-Key: dev-api-key" "http://localhost:8956/api/incidents?status=open&limit=1"
 ```
 
 Cada item traz o monitor e a contagem de falhas:
@@ -504,7 +504,7 @@ Cada item traz o monitor e a contagem de falhas:
 | `30d`   | 6 h    | 120                |
 
 ```bash
-curl -H "X-API-Key: dev-api-key" "http://localhost:8080/api/monitors/<id>/stats?range=7d"
+curl -H "X-API-Key: dev-api-key" "http://localhost:8956/api/monitors/<id>/stats?range=7d"
 ```
 
 ```json
@@ -540,7 +540,7 @@ curl -H "X-API-Key: dev-api-key" "http://localhost:8080/api/monitors/<id>/stats?
 HTTP:
 
 ```bash
-curl -X POST http://localhost:8080/api/monitors \
+curl -X POST http://localhost:8956/api/monitors \
   -H "X-API-Key: dev-api-key" -H "Content-Type: application/json" \
   -d '{"name":"API","type":"http","url":"https://api.exemplo.com/health","interval_seconds":60,"timeout_seconds":5,"failure_threshold":3}'
 ```
@@ -548,7 +548,7 @@ curl -X POST http://localhost:8080/api/monitors \
 TCP:
 
 ```bash
-curl -X POST http://localhost:8080/api/monitors \
+curl -X POST http://localhost:8956/api/monitors \
   -H "X-API-Key: dev-api-key" -H "Content-Type: application/json" \
   -d '{"name":"Postgres","type":"tcp","config":{"host":"db.interno","port":5432},"interval_seconds":60,"timeout_seconds":5,"failure_threshold":3}'
 ```
@@ -556,7 +556,7 @@ curl -X POST http://localhost:8080/api/monitors \
 Heartbeat:
 
 ```bash
-curl -X POST http://localhost:8080/api/monitors \
+curl -X POST http://localhost:8956/api/monitors \
   -H "X-API-Key: dev-api-key" -H "Content-Type: application/json" \
   -d '{"name":"Backup diário","type":"heartbeat","interval_seconds":86400,"config":{"grace_seconds":3600}}'
 ```
@@ -630,7 +630,7 @@ Campos `type` e `target`:
 `POST /api/settings/webhook/test` envia um evento `test` sem gravar nada no banco. Com `{"url": "..."}` no corpo, testa essa URL (sem salvar). Sem corpo, testa a URL salva.
 
 ```bash
-curl -X POST http://localhost:8080/api/settings/webhook/test \
+curl -X POST http://localhost:8956/api/settings/webhook/test \
   -H "X-API-Key: dev-api-key" \
   -d '{"url":"https://webhook.site/<id>"}'
 ```
@@ -724,7 +724,6 @@ go build -o pingou ./cmd/pingou
 
 ```bash
 ./pingou serve
-PINGOU_PORT=9999 ./pingou serve
 ```
 
 **Proteção contra múltiplas instâncias:** usa um lock file em `~/.pingou/pingou.lock`. Se já houver um servidor rodando, retorna erro.
@@ -803,7 +802,7 @@ O monitor é sempre criado com `enabled: true`. Para `heartbeat`, o comando impr
 ./pingou config --key <API_KEY>
 # {
 #   "DatabaseURL": "./pingou.db",
-#   "Port": "8080",
+#   "Port": "8956",
 #   "LogLevel": "debug",
 #   "CORSAllowedOrigins": null,
 #   "MaxRedirects": 5,
