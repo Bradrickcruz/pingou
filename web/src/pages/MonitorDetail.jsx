@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Activity, ChevronLeft, Globe, Pause, Pencil, Play, Server } from "lucide-react";
+import { toast } from "react-toastify";
 import { monitorsApi } from "../api/monitors";
 import { useNow } from "../hooks/useNow";
 import { useSettings } from "../hooks/useSettings";
@@ -237,6 +238,7 @@ export function MonitorDetail() {
     setActionError(null);
     try {
       await monitorsApi.update(m.id, { enabled: !m.enabled });
+      toast.success(m.enabled ? "Monitor pausado" : "Monitor retomado");
       await reload();
     } catch (e) {
       setActionError(e.message);

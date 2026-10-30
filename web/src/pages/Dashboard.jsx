@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Plus, RefreshCw, Search } from "lucide-react";
+import { toast } from "react-toastify";
 import { useMonitors } from "../hooks/useMonitors";
 import { useNow } from "../hooks/useNow";
 import { monitorsApi } from "../api/monitors";
@@ -68,12 +69,17 @@ export function Dashboard() {
     }
   };
 
-  const handleCreate = (data) => run(() => monitorsApi.create(data));
+  const handleCreate = (data) =>
+    run(async () => {
+      await monitorsApi.create(data);
+      toast.success("Monitor criado");
+    });
 
   const handleToggle = async (m) => {
     setActionError(null);
     try {
       await monitorsApi.update(m.id, { enabled: !m.enabled });
+      toast.success(m.enabled ? "Monitor pausado" : "Monitor retomado");
       await refetch();
     } catch (e) {
       setActionError(e.message);
