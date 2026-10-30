@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `2983a5cb`
+- Built from commit: `12bf37ee`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -284,12 +284,12 @@
   plan-incidents-page.md → web/src/hooks/useMonitors.js
 - `🔍 Contexto` --references--> `useMonitors()`  [INFERRED]
   tasks/tarefa-sistema-websocket-tempo-real.md → web/src/hooks/useMonitors.js
-- `Task T10: `ChecksTable`, `RecentIncidents`, `ConfigCard`` --references--> `formatDuration()`  [INFERRED]
+- `Overview` --references--> `Modal()`  [INFERRED]
+  plan-monitor-details.md → web/src/components/ui/Modal.jsx
+- `Overview` --references--> `startedLabel()`  [INFERRED]
   plan-monitor-details.md → web/src/lib/format.js
-- `Task T11: Página `MonitorDetail.jsx`` --references--> `formatDuration()`  [INFERRED]
-  plan-monitor-details.md → web/src/lib/format.js
-- `Task T11: Página `MonitorDetail.jsx`` --references--> `formatUptime()`  [INFERRED]
-  plan-monitor-details.md → web/src/lib/format.js
+- `Tech Stack` --references--> `MonitorModals()`  [INFERRED]
+  plan-monitor-details.md → web/src/components/monitors/MonitorModals.jsx
 
 ## Import Cycles
 - None detected.
@@ -641,20 +641,20 @@ Cohesion: 0.50
 Nodes (4): Detalhamento, 📦 Escopo inicial, Funcionalidades de visualização, Informações adicionais
 
 ## Knowledge Gaps
-- **507 isolated node(s):** `units`, `BYTE_UNITS`, `bytesFormat`, `MONTHS`, `WEEKDAYS` (+502 more)
+- **507 isolated node(s):** `Project Type`, `Definition of Done (DoD)`, `Success Criteria`, `Contrato da API (alvo)`, `File Structure` (+502 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 736 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **166 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Pingou README` connect `plan-check-types.md` to `🧩 Tarefa: Melhorias na página de Incidentes`?**
-  _High betweenness centrality (0.018) - this node is a cross-community bridge._
-- **Why does `DESIGN.md — Design system do Pingou` connect `DESIGN.md — Design system do Pingou` to `plan-check-types.md`, `3. Cores`?**
-  _High betweenness centrality (0.016) - this node is a cross-community bridge._
-- **Why does `Plano de Desenvolvimento: Reconstrução da página de Incidentes` connect `Plano de Desenvolvimento: Reconstrução da página de Incidentes` to `🧩 Tarefa: Melhorias na página de Incidentes`, `Incidents.jsx`, `Status de Execução`, `MonitorForm.jsx`?**
-  _High betweenness centrality (0.016) - this node is a cross-community bridge._
-- **What connects `units`, `BYTE_UNITS`, `bytesFormat` to the rest of the system?**
+- **Why does `Monitor` connect `Monitor` to `serve.go`, `time.Time`, `Incident`, `newTestRegistry`, `WebhookNotifier`, `Scheduler`, `net/http.ResponseWriter`, `UnitOfWork`, `MonitorService`, `newEnv`, `scanMonitor`, `context.Context`?**
+  _High betweenness centrality (0.012) - this node is a cross-community bridge._
+- **Why does `Plano de Desenvolvimento: Tipos de check (HTTP, TCP, Heartbeat) + redesign do painel` connect `Plano de Desenvolvimento: Tipos de check (HTTP, TCP, Heartbeat) + redesign do painel` to `Dashboard.jsx`, `Task Breakdown`, `plan-check-types.md`, `Status de Execução`, `Notes`?**
+  _High betweenness centrality (0.011) - this node is a cross-community bridge._
+- **Why does `Task Breakdown` connect `Task Breakdown` to `Plano de Desenvolvimento: Reconstrução da página de Configurações`, `BackupCard.jsx`, `ChipGroup.jsx`?**
+  _High betweenness centrality (0.010) - this node is a cross-community bridge._
+- **What connects `Project Type`, `Definition of Done (DoD)`, `Success Criteria` to the rest of the system?**
   _507 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `serve.go` be split into smaller, more focused modules?**
   _Cohesion score 0.09269442262372349 - nodes in this community are weakly interconnected._

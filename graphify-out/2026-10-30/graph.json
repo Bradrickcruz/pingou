@@ -469,7 +469,7 @@
       "file_type": "code",
       "norm_label": "rowmenu()",
       "source_file": "web/src/components/monitors/RowMenu.jsx",
-      "source_location": "L7"
+      "source_location": "L6"
     },
     {
       "id": "web_src_lib_ranges_clamprange",
@@ -53757,7 +53757,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/components/monitors/RowMenu.jsx",
-      "source_location": "L7",
+      "source_location": "L6",
       "weight": 1.0
     },
     {
@@ -58619,5 +58619,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "2983a5cb8ce3fb1c3b3ad4a321537c2fd70be482"
+  "built_at_commit": "12bf37ee2688e84464434ea65947e34389545766"
 }
