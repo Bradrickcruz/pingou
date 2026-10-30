@@ -984,9 +984,9 @@
     "semantic_hash": ""
   },
   "web/src/components/monitors/RowMenu.jsx": {
-    "mtime": 1793289107.9499123,
-    "seen": 1793302041.8767555,
-    "ast_hash": "18d359e93a0b06c22e56997aacad1c41",
+    "mtime": 1793363853.3335874,
+    "seen": 1793363854.7164352,
+    "ast_hash": "b3bcc43e7423700baffd00c722207de0",
     "semantic_hash": ""
   },
   "web/src/components/monitors/StatusBanner.jsx": {
@@ -1008,9 +1008,9 @@
     "semantic_hash": ""
   },
   "web/src/lib/format.js": {
-    "mtime": 1793363571.4366193,
-    "seen": 1793363594.440046,
-    "ast_hash": "2dcaceeff440c8b4e51eaa41814df3a3",
+    "mtime": 1793363766.4988155,
+    "seen": 1793363854.716447,
+    "ast_hash": "35fc69452445e232766eb758d47a9cc8",
     "semantic_hash": ""
   },
   "web/src/lib/monitors.js": {
@@ -1110,9 +1110,9 @@
     "semantic_hash": ""
   },
   "plan-monitor-details.md": {
-    "mtime": 1793363593.009916,
-    "seen": 1793363594.4425313,
-    "ast_hash": "0e3fd448302cd55fbc31f68992cb880c",
+    "mtime": 1793363853.338587,
+    "seen": 1793363854.7164736,
+    "ast_hash": "b6d5755aafb990c36bb0998b679bd6d7",
     "semantic_hash": ""
   },
   "concept-design/Detalhes.png": {

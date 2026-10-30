@@ -1,17 +1,17 @@
 # Graph Report - pingou-health-checker  (2026-10-30)
 
 ## Corpus Check
-- 154 files · ~175,494 words
+- 154 files · ~175,514 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 15 file(s) not represented in the graph (top: (none) 9, .woff2 4, .example 1)
 
 ## Summary
-- 1585 nodes · 3450 edges · 246 communities (80 shown, 166 thin omitted)
+- 1585 nodes · 3451 edges · 252 communities (86 shown, 166 thin omitted)
 - Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 171 edges (avg confidence: 0.89)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `1f6b4c36`
+- Built from commit: `12bf37ee`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -21,7 +21,7 @@
 - Incident
 - package.json
 - database/sql.DB
-- Plano de Desenvolvimento: Página de detalhes do monitor
+- MonitorDetail.jsx
 - net/http.ResponseWriter
 - Testing Strategy & Framework
 - ref_dns
@@ -45,7 +45,7 @@
 - Project Structure Analysis
 - What You Must Do When Invoked
 - Plano de Desenvolvimento: {{Titulo}}
-- MonitorDetail.jsx
+- MonitorForm.jsx
 - Hero Image
 - React Logo
 - MonitorService
@@ -101,10 +101,10 @@
 - context.Context
 - ref_node_https
 - format.js
-- Task Breakdown
+- Incidents.jsx
 - ref_zod
-- MonitorRow.jsx
-- client.js
+- Task Breakdown
+- main.jsx
 - ref_jest_globals
 - DESIGN.md — Design system do Pingou
 - inspiration_checkmate_client_src_components_design_elements_index_detailgauge
@@ -112,7 +112,7 @@
 - ref_node_http
 - time.Time
 - WebhookNotifier
-- Task Breakdown
+- Plano de Desenvolvimento: Reconstrução da página de Configurações
 - newTestRegistry
 - ref_mongoose
 - inspiration_checkmate_client_src_components_common_index_heatmapresponsetime
@@ -253,6 +253,7 @@
 - 🧩 Tarefa: Tela de detalhe do monitor com checks e incidentes
 - commands/info.go
 - Status de Execução
+- Plano de Desenvolvimento: Tipos de check (HTTP, TCP, Heartbeat) + redesign do painel
 - incidents_test.go
 - migrations_test.go
 - 🧩 Tarefa: Melhorias na página de Incidentes
@@ -260,6 +261,11 @@
 - 3. Cores
 - at
 - Status de Execução
+- ChipGroup.jsx
+- Status de Execução
+- Status de Execução
+- Notes
+- 📦 Escopo inicial
 
 ## God Nodes (most connected - your core abstractions)
 1. `Monitor` - 66 edges
@@ -278,25 +284,25 @@
   plan-incidents-page.md → web/src/hooks/useMonitors.js
 - `🔍 Contexto` --references--> `useMonitors()`  [INFERRED]
   tasks/tarefa-sistema-websocket-tempo-real.md → web/src/hooks/useMonitors.js
-- `Overview` --references--> `Badge()`  [INFERRED]
-  plan-monitor-details.md → web/src/components/ui/Badge.jsx
 - `Overview` --references--> `Modal()`  [INFERRED]
   plan-monitor-details.md → web/src/components/ui/Modal.jsx
 - `Overview` --references--> `startedLabel()`  [INFERRED]
   plan-monitor-details.md → web/src/lib/format.js
+- `Tech Stack` --references--> `MonitorModals()`  [INFERRED]
+  plan-monitor-details.md → web/src/components/monitors/MonitorModals.jsx
 
 ## Import Cycles
 - None detected.
 
-## Communities (246 total, 166 thin omitted)
+## Communities (252 total, 166 thin omitted)
 
 ### Community 0 - "serve.go"
 Cohesion: 0.09
 Nodes (63): copyFile(), runExportDB(), Execute(), requireKey(), acquireLock(), checkExistingLock(), main(), MonitorEnabled (+55 more)
 
 ### Community 1 - "Dashboard.jsx"
-Cohesion: 0.09
-Nodes (30): Tech Stack, lucide-react, react, react-router-dom, version, monitorsApi, web_src_assets_brand_pingou_marca_horizontal, web_src_assets_brand_pingou_marca_horizontal_negativa (+22 more)
+Cohesion: 0.17
+Nodes (15): Tech Stack, lucide-react, react, monitorsApi, web_src_assets_brand_pingou_simbolo, typeIcon, typeLabel, joinNames() (+7 more)
 
 ### Community 2 - "Incident"
 Cohesion: 0.10
@@ -310,9 +316,9 @@ Nodes (41): autoprefixer, axios, eslint, @eslint/js, eslint-plugin-react-hooks, 
 Cohesion: 0.18
 Nodes (30): runAdd(), runRM(), releaseLock(), runServe(), database/sql.DB, github.com/spf13/cobra.Command, ExportHandler, Open() (+22 more)
 
-### Community 5 - "Plano de Desenvolvimento: Página de detalhes do monitor"
-Cohesion: 0.13
-Nodes (18): Alternativas consideradas e descartadas, Contrato da API (alvo), Cronograma Sugerido, Definition of Done (DoD), Desvios na implementação, File Structure, Notes, Phase X: Verification (+10 more)
+### Community 5 - "MonitorDetail.jsx"
+Cohesion: 0.09
+Nodes (29): Task T18: Componentes base, Alternativas consideradas e descartadas, Contrato da API (alvo), Cronograma Sugerido, Definition of Done (DoD), Desvios na implementação, File Structure, Notes (+21 more)
 
 ### Community 6 - "net/http.ResponseWriter"
 Cohesion: 0.07
@@ -362,9 +368,9 @@ Nodes (24): For /graphify add and --watch, For /graphify query, For the commit h
 Cohesion: 0.09
 Nodes (22): Alternativas consideradas e descartadas, Build Verification, Concluído, Cronograma Sugerido, Definition of Done (DoD), Em andamento, Fase 1, File Structure (+14 more)
 
-### Community 31 - "MonitorDetail.jsx"
-Cohesion: 0.10
-Nodes (32): Overview, Overview, Task T11: Página `MonitorDetail.jsx`, Task T15: `RangeTabs` limitado pela retenção, RangeTabs(), ChartLegend(), blank, CHECK_EVERY (+24 more)
+### Community 31 - "MonitorForm.jsx"
+Cohesion: 0.11
+Nodes (27): Overview, Overview, ChartLegend(), HistoryBar(), blank, CHECK_EVERY, fromMonitor(), GRACE (+19 more)
 
 ### Community 34 - "MonitorService"
 Cohesion: 0.18
@@ -403,8 +409,8 @@ Cohesion: 0.22
 Nodes (8): graphify reference: extra exports and benchmark, Step 6b - Wiki (only if --wiki flag), Step 7 - Neo4j export (only if --neo4j or --neo4j-push flag), Step 7a - FalkorDB export (only if --falkordb or --falkordb-push flag), Step 7b - SVG export (only if --svg flag), Step 7c - GraphML export (only if --graphml flag), Step 7d - MCP server (only if --mcp flag), Step 8 - Token reduction benchmark (only if total_words > 5000)
 
 ### Community 44 - "Task Breakdown"
-Cohesion: 0.05
-Nodes (43): Alternativas consideradas e descartadas, Concluído, Cronograma Sugerido, Decisões tomadas na implementação, Definition of Done (DoD), Divergências do QA contra os PNGs (registradas, não corrigidas), Em andamento, Evidências de verificação (+35 more)
+Cohesion: 0.08
+Nodes (24): Task Breakdown, Task T10: `Scheduler.Record` + state machine, Task T11: Rota `/ping/{token}` + rate limit, Task T12: Avaliador de prazos, Task T13: Webhook com `type`/`target`, Task T14: CLI heartbeat e endpoint de token, Task T15: Testes heartbeat (fecha o PR 3), Task T16: Revisão de segurança (+16 more)
 
 ### Community 46 - "graphify reference: query, path, explain"
 Cohesion: 0.33
@@ -538,17 +544,17 @@ Nodes (11): context.Context, database/sql.Tx, Check, MonitorRepository, CheckRep
 Cohesion: 0.10
 Nodes (41): Task Breakdown, Task T10: `ChecksTable`, `RecentIncidents`, `ConfigCard`, Task T12: QA, Task T13: README, Task T14: Tooltip do gráfico, Task T1: `CheckRepo.Buckets`, Task T2: `IncidentRepo.FindInWindow`, Task T3: `MonitorService.Stats` (+33 more)
 
-### Community 87 - "Task Breakdown"
-Cohesion: 0.10
-Nodes (23): Task Breakdown, Task T10: Corrigir badge da sidebar, Task T11: Helpers de data, Task T12: `OpenIncidentCard`, Task T13: `ResolvedTable` agrupada por dia, Task T14: Página `Incidents.jsx`, Task T15: "Ver histórico" no menu ⋮, Task T16: QA (+15 more)
+### Community 87 - "Incidents.jsx"
+Cohesion: 0.08
+Nodes (30): Task Breakdown, Task T10: Corrigir badge da sidebar, Task T11: Helpers de data, Task T12: `OpenIncidentCard`, Task T13: `ResolvedTable` agrupada por dia, Task T14: Página `Incidents.jsx`, Task T15: "Ver histórico" no menu ⋮, Task T16: QA (+22 more)
 
-### Community 89 - "MonitorRow.jsx"
-Cohesion: 0.23
-Nodes (8): Task T18: Componentes base, HistoryBar(), typeIcon, RowMenu(), joinNames(), StatusBanner(), Badge(), stateStyles
+### Community 89 - "Task Breakdown"
+Cohesion: 0.17
+Nodes (12): Task Breakdown, Task T10: Página, dirty state e rodapé, Task T11: Revisão de segurança, Task T12: QA manual, Task T13: README, Task T1: Contrato, Task T2: `GET /api/info`, Task T3: Nome do arquivo no export (+4 more)
 
-### Community 90 - "client.js"
-Cohesion: 0.24
-Nodes (6): client, incidentsApi, ConnectionOverlay(), ConnectionContext, useConnection(), ConnectionProvider()
+### Community 90 - "main.jsx"
+Cohesion: 0.11
+Nodes (16): version, client, incidentsApi, web_src_assets_brand_pingou_marca_horizontal, web_src_assets_brand_pingou_marca_horizontal_negativa, nav, Shell(), useOpenIncidents() (+8 more)
 
 ### Community 92 - "DESIGN.md — Design system do Pingou"
 Cohesion: 0.15
@@ -562,9 +568,9 @@ Nodes (9): DownWindow, time.Time, MonitorStats, StatsBucket, MonitorSummary, Sch
 Cohesion: 0.46
 Nodes (4): toWebhookMonitor(), WebhookNotifier, webhookPayload, webhookPayloadMonitor
 
-### Community 98 - "Task Breakdown"
-Cohesion: 0.06
-Nodes (37): Alternativas consideradas e descartadas, Concluído, Conferência do briefing da IA de design contra o código (2026-10-29), Cronograma Sugerido, Definition of Done (DoD), Em andamento, Evidências (2026-10-29), File Structure (+29 more)
+### Community 98 - "Plano de Desenvolvimento: Reconstrução da página de Configurações"
+Cohesion: 0.15
+Nodes (13): Alternativas consideradas e descartadas, Conferência do briefing da IA de design contra o código (2026-10-29), Cronograma Sugerido, Definition of Done (DoD), File Structure, Notes, Overview, Phase X: Verification (+5 more)
 
 ### Community 99 - "newTestRegistry"
 Cohesion: 0.19
@@ -586,6 +592,10 @@ Nodes (8): getEnvInt(), getEnvList(), getEnvOr(), runConfig(), runVersion(), spl
 Cohesion: 0.40
 Nodes (5): Concluído, Em andamento, Evidências (T12), Pendente, Status de Execução
 
+### Community 239 - "Plano de Desenvolvimento: Tipos de check (HTTP, TCP, Heartbeat) + redesign do painel"
+Cohesion: 0.20
+Nodes (10): Cronograma Sugerido, Definition of Done (DoD), File Structure, Overview, Phase X: Verification, Plano de Desenvolvimento: Tipos de check (HTTP, TCP, Heartbeat) + redesign do painel, Project Type, Risk Areas (+2 more)
+
 ### Community 240 - "incidents_test.go"
 Cohesion: 0.42
 Nodes (8): go_pkg_slices, incidentsPage, Server, ids(), listIncidents(), seedIncidents(), TestListIncidentsResolvedOrderAndFilters(), TestListIncidentsTotalIgnoresLimit()
@@ -595,8 +605,8 @@ Cohesion: 0.38
 Nodes (9): go_pkg_github_com_pressly_goose_v3, assertFKOn(), assertNoFKViolations(), countRows(), mustExec(), setupGoose(), TestIncidentsPageMigration(), TestMonitorTypesConstraints() (+1 more)
 
 ### Community 242 - "🧩 Tarefa: Melhorias na página de Incidentes"
-Cohesion: 0.17
-Nodes (12): 🔍 Contexto, Detalhamento, 📦 Escopo inicial, 🚧 Fora de escopo, Funcionalidades de visualização, 💡 Ideia, Informações adicionais, 🎯 Objetivo (+4 more)
+Cohesion: 0.18
+Nodes (8): 🔍 Contexto, 🚧 Fora de escopo, 💡 Ideia, 🎯 Objetivo, ⚠️ Observações, ⏱️ Prioridade, 🧩 Tarefa: Melhorias na página de Incidentes, 🏷️ Tipo
 
 ### Community 244 - "3. Cores"
 Cohesion: 0.33
@@ -610,6 +620,26 @@ Nodes (3): at(), TestStatsBucketsAndTotals(), TestStatsIncidentsClipped()
 Cohesion: 0.50
 Nodes (4): Concluído, Em andamento, Pendente, Status de Execução
 
+### Community 247 - "ChipGroup.jsx"
+Cohesion: 0.38
+Nodes (6): Task T9: Cards, Tech Stack, bestUnit(), chip(), ChipGroup(), UNITS
+
+### Community 248 - "Status de Execução"
+Cohesion: 0.33
+Nodes (6): Concluído, Em andamento, Evidências (2026-10-29), Pendente, Revisão de segurança (T11), Status de Execução
+
+### Community 249 - "Status de Execução"
+Cohesion: 0.40
+Nodes (5): Concluído, Em andamento, Evidências de verificação, Pendente, Status de Execução
+
+### Community 250 - "Notes"
+Cohesion: 0.50
+Nodes (4): Alternativas consideradas e descartadas, Decisões tomadas na implementação, Divergências do QA contra os PNGs (registradas, não corrigidas), Notes
+
+### Community 251 - "📦 Escopo inicial"
+Cohesion: 0.50
+Nodes (4): Detalhamento, 📦 Escopo inicial, Funcionalidades de visualização, Informações adicionais
+
 ## Knowledge Gaps
 - **507 isolated node(s):** `Project Type`, `Definition of Done (DoD)`, `Success Criteria`, `Contrato da API (alvo)`, `File Structure` (+502 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 736 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
@@ -618,16 +648,16 @@ Nodes (4): Concluído, Em andamento, Pendente, Status de Execução
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Plano de Desenvolvimento: Tipos de check (HTTP, TCP, Heartbeat) + redesign do painel` connect `Task Breakdown` to `Dashboard.jsx`, `plan-check-types.md`?**
-  _High betweenness centrality (0.014) - this node is a cross-community bridge._
-- **Why does `Scheduler` connect `Scheduler` to `serve.go`, `Server`, `database/sql.DB`, `Monitor`, `context.Context`?**
-  _High betweenness centrality (0.013) - this node is a cross-community bridge._
+- **Why does `Monitor` connect `Monitor` to `serve.go`, `time.Time`, `Incident`, `newTestRegistry`, `WebhookNotifier`, `Scheduler`, `net/http.ResponseWriter`, `UnitOfWork`, `MonitorService`, `newEnv`, `scanMonitor`, `context.Context`?**
+  _High betweenness centrality (0.012) - this node is a cross-community bridge._
+- **Why does `Plano de Desenvolvimento: Tipos de check (HTTP, TCP, Heartbeat) + redesign do painel` connect `Plano de Desenvolvimento: Tipos de check (HTTP, TCP, Heartbeat) + redesign do painel` to `Dashboard.jsx`, `Task Breakdown`, `plan-check-types.md`, `Status de Execução`, `Notes`?**
+  _High betweenness centrality (0.011) - this node is a cross-community bridge._
+- **Why does `Task Breakdown` connect `Task Breakdown` to `Plano de Desenvolvimento: Reconstrução da página de Configurações`, `BackupCard.jsx`, `ChipGroup.jsx`?**
+  _High betweenness centrality (0.010) - this node is a cross-community bridge._
 - **What connects `Project Type`, `Definition of Done (DoD)`, `Success Criteria` to the rest of the system?**
   _507 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `serve.go` be split into smaller, more focused modules?**
   _Cohesion score 0.09269442262372349 - nodes in this community are weakly interconnected._
-- **Should `Dashboard.jsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.09019607843137255 - nodes in this community are weakly interconnected._
 - **Should `Incident` be split into smaller, more focused modules?**
   _Cohesion score 0.09523809523809523 - nodes in this community are weakly interconnected._
 - **Should `package.json` be split into smaller, more focused modules?**
