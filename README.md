@@ -1,6 +1,6 @@
 ![Pingou](assets/capa-readme.png)
 
-# 💧 Pingou
+# Pingou
 
 > **Rodou, pingou.** Monitor de uptime self-hosted, leve e open-source, escrito em Go.
 
@@ -188,7 +188,7 @@ Garantias:
 
 ### Modelo de dados do monitor
 
-Os monitores ganham quatro campos:
+Campos do monitor, além dos básicos (nome, intervalo, timeout, threshold):
 
 | Campo          | Descrição                                                                    |
 | -------------- | ---------------------------------------------------------------------------- |
@@ -786,7 +786,7 @@ O monitor é sempre criado com `enabled: true`. Para `heartbeat`, o comando impr
 ./pingou export-db -o /tmp/backup.db --key <API_KEY>
 ```
 
-> O export inclui os tokens de ping dos monitores Heartbeat. Guarde o arquivo com o mesmo cuidado que a API Key.
+> O export inclui os tokens de ping dos monitores Heartbeat e a URL do webhook, que costuma conter um segredo (a do Slack, por exemplo). Guarde o arquivo com o mesmo cuidado que a API Key.
 
 ### version
 
@@ -807,7 +807,8 @@ O monitor é sempre criado com `enabled: true`. Para `heartbeat`, o comando impr
 #   "LogLevel": "debug",
 #   "CORSAllowedOrigins": null,
 #   "MaxRedirects": 5,
-#   "GlobalTimeout": 60
+#   "GlobalTimeout": 60,
+#   "PublicURL": ""
 # }
 ```
 
