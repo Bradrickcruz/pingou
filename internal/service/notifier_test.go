@@ -71,20 +71,36 @@ func TestWebhookDashboardURL(t *testing.T) {
 	incident := &domain.Incident{ID: "i1", StartedAt: time.Now()}
 	str := func(s string) *string { return &s }
 
-	for publicURL, want := range map[string]*string{
-		"":                           nil,
-		"https://pingou.exemplo.com": str("https://pingou.exemplo.com/monitors/abc"),
-	} {
-		NewWebhookNotifier(func() string { return srv.URL }, publicURL).NotifyDown(t.Context(), m, incident)
+	dashboardURL := func() *string {
+		t.Helper()
 		var p struct {
 			DashboardURL *string `json:"dashboard_url"`
 		}
 		if err := json.Unmarshal([]byte(<-bodies), &p); err != nil {
 			t.Fatal(err)
 		}
-		if !eqPtr(p.DashboardURL, want) {
-			t.Fatalf("publicURL %q: dashboard_url = %v", publicURL, p.DashboardURL)
+		return p.DashboardURL
+	}
+
+	for publicURL, want := range map[string]*string{
+		"":                           nil,
+		"https://pingou.exemplo.com": str("https://pingou.exemplo.com/monitors/abc"),
+	} {
+		n := NewWebhookNotifier(func() string { return srv.URL }, publicURL)
+		n.NotifyDown(t.Context(), m, incident)
+		if got := dashboardURL(); !eqPtr(got, want) {
+			t.Fatalf("down, publicURL %q: dashboard_url = %v", publicURL, got)
 		}
+		n.NotifyRecovery(t.Context(), m, incident)
+		if got := dashboardURL(); !eqPtr(got, want) {
+			t.Fatalf("up, publicURL %q: dashboard_url = %v", publicURL, got)
+		}
+	}
+
+	// evento "test": o monitor é fictício, então nunca leva link
+	SendTestWebhook(t.Context(), srv.URL)
+	if got := dashboardURL(); got != nil {
+		t.Fatalf("test: dashboard_url = %v, want null", *got)
 	}
 }
 
