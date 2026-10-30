@@ -79,13 +79,13 @@
   },
   "internal/database/migrations/0001_init.sql": {
     "mtime": 1777012405.3893824,
-    "seen": 1793383505.323326,
+    "seen": 1793387384.4169052,
     "ast_hash": "cdf3d4043c780543a27d4cc148cf5555",
     "semantic_hash": ""
   },
   "internal/database/migrations/0002_add_duration_seconds_to_incidents.sql": {
     "mtime": 1777061129.9355462,
-    "seen": 1793383505.3233275,
+    "seen": 1793387384.4169066,
     "ast_hash": "ab52761c5aed638df004b2cddba66e83",
     "semantic_hash": ""
   },
@@ -162,9 +162,9 @@
     "semantic_hash": "b891d78a61c29aede54d9fd4746933ee"
   },
   "internal/handler/server.go": {
-    "mtime": 1793381619.2904093,
-    "seen": 1793381809.9084678,
-    "ast_hash": "2a04eafe78b6b3cf6d890fd00d6fc944",
+    "mtime": 1793387275.2774646,
+    "seen": 1793387297.4318147,
+    "ast_hash": "2a50db2be87fce82e1ba5b8b0002f72d",
     "semantic_hash": ""
   },
   "internal/handler/settings.go": {
@@ -414,9 +414,9 @@
     "semantic_hash": ""
   },
   "web/src/pages/Login.jsx": {
-    "mtime": 1793381619.2964091,
-    "seen": 1793381809.9085655,
-    "ast_hash": "6aa3ac21a5bbfc86953f5d16ed9ac86c",
+    "mtime": 1793387505.3565278,
+    "seen": 1793387572.4370306,
+    "ast_hash": "ff14c16c2a0a42fd39c44afec28c419e",
     "semantic_hash": ""
   },
   "web/src/pages/Settings.jsx": {
@@ -462,9 +462,9 @@
     "semantic_hash": "c7cbb47765f8248e3137599f24de44e0"
   },
   "README.md": {
-    "mtime": 1793383469.655014,
-    "seen": 1793383472.056278,
-    "ast_hash": "cee9d3d76efc9f8a876e77fa518998b4",
+    "mtime": 1793387506.1325066,
+    "seen": 1793387572.4370506,
+    "ast_hash": "82ea903197a5d252a9733fda6aafb6c9",
     "semantic_hash": ""
   },
   "docker-compose.yml": {
@@ -919,7 +919,7 @@
   },
   "internal/database/migrations/0003_monitor_types.sql": {
     "mtime": 1793381619.2904093,
-    "seen": 1793383505.3233283,
+    "seen": 1793387384.4169075,
     "ast_hash": "acc29bbbdeb940baaf9ab1e94647b53e",
     "semantic_hash": ""
   },
@@ -930,21 +930,21 @@
     "semantic_hash": ""
   },
   "internal/handler/handler_test.go": {
-    "mtime": 1793381619.2904093,
-    "seen": 1793381809.9084566,
-    "ast_hash": "522413e7e33920455c2b9546d7a0fc74",
+    "mtime": 1793387288.4990265,
+    "seen": 1793387297.431616,
+    "ast_hash": "99288e7bf3400ac6152b518f52edf99c",
     "semantic_hash": ""
   },
   "internal/handler/ping.go": {
-    "mtime": 1793381619.2904093,
-    "seen": 1793381809.9084644,
-    "ast_hash": "9ac2f08654f9a178f115ebe2f0a7924a",
+    "mtime": 1793387274.4914908,
+    "seen": 1793387297.4317813,
+    "ast_hash": "a7105988eceb3c7981f5f03c2007b830",
     "semantic_hash": ""
   },
   "internal/handler/ratelimit.go": {
-    "mtime": 1793381619.2904093,
-    "seen": 1793381809.9084654,
-    "ast_hash": "4d6f5d1930c1b8e24d4b9fd5d7b492a1",
+    "mtime": 1793387273.7115169,
+    "seen": 1793387297.4317827,
+    "ast_hash": "8e31615a468e88d25264c4872f7c1696",
     "semantic_hash": ""
   },
   "internal/scheduler/heartbeat.go": {
@@ -1051,7 +1051,7 @@
   },
   "internal/database/migrations/0004_incidents_page.sql": {
     "mtime": 1793381619.2904093,
-    "seen": 1793383505.3233294,
+    "seen": 1793387384.416909,
     "ast_hash": "b6bac1548426042243e703bf72f471e7",
     "semantic_hash": ""
   },
