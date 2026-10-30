@@ -176,7 +176,7 @@ export function Dashboard() {
         </p>
       )}
 
-      {!loading && monitors.length === 0 && (
+      {!loading && !error && monitors.length === 0 && (
         <div className="text-center py-16 px-4 rounded-pg-card border border-dashed border-pg-borda text-pg-neblina">
           <img
             src={logo}
