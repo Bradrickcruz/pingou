@@ -182,7 +182,7 @@ Tailwind v4: declare os mesmos valores em `@theme` (`--color-pg-ciano: #1E9BB3;`
 - **Botão secundário**: fundo transparente, borda `--pg-borda`, texto `--pg-ardosia`.
 - **Botão destrutivo** (ex.: remover monitor): texto/borda `--pg-down`; fundo sólido só na confirmação.
 - **Link**: `--pg-ciano-fundo`, sublinhado no hover.
-- **Input**: fundo branco, borda `--pg-borda`, raio 8 px; foco com anel `--pg-ciano`.
+- **Input**: fundo branco, borda `1px solid var(--pg-neblina)` (não `--pg-borda`: 5,5:1 contra o fundo, contra ~1,3:1 e abaixo dos 3:1 exigidos para componentes de interface), raio 8 px; foco com anel `--pg-ciano`.
 - **Card**: fundo branco sobre `--pg-nuvem`, borda `--pg-borda`, raio 12 px.
 - **Tabela**: header com fundo `--pg-ciano-nevoa` e texto `--pg-ciano-fundo`; linhas separadas por `--pg-borda`.
 - **Header do dashboard**: símbolo (24–32 px) + logotipo, via SVG oficial.
@@ -201,6 +201,7 @@ Tailwind v4: declare os mesmos valores em `@theme` (`--color-pg-ciano: #1E9BB3;`
 - Ondas nascem de um ponto (canto, borda ou símbolo), máx. 5 anéis, transparência crescente.
 - Grafismos **só em ciano** (ou branco sobre ciano). Nunca verde/vermelho.
 - Barras decorativas têm **altura igual**; variar altura parece dado real.
+- Barras que mostram **dados** (ex.: histórico de checks do monitor) **podem** usar as cores de status (`--pg-up`, `--pg-down`, `--pg-unknown`), pois representam estado real. Barras **decorativas** (divisórias, rodapés) **NUNCA**: só ciano.
 - **NUNCA** grafismo atrás de texto pequeno.
 - Telas de trabalho (listas, formulários) ficam limpas: no máximo o arco divisor.
 
@@ -210,6 +211,7 @@ Tailwind v4: declare os mesmos valores em `@theme` (`--color-pg-ciano: #1E9BB3;`
 - Sem "por favor", sem "com sucesso", sem exclamação em mensagens do sistema.
 - Erros: o que aconteceu + o que fazer. Ex.: "Não foi possível conectar. Verifique a URL."
 - Estados de status ficam em inglês (`UP`, `DOWN`, `UNKNOWN`), por serem termos técnicos de monitoramento, mesmo com a interface em português.
+- Aba de configurações: no celular, o rótulo da aba é **"Ajustes"** (cabe na barra inferior); a tela e o menu no desktop continuam "Configurações".
 - Slogan oficial: **"Rodou, pingou."**
 
 ## 10. Pendências (não definidas na v1.0)
