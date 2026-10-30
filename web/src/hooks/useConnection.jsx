@@ -4,7 +4,7 @@ import { ConnectionContext } from "./connectionContext";
 
 const RETRY_MS = 10000;
 
-export function ConnectionProvider({ children }) {
+export function ConnectionProvider({ children, onUnauthorized }) {
   const [online, setOnline] = useState(true);
   const [checking, setChecking] = useState(true);
   const [offlineSince, setOfflineSince] = useState(null);
@@ -23,7 +23,9 @@ export function ConnectionProvider({ children }) {
           setOnline(true);
           setOfflineSince(null);
         }
-      } catch {
+      } catch (e) {
+        // chave inválida/revogada: reconectar não adianta, volta pro login
+        if (e.status === 401) return onUnauthorized?.();
         if (mounted) {
           setOnline(false);
           setOfflineSince((since) => since ?? Date.now());
@@ -41,7 +43,7 @@ export function ConnectionProvider({ children }) {
       mounted = false;
       clearInterval(interval);
     };
-  }, []);
+  }, [onUnauthorized]);
 
   return (
     <ConnectionContext.Provider

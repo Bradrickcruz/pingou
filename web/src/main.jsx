@@ -33,7 +33,7 @@ function App() {
   }
 
   return (
-    <ConnectionProvider>
+    <ConnectionProvider onUnauthorized={handleLogout}>
       <ToastContainer position="bottom-right" autoClose={3000} />
       <ConnectionOverlay>
         <BrowserRouter>
