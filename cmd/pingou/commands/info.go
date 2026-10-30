@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/Bradrickcruz/pingou/internal/config"
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 )
@@ -36,7 +37,7 @@ func runConfig(cmd *cobra.Command, args []string) error {
 
 	cfg := map[string]interface{}{
 		"DatabaseURL":        getEnvOr("PINGOU_DATABASE_URL", "pingou.db"),
-		"Port":               getEnvOr("PINGOU_PORT", "8080"),
+		"Port":               config.Port,
 		"LogLevel":           getEnvOr("PINGOU_LOG_LEVEL", "INFO"),
 		"CORSAllowedOrigins": getEnvList("PINGOU_CORS_ALLOWED_ORIGINS"),
 		"MaxRedirects":       getEnvInt("PINGOU_MAX_REDIRECTS", 5),
