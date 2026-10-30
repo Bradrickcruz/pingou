@@ -23,14 +23,25 @@ type Notifier interface {
 // WebhookNotifier envia payloads para a URL configurada nas settings
 type WebhookNotifier struct {
 	getWebhookURL func() string
+	publicURL     string // PINGOU_PUBLIC_URL sem "/" final; vazio = sem dashboard_url
 	client        *http.Client
 }
 
-func NewWebhookNotifier(getWebhookURL func() string) *WebhookNotifier {
+func NewWebhookNotifier(getWebhookURL func() string, publicURL string) *WebhookNotifier {
 	return &WebhookNotifier{
 		getWebhookURL: getWebhookURL,
+		publicURL:     publicURL,
 		client:        &http.Client{Timeout: 10 * time.Second},
 	}
+}
+
+// dashboardURL é o link para a página de detalhe do monitor, ou nil sem PINGOU_PUBLIC_URL.
+func (n *WebhookNotifier) dashboardURL(m *domain.Monitor) *string {
+	if n.publicURL == "" {
+		return nil
+	}
+	u := n.publicURL + "/monitors/" + m.ID
+	return &u
 }
 
 type webhookPayload struct {
@@ -39,6 +50,7 @@ type webhookPayload struct {
 	Timestamp               string                `json:"timestamp"`
 	LastError               *string               `json:"last_error"`
 	DowntimeDurationSeconds *int64                `json:"downtime_duration_seconds"`
+	DashboardURL            *string               `json:"dashboard_url"`
 }
 
 // webhookPayloadMonitor nunca leva o ping_token: webhooks costumam ir para
@@ -71,6 +83,7 @@ func (n *WebhookNotifier) NotifyDown(ctx context.Context, m *domain.Monitor, i *
 		Timestamp:               i.StartedAt.UTC().Format(time.RFC3339),
 		LastError:               i.LastError,
 		DowntimeDurationSeconds: nil,
+		DashboardURL:            n.dashboardURL(m),
 	}
 
 	n.send(url, payload)
@@ -104,6 +117,7 @@ func (n *WebhookNotifier) NotifyRecovery(ctx context.Context, m *domain.Monitor,
 		Timestamp:               timestamp.Format(time.RFC3339),
 		LastError:               nil,
 		DowntimeDurationSeconds: downtimeDurationSeconds,
+		DashboardURL:            n.dashboardURL(m),
 	}
 
 	n.send(url, payload)

@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
-import { Activity, Globe, Plus, RefreshCw, Search, Server } from "lucide-react";
+import { Plus, RefreshCw, Search } from "lucide-react";
 import { useMonitors } from "../hooks/useMonitors";
 import { useNow } from "../hooks/useNow";
 import { monitorsApi } from "../api/monitors";
 import { MonitorRow } from "../components/monitors/MonitorRow";
 import { MonitorForm } from "../components/monitors/MonitorForm";
+import { MonitorModals } from "../components/monitors/MonitorModals";
 import { StatusBanner } from "../components/monitors/StatusBanner";
 import { Modal } from "../components/ui/Modal";
 import { Button } from "../components/ui/Button";
@@ -22,19 +23,6 @@ const FILTERS = [
   { key: "up", label: "No ar", match: (s) => s === "UP" },
   { key: "paused", label: "Pausados", match: (s) => s === "PAUSED" },
 ];
-
-const typeLabel = { http: "HTTP", tcp: "TCP", heartbeat: "Heartbeat" };
-const typeIcon = { http: Globe, tcp: Server, heartbeat: Activity };
-
-function TypeNote({ type }) {
-  const Icon = typeIcon[type] ?? Globe;
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <Icon size={14} aria-hidden="true" />
-      {typeLabel[type]} · o tipo não pode ser alterado
-    </span>
-  );
-}
 
 export function Dashboard() {
   const { monitors, loading, error, refetch, isFetching, updatedAt } = useMonitors();
@@ -81,8 +69,6 @@ export function Dashboard() {
   };
 
   const handleCreate = (data) => run(() => monitorsApi.create(data));
-  const handleEdit = (data) => run(() => monitorsApi.update(selected.id, data));
-  const handleDelete = () => run(() => monitorsApi.delete(selected.id));
 
   const handleToggle = async (m) => {
     setActionError(null);
@@ -92,12 +78,6 @@ export function Dashboard() {
     } catch (e) {
       setActionError(e.message);
     }
-  };
-
-  const handleRegenerate = async () => {
-    const updated = await monitorsApi.regenerateToken(selected.id);
-    setSelected((s) => ({ ...s, ...updated }));
-    void refetch();
   };
 
   return (
@@ -274,39 +254,15 @@ export function Dashboard() {
         </Modal>
       )}
 
-      {modal === "edit" && selected && (
-        <Modal
-          title="Editar monitor"
-          subtitle={<TypeNote type={selected.type} />}
-          onClose={closeModal}
-        >
-          <MonitorForm
-            initial={selected}
-            onSubmit={handleEdit}
-            onCancel={closeModal}
-            onDelete={() => setModal("delete")}
-            onRegenerate={handleRegenerate}
-            loading={saving}
-          />
-        </Modal>
-      )}
-
-      {modal === "delete" && selected && (
-        <Modal title="Excluir monitor" onClose={closeModal}>
-          <p className="mb-5 text-pg-neblina">
-            Excluir <strong className="font-medium text-pg-ardosia">{selected.name}</strong>? O histórico de
-            checks e incidentes também é apagado. Esta ação não pode ser desfeita.
-          </p>
-          <div className="flex gap-2.5 justify-end">
-            <Button variant="ghost" onClick={closeModal}>
-              Cancelar
-            </Button>
-            <Button variant="danger" onClick={handleDelete} disabled={saving}>
-              {saving ? "Excluindo..." : "Excluir"}
-            </Button>
-          </div>
-        </Modal>
-      )}
+      <MonitorModals
+        modal={modal}
+        selected={selected}
+        onModalChange={setModal}
+        onSelectedChange={setSelected}
+        onClose={closeModal}
+        onSaved={refetch}
+        onDeleted={refetch}
+      />
     </div>
   );
 }

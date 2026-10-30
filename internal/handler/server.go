@@ -85,6 +85,7 @@ func (s *Server) registerRoutes() {
 	api.HandleFunc("POST /monitors/{id}/token", s.handleRegenerateToken)
 	api.HandleFunc("GET /monitors/{id}/checks", s.handleListMonitorChecks)
 	api.HandleFunc("GET /monitors/{id}/incidents", s.handleListMonitorIncidents)
+	api.HandleFunc("GET /monitors/{id}/stats", s.handleMonitorStats)
 
 	// incidents
 	api.HandleFunc("GET /incidents", s.handleListIncidents)

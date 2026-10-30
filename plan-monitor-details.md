@@ -41,31 +41,31 @@ Criar a rota `/monitors/:id` conforme [Detalhes.png](concept-design/Detalhes.png
 
 Este plano está concluído quando:
 
-- [ ] Todos os Success Criteria estão marcados
-- [ ] Build, lint e type-check passam
-- [ ] Nenhum item pendente no Status de Execução
-- [ ] Evidências de verificação registradas
+- [x] Todos os Success Criteria estão marcados
+- [x] Build, lint e type-check passam
+- [x] Nenhum item pendente no Status de Execução
+- [x] Evidências de verificação registradas
 
 > Revisar o plano se: escopo mudar, nova dependência for descoberta, ou mais de 2 tasks forem bloqueadas.
 
 ## Success Criteria
 
-- [ ] `GET /api/monitors/{id}/stats?range=24h|7d|14d|30d` responde em < 50 ms com 30 d de checks a 1 min (43 200 linhas) no SQLite local
-- [ ] `range` inválido → 400 `VALIDATION_ERROR`; monitor inexistente → 404
-- [ ] Uptime e média batem com um cálculo manual sobre os mesmos checks (teste)
-- [ ] Média de resposta usa **só checks com sucesso**; balde sem sucesso vem `null` e vira buraco na linha
-- [ ] Incidente que começou antes da janela ou ainda está aberto entra na contagem e tem a duração recortada à janela (teste)
-- [ ] `series` tem sempre o mesmo tamanho por janela (144 / 168 / 112 / 120 pontos), baldes vazios incluídos
-- [ ] Botões de período "24h", "7 dias", "14 dias", "30 dias"; os maiores que `retention_days` ficam desabilitados e mostram, no hover **e** no foco por teclado, o tooltip com o motivo e o link para Configurações
-- [ ] `?range=` acima da retenção (link antigo, retenção reduzida) cai no maior período permitido, sem request inválido
-- [ ] Tooltip do gráfico no hover, toque e setas do teclado: horário do intervalo, média, checks/falhas e "fora do ar" quando o ponto cai numa queda
-- [ ] Rota `/monitors/:id` bate com [Detalhes.png](concept-design/Detalhes.png) em 1440 px e é usável em 375 px sem scroll horizontal
-- [ ] Nome do monitor no painel e nos incidentes leva à página; "Painel" fica ativo na sidebar
-- [ ] Pausar/Retomar, Editar e Excluir funcionam na página (Excluir volta para `/`)
-- [ ] Heartbeat: sem card de resposta média e sem gráfico de latência (não há latência); TCP e HTTP com tudo
-- [ ] Estados: carregando, monitor não encontrado, monitor sem checks ainda, pausado, erro com "Tentar de novo"
-- [ ] Seletor de janela fica na URL (`?range=7d`) e sobrevive a F5
-- [ ] README documenta o `/stats`
+- [x] `GET /api/monitors/{id}/stats?range=24h|7d|14d|30d` responde em < 50 ms com 30 d de checks a 1 min (43 200 linhas) no SQLite local
+- [x] `range` inválido → 400 `VALIDATION_ERROR`; monitor inexistente → 404
+- [x] Uptime e média batem com um cálculo manual sobre os mesmos checks (teste)
+- [x] Média de resposta usa **só checks com sucesso**; balde sem sucesso vem `null` e vira buraco na linha
+- [x] Incidente que começou antes da janela ou ainda está aberto entra na contagem e tem a duração recortada à janela (teste)
+- [x] `series` tem sempre o mesmo tamanho por janela (144 / 168 / 112 / 120 pontos), baldes vazios incluídos
+- [x] Botões de período "24h", "7 dias", "14 dias", "30 dias"; os maiores que `retention_days` ficam desabilitados e mostram, no hover **e** no foco por teclado, o tooltip com o motivo e o link para Configurações
+- [x] `?range=` acima da retenção (link antigo, retenção reduzida) cai no maior período permitido, sem request inválido
+- [x] Tooltip do gráfico no hover, toque e setas do teclado: horário do intervalo, média, checks/falhas e "fora do ar" quando o ponto cai numa queda
+- [x] Rota `/monitors/:id` bate com [Detalhes.png](concept-design/Detalhes.png) em 1440 px e é usável em 375 px sem scroll horizontal
+- [x] Nome do monitor no painel e nos incidentes leva à página; "Painel" fica ativo na sidebar
+- [x] Pausar/Retomar, Editar e Excluir funcionam na página (Excluir volta para `/`)
+- [x] Heartbeat: sem card de resposta média e sem gráfico de latência (não há latência); TCP e HTTP com tudo
+- [x] Estados: carregando, monitor não encontrado, monitor sem checks ainda, pausado, erro com "Tentar de novo"
+- [x] Seletor de janela fica na URL (`?range=7d`) e sobrevive a F5
+- [x] README documenta o `/stats`
 
 ## Tech Stack
 
@@ -430,7 +430,7 @@ web/src/
 | Risk                                                  | Impact                                      | Mitigation                                                                                                       |
 | ----------------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `strftime('%s', checked_at)` por linha em 43 k linhas | `/stats?range=30d` lento                    | Filtro por índice antes do cálculo; medir em T12. Se > 50 ms, guardar `checked_at` epoch numa coluna (migration) |
-| Fuso: baldes em UTC, usuário em UTC-3                 | Balde de 6 h começa às 21:00 local          | Aceito: gráfico sem rótulos no eixo X, como no PNG                                                               |
+| Fuso: baldes em UTC, usuário em UTC-3                 | Balde de 6 h começa às 21:00 local          | Rótulos do eixo X em horário local (horas cheias / meia-noite); baldes seguem em UTC                                                               |
 | Janela maior que a retenção                           | Uptime "30 dias" calculado sobre 7          | Botão desabilitado + `clampRange` na URL (T15); a API não bloqueia, só a tela                                    |
 | Retenção acabou de subir (7 → 30)                     | "30 dias" habilitado com só 7 dias de dados | Aceito: o gráfico mostra buraco à esquerda, que é a verdade; os dados enchem com o tempo                         |
 | Tooltip do gráfico em telas de toque                  | Hover não existe                            | `pointerdown` fixa o ponto (T14); verificado em 375 px na T12                                                    |
@@ -466,15 +466,15 @@ graphify update .
 
 | Fase               | Tarefas                            | Complexity | Esforço | Target                                 | Status      |
 | ------------------ | ---------------------------------- | ---------- | ------- | -------------------------------------- | ----------- |
-| Fase 1 — API       | T1, T2, T3, T4, T5                 | L          | ~1 h 30 | `/stats` pronto e testado              | ⬜ Pendente |
-| Fase 2 — Tela      | T6, T7, T8, T9, T14, T15, T10, T11 | XL         | ~4 h    | Página igual ao PNG, 3 tipos, tooltips | ⬜ Pendente |
-| Fase 3 — Polimento | T12, T13                           | M          | ~45 min | QA e README                            | ⬜ Pendente |
+| Fase 1 — API       | T1, T2, T3, T4, T5                 | L          | ~1 h 30 | `/stats` pronto e testado              | ✅ Concluído |
+| Fase 2 — Tela      | T6, T7, T8, T9, T14, T15, T10, T11 | XL         | ~4 h    | Página igual ao PNG, 3 tipos, tooltips | ✅ Concluído |
+| Fase 3 — Polimento | T12, T13                           | M          | ~45 min | QA e README                            | ✅ Concluído |
 
 ## Status de Execução
 
 ### Concluído
 
--
+- T1 a T15
 
 ### Em andamento
 
@@ -482,7 +482,17 @@ graphify update .
 
 ### Pendente
 
-- T1 a T15
+-
+
+### Evidências (T12)
+
+- `go test ./...` verde; `npm run lint` e `npm run build` limpos
+- `/stats?range=30d` com 43 200 checks: ~28 ms no teste, ~35 ms via HTTP no binário; `EXPLAIN` usa `COVERING INDEX idx_checks_monitor_checked`
+- Playwright no binário real, banco semeado com 30 d: 1440 px lado a lado com o PNG; 375 px sem scroll horizontal (`scrollWidth = 375`)
+- HTTP, TCP com queda em andamento (faixa até a borda direita), heartbeat (sem card de resposta e sem gráfico), pausado, recém-criado, 404
+- Retenção 7: "14 dias"/"30 dias" com `aria-disabled`, tooltip no foco por teclado, Enter não muda a URL; `?range=30d` vira `?range=7d`; F5 mantém o período
+- Gráfico: hover mostra o tooltip; `Home`/`→` anunciam o ponto no `aria-live`
+- Retomar, excluir (volta para `/`), link do nome no painel, "Painel" ativo na sidebar
 
 ## Notes
 
@@ -492,7 +502,7 @@ graphify update .
 - Os incidentes listados no PNG (domingo, 24 out) estão fora da janela de 24 h, mas aparecem porque a lista "Incidentes" é **independente da janela** (são os 3 mais recentes). O card "Incidentes: 1" segue a janela. Manter essa diferença.
 - `last_error` dos incidentes já vem sem o prefixo `Get "<url>":` (corrigido no plano de incidentes).
 - "ver mais" dos checks pagina na própria página; não há página de histórico de checks.
-- `RowMenu` → "Ver histórico" continua indo para `/incidents?monitor=<id>`; o acesso à página de detalhe é pelo nome do monitor.
+- `RowMenu` → "Ver detalhes" leva à página de detalhe (escondido nela mesma); o histórico de incidentes do monitor é o link "Ver todos" da página.
 
 ### Alternativas consideradas e descartadas
 
@@ -506,3 +516,12 @@ graphify update .
 - Esconder os períodos acima da retenção → descartado: o usuário não descobriria que pode ter 30 dias mudando a retenção.
 - API rejeitar `range` acima da retenção → descartado: a retenção pode mudar entre dois requests; a regra fica na tela.
 - `title` nativo como tooltip → descartado: não aparece no foco por teclado nem em toque, e demora ~1 s.
+
+### Desvios na implementação
+
+- Incidente aberto termina em `now`, não em `until` (fim do balde corrente, no futuro): senão o "Tempo fora do ar" contaria minutos que ainda não passaram.
+- Escala Y em 3 passos de 100 ms arredondados (pico 402 → 0/200/400/600, como no PNG; pico 250 → 0/100/200/300), em vez de "múltiplos de 200": com 4 linhas fixas, múltiplos de 200 geravam rótulos quebrados (133 ms).
+- "ver mais" aumenta o `limit` do polling (8 → 28 → …, até 200, limite da API) em vez de paginar por `offset`: o polling de 15 s continua trazendo a lista inteira sem juntar páginas.
+- Tabela de checks mostra o dia quando o check não é de hoje ("Ontem, 21:07"): heartbeat diário ficava com 8 linhas de mesma hora.
+- `RANGES`/`clampRange` em `lib/ranges.js` (não no `RangeTabs.jsx`): a regra de lint do fast refresh proíbe exportar não-componentes do arquivo do componente.
+- Eixo X ganhou rótulos (24h: a cada 4 h; 7 d: diário; 14 d: a cada 2 dias; 30 d: a cada 5 dias), em horário local, e a legenda mostra o tamanho do balde ("média a cada 10 min"). O PNG não tinha; pedido depois da entrega. Abaixo de `sm` metade dos rótulos some.

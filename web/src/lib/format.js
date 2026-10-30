@@ -120,3 +120,44 @@ export function timeRange(startIso, endIso, now = Date.now()) {
   const start = long ? `${shortDate(new Date(startIso), now)}, ${clock(startIso)}` : clock(startIso);
   return `${start} → ${clock(endIso)}`;
 }
+
+// ── datas da página de detalhe ─────────────────────────────────────────────
+
+// fullDate → "20 out 2026, 14:32" (sempre com o ano e a hora)
+export function fullDate(iso) {
+  const d = new Date(iso);
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}, ${clock(iso)}`;
+}
+
+// dayMonth → "27 out" (rótulo do eixo X do gráfico)
+export function dayMonth(date) {
+  return `${date.getDate()} ${MONTHS[date.getMonth()]}`;
+}
+
+function dayWord(date, now) {
+  const diff = daysAgo(date, now);
+  if (diff === 0) return "Hoje";
+  if (diff === 1) return "Ontem";
+  if (diff > 1 && diff < 7) return WEEKDAYS[date.getDay()];
+  return shortDate(date, now);
+}
+
+// whenLabel → "Hoje, 10:12", "Ontem, 08:00", "Domingo, 19:05" (até 6 dias), "24 out, 03:20"
+export function whenLabel(iso, now = Date.now()) {
+  return `${dayWord(new Date(iso), now)}, ${clock(iso)}`;
+}
+
+// bucketLabel → "Hoje, 14:10 – 14:20", "27 out, 06:00 – 12:00". Balde que vira
+// a meia-noite leva só a data do início.
+export function bucketLabel(startIso, bucketSeconds, now = Date.now()) {
+  const end = new Date(new Date(startIso).getTime() + bucketSeconds * 1000).toISOString();
+  return `${whenLabel(startIso, now)} – ${clock(end)}`;
+}
+
+// checkTime → "14:02:41" hoje; "Ontem, 14:02", "24 out, 03:20" em outros dias
+export function checkTime(iso, now = Date.now()) {
+  if (daysAgo(new Date(iso), now) === 0) {
+    return new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  }
+  return whenLabel(iso, now);
+}

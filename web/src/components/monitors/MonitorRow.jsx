@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Globe, Server, Activity } from "lucide-react";
 import { Badge } from "../ui/Badge";
 import { HistoryBar } from "./HistoryBar";
@@ -31,7 +32,12 @@ export function MonitorRow({ monitor, now, onEdit, onToggle, onDelete }) {
         <Badge state={status} />
       </td>
       <td className={`${cell} max-w-0 w-full`}>
-        <div className={`text-pg-ui font-medium truncate ${muted}`}>{monitor.name}</div>
+        <Link
+          to={`/monitors/${monitor.id}`}
+          className={`block text-pg-ui font-medium truncate no-underline hover:underline focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano ${muted}`}
+        >
+          {monitor.name}
+        </Link>
         <div className="flex items-center gap-1.5 mt-0.5 text-pg-neblina min-w-0">
           <Icon size={14} aria-hidden="true" className="flex-shrink-0" />
           <span className="sr-only">{monitor.type.toUpperCase()}:</span>

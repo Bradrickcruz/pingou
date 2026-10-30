@@ -20,6 +20,7 @@ type CheckRepository interface {
 	FindByMonitor(ctx context.Context, monitorID string, limit, offset int) ([]*Check, int, error)
 	DeleteOlderThan(ctx context.Context, before string) (int64, error) // <- adiciona
 	Summaries(ctx context.Context, monitorIDs []string, historySize int, since time.Time) (map[string]*MonitorSummary, error)
+	Buckets(ctx context.Context, monitorID string, since, until time.Time, bucketSeconds int) ([]StatsBucket, error)
 }
 
 type IncidentRepository interface {
@@ -28,6 +29,7 @@ type IncidentRepository interface {
 	FindAll(ctx context.Context, filter IncidentFilter) ([]*Incident, int, error)
 	Close(ctx context.Context, id string, endedAt string, durationSeconds int) error
 	DeleteResolvedOlderThan(ctx context.Context, before string) (int64, error)
+	FindInWindow(ctx context.Context, monitorID string, since time.Time) ([]*Incident, error)
 }
 
 type MonitorFilter struct {

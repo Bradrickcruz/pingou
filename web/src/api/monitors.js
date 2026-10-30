@@ -13,4 +13,6 @@ export const monitorsApi = {
     client.get(`/monitors/${id}/checks`, { params }).then((r) => r.data),
   incidents: (id, params) =>
     client.get(`/monitors/${id}/incidents`, { params }).then((r) => r.data),
+  stats: (id, range) =>
+    client.get(`/monitors/${id}/stats`, { params: { range } }).then((r) => r.data),
 };
