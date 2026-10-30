@@ -1192,5 +1192,35 @@
     "seen": 1793366582.5577743,
     "ast_hash": "9d54c0d7d2deca5df16998f5fe085d8b",
     "semantic_hash": ""
+  },
+  "plan-mobile-redesign.md": {
+    "mtime": 1793369472.9696474,
+    "seen": 1793369480.1884449,
+    "ast_hash": "3fda10204b92083456be5383830fe18b",
+    "semantic_hash": ""
+  },
+  "concept-design/mobile-Configura\u00e7\u00f5es \u00b7 reten\u00e7\u00e3o alterada@1x.png": {
+    "mtime": 1793368778.5298958,
+    "seen": 1793369480.188498,
+    "ast_hash": "d20970b7a789c60e3f5d7d74c8e76884",
+    "semantic_hash": ""
+  },
+  "concept-design/mobile-Detalhe do monitor \u00b7 aberto pelo alerta@1x.png": {
+    "mtime": 1793369270.931334,
+    "seen": 1793369480.1884995,
+    "ast_hash": "3872c6ef8ab72d0cc206616a7850957d",
+    "semantic_hash": ""
+  },
+  "concept-design/mobile-Incidentes@1x.png": {
+    "mtime": 1793368778.5358956,
+    "seen": 1793369480.1885004,
+    "ast_hash": "b92f53ebd2ae6f504a0bba099b02dd66",
+    "semantic_hash": ""
+  },
+  "concept-design/mobile-Painel \u00b7 2 fora do ar (filtros funcionam)@1x.png": {
+    "mtime": 1793368778.5478952,
+    "seen": 1793369480.1885018,
+    "ast_hash": "0a14ae8ad4d61cf41864065429d696be",
+    "semantic_hash": ""
   }
 }

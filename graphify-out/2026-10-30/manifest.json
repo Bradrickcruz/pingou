@@ -300,9 +300,9 @@
     "semantic_hash": "3aa4b57d7f08181d86bde52a4dcb7f22"
   },
   "web/package.json": {
-    "mtime": 1793364585.8048692,
-    "seen": 1793364612.5470982,
-    "ast_hash": "c289d2aee9019a98a6bbd553126a0a6d",
+    "mtime": 1793366864.3566957,
+    "seen": 1793366866.1183567,
+    "ast_hash": "195c633b6e30889f4b61681cabbecdb3",
     "semantic_hash": ""
   },
   "web/postcss.config.js": {
@@ -396,15 +396,15 @@
     "semantic_hash": ""
   },
   "web/src/main.jsx": {
-    "mtime": 1793364606.033422,
-    "seen": 1793364612.5471754,
-    "ast_hash": "e2e6c8b63e31993ab89802b1f12f0db0",
+    "mtime": 1793366409.1346653,
+    "seen": 1793366582.5577672,
+    "ast_hash": "24d50eb476f53f83fc9e000145626759",
     "semantic_hash": ""
   },
   "web/src/pages/Dashboard.jsx": {
-    "mtime": 1793364606.033422,
-    "seen": 1793364612.547176,
-    "ast_hash": "39bd22ff63d8f5080b2f6f8e4d6ce5db",
+    "mtime": 1793366409.1346653,
+    "seen": 1793366582.557769,
+    "ast_hash": "a28ba346d4d4a80e9cb6a9fa5b20659f",
     "semantic_hash": ""
   },
   "web/src/pages/Incidents.jsx": {
@@ -1188,9 +1188,9 @@
     "semantic_hash": ""
   },
   "web/src/pages/MonitorDetail.jsx": {
-    "mtime": 1793364606.033422,
-    "seen": 1793364612.5471778,
-    "ast_hash": "e8fc02fe5306ec484144a7505737bbb4",
+    "mtime": 1793366409.1366658,
+    "seen": 1793366582.5577743,
+    "ast_hash": "9d54c0d7d2deca5df16998f5fe085d8b",
     "semantic_hash": ""
   }
 }
