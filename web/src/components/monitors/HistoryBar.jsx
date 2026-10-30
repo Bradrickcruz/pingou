@@ -1,6 +1,7 @@
 // Últimos N checks como barras: verde (no ar), vermelho (fora), cinza (sem dados).
 // history vem do mais antigo para o mais recente; completa à direita com cinza.
-export function HistoryBar({ history = [], size = 30, dimmed = false }) {
+// fluid: ocupa a largura toda (card do mobile) em vez dos 198 px da tabela.
+export function HistoryBar({ history = [], size = 30, dimmed = false, fluid = false }) {
   const bars = history.slice(-size);
   const empty = size - bars.length;
   const ok = bars.filter(Boolean).length;
@@ -12,7 +13,7 @@ export function HistoryBar({ history = [], size = 30, dimmed = false }) {
     <div
       role="img"
       aria-label={label}
-      className={`flex items-stretch gap-[2px] h-6 w-[198px] ${dimmed ? "opacity-50" : ""}`}
+      className={`flex items-stretch gap-[2px] h-6 ${fluid ? "w-full" : "w-[198px]"} ${dimmed ? "opacity-50" : ""}`}
     >
       {bars.map((success, i) => (
         <span

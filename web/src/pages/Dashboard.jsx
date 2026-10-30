@@ -5,6 +5,8 @@ import { useMonitors } from "../hooks/useMonitors";
 import { useNow } from "../hooks/useNow";
 import { monitorsApi } from "../api/monitors";
 import { MonitorRow } from "../components/monitors/MonitorRow";
+import { MonitorCard } from "../components/monitors/MonitorCard";
+import { MobileHeader } from "../components/layout/MobileHeader";
 import { MonitorForm } from "../components/monitors/MonitorForm";
 import { MonitorModals } from "../components/monitors/MonitorModals";
 import { StatusBanner } from "../components/monitors/StatusBanner";
@@ -86,9 +88,42 @@ export function Dashboard() {
     }
   };
 
+  const refreshButton = (
+    <button
+      type="button"
+      onClick={refetch}
+      disabled={isFetching}
+      aria-label="Atualizar lista de monitores"
+      aria-busy={isFetching}
+      className={`flex items-center justify-center w-11 h-11 rounded-pg-control border border-pg-borda bg-pg-branco transition-colors ${
+        isFetching ? "opacity-50 cursor-not-allowed" : "hover:bg-pg-nuvem"
+      }`}
+    >
+      <RefreshCw
+        size={16}
+        aria-hidden="true"
+        className={isFetching ? "animate-spin motion-reduce:animate-none" : ""}
+      />
+    </button>
+  );
+
   return (
     <div className="max-w-[1180px]">
-      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-7">
+      <MobileHeader
+        title="Monitores"
+        subtitle={updatedAt && `Atualizado ${timeAgo(updatedAt, now)}`}
+        actions={
+          <>
+            {refreshButton}
+            <Button onClick={() => setModal("create")} className="w-11 h-11 !p-0">
+              <Plus size={20} aria-hidden="true" />
+              <span className="sr-only">Novo monitor</span>
+            </Button>
+          </>
+        }
+      />
+
+      <div className="hidden md:flex md:flex-row gap-4 md:justify-between md:items-center mb-7">
         <h1 className="text-pg-h1 font-medium text-pg-ardosia my-0">Monitores</h1>
         <div className="flex items-center gap-3">
           {updatedAt && (
@@ -96,22 +131,7 @@ export function Dashboard() {
               Atualizado {timeAgo(updatedAt, now)}
             </span>
           )}
-          <button
-            type="button"
-            onClick={refetch}
-            disabled={isFetching}
-            aria-label="Atualizar lista de monitores"
-            aria-busy={isFetching}
-            className={`flex items-center justify-center w-11 h-11 rounded-pg-control border border-pg-borda bg-pg-branco transition-colors ${
-              isFetching ? "opacity-50 cursor-not-allowed" : "hover:bg-pg-nuvem"
-            }`}
-          >
-            <RefreshCw
-              size={16}
-              aria-hidden="true"
-              className={isFetching ? "animate-spin motion-reduce:animate-none" : ""}
-            />
-          </button>
+          {refreshButton}
           <Button onClick={() => setModal("create")} className="inline-flex items-center gap-1.5 h-11">
             <Plus size={16} aria-hidden="true" />
             Novo monitor
@@ -154,8 +174,12 @@ export function Dashboard() {
         <>
           <StatusBanner monitors={monitors} counts={counts} />
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5">
-            <div role="group" aria-label="Filtrar monitores" className="flex flex-wrap gap-2">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4 md:mb-5">
+            <div
+              role="group"
+              aria-label="Filtrar monitores"
+              className="no-scrollbar flex flex-nowrap overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible gap-2"
+            >
               {FILTERS.map((f) => {
                 const on = filter === f.key;
                 return (
@@ -164,7 +188,7 @@ export function Dashboard() {
                     type="button"
                     aria-pressed={on}
                     onClick={() => setFilter(f.key)}
-                    className={`px-4 py-2 rounded-full border text-pg-ui transition-colors duration-150 focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano ${
+                    className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-full border text-pg-ui transition-colors duration-150 focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano ${
                       on
                         ? "bg-pg-ardosia border-pg-ardosia text-pg-branco"
                         : "bg-pg-branco border-pg-borda text-pg-ardosia hover:bg-pg-nuvem"
@@ -194,7 +218,16 @@ export function Dashboard() {
             )}
           </div>
 
-          <div className="rounded-pg-card border border-pg-borda bg-pg-branco">
+          <ul className="md:hidden flex flex-col gap-3">
+            {visible.map((m) => (
+              <MonitorCard key={m.id} monitor={m} now={now} />
+            ))}
+            {visible.length === 0 && (
+              <li className="py-10 text-center text-pg-ui text-pg-neblina">Nenhum monitor neste filtro.</li>
+            )}
+          </ul>
+
+          <div className="hidden md:block rounded-pg-card border border-pg-borda bg-pg-branco">
             <table className="w-full border-collapse text-left">
               <caption className="sr-only">Monitores, ordenados por gravidade</caption>
               <thead>

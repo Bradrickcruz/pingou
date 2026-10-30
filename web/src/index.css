@@ -107,3 +107,12 @@
     @apply font-mono inline-flex rounded text-pg-ciano-fundo text-pg-ui leading-[135%] py-1 px-2 bg-pg-ciano-nevoa;
   }
 }
+@layer utilities {
+  /* linhas roláveis na horizontal (chips do mobile) sem barra visível */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
