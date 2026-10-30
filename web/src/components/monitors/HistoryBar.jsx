@@ -1,5 +1,5 @@
 // Últimos N checks como barras: verde (no ar), vermelho (fora), cinza (sem dados).
-// history vem do mais antigo para o mais recente; completa à direita com cinza.
+// history vem do mais antigo para o mais recente; completa à esquerda com cinza, o mais recente na ponta direita.
 // fluid: ocupa a largura toda (card do mobile) em vez dos 198 px da tabela.
 export function HistoryBar({
   history = [],
@@ -20,14 +20,14 @@ export function HistoryBar({
       aria-label={label}
       className={`flex items-stretch gap-[2px] h-6 ${fluid ? "w-full" : "w-[198px]"} ${dimmed ? "opacity-50" : ""}`}
     >
+      {Array.from({ length: empty }, (_, i) => (
+        <span key={`e${i}`} className="flex-1 rounded-[1px] bg-pg-borda" />
+      ))}
       {bars.map((success, i) => (
         <span
           key={i}
           className={`flex-1 rounded-[1px] ${success ? "bg-pg-up" : "bg-pg-down"}`}
         />
-      ))}
-      {Array.from({ length: empty }, (_, i) => (
-        <span key={`e${i}`} className="flex-1 rounded-[1px] bg-pg-borda" />
       ))}
     </div>
   );
