@@ -166,7 +166,7 @@ function Performance({ monitor, stats, statsError, range, onRange, retentionDays
         <div className="p-4 sm:p-5 rounded-pg-card border border-pg-borda bg-pg-branco">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
             <h3 className="text-pg-ui font-medium text-pg-ardosia my-0">Tempo de resposta</h3>
-            <ChartLegend />
+            <ChartLegend bucketSeconds={stats?.bucket_seconds} />
           </div>
           {stats ? (
             <ResponseChart stats={stats} now={now} />

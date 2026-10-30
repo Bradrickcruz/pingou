@@ -430,7 +430,7 @@ web/src/
 | Risk                                                  | Impact                                      | Mitigation                                                                                                       |
 | ----------------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `strftime('%s', checked_at)` por linha em 43 k linhas | `/stats?range=30d` lento                    | Filtro por índice antes do cálculo; medir em T12. Se > 50 ms, guardar `checked_at` epoch numa coluna (migration) |
-| Fuso: baldes em UTC, usuário em UTC-3                 | Balde de 6 h começa às 21:00 local          | Aceito: gráfico sem rótulos no eixo X, como no PNG                                                               |
+| Fuso: baldes em UTC, usuário em UTC-3                 | Balde de 6 h começa às 21:00 local          | Rótulos do eixo X em horário local (horas cheias / meia-noite); baldes seguem em UTC                                                               |
 | Janela maior que a retenção                           | Uptime "30 dias" calculado sobre 7          | Botão desabilitado + `clampRange` na URL (T15); a API não bloqueia, só a tela                                    |
 | Retenção acabou de subir (7 → 30)                     | "30 dias" habilitado com só 7 dias de dados | Aceito: o gráfico mostra buraco à esquerda, que é a verdade; os dados enchem com o tempo                         |
 | Tooltip do gráfico em telas de toque                  | Hover não existe                            | `pointerdown` fixa o ponto (T14); verificado em 375 px na T12                                                    |
@@ -524,3 +524,4 @@ graphify update .
 - "ver mais" aumenta o `limit` do polling (8 → 28 → …, até 200, limite da API) em vez de paginar por `offset`: o polling de 15 s continua trazendo a lista inteira sem juntar páginas.
 - Tabela de checks mostra o dia quando o check não é de hoje ("Ontem, 21:07"): heartbeat diário ficava com 8 linhas de mesma hora.
 - `RANGES`/`clampRange` em `lib/ranges.js` (não no `RangeTabs.jsx`): a regra de lint do fast refresh proíbe exportar não-componentes do arquivo do componente.
+- Eixo X ganhou rótulos (24h: a cada 4 h; 7 d: diário; 14 d: a cada 2 dias; 30 d: a cada 5 dias), em horário local, e a legenda mostra o tamanho do balde ("média a cada 10 min"). O PNG não tinha; pedido depois da entrega. Abaixo de `sm` metade dos rótulos some.

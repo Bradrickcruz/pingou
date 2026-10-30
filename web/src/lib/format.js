@@ -129,6 +129,11 @@ export function fullDate(iso) {
   return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
+// dayMonth → "27 out" (rótulo do eixo X do gráfico)
+export function dayMonth(date) {
+  return `${date.getDate()} ${MONTHS[date.getMonth()]}`;
+}
+
 function dayWord(date, now) {
   const diff = daysAgo(date, now);
   if (diff === 0) return "Hoje";

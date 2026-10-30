@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { bucketLabel, plural } from "../../lib/format";
+import { bucketLabel, clock, dayMonth, formatDuration, plural } from "../../lib/format";
 
 const W = 1000; // viewBox; o SVG estica na largura (preserveAspectRatio="none")
 const H = 200;
@@ -25,6 +25,28 @@ function linePath(series, xOf, yOf) {
     pen = true;
   });
   return d;
+}
+
+// Marcas do eixo X em horários "redondos" no fuso local: a cada 4 h na janela
+// de 24 h; à meia-noite a cada 1, 2 ou 5 dias nas maiores (~6 a 7 rótulos).
+function axisTicks(since, until) {
+  const start = new Date(since);
+  const end = new Date(until);
+  const days = (end - start) / 86_400_000;
+  const ticks = [];
+  if (days <= 1) {
+    const t = new Date(start);
+    t.setMinutes(0, 0, 0);
+    t.setHours(Math.ceil((t < start ? t.getHours() + 1 : t.getHours()) / 4) * 4);
+    for (; t < end; t.setHours(t.getHours() + 4)) ticks.push({ t: new Date(t), label: clock(t) });
+    return ticks;
+  }
+  const step = days <= 7 ? 1 : days <= 14 ? 2 : 5;
+  const t = new Date(start);
+  t.setHours(0, 0, 0, 0);
+  if (t < start) t.setDate(t.getDate() + 1);
+  for (; t < end; t.setDate(t.getDate() + step)) ticks.push({ t: new Date(t), label: dayMonth(t) });
+  return ticks;
 }
 
 function isDown(bucket, bucketSeconds, down) {
@@ -104,7 +126,7 @@ export function ResponseChart({ stats, now }) {
     : "";
 
   return (
-    <div className="flex gap-3">
+    <div className="flex gap-3 pb-6">
       {/* rótulos do eixo Y em HTML: texto não deforma com o SVG */}
       <div className="relative w-12 flex-shrink-0 h-[200px] text-pg-caption text-pg-neblina tabular-nums" aria-hidden="true">
         {ticks.map((t) => (
@@ -209,6 +231,21 @@ export function ResponseChart({ stats, now }) {
             </div>
           </>
         )}
+        {/* eixo X: rótulos que encostariam nas bordas do card ficam de fora */}
+        <div className="absolute left-0 right-0 top-full mt-2 h-4 text-pg-caption text-pg-neblina tabular-nums" aria-hidden="true">
+          {axisTicks(since, until)
+            .map(({ t, label }) => ({ label, pct: (xAt(t) / W) * 100 }))
+            .filter(({ pct }) => pct > 4 && pct < 96)
+            .map(({ label, pct }, i) => (
+              <span
+                key={label}
+                className={`absolute -translate-x-1/2 whitespace-nowrap ${i % 2 ? "hidden sm:inline" : ""}`}
+                style={{ left: `${pct}%` }}
+              >
+                {label}
+              </span>
+            ))}
+        </div>
         <div role="status" aria-live="polite" className="sr-only">
           {tipText}
         </div>
@@ -217,11 +254,12 @@ export function ResponseChart({ stats, now }) {
   );
 }
 
-export function ChartLegend() {
+export function ChartLegend({ bucketSeconds }) {
   return (
     <div className="flex gap-4 text-pg-caption text-pg-neblina" aria-hidden="true">
       <span className="inline-flex items-center gap-1.5">
-        <span className="w-3.5 h-0.5 rounded bg-pg-ciano" /> média por intervalo
+        <span className="w-3.5 h-0.5 rounded bg-pg-ciano" />{" "}
+        {bucketSeconds ? `média a cada ${formatDuration(bucketSeconds)}` : "média por intervalo"}
       </span>
       <span className="inline-flex items-center gap-1.5">
         <span className="w-3 h-3 rounded-[2px] border border-pg-down bg-pg-down-bg" /> fora do ar
