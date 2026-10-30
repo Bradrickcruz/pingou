@@ -473,13 +473,13 @@ make dev   # abrir em 390 px (DevTools) e comparar com concept-design/mobile-*.p
 
 | Fase                  | Tarefas       | Complexity | Esforço | Target                        | Status      |
 | --------------------- | ------------- | ---------- | ------- | ----------------------------- | ----------- |
-| Fase 0: Dados         | T1            | S          | ~15 min | Payload confirmado            | ⬜ Pendente |
-| Fase 1: Shell         | T2            | M          | ~30 min | Barra inferior + header       | ⬜ Pendente |
-| Fase 2: Painel        | T3, T4        | M + L      | ~1 h 30 | Painel igual ao mockup        | ⬜ Pendente |
-| Fase 3: Incidentes    | T5, T6        | M + M      | ~1 h    | Incidentes igual ao mockup    | ⬜ Pendente |
-| Fase 4: Configurações | T7, T8        | M + M      | ~1 h    | Configurações igual ao mockup | ⬜ Pendente |
-| Fase 4b: Detalhe      | T11, T12, T13 | M + M + M  | ~1 h 30 | Detalhe igual ao mockup       | ⬜ Pendente |
-| Fase 5: Polimento     | T9, T10       | S + M      | ~45 min | A11y + QA + regressão         | ⬜ Pendente |
+| Fase 0: Dados         | T1            | S          | ~15 min | Payload confirmado            | ✅ Concluído |
+| Fase 1: Shell         | T2            | M          | ~30 min | Barra inferior + header       | ✅ Concluído |
+| Fase 2: Painel        | T3, T4        | M + L      | ~1 h 30 | Painel igual ao mockup        | ✅ Concluído |
+| Fase 3: Incidentes    | T5, T6        | M + M      | ~1 h    | Incidentes igual ao mockup    | ✅ Concluído |
+| Fase 4: Configurações | T7, T8        | M + M      | ~1 h    | Configurações igual ao mockup | ✅ Concluído |
+| Fase 4b: Detalhe      | T11, T12, T13 | M + M + M  | ~1 h 30 | Detalhe igual ao mockup       | ✅ Concluído |
+| Fase 5: Polimento     | T9, T10       | S + M      | ~45 min | A11y + QA + regressão         | ✅ Concluído |
 
 > Fases 2, 3, 4 e 4b são independentes entre si (só dependem da Fase 1) e podem rodar em paralelo. Dentro da 4b, T12 e T13 rodam em paralelo depois da T11.
 
@@ -487,7 +487,9 @@ make dev   # abrir em 390 px (DevTools) e comparar com concept-design/mobile-*.p
 
 ### Concluído
 
--
+- T1: `GET /api/monitors` **não** tinha os campos. Adicionados `last_error` e `down_since` (só DOWN, do incidente aberto, uma query para a lista via `FindOpenByMonitors`), com teste e README
+- T2 a T8, T11 a T13: implementados, um commit por fase
+- T9/T10: conferidos 360/390/430/600 px (sem scroll horizontal, barra visível) e comparação pixel a pixel do desktop (1280 e 800 px) contra `develop`: diferenças só de dados e "em aberto"
 
 ### Em andamento
 
@@ -495,7 +497,7 @@ make dev   # abrir em 390 px (DevTools) e comparar com concept-design/mobile-*.p
 
 ### Pendente
 
-- T1 a T13
+- Teste em dispositivo real (teclado virtual com a barra "Alterações não salvas", safe-area no iPhone, leitor de tela)
 
 ## Notes
 
@@ -504,6 +506,7 @@ make dev   # abrir em 390 px (DevTools) e comparar com concept-design/mobile-*.p
 - Mobile = `< 768 px` (`md`). Tudo que é exclusivo de um lado usa classes `md:` (`hidden md:flex`, `md:hidden`); nenhum `matchMedia`.
 - Os mockups são de 390 px de largura (@1x). Comparar nessa largura.
 - O mockup do Painel mostra a barra de abas sobre o último card ("Backup diário"): o `main` precisa de `pb-24` para o fim da lista ficar alcançável.
+- Decisões na execução: o aviso de retenção aparece também no desktop (protege ação irreversível); a cópia do teste de webhook mudou nos dois layouts (como previsto na T7); a faixa cinza "sem dados" do gráfico é só mobile; o `RowMenu` mantém 40 px (componente compartilhado com a tabela).
 - Itens deixados de fora por não aparecerem nos mockups: busca (≥ 10 monitores), menu `⋯` no card, `Ver formato do JSON` e o "Baixar backup (.db)" com nome de arquivo. Os dois últimos continuam no desktop; no mobile, o link do JSON fica na descrição do card (é um link inline, sem custo de espaço).
 
 ### Alternativas consideradas e descartadas
