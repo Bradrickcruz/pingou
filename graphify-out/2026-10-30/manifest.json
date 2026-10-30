@@ -80,13 +80,13 @@
   "internal/database/migrations/0001_init.sql": {
     "mtime": 1777012405.3893824,
     "seen": 1793381322.6324701,
-    "ast_hash": "cdf3d4043c780543a27d4cc148cf5555",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "internal/database/migrations/0002_add_duration_seconds_to_incidents.sql": {
     "mtime": 1777061129.9355462,
     "seen": 1793381322.632471,
-    "ast_hash": "ab52761c5aed638df004b2cddba66e83",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "internal/domain/check.go": {
@@ -342,9 +342,9 @@
     "semantic_hash": ""
   },
   "web/src/components/monitors/MonitorForm.jsx": {
-    "mtime": 1793381630.0543334,
-    "seen": 1793381809.9085333,
-    "ast_hash": "2d97f08a454fac0a089bf959d5e103d3",
+    "mtime": 1793383255.5464594,
+    "seen": 1793383287.753422,
+    "ast_hash": "fbb50326c052524e80420a7334ca2ae4",
     "semantic_hash": ""
   },
   "web/src/components/ui/Badge.jsx": {
@@ -920,7 +920,7 @@
   "internal/database/migrations/0003_monitor_types.sql": {
     "mtime": 1793381619.2904093,
     "seen": 1793381809.9084444,
-    "ast_hash": "acc29bbbdeb940baaf9ab1e94647b53e",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "internal/database/migrations_test.go": {
@@ -984,9 +984,9 @@
     "semantic_hash": ""
   },
   "web/src/components/monitors/RowMenu.jsx": {
-    "mtime": 1793381784.0732002,
-    "seen": 1793381809.9085367,
-    "ast_hash": "25606a8f94fa80c5e57677927d446210",
+    "mtime": 1793383257.1014328,
+    "seen": 1793383287.7534783,
+    "ast_hash": "bc21c35f35903627cfd53e3c82bcc783",
     "semantic_hash": ""
   },
   "web/src/components/monitors/StatusBanner.jsx": {
@@ -1014,9 +1014,9 @@
     "semantic_hash": ""
   },
   "web/src/lib/monitors.js": {
-    "mtime": 1793381784.2631989,
-    "seen": 1793381809.908561,
-    "ast_hash": "803a7bd5240e5bb6a7a062abbbabf65f",
+    "mtime": 1793383253.2044997,
+    "seen": 1793383287.7540646,
+    "ast_hash": "456bd4b95dba4b483055158c770f741a",
     "semantic_hash": ""
   },
   "plan-incidents-page.md": {
@@ -1052,7 +1052,7 @@
   "internal/database/migrations/0004_incidents_page.sql": {
     "mtime": 1793381619.2904093,
     "seen": 1793381809.9084458,
-    "ast_hash": "b6bac1548426042243e703bf72f471e7",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "plan-settings-page.md": {
@@ -1182,9 +1182,9 @@
     "semantic_hash": ""
   },
   "web/src/pages/MonitorDetail.jsx": {
-    "mtime": 1793382107.7096028,
-    "seen": 1793382133.7428534,
-    "ast_hash": "51daa4aa4520e63e30830548238a107c",
+    "mtime": 1793383258.654406,
+    "seen": 1793383287.75421,
+    "ast_hash": "464edd412312749414c891b1a71a16a0",
     "semantic_hash": ""
   },
   "plan-mobile-redesign.md": {
