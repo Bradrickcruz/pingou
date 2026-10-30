@@ -11,13 +11,12 @@ import (
 )
 
 type RetentionWorker struct {
-	checks    domain.CheckRepository
-	incidents domain.IncidentRepository
-	settings  *repository.SettingsRepo
+	checks   domain.CheckRepository
+	settings *repository.SettingsRepo
 }
 
-func NewRetentionWorker(checks domain.CheckRepository, incidents domain.IncidentRepository, settings *repository.SettingsRepo) *RetentionWorker {
-	return &RetentionWorker{checks: checks, incidents: incidents, settings: settings}
+func NewRetentionWorker(checks domain.CheckRepository, settings *repository.SettingsRepo) *RetentionWorker {
+	return &RetentionWorker{checks: checks, settings: settings}
 }
 
 func (w *RetentionWorker) Start(ctx context.Context) {
@@ -43,6 +42,7 @@ func (w *RetentionWorker) run(ctx context.Context) {
 	}
 }
 
+// purge apaga só os checks; incidentes são histórico e nunca expiram.
 func (w *RetentionWorker) purge(ctx context.Context) {
 	retentionStr, err := w.settings.Get(ctx, "retention_days")
 	if err != nil {
@@ -71,19 +71,5 @@ func (w *RetentionWorker) purge(ctx context.Context) {
 		)
 	} else {
 		slog.Debug("retention worker: nothing to purge", "retention_days", days)
-	}
-
-	// incidentes abertos nunca expiram, só os resolvidos
-	deleted, err = w.incidents.DeleteResolvedOlderThan(ctx, before)
-	if err != nil {
-		slog.Error("retention worker: incident purge failed", "err", err)
-		return
-	}
-	if deleted > 0 {
-		slog.Info("retention worker: purged old incidents",
-			"deleted", deleted,
-			"retention_days", days,
-			"before", before,
-		)
 	}
 }

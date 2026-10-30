@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { incidentsApi } from "../api/incidents";
 import { monitorsApi } from "../api/monitors";
 import { useNow } from "../hooks/useNow";
-import { useSettings } from "../hooks/useSettings";
 import { OpenIncidentCard } from "../components/incidents/OpenIncidentCard";
 import { ResolvedTable } from "../components/incidents/ResolvedTable";
 import { Button } from "../components/ui/Button";
@@ -168,7 +167,6 @@ export function Incidents() {
   const monitorId = params.get("monitor") ?? "";
 
   const now = useNow(1000);
-  const { settings } = useSettings();
   const [monitors, setMonitors] = useState([]);
   const open = useOpenIncidents(monitorId);
   const resolved = useResolvedIncidents(monitorId);
@@ -195,7 +193,6 @@ export function Incidents() {
       { replace: true },
     );
 
-  const days = settings?.retention_days;
   const selected = monitors.find((m) => m.id === monitorId);
   const showOpen = tab !== "resolved";
   const showResolved = tab !== "open";
@@ -208,16 +205,6 @@ export function Incidents() {
       </h1>
       <p className="hidden md:block mt-2 mb-6 text-pg-ui text-pg-neblina">
         Cada vez que um monitor caiu e quando voltou.
-        {days && (
-          <>
-            {" "}
-            Guardados por {days} dias (
-            <Link to="/settings" className="text-pg-ciano-fundo underline">
-              mudar em Configurações
-            </Link>
-            ).
-          </>
-        )}
       </p>
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6 md:mb-7">
@@ -310,7 +297,7 @@ export function Incidents() {
               {selected
                 ? `${selected.name} não teve incidentes resolvidos`
                 : "Nenhum incidente resolvido"}
-              {days ? ` nos últimos ${days} dias.` : "."}
+              .
             </Empty>
           ) : (
             <>

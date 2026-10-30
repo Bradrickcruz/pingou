@@ -10,7 +10,7 @@ export function RetentionCard({ value, savedValue, onChange, databaseSize }) {
   return (
     <Card
       title="Retenção de dados"
-      description="Por quanto tempo o Pingou guarda checks e incidentes. Checks e incidentes resolvidos mais antigos que isso são apagados automaticamente. Incidentes abertos nunca. Prazos maiores deixam o banco maior."
+      description="Por quanto tempo o Pingou guarda os checks. Checks mais antigos que isso são apagados automaticamente; os incidentes são mantidos. Prazos maiores deixam o banco maior."
     >
       <fieldset className="min-w-0 border-0 p-0 m-0">
         <legend className="sr-only">Retenção (dias)</legend>
@@ -58,7 +58,7 @@ export function RetentionCard({ value, savedValue, onChange, databaseSize }) {
             className="shrink-0 mt-px"
           />
           <span>
-            Ao salvar, checks e incidentes resolvidos com mais de{" "}
+            Ao salvar, checks com mais de{" "}
             <strong className="font-medium">{value} dias</strong> serão
             apagados. Isso não pode ser desfeito.
           </span>

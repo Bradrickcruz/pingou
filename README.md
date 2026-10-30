@@ -99,7 +99,7 @@ Um novo tipo de check só entra no Pingou se passar nas quatro perguntas:
 - Página de detalhe por monitor (`/monitors/:id`): uptime, resposta média, incidentes e tempo fora do ar em 24h / 7 / 14 / 30 dias, gráfico de tempo de resposta, últimos checks e configuração
 - Login com API Key
 - Webhook global para quedas e recuperações
-- Retenção configurável: checks e incidentes resolvidos expiram após `retention_days` (incidentes abertos nunca). A limpeza roda na subida e a cada 1 h
+- Retenção configurável: checks expiram após `retention_days`; incidentes são mantidos. A limpeza roda na subida e a cada 1 h
 - Export do banco SQLite
 - Atomicidade na state machine (transações SQL)
 

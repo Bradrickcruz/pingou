@@ -124,17 +124,6 @@ func (r *IncidentRepo) FindAll(ctx context.Context, f domain.IncidentFilter) ([]
 	return incidents, total, rows.Err()
 }
 
-// DeleteResolvedOlderThan apaga incidentes resolvidos antes de `before`.
-// Incidentes abertos nunca são apagados.
-func (r *IncidentRepo) DeleteResolvedOlderThan(ctx context.Context, before string) (int64, error) {
-	res, err := r.db.ExecContext(ctx,
-		`DELETE FROM incidents WHERE ended_at IS NOT NULL AND ended_at < ?`, before)
-	if err != nil {
-		return 0, err
-	}
-	return res.RowsAffected()
-}
-
 type incidentFields struct {
 	notifSent       int
 	startedAt       string

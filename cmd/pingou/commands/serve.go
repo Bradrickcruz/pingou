@@ -117,7 +117,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 	}
 
 	// Retention worker
-	retention := scheduler.NewRetentionWorker(checkRepository, incidentRepository, settingsRepository)
+	retention := scheduler.NewRetentionWorker(checkRepository, settingsRepository)
 	retention.Start(ctx)
 
 	// Inicia server

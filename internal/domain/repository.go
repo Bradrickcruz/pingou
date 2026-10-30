@@ -29,7 +29,6 @@ type IncidentRepository interface {
 	FindOpenByMonitors(ctx context.Context, monitorIDs []string) (map[string]*Incident, error)
 	FindAll(ctx context.Context, filter IncidentFilter) ([]*Incident, int, error)
 	Close(ctx context.Context, id string, endedAt string, durationSeconds int) error
-	DeleteResolvedOlderThan(ctx context.Context, before string) (int64, error)
 	FindInWindow(ctx context.Context, monitorID string, since time.Time) ([]*Incident, error)
 }
 
