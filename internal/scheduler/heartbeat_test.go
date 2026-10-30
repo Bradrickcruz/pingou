@@ -50,8 +50,8 @@ func TestHeartbeatLifecycle(t *testing.T) {
 		t.Fatal("heartbeat não deveria ter job de check ativo")
 	}
 
-	// antes do primeiro ping: UNKNOWN, mesmo muito depois
-	e.sched.checkHeartbeats(ctx, time.Now().Add(365*24*time.Hour))
+	// antes do primeiro ping, dentro do prazo desde a criação: UNKNOWN
+	e.sched.checkHeartbeats(ctx, m.UpdatedAt)
 	if got := e.load(t, m.ID); got.CurrentState != domain.StateUnknown || e.countChecks(t, m.ID) != 0 {
 		t.Fatalf("sem ping: state=%s checks=%d, want UNKNOWN e 0", got.CurrentState, e.countChecks(t, m.ID))
 	}
@@ -95,6 +95,44 @@ func TestHeartbeatLifecycle(t *testing.T) {
 	open, _ := repository.NewIncidentRepo(e.db).FindOpenByMonitor(ctx, m.ID)
 	if open != nil {
 		t.Fatal("incidente continua aberto após o ping")
+	}
+}
+
+// Criado e nunca pingado ("esqueci o curl"): vence o prazo contado da criação.
+func TestHeartbeatNeverPingedGoesDown(t *testing.T) {
+	e := newEnv(t, true)
+	ctx := context.Background()
+	m := newHeartbeat(t, e)
+
+	late := m.UpdatedAt.Add(time.Duration(m.IntervalSeconds+m.Config.GraceSeconds+1) * e.sched.intervalUnit)
+	e.sched.checkHeartbeats(ctx, late)
+	if got := e.load(t, m.ID); got.CurrentState != domain.StateDown || e.notifier.downs.Load() != 1 {
+		t.Fatalf("sem ping após o prazo: state=%s downs=%d, want DOWN e 1", got.CurrentState, e.notifier.downs.Load())
+	}
+}
+
+// Prazo que venceu com o Pingou fora do ar não vira DOWN no restart: ganha
+// mais um intervalo + grace a partir da subida.
+func TestHeartbeatDeadlineMissedWhileOffline(t *testing.T) {
+	e := newEnv(t, true)
+	ctx := context.Background()
+	m := newHeartbeat(t, e)
+	if err := e.svc.Ping(ctx, *m.PingToken); err != nil {
+		t.Fatal(err)
+	}
+	got := e.load(t, m.ID)
+
+	window := time.Duration(m.IntervalSeconds+m.Config.GraceSeconds) * e.sched.intervalUnit
+	e.sched.startedAt = e.afterDeadline(got).Add(time.Hour) // subiu bem depois do prazo
+
+	e.sched.checkHeartbeats(ctx, e.sched.startedAt.Add(window/2))
+	if got := e.load(t, m.ID); got.CurrentState != domain.StateUp {
+		t.Fatalf("prazo vencido offline gerou alarme: state=%s, want UP", got.CurrentState)
+	}
+
+	e.sched.checkHeartbeats(ctx, e.sched.startedAt.Add(window+time.Millisecond))
+	if got := e.load(t, m.ID); got.CurrentState != domain.StateDown {
+		t.Fatalf("sem ping após a subida + prazo: state=%s, want DOWN", got.CurrentState)
 	}
 }
 

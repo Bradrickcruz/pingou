@@ -31,6 +31,7 @@ type Scheduler struct {
 	intervalUnit   time.Duration   // unidade de interval_seconds; testes reduzem para rodar rápido
 	heartbeatTick  time.Duration   // frequência do avaliador de prazos do heartbeat
 	rootCtx        context.Context // contexto de vida dos jobs (definido em Start)
+	startedAt      time.Time       // prazos vencidos antes disso venceram com o Pingou fora do ar
 	stopHeartbeats context.CancelFunc
 }
 
@@ -62,6 +63,7 @@ func NewScheduler(
 func (s *Scheduler) Start(ctx context.Context) error {
 	s.mu.Lock()
 	s.rootCtx = ctx
+	s.startedAt = time.Now()
 	hbCtx, cancel := context.WithCancel(ctx)
 	s.stopHeartbeats = cancel
 	s.mu.Unlock()

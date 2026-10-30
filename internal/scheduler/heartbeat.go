@@ -58,12 +58,23 @@ func (s *Scheduler) checkHeartbeats(ctx context.Context, now time.Time) {
 }
 
 // heartbeatExpired: venceu interval + grace desde o último ping. Gera no máximo
-// uma falha por queda (já DOWN não gera de novo) e nunca antes do primeiro ping
-// (fica UNKNOWN).
+// uma falha por queda (já DOWN não gera de novo).
 func (s *Scheduler) heartbeatExpired(m *domain.Monitor, now time.Time) bool {
-	if m.LastPingAt == nil || m.CurrentState == domain.StateDown {
+	if m.CurrentState == domain.StateDown {
 		return false
 	}
-	deadline := m.LastPingAt.Add(time.Duration(m.IntervalSeconds+m.Config.GraceSeconds) * s.intervalUnit)
+	// sem nenhum ping, conta da criação ou da última edição/retomada (updated_at;
+	// sem ping não há checks que o mexam): "esqueci o curl" também alerta
+	base := m.UpdatedAt
+	if m.LastPingAt != nil {
+		base = *m.LastPingAt
+	}
+	window := time.Duration(m.IntervalSeconds+m.Config.GraceSeconds) * s.intervalUnit
+	deadline := base.Add(window)
+	// venceu com o Pingou fora do ar: o ping pode ter se perdido. Espera a
+	// próxima execução da tarefa em vez de dar alarme falso.
+	if deadline.Before(s.startedAt) {
+		deadline = s.startedAt.Add(window)
+	}
 	return now.After(deadline)
 }
