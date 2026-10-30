@@ -42,9 +42,9 @@
     "semantic_hash": "941647837c337f068374aaf2dc68d499"
   },
   "cmd/pingou/commands/serve.go": {
-    "mtime": 1793289119.8169777,
-    "seen": 1793302041.8766084,
-    "ast_hash": "15050810a1ca02510f573dee8ef012b3",
+    "mtime": 1793363131.2529476,
+    "seen": 1793363153.9373496,
+    "ast_hash": "18f713b57206b27a25b335935c9928c7",
     "semantic_hash": ""
   },
   "cmd/pingou/main.go": {
@@ -66,9 +66,9 @@
     "semantic_hash": ""
   },
   "internal/config/config.go": {
-    "mtime": 1793289119.8319778,
-    "seen": 1793302041.8766315,
-    "ast_hash": "a507f57cc2b439299857ed94c5037b36",
+    "mtime": 1793363131.2529476,
+    "seen": 1793363153.9374928,
+    "ast_hash": "d0a342c4347e1bd5875700eb69b3d179",
     "semantic_hash": ""
   },
   "internal/database/database.go": {
@@ -79,14 +79,14 @@
   },
   "internal/database/migrations/0001_init.sql": {
     "mtime": 1777012405.3893824,
-    "seen": 1793302041.8766367,
-    "ast_hash": "",
+    "seen": 1793363284.7310455,
+    "ast_hash": "cdf3d4043c780543a27d4cc148cf5555",
     "semantic_hash": ""
   },
   "internal/database/migrations/0002_add_duration_seconds_to_incidents.sql": {
     "mtime": 1777061129.9355462,
-    "seen": 1793302041.8766387,
-    "ast_hash": "",
+    "seen": 1793363284.7310467,
+    "ast_hash": "ab52761c5aed638df004b2cddba66e83",
     "semantic_hash": ""
   },
   "internal/domain/check.go": {
@@ -252,9 +252,9 @@
     "semantic_hash": ""
   },
   "internal/service/notifier.go": {
-    "mtime": 1793289119.8319778,
-    "seen": 1793302041.8767138,
-    "ast_hash": "8d7d6e50503f43d17302a4d0db15da55",
+    "mtime": 1793363131.2529476,
+    "seen": 1793363153.9384918,
+    "ast_hash": "2872c70b4c57111bfc3850c4e3980e9e",
     "semantic_hash": ""
   },
   "internal/service/settings_service.go": {
@@ -462,9 +462,9 @@
     "semantic_hash": "c7cbb47765f8248e3137599f24de44e0"
   },
   "README.md": {
-    "mtime": 1793362749.6004007,
-    "seen": 1793362751.4503787,
-    "ast_hash": "b31fc1ac87dd610c5809f4d8550addc4",
+    "mtime": 1793363273.3354015,
+    "seen": 1793363284.731217,
+    "ast_hash": "50fb0ff2afb80a357899809c435773d2",
     "semantic_hash": ""
   },
   "docker-compose.yml": {
@@ -919,8 +919,8 @@
   },
   "internal/database/migrations/0003_monitor_types.sql": {
     "mtime": 1793289107.9439123,
-    "seen": 1793302041.8766403,
-    "ast_hash": "",
+    "seen": 1793363284.7310479,
+    "ast_hash": "acc29bbbdeb940baaf9ab1e94647b53e",
     "semantic_hash": ""
   },
   "internal/database/migrations_test.go": {
@@ -960,9 +960,9 @@
     "semantic_hash": ""
   },
   "internal/service/notifier_test.go": {
-    "mtime": 1793289119.8319778,
-    "seen": 1793302041.8767152,
-    "ast_hash": "499ba0c5ab92db7ae3ce369e6f6a8b4e",
+    "mtime": 1793363152.287018,
+    "seen": 1793363153.9384928,
+    "ast_hash": "46e1b6a3048aaf28ab9c8e37c2a1092d",
     "semantic_hash": ""
   },
   "internal/service/token.go": {
@@ -1057,8 +1057,8 @@
   },
   "internal/database/migrations/0004_incidents_page.sql": {
     "mtime": 1793289107.9439123,
-    "seen": 1793302041.8766427,
-    "ast_hash": "",
+    "seen": 1793363284.7310495,
+    "ast_hash": "b6bac1548426042243e703bf72f471e7",
     "semantic_hash": ""
   },
   "plan-settings-page.md": {
