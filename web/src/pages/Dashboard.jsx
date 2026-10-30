@@ -40,12 +40,15 @@ export function Dashboard() {
   const counts = useMemo(() => countByStatus(monitors), [monitors]);
   const sorted = useMemo(() => [...monitors].sort(bySeverity), [monitors]);
 
-  const active = FILTERS.find((f) => f.key === filter);
+  const filterCount = (f) => monitors.filter((m) => f.match(statusOf(m))).length;
+  // "Todos" sempre aparece; os demais só se houver monitor no filtro
+  const shownFilters = FILTERS.filter((f) => f.key === "all" || filterCount(f) > 0);
+  // se o filtro ativo sumiu (ex.: último monitor fora do ar voltou), cai em "Todos"
+  const active = shownFilters.find((f) => f.key === filter) ?? FILTERS[0];
   const q = query.trim().toLocaleLowerCase("pt-BR");
   const visible = sorted.filter(
     (m) => active.match(statusOf(m)) && (!q || m.name.toLocaleLowerCase("pt-BR").includes(q)),
   );
-  const filterCount = (f) => monitors.filter((m) => f.match(statusOf(m))).length;
 
   const openEdit = (m) => {
     setSelected(m);
@@ -180,8 +183,8 @@ export function Dashboard() {
               aria-label="Filtrar monitores"
               className="no-scrollbar flex flex-nowrap overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible gap-2"
             >
-              {FILTERS.map((f) => {
-                const on = filter === f.key;
+              {shownFilters.map((f) => {
+                const on = active.key === f.key;
                 return (
                   <button
                     key={f.key}
