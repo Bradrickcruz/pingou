@@ -1,6 +1,5 @@
 import { formatDuration, fullDate, plural } from "../../lib/format";
-
-const typeLabel = { http: "HTTP", tcp: "TCP", heartbeat: "Heartbeat" };
+import { typeLabel } from "../../lib/monitors";
 
 export function ConfigCard({ monitor: m }) {
   const heartbeat = m.type === "heartbeat";
@@ -16,8 +15,12 @@ export function ConfigCard({ monitor: m }) {
 
   return (
     <dl className="m-0 px-4 rounded-pg-card border border-pg-borda bg-pg-branco">
-      {rows.map(([k, v]) => (
-        <div key={k} className="flex justify-between gap-4 py-2.5 border-t border-pg-borda first:border-t-0 text-pg-ui">
+      {/* mobile: o tipo já está no cabeçalho ("HTTP · a cada 30 s") */}
+      {rows.map(([k, v], i) => (
+        <div
+          key={k}
+          className={`${i === 0 ? "hidden md:flex" : "flex"} ${i === 1 ? "max-md:border-t-0" : ""} justify-between gap-4 py-2.5 border-t border-pg-borda first:border-t-0 text-pg-ui`}
+        >
           <dt className="text-pg-neblina">{k}</dt>
           <dd className="m-0 text-right text-pg-ardosia">{v}</dd>
         </div>

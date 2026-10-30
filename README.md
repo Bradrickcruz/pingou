@@ -562,7 +562,7 @@ A resposta do Heartbeat inclui o `ping_token` para montar a URL de ping.
 
 Limites de `interval_seconds`: 10 a 86400 para `http` e `tcp`; 60 a 604800 (1 semana) para `heartbeat`.
 
-`GET /api/monitors` também traz, por monitor, o resumo usado pelo painel: `history` (últimos 30 checks, `true` = sucesso, mais recente por último), `uptime_24h` (percentual, `null` sem checks) e `last_latency_ms`.
+`GET /api/monitors` também traz, por monitor, o resumo usado pelo painel: `history` (últimos 30 checks, `true` = sucesso, mais recente por último), `uptime_24h` (percentual, `null` sem checks), `last_latency_ms` e, só para monitores `DOWN`, `last_error` e `down_since` (erro e início do incidente aberto; `null` nos outros estados).
 
 ---
 

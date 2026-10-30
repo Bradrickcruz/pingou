@@ -11,10 +11,15 @@ function detailOf(c, type) {
 
 const cell = "px-4 py-2.5 align-middle";
 
+// No mobile (< md), a primeira página mostra só 5 dos checks carregados.
+const COMPACT = 5;
+
 // Últimos checks do monitor, do mais recente ao mais antigo. "ver mais"
-// acrescenta mais 20 na própria página.
-export function ChecksTable({ checks, total, type, now, onMore, loadingMore }) {
+// acrescenta mais 20 na própria página. No mobile vira lista (hora, status,
+// resposta e o erro embaixo); compact = ainda na primeira página.
+export function ChecksTable({ checks, total, type, now, onMore, loadingMore, compact = false }) {
   const heartbeat = type === "heartbeat";
+  const mobile = compact ? checks.slice(0, COMPACT) : checks;
 
   if (checks.length === 0) {
     return (
@@ -26,7 +31,39 @@ export function ChecksTable({ checks, total, type, now, onMore, loadingMore }) {
 
   return (
     <div className="rounded-pg-card border border-pg-borda bg-pg-branco overflow-hidden">
-      <table className="w-full table-fixed border-collapse text-left">
+      <ul className="md:hidden list-none m-0 p-0">
+        {mobile.map((c) => (
+          <li key={c.id} className="px-4 py-2.5 border-t border-pg-borda first:border-t-0">
+            <div className="flex items-center gap-3">
+              <span className="text-pg-ui text-pg-ardosia tabular-nums">{checkTime(c.checked_at, now)}</span>
+              <span className={`inline-flex items-center gap-1 text-pg-caption font-medium ${c.success ? "text-pg-up" : "text-pg-down"}`}>
+                {c.success ? <Check size={12} aria-hidden="true" /> : <X size={12} aria-hidden="true" />}
+                {c.success ? "OK" : "Falha"}
+              </span>
+              <span className="ml-auto text-pg-ui text-pg-ardosia tabular-nums whitespace-nowrap">
+                {heartbeat || !c.success ? <span aria-label="sem dados">—</span> : `${c.latency_ms} ms`}
+              </span>
+            </div>
+            {!c.success && (
+              <div className="font-pg-mono text-pg-caption text-pg-neblina truncate" title={detailOf(c, type)}>
+                {detailOf(c, type)}
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+      {(mobile.length < checks.length || checks.length < total) && (
+        <button
+          type="button"
+          onClick={onMore}
+          disabled={loadingMore}
+          className="md:hidden w-full min-h-[48px] border-t border-pg-borda text-pg-ui font-medium text-pg-ciano-fundo disabled:opacity-50 focus-visible:outline-2 focus-visible:outline focus-visible:-outline-offset-2 focus-visible:outline-pg-ciano"
+        >
+          {loadingMore ? "Carregando…" : "Ver mais checks"}
+        </button>
+      )}
+
+      <table className="hidden md:table w-full table-fixed border-collapse text-left">
         <caption className="sr-only">Últimos checks, do mais recente ao mais antigo</caption>
         <colgroup>
           <col className="w-[112px] sm:w-[148px]" />
@@ -73,7 +110,7 @@ export function ChecksTable({ checks, total, type, now, onMore, loadingMore }) {
           })}
         </tbody>
       </table>
-      <div className="px-4 py-3 border-t border-pg-borda text-pg-caption text-pg-neblina" aria-live="polite">
+      <div className="hidden md:block px-4 py-3 border-t border-pg-borda text-pg-caption text-pg-neblina" aria-live="polite">
         Mostrando {checks.length === 1 ? "o mais recente" : `os ${checks.length} mais recentes`}
         {checks.length < total && (
           <>

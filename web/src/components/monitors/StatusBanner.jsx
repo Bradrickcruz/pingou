@@ -40,10 +40,18 @@ export function StatusBanner({ monitors, counts }) {
     { n: counts.PAUSED, label: counts.PAUSED === 1 ? "pausado" : "pausados" },
   ];
 
+  // linha curta do mobile: "3 no ar · 2 fora · 1 desconhecido · 1 pausado"
+  const short = [
+    { n: counts.UP, label: "no ar" },
+    { n: counts.DOWN, label: "fora", strong: true },
+    { n: counts.UNKNOWN, label: counts.UNKNOWN === 1 ? "desconhecido" : "desconhecidos" },
+    { n: counts.PAUSED, label: counts.PAUSED === 1 ? "pausado" : "pausados" },
+  ].filter((s) => s.n > 0);
+
   return (
     <section
       aria-live="polite"
-      className={`flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between p-5 mb-7 rounded-pg-card border ${tone.box}`}
+      className={`flex flex-col gap-3 md:gap-4 lg:flex-row lg:items-center lg:justify-between p-4 md:p-5 mb-4 md:mb-7 rounded-pg-card border ${tone.box}`}
     >
       <div className="flex items-center gap-4 min-w-0">
         <span className={`flex-shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-full text-pg-branco ${tone.icon}`}>
@@ -51,10 +59,20 @@ export function StatusBanner({ monitors, counts }) {
         </span>
         <div className="min-w-0">
           <h2 className="text-pg-h3 font-medium text-pg-ardosia my-0">{title}</h2>
-          <p className="text-pg-ui text-pg-ardosia">{detail}</p>
+          <p className="hidden md:block text-pg-ui text-pg-ardosia">{detail}</p>
         </div>
       </div>
-      <ul className="flex flex-wrap gap-x-5 gap-y-1 text-pg-ui text-pg-ardosia list-none m-0 p-0">
+      <p className="md:hidden text-pg-caption text-pg-ardosia">
+        {short.map((s, i) => (
+          <span key={s.label}>
+            {i > 0 && " · "}
+            <span className={s.strong ? "text-pg-down" : undefined}>
+              <span className="tabular-nums">{s.n}</span> {s.label}
+            </span>
+          </span>
+        ))}
+      </p>
+      <ul className="hidden md:flex flex-wrap gap-x-5 gap-y-1 text-pg-ui text-pg-ardosia list-none m-0 p-0">
         {stats.map((s) => (
           <li key={s.label} className={s.strong ? "text-pg-down" : undefined}>
             <span className="tabular-nums">{s.n}</span> {s.label}

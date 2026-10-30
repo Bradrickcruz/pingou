@@ -7,6 +7,8 @@ import { useSettings } from "../hooks/useSettings";
 import { OpenIncidentCard } from "../components/incidents/OpenIncidentCard";
 import { ResolvedTable } from "../components/incidents/ResolvedTable";
 import { Button } from "../components/ui/Button";
+import { SegmentedTabs } from "../components/ui/SegmentedTabs";
+import { MobileHeader } from "../components/layout/MobileHeader";
 import { Spinner } from "../components/ui/Spinner";
 
 const PAGE_SIZE = 20;
@@ -143,8 +145,9 @@ export function Incidents() {
 
   return (
     <div className="max-w-[1180px]">
-      <h1 className="text-pg-h1 font-medium text-pg-ardosia my-0">Incidentes</h1>
-      <p className="mt-2 mb-6 text-pg-ui text-pg-neblina">
+      <MobileHeader title="Incidentes" />
+      <h1 className="hidden md:block text-pg-h1 font-medium text-pg-ardosia my-0">Incidentes</h1>
+      <p className="hidden md:block mt-2 mb-6 text-pg-ui text-pg-neblina">
         Cada vez que um monitor caiu e quando voltou.
         {days && (
           <>
@@ -157,37 +160,25 @@ export function Incidents() {
         )}
       </p>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-7">
-        <div role="group" aria-label="Filtrar incidentes" className="flex flex-wrap gap-2">
-          {TABS.map((t) => {
-            const on = tab === t.key;
-            return (
-              <button
-                key={t.key}
-                type="button"
-                aria-pressed={on}
-                onClick={() => setParam("tab", t.key === "all" ? "" : t.key)}
-                className={`px-4 py-2 rounded-full border text-pg-ui transition-colors duration-150 focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano ${
-                  on
-                    ? "bg-pg-ardosia border-pg-ardosia text-pg-branco"
-                    : "bg-pg-branco border-pg-borda text-pg-ardosia hover:bg-pg-nuvem"
-                }`}
-              >
-                {t.label}
-                {t.key === "open" && !open.loading && !open.error && ` (${open.total})`}
-              </button>
-            );
-          })}
-        </div>
-        <div className="flex items-center gap-3">
-          <label htmlFor="incident-monitor" className="text-pg-ui text-pg-neblina">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6 md:mb-7">
+        <SegmentedTabs
+          label="Filtrar incidentes"
+          options={TABS.map((t) => ({
+            ...t,
+            count: t.key === "open" && !open.loading && !open.error ? open.total : null,
+          }))}
+          value={tab}
+          onChange={(key) => setParam("tab", key === "all" ? "" : key)}
+        />
+        <div className="flex flex-col gap-1.5 md:flex-row md:items-center md:gap-3">
+          <label htmlFor="incident-monitor" className="text-pg-caption md:text-pg-ui text-pg-neblina">
             Monitor
           </label>
           <select
             id="incident-monitor"
             value={monitorId}
             onChange={(e) => setParam("monitor", e.target.value)}
-            className="flex-1 sm:flex-none sm:w-[220px] px-3 py-2.5 rounded-pg-control text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano"
+            className="w-full md:w-[220px] px-3 py-2.5 min-h-[44px] md:min-h-0 rounded-pg-control text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano"
           >
             <option value="">Todos os monitores</option>
             {monitors.map((m) => (
@@ -200,7 +191,7 @@ export function Incidents() {
       </div>
 
       {showOpen && (
-        <section aria-labelledby="open-title" className="mb-9">
+        <section aria-labelledby="open-title" className="mb-7 md:mb-9">
           <h2 id="open-title" className="flex items-center gap-2.5 text-pg-h3 font-medium text-pg-ardosia mt-0 mb-3">
             Abertos agora
             {open.total > 0 && (

@@ -265,13 +265,33 @@ func (s *MonitorService) Ping(ctx context.Context, token string) error {
 	return s.recorder.Record(ctx, m.ID, domain.CheckResult{Success: true}, &now)
 }
 
-// Summaries devolve histórico, uptime 24 h e última latência dos monitores.
+// Summaries devolve histórico, uptime 24 h e última latência dos monitores e,
+// para os DOWN, o erro e o início do incidente aberto.
 func (s *MonitorService) Summaries(ctx context.Context, monitors []*domain.Monitor) (map[string]*domain.MonitorSummary, error) {
 	ids := make([]string, len(monitors))
+	var downIDs []string
 	for i, m := range monitors {
 		ids[i] = m.ID
+		if m.CurrentState == domain.StateDown {
+			downIDs = append(downIDs, m.ID)
+		}
 	}
-	return s.checks.Summaries(ctx, ids, historySize, time.Now().Add(-24*time.Hour))
+	out, err := s.checks.Summaries(ctx, ids, historySize, time.Now().Add(-24*time.Hour))
+	if err != nil || len(downIDs) == 0 {
+		return out, err
+	}
+	open, err := s.incidents.FindOpenByMonitors(ctx, downIDs)
+	if err != nil {
+		return nil, err
+	}
+	for id, inc := range open {
+		if sum := out[id]; sum != nil {
+			startedAt := inc.StartedAt
+			sum.LastError = inc.LastError
+			sum.DownSince = &startedAt
+		}
+	}
+	return out, nil
 }
 
 func (s *MonitorService) Delete(ctx context.Context, id string) error {

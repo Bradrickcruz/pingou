@@ -16,8 +16,10 @@ import { ChartLegend, ResponseChart } from "../components/monitor-detail/Respons
 import { ChecksTable } from "../components/monitor-detail/ChecksTable";
 import { RecentIncidents } from "../components/monitor-detail/RecentIncidents";
 import { ConfigCard } from "../components/monitor-detail/ConfigCard";
+import { DetailTopBar } from "../components/monitor-detail/DetailTopBar";
+import { DownAlert } from "../components/monitor-detail/DownAlert";
 import { formatDuration, formatUptime, timeAgo } from "../lib/format";
-import { statusOf, targetOf } from "../lib/monitors";
+import { statusOf, targetOf, typeLabel } from "../lib/monitors";
 
 const typeIcon = { http: Globe, tcp: Server, heartbeat: Activity };
 const FIRST_CHECKS = 8;
@@ -102,12 +104,30 @@ function useStats(id, range) {
   return { stats, error: state.error, reload: load };
 }
 
-function StatCard({ label, value, note }) {
+// short/shortValue: rótulo e valor do mobile (< md), que não mostra a nota;
+// alert: valor em vermelho no mobile.
+function StatCard({ label, short, value, shortValue, note, alert = false, className = "" }) {
   return (
-    <div className="p-4 rounded-pg-card border border-pg-borda bg-pg-branco min-w-0">
-      <div className="text-pg-caption text-pg-neblina">{label}</div>
-      <div className="mt-1 font-pg-heading text-pg-h2 font-medium text-pg-ardosia tabular-nums truncate">{value}</div>
-      <div className="mt-1 text-pg-caption text-pg-neblina">{note}</div>
+    <div className={`p-4 rounded-pg-card border border-pg-borda bg-pg-branco min-w-0 ${className}`}>
+      <div className="text-pg-caption text-pg-neblina">
+        <span className="md:hidden">{short ?? label}</span>
+        <span className="hidden md:inline">{label}</span>
+      </div>
+      <div
+        className={`mt-1 font-pg-heading text-pg-h3 md:text-pg-h2 font-medium tabular-nums break-words md:truncate ${
+          alert ? "text-pg-down md:text-pg-ardosia" : "text-pg-ardosia"
+        }`}
+      >
+        {shortValue != null ? (
+          <>
+            <span className="md:hidden">{shortValue}</span>
+            <span className="hidden md:inline">{value}</span>
+          </>
+        ) : (
+          value
+        )}
+      </div>
+      <div className="hidden md:block mt-1 text-pg-caption text-pg-neblina">{note}</div>
     </div>
   );
 }
@@ -125,12 +145,13 @@ const linkClass = "text-pg-ui text-pg-ciano-fundo underline focus-visible:outlin
 
 function Performance({ monitor, stats, statsError, range, onRange, retentionDays, now, onRetry }) {
   const heartbeat = monitor.type === "heartbeat";
-  const since = RANGES.find((r) => r.key === range)?.since ?? "";
+  const current = RANGES.find((r) => r.key === range);
+  const since = current?.since ?? "";
   const empty = <span aria-label="sem dados">—</span>;
 
   return (
-    <section aria-labelledby="desempenho" className="mb-9">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+    <section aria-labelledby="desempenho" className="mb-6 md:mb-9">
+      <div className="flex flex-col md:flex-row md:flex-wrap md:items-center md:justify-between gap-3 mb-3 md:mb-4">
         <h2 id="desempenho" className="text-pg-h3 font-medium text-pg-ardosia my-0">
           Desempenho
         </h2>
@@ -147,7 +168,13 @@ function Performance({ monitor, stats, statsError, range, onRange, retentionDays
       )}
 
       <div className={`grid grid-cols-2 gap-3 mb-3 ${heartbeat ? "lg:grid-cols-3" : "lg:grid-cols-4"}`}>
-        <StatCard label="Uptime" value={stats?.uptime != null ? formatUptime(stats.uptime) : empty} note={since} />
+        <StatCard
+          label="Uptime"
+          short={`Uptime ${current?.short ?? ""}`}
+          value={stats?.uptime != null ? formatUptime(stats.uptime) : empty}
+          note={since}
+          alert={stats?.uptime != null && stats.uptime < 100}
+        />
         {!heartbeat && (
           <StatCard
             label="Resposta média"
@@ -155,17 +182,20 @@ function Performance({ monitor, stats, statsError, range, onRange, retentionDays
             note="só checks com sucesso"
           />
         )}
-        <StatCard label="Incidentes" value={stats ? stats.incidents : empty} note={since} />
+        <StatCard label="Incidentes" value={stats ? stats.incidents : empty} note={since} alert={stats?.incidents > 0} />
         <StatCard
           label="Tempo fora do ar"
+          short="Tempo fora"
+          className={heartbeat ? "col-span-2 md:col-span-1" : ""}
           value={stats ? (stats.downtime_seconds > 0 ? formatDuration(stats.downtime_seconds) : "nenhum") : empty}
+          shortValue={stats?.downtime_seconds > 0 ? formatDuration(stats.downtime_seconds).replace(" e ", " ") : null}
           note={`somado ${since}`}
         />
       </div>
 
       {!heartbeat && (
         <div className="p-4 sm:p-5 rounded-pg-card border border-pg-borda bg-pg-branco">
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div className="flex flex-col md:flex-row md:flex-wrap md:items-center md:justify-between gap-1 md:gap-2 mb-4">
             <h3 className="text-pg-ui font-medium text-pg-ardosia my-0">Tempo de resposta</h3>
             <ChartLegend bucketSeconds={stats?.bucket_seconds} />
           </div>
@@ -246,7 +276,7 @@ export function MonitorDetail() {
   };
 
   const back = (
-    <Link to="/" className="inline-flex items-center gap-1 mb-5 text-pg-ui text-pg-ciano-fundo no-underline hover:underline">
+    <Link to="/" className="hidden md:inline-flex items-center gap-1 mb-5 text-pg-ui text-pg-ciano-fundo no-underline hover:underline">
       <ChevronLeft size={16} aria-hidden="true" />
       Monitores
     </Link>
@@ -255,6 +285,7 @@ export function MonitorDetail() {
   if (loading) {
     return (
       <div className="max-w-[1180px]">
+        <DetailTopBar />
         {back}
         <div className="flex justify-center py-12">
           <Spinner />
@@ -266,6 +297,7 @@ export function MonitorDetail() {
   if (!monitor) {
     return (
       <div className="max-w-[1180px]">
+        <DetailTopBar />
         {back}
         {notFound ? (
           <div className="text-center py-16 px-4 rounded-pg-card border border-dashed border-pg-borda">
@@ -295,18 +327,24 @@ export function MonitorDetail() {
   const lastAt = heartbeat ? monitor.last_ping_at : monitor.last_checked_at;
   const lastLabel = heartbeat ? "último ping" : "último check";
   const last = paused ? "pausado" : lastAt ? `${lastLabel} ${timeAgo(lastAt, now)}` : `${lastLabel}: ainda não houve`;
+  // o incidente aberto é sempre o mais novo; fora dos 3 carregados, o cartão não aparece
+  const openIncident = status === "DOWN" ? incidents.find((i) => i.open) : null;
+  const menu = (
+    <RowMenu monitor={monitor} onEdit={openModal("edit")} onToggle={handleToggle} onDelete={openModal("delete")} />
+  );
 
   return (
     <div className="max-w-[1180px]">
+      <DetailTopBar menu={menu} />
       {back}
 
-      <header className="flex items-start justify-between gap-4 mb-8">
+      <header className="flex items-start justify-between gap-4 mb-4 md:mb-8">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-pg-h1 font-medium text-pg-ardosia my-0 break-words min-w-0">{monitor.name}</h1>
             <Badge state={status} />
           </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-pg-ui text-pg-neblina">
+          <div className="flex flex-col items-start md:flex-row md:flex-wrap md:items-center gap-x-4 gap-y-1 mt-2 text-pg-ui text-pg-neblina">
             <span className="inline-flex items-center gap-1.5 min-w-0 max-w-full">
               <Icon size={14} aria-hidden="true" className="flex-shrink-0" />
               <span className="sr-only">{monitor.type.toUpperCase()}:</span>
@@ -327,25 +365,37 @@ export function MonitorDetail() {
                 </span>
               )}
             </span>
-            <span>
+            <span className="text-pg-caption md:text-pg-ui">
+              <span className="md:hidden">{typeLabel[monitor.type] ?? monitor.type} · </span>
               a cada {formatDuration(monitor.interval_seconds)} · {last}
             </span>
           </div>
         </div>
         <div className="flex flex-shrink-0 items-center gap-2">
-          <Button variant="ghost" onClick={() => handleToggle(monitor)} className="hidden sm:inline-flex gap-1.5 h-10 bg-pg-branco">
+          <Button variant="ghost" onClick={() => handleToggle(monitor)} className="hidden md:inline-flex gap-1.5 h-10 bg-pg-branco">
             {monitor.enabled ? <Pause size={16} aria-hidden="true" /> : <Play size={16} aria-hidden="true" />}
             {monitor.enabled ? "Pausar" : "Retomar"}
           </Button>
-          <Button variant="ghost" onClick={() => openModal("edit")(monitor)} className="hidden sm:inline-flex gap-1.5 h-10 bg-pg-branco">
+          <Button variant="ghost" onClick={() => openModal("edit")(monitor)} className="hidden md:inline-flex gap-1.5 h-10 bg-pg-branco">
             <Pencil size={16} aria-hidden="true" />
             Editar
           </Button>
-          <div className="rounded-pg-control border border-pg-borda bg-pg-branco">
-            <RowMenu monitor={monitor} onEdit={openModal("edit")} onToggle={handleToggle} onDelete={openModal("delete")} />
-          </div>
+          <div className="hidden md:block rounded-pg-control border border-pg-borda bg-pg-branco">{menu}</div>
         </div>
       </header>
+
+      {openIncident && <DownAlert incident={openIncident} now={now} />}
+
+      <div className="md:hidden grid grid-cols-2 gap-2 mb-6">
+        <Button variant="ghost" onClick={() => handleToggle(monitor)} className="gap-1.5 min-h-[44px] bg-pg-branco">
+          {monitor.enabled ? <Pause size={16} aria-hidden="true" /> : <Play size={16} aria-hidden="true" />}
+          {monitor.enabled ? "Pausar" : "Retomar"}
+        </Button>
+        <Button variant="ghost" onClick={() => openModal("edit")(monitor)} className="gap-1.5 min-h-[44px] bg-pg-branco">
+          <Pencil size={16} aria-hidden="true" />
+          Editar
+        </Button>
+      </div>
 
       {(actionError || (error && monitor)) && (
         <p className="text-pg-ui text-pg-down mb-4" role="alert">
@@ -364,7 +414,7 @@ export function MonitorDetail() {
         onRetry={() => reloadStats()}
       />
 
-      <div className="grid gap-8 lg:grid-cols-3">
+      <div className="grid gap-6 md:gap-8 lg:grid-cols-3">
         <section aria-labelledby="ultimos-checks" className="lg:col-span-2 min-w-0">
           <SectionTitle>
             <span id="ultimos-checks">Últimos checks</span>
@@ -376,10 +426,11 @@ export function MonitorDetail() {
             now={now}
             onMore={loadMore}
             loadingMore={loadingMore}
+            compact={checkLimit === FIRST_CHECKS}
           />
         </section>
 
-        <div className="flex flex-col gap-8 min-w-0">
+        <div className="flex flex-col gap-6 md:gap-8 min-w-0">
           <section aria-labelledby="incidentes">
             <SectionTitle
               action={
@@ -399,7 +450,7 @@ export function MonitorDetail() {
                 <button
                   type="button"
                   onClick={() => openModal("edit")(monitor)}
-                  className={`${linkClass} p-0 border-0 bg-transparent cursor-pointer`}
+                  className={`${linkClass} hidden md:inline p-0 border-0 bg-transparent cursor-pointer`}
                 >
                   Editar
                 </button>
