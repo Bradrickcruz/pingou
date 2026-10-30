@@ -42,7 +42,7 @@ function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/monitors/:id" element={<MonitorDetail />} />
               <Route path="/incidents" element={<Incidents />} />
-              <Route path="/settings" element={<Settings />} />
+              <Route path="/settings" element={<Settings onLogout={handleLogout} />} />
             </Routes>
           </Shell>
         </BrowserRouter>
