@@ -10,8 +10,9 @@ export function Modal({ title, subtitle, onClose, children }) {
 
   useEffect(() => {
     const previous = document.activeElement;
+    // [data-autofocus] marca o foco inicial (ex.: "Cancelar" em ação destrutiva)
     const field = dialogRef.current?.querySelector(
-      "input:not([disabled]):not([readonly]):not([type=radio]), textarea:not([disabled]), select:not([disabled])",
+      "[data-autofocus], input:not([disabled]):not([readonly]):not([type=radio]), textarea:not([disabled]), select:not([disabled])",
     );
     (field ?? dialogRef.current?.querySelector(FOCUSABLE))?.focus();
     return () => previous?.focus?.();

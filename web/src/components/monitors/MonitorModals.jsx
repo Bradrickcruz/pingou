@@ -87,7 +87,7 @@ export function MonitorModals({
           pode ser desfeita.
         </p>
         <div className="flex gap-2.5 justify-end">
-          <Button variant="ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={onClose} data-autofocus>
             Cancelar
           </Button>
           <Button variant="danger" onClick={handleDelete} disabled={saving}>
