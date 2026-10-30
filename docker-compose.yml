@@ -3,7 +3,7 @@ services:
     build:
       context: .
       args:
-        VERSION: "1.0.0"
+        VERSION: "1.3.0"
         COMMIT: "local"
         BUILD_DATE: "2026-04-24T19:37:34Z"
     ports:
