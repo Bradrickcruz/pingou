@@ -62,7 +62,7 @@ Regras:
 - Monitor pausado aceita o ping, mas não registra nada. Ao retomar, o prazo recomeça a contar a partir da retomada (os pings da pausa não foram registrados).
 - O avaliador de prazos roda a cada 10 segundos e gera **um** check `DOWN` por queda, não um por rodada.
 - Prazo que venceu enquanto o Pingou estava fora do ar não vira `DOWN` na volta: o ping pode ter se perdido. Esse monitor ganha mais um intervalo + tolerância a partir da subida. Os demais seguem o prazo normal.
-- A URL de ping fica sempre visível no dashboard e pode ser **regenerada** a qualquer momento (o token antigo deixa de funcionar na hora).
+- A URL de ping fica visível na página de detalhe do monitor (com botão de copiar e exemplo de cron) e na edição. O menu ⋮ do painel também tem "Copiar URL de ping". Ela pode ser **regenerada** a qualquer momento (o token antigo deixa de funcionar na hora).
 
 Exemplo com cron:
 
@@ -112,6 +112,7 @@ Um novo tipo de check só entra no Pingou se passar nas quatro perguntas:
 - `net/http`
 - SQLite (`github.com/mattn/go-sqlite3`)
 - `goose` para migrations
+- `cobra` para a CLI
 - `log/slog`
 
 ### Frontend
@@ -187,13 +188,14 @@ Garantias:
 
 ### Modelo de dados do monitor
 
-Os monitores ganham três campos:
+Os monitores ganham quatro campos:
 
-| Campo        | Descrição                                                                    |
-| ------------ | ---------------------------------------------------------------------------- |
-| `type`       | `http`, `tcp` ou `heartbeat`. Padrão `http`: monitores existentes não mudam. |
-| `config`     | JSON com os campos específicos do tipo.                                      |
-| `ping_token` | Token secreto da URL de ping (somente `heartbeat`).                          |
+| Campo          | Descrição                                                                    |
+| -------------- | ---------------------------------------------------------------------------- |
+| `type`         | `http`, `tcp` ou `heartbeat`. Padrão `http`: monitores existentes não mudam. |
+| `config`       | JSON com os campos específicos do tipo.                                      |
+| `ping_token`   | Token secreto da URL de ping (somente `heartbeat`).                          |
+| `last_ping_at` | Quando chegou o último ping (somente `heartbeat`; `null` antes do primeiro). |
 
 Campos de `config` por tipo:
 
@@ -217,15 +219,17 @@ pingou/
 │   ├── database/
 │   ├── domain/
 │   ├── repository/
-│   ├── service/
+│   ├── service/        # state machine, validação, notificador
+│   ├── scheduler/      # jobs de check, avaliador de heartbeat, retenção
 │   ├── handler/
 │   └── checker/        # um arquivo por tipo de check
-├── migrations/
+│   # as migrations ficam em internal/database/migrations/
 ├── web/
 │   ├── src/
 │   │   ├── api/
 │   │   ├── components/
 │   │   ├── hooks/
+│   │   ├── lib/
 │   │   ├── pages/
 │   │   ├── main.jsx
 │   │   └── theme/
@@ -290,7 +294,7 @@ make build
 
 O binário é gerado em `bin/pingou`.
 
-Ainda não há workflow de GitHub Actions. Também não há suíte de testes automatizados no primeiro momento; a validação do projeto é local e manual, via `make build` e `make docker-build` quando necessário.
+Ainda não há workflow de GitHub Actions: a validação é local. Rode `make test` (testes Go) e, no frontend, `npm test` dentro de `web/`. `make build` e `make docker-build` completam a checagem quando necessário.
 
 ### Convenções de formatação
 
