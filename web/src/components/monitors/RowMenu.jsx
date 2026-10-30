@@ -1,11 +1,11 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { EllipsisVertical, History, Pencil, Pause, Play, Trash2 } from "lucide-react";
+import { useMatch, useNavigate } from "react-router-dom";
+import { EllipsisVertical, Eye, Pencil, Pause, Play, Trash2 } from "lucide-react";
 
-// Menu ⋮ da linha. "Ver histórico" abre a página de incidentes já filtrada
-// pelo monitor.
+// Menu ⋮ da linha. "Ver detalhes" abre a página do monitor (some nela mesma).
 export function RowMenu({ monitor, onEdit, onToggle, onDelete }) {
   const navigate = useNavigate();
+  const onDetailPage = useMatch("/monitors/:id") != null;
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
   const buttonRef = useRef(null);
@@ -81,15 +81,17 @@ export function RowMenu({ monitor, onEdit, onToggle, onDelete }) {
             {monitor.enabled ? <Pause size={16} aria-hidden="true" /> : <Play size={16} aria-hidden="true" />}
             {monitor.enabled ? "Pausar" : "Retomar"}
           </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={run((m) => navigate(`/incidents?monitor=${encodeURIComponent(m.id)}`))}
-            className={`${item} text-pg-ardosia`}
-          >
-            <History size={16} aria-hidden="true" />
-            Ver histórico
-          </button>
+          {!onDetailPage && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={run((m) => navigate(`/monitors/${encodeURIComponent(m.id)}`))}
+              className={`${item} text-pg-ardosia`}
+            >
+              <Eye size={16} aria-hidden="true" />
+              Ver detalhes
+            </button>
+          )}
           <div className="my-1.5 border-t border-pg-borda" role="separator" />
           <button type="button" role="menuitem" onClick={run(onDelete)} className={`${item} text-pg-down`}>
             <Trash2 size={16} aria-hidden="true" />

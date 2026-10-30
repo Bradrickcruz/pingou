@@ -502,7 +502,7 @@ graphify update .
 - Os incidentes listados no PNG (domingo, 24 out) estão fora da janela de 24 h, mas aparecem porque a lista "Incidentes" é **independente da janela** (são os 3 mais recentes). O card "Incidentes: 1" segue a janela. Manter essa diferença.
 - `last_error` dos incidentes já vem sem o prefixo `Get "<url>":` (corrigido no plano de incidentes).
 - "ver mais" dos checks pagina na própria página; não há página de histórico de checks.
-- `RowMenu` → "Ver histórico" continua indo para `/incidents?monitor=<id>`; o acesso à página de detalhe é pelo nome do monitor.
+- `RowMenu` → "Ver detalhes" leva à página de detalhe (escondido nela mesma); o histórico de incidentes do monitor é o link "Ver todos" da página.
 
 ### Alternativas consideradas e descartadas
 
