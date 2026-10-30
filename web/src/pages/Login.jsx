@@ -58,7 +58,7 @@ export function Login({ onLogin }) {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/monitors?limit=1", {
+      const res = await fetch("/api/info", {
         headers: { "X-API-Key": key },
       });
 

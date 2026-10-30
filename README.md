@@ -324,7 +324,7 @@ make docker-down    # derruba os containers
 
 ## Login no dashboard
 
-O dashboard pede uma **API Key**. Ela é validada contra a API e guardada no `localStorage` do navegador. Use o mesmo valor de:
+O dashboard pede uma **API Key**. Ela é validada com uma chamada a `GET /api/info` (rota protegida e barata, sem consultar monitores) e guardada no `localStorage` do navegador. Use o mesmo valor de:
 
 ```env
 PINGOU_API_KEY=...
