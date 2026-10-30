@@ -300,9 +300,9 @@
     "semantic_hash": "3aa4b57d7f08181d86bde52a4dcb7f22"
   },
   "web/package.json": {
-    "mtime": 1793366401.9749691,
-    "seen": 1793366582.557692,
-    "ast_hash": "f1255a3ab9ed5afe7a73c9f8188e31fc",
+    "mtime": 1793366814.229771,
+    "seen": 1793366826.735908,
+    "ast_hash": "4f300cf049df97fc1505a166069f8a4c",
     "semantic_hash": ""
   },
   "web/postcss.config.js": {
