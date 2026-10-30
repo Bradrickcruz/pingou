@@ -1,59 +1,118 @@
 ![Pingou](assets/capa-readme.png)
 
-# 💧 Pingou
+# Pingou
 
-> **Rodou, Pingou** — health checker self-hosted, leve e open-source em Go.
+> **Rodou, pingou.** Monitor de uptime self-hosted, leve e open-source, escrito em Go.
 
-Pingou é um monitor de uptime self-hosted que executa checks HTTP periódicos em URLs configuradas, persiste resultados em SQLite, detecta incidentes com base em transições de estado e oferece um dashboard web embutido no próprio binário Go.
+O Pingou verifica se seus serviços estão no ar, guarda o histórico em SQLite, abre e fecha incidentes quando o estado muda e avisa por webhook. Tudo em **um binário só**, com o dashboard web embutido.
 
-O objetivo do projeto é ser:
+O projeto tem quatro objetivos:
 
-- **simples de rodar**
-- **simples de manter**
-- **leve**
-- **sem dependências externas obrigatórias**, além do próprio binário ou container
+- **simples de rodar**: um binário ou um container, sem banco separado
+- **simples de manter**: SQLite em arquivo, sem serviços extras
+- **leve**: roda numa VPS mínima ou num Raspberry Pi
+- **focado**: faz uma coisa só (dizer se algo está no ar) e faz bem
 
-## Visão geral
+---
 
-O Pingou monitora endpoints HTTP em intervalos configuráveis e registra:
+## Tipos de monitor
 
-- status atual do monitor
-- histórico de checks
-- incidentes abertos e resolvidos
-- configurações globais, como webhook e retenção
+| Tipo        | O que verifica                                  | Direção          | Status     |
+| ----------- | ----------------------------------------------- | ---------------- | ---------- |
+| `http`      | Uma URL responde com sucesso                    | Pingou → serviço | Disponível |
+| `tcp`       | Uma porta aceita conexões                       | Pingou → serviço | Disponível |
+| `heartbeat` | Um serviço avisou que está vivo dentro do prazo | Serviço → Pingou | Disponível |
 
-A aplicação pode ser distribuída de duas formas:
+Os três tipos usam os mesmos estados (`UNKNOWN`, `UP`, `DOWN`), o mesmo registro de incidentes e o mesmo webhook. Só muda **como** o check é feito.
 
-- **binário único** com frontend embutido via `embed.FS`
-- **container Docker** com persistência em volume
+### HTTP
+
+Faz uma requisição para a URL configurada. Considera `UP` quando a resposta chega dentro do timeout com status de sucesso; caso contrário, registra o erro em `last_error`.
+
+- Segue até `PINGOU_MAX_REDIRECTS` redirects.
+- Vira `DOWN` depois de `threshold` falhas seguidas.
+
+### TCP
+
+Tenta abrir uma conexão TCP com `host:porta`. Útil para bancos de dados, filas, SMTP, SSH e qualquer serviço que não fala HTTP.
+
+- `UP`: a conexão abriu dentro do timeout.
+- `DOWN`: conexão recusada, timeout ou host inexistente (o motivo vai para `last_error`).
+- O tempo de resposta registrado é o tempo para conectar.
+- Vira `DOWN` depois de `threshold` falhas seguidas, igual ao HTTP.
+
+### Heartbeat
+
+O inverso dos outros tipos: **o serviço pinga o Pingou**. Ideal para cron jobs, backups, workers e qualquer tarefa que roda em horário marcado.
+
+Como funciona:
+
+1. Ao criar o monitor, o Pingou gera um **token secreto** e uma URL de ping, por exemplo `https://seu-pingou/ping/<token>`.
+2. A tarefa chama essa URL quando termina com sucesso.
+3. Cada chamada registra um check `UP`.
+4. Se passar do **intervalo + tolerância** sem nenhuma chamada, o monitor vira `DOWN`.
+5. Antes da primeira chamada, o monitor fica `UNKNOWN`. Se passar do **intervalo + tolerância** desde a criação (ou da última edição/retomada) sem nenhuma chamada, ele vira `DOWN`: assim, esquecer de colocar o `curl` na tarefa também gera alerta.
+
+Regras:
+
+- `interval_seconds` é o período esperado entre pings (ex.: `86400` para uma tarefa diária), de 1 minuto a 1 semana.
+- `grace_seconds` é a tolerância para atrasos. Padrão: `60`.
+- O `threshold` **não se aplica**: perdeu o prazo + tolerância, vira `DOWN`. A tolerância já cumpre esse papel.
+- O `timeout` também não se aplica.
+- Monitor pausado aceita o ping, mas não registra nada. Ao retomar, o prazo recomeça a contar a partir da retomada (os pings da pausa não foram registrados).
+- O avaliador de prazos roda a cada 10 segundos e gera **um** check `DOWN` por queda, não um por rodada.
+- Prazo que venceu enquanto o Pingou estava fora do ar não vira `DOWN` na volta: o ping pode ter se perdido. Esse monitor ganha mais um intervalo + tolerância a partir da subida. Os demais seguem o prazo normal.
+- A URL de ping fica visível na página de detalhe do monitor (com botão de copiar e exemplo de cron) e na edição. O menu ⋮ do painel também tem "Copiar URL de ping". Ela pode ser **regenerada** a qualquer momento (o token antigo deixa de funcionar na hora).
+
+Exemplo com cron:
+
+```bash
+# Backup todo dia às 3h. Só avisa o Pingou se o backup terminar com sucesso.
+0 3 * * * /usr/local/bin/backup.sh && curl -fsS -m 10 --retry 3 https://pingou.exemplo.com/ping/SEU_TOKEN > /dev/null
+```
+
+> **Importante:** para receber pings de outras máquinas, a rota `/ping/*` precisa estar acessível a partir delas.
+
+### Princípio de escopo
+
+Um novo tipo de check só entra no Pingou se passar nas quatro perguntas:
+
+1. Responde só `UP` ou `DOWN`, sem estados novos?
+2. Funciona com a biblioteca padrão do Go, sem dependência pesada?
+3. Dispensa agente instalado no servidor monitorado?
+4. Roda sem permissões especiais (root, capabilities, socket do Docker)?
+
+É por isso que, por enquanto, ficam de fora: ping ICMP (exige permissão especial), métricas de CPU/memória/disco (exigem agente) e monitoramento de Docker (exige o socket do Docker).
+
+---
 
 ## Funcionalidades
 
-- Monitoramento de URLs HTTP
+- Monitores dos tipos HTTP, TCP e Heartbeat
 - Intervalo, timeout e threshold configuráveis por monitor
 - Detecção de transições de estado:
   - `UNKNOWN → UP`
   - `UNKNOWN → DOWN`
   - `UP → DOWN`
   - `DOWN → UP`
-- Registro de incidentes
-- Dashboard web embutido no backend
-- Tela de login com API Key
-- Configuração global de webhook
-- Configuração de retenção de checks
+- Registro de incidentes abertos e resolvidos
+- Dashboard web embutido no binário
+- Página de detalhe por monitor (`/monitors/:id`): uptime, resposta média, incidentes e tempo fora do ar em 24h / 7 / 14 / 30 dias, gráfico de tempo de resposta, últimos checks e configuração
+- Login com API Key
+- Webhook global para quedas e recuperações
+- Retenção configurável: checks expiram após `retention_days`; incidentes são mantidos. A limpeza roda na subida e a cada 1 h
 - Export do banco SQLite
-- Execução self-hosted com SQLite
-- **Atomicidade nas operações de state machine** (transações SQL)
+- Atomicidade na state machine (transações SQL)
 
-## Stack atual
+## Stack
 
 ### Backend
 
 - Go
 - `net/http`
-- SQLite
-- `github.com/mattn/go-sqlite3`
+- SQLite (`github.com/mattn/go-sqlite3`)
 - `goose` para migrations
+- `cobra` para a CLI
 - `log/slog`
 
 ### Frontend
@@ -66,58 +125,87 @@ A aplicação pode ser distribuída de duas formas:
 
 ### Infra
 
-- Docker
-- Docker Compose
+- Docker e Docker Compose
 - `embed.FS` para embutir os assets do frontend no binário
 
-## Arquitetura de Transações
+---
 
-O Pingou implementa **atomicidade** no fluxo de processamento da state machine usando o padrão **Unit of Work**.
+## Arquitetura
 
-### O problema
+### Checkers
 
-Antes desta implementação, `StateMachine.Process` executava operações sequenciais via repositórios:
+Cada tipo de monitor é implementado por um **checker**: um arquivo que cumpre uma interface pequena.
 
-1. Inserir `checks`
-2. Atualizar `monitors` (current_state, last_checked_at)
-3. Abrir incidente (se transita para DOWN)
-4. Fechar incidente (se transita para UP)
+```go
+type Checker interface {
+    Check(ctx context.Context, m *domain.Monitor) CheckResult
+}
+```
 
-Se uma etapa falhasse depois de outra já ter sido gravada, o banco ficaria em estado parcialmente persistido.
+O `checker.Registry` escolhe o checker pelo campo `type` do monitor e o agendador entrega o `CheckResult` para a state machine. A state machine **não conhece o tipo do check**: ela só recebe "deu certo" ou "deu errado". Por isso, adicionar um tipo novo não mexe em incidentes, transações nem webhook.
 
-### A solução
+O Heartbeat é o único caso diferente:
 
-A implementação usa **transações SQL** para garantir que todas as operações sejam aplicadas atomicamente:
+- Os checks `UP` chegam pela rota pública `/ping/{token}`.
+- Um avaliador periódico verifica prazos vencidos e gera os checks `DOWN`.
+- Os dois caminhos passam pela mesma state machine.
+
+### Transações (Unit of Work)
+
+O processamento da state machine é **atômico**, usando o padrão Unit of Work.
+
+**O problema:** `StateMachine.Process` executava operações em sequência (inserir check, atualizar monitor, abrir incidente, fechar incidente). Se uma etapa falhasse depois de outra já gravada, o banco ficava parcialmente atualizado.
+
+**A solução:** todas as operações rodam na mesma transação SQL.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     StateMachine.Process                     │
+│                     StateMachine.Process                    │
 ├─────────────────────────────────────────────────────────────┤
-│  1. uow.Begin() → inicia transação                          │
-│  2. checkRepo.CreateWithTx() → insere check                  │
-│  3. monitorRepo.UpdateWithTx() → atualiza monitor            │
-│  4. incidentRepo.CreateWithTx() → abre incidente            │
-│  5. incidentRepo.Close() → fecha incidente                   │
-│  6. uow.Commit() → confirma transação                        │
-│  7. notifier.NotifyDown/NotifyRecovery() → webhook (APÓS!)  │
+│  1. uow.Begin()                     → inicia transação      │
+│  2. checkRepo.CreateWithTx()        → insere check          │
+│  3. monitorRepo.UpdateWithTx()      → atualiza monitor      │
+│  4. incidentRepo.CreateWithTx()     → abre incidente        │
+│  5. incidentRepo.Close()            → fecha incidente       │
+│  6. uow.Commit()                    → confirma transação    │
+│  7. notifier.NotifyDown/Recovery()  → webhook (APÓS commit) │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Garantias
+Garantias:
 
-- **Atomicidade**: Check + mudança de estado + incidente são persistidos juntos
-- **Rollback automático**: Em caso de erro, todas as operações são desfeitas
-- **Webhook seguro**: Notificações são enviadas APÓS o commit, garantindo que o estado do banco está correto
+- **Atomicidade**: check, mudança de estado e incidente são gravados juntos.
+- **Rollback automático**: em caso de erro, nada é gravado.
+- **Webhook seguro**: as notificações só saem depois do commit.
 
-### Componentes
+| Componente         | Arquivo                                   | Descrição                  |
+| ------------------ | ----------------------------------------- | -------------------------- |
+| `UnitOfWork`       | `internal/service/unit_of_work.go`        | Interface de transações    |
+| `sqliteUnitOfWork` | `internal/service/unit_of_work_impl.go`   | Implementação com `sql.Tx` |
+| `CheckRepoTx`      | `internal/repository/check_repo_tx.go`    | Checks com suporte a Tx    |
+| `MonitorRepoTx`    | `internal/repository/monitor_repo_tx.go`  | Monitors com suporte a Tx  |
+| `IncidentRepoTx`   | `internal/repository/incident_repo_tx.go` | Incidents com suporte a Tx |
 
-| Componente         | Arquivo                                   | Descrição                                  |
-| ------------------ | ----------------------------------------- | ------------------------------------------ |
-| `UnitOfWork`       | `internal/service/unit_of_work.go`        | Interface para gerenciamento de transações |
-| `sqliteUnitOfWork` | `internal/service/unit_of_work_impl.go`   | Implementação com `sql.Tx`                 |
-| `CheckRepoTx`      | `internal/repository/check_repo_tx.go`    | Repositório de checks com suporte a Tx     |
-| `MonitorRepoTx`    | `internal/repository/monitor_repo_tx.go`  | Repositório de monitors com suporte a Tx   |
-| `IncidentRepoTx`   | `internal/repository/incident_repo_tx.go` | Repositório de incidents com suporte a Tx  |
+### Modelo de dados do monitor
+
+Campos do monitor, além dos básicos (nome, intervalo, timeout, threshold):
+
+| Campo          | Descrição                                                                    |
+| -------------- | ---------------------------------------------------------------------------- |
+| `type`         | `http`, `tcp` ou `heartbeat`. Padrão `http`: monitores existentes não mudam. |
+| `config`       | JSON com os campos específicos do tipo.                                      |
+| `ping_token`   | Token secreto da URL de ping (somente `heartbeat`).                          |
+| `last_ping_at` | Quando chegou o último ping (somente `heartbeat`; `null` antes do primeiro). |
+
+Campos de `config` por tipo:
+
+| Tipo        | Campos                             |
+| ----------- | ---------------------------------- |
+| `http`      | (usa o campo `url` do monitor)     |
+| `tcp`       | `host` (texto), `port` (1 a 65535) |
+| `heartbeat` | `grace_seconds` (padrão `60`)      |
+
+---
 
 ## Estrutura do projeto
 
@@ -131,21 +219,26 @@ pingou/
 │   ├── database/
 │   ├── domain/
 │   ├── repository/
-│   ├── service/
+│   ├── service/        # state machine, validação, notificador
+│   ├── scheduler/      # jobs de check, avaliador de heartbeat, retenção
 │   ├── handler/
-│   └── checker/
-├── migrations/
+│   └── checker/        # um arquivo por tipo de check
+│   # as migrations ficam em internal/database/migrations/
 ├── web/
 │   ├── src/
 │   │   ├── api/
 │   │   ├── components/
 │   │   ├── hooks/
+│   │   ├── lib/
 │   │   ├── pages/
 │   │   ├── main.jsx
 │   │   └── theme/
 │   ├── package.json
 │   └── vite.config.js
+├── assets/             # marca, favicons e grafismos
+├── docs/               # manual de identidade visual
 ├── bin/
+├── DESIGN.md           # design system
 ├── Dockerfile
 ├── docker-compose.yml
 ├── Makefile
@@ -155,6 +248,8 @@ pingou/
 └── README.md
 ```
 
+---
+
 ## Como rodar em desenvolvimento
 
 ### Requisitos
@@ -163,24 +258,11 @@ pingou/
 - Node.js + npm
 - GCC ou toolchain compatível com CGO
 - SQLite
-- `gofumpt` instalado, se você for usar o target `fmt`
+- `gofumpt` (para o target `fmt`)
 
-## Convenções de formatação
+### 1. Configurar o ambiente
 
-O projeto inclui `.editorconfig` na raiz para padronizar configuracoes basicas entre editores:
-
-- UTF-8, line endings LF e newline final.
-- Remocao de espacos finais em editores compativeis.
-- Tabs para arquivos Go e Makefile.
-- 2 espacos para JS, JSX, JSON, CSS, Markdown, YAML, SQL, Dockerfile e `.env*`.
-
-Essa configuracao complementa `gofumpt` no backend e ESLint/Vite no frontend.
-
-### 1. Configurar ambiente
-
-Crie um arquivo `.env` na raiz do projeto com base no `.env.example`.
-
-Exemplo:
+Crie um arquivo `.env` na raiz, com base no `.env.example`:
 
 ```env
 PINGOU_PORT=8080
@@ -196,11 +278,7 @@ PINGOU_CORS_ALLOWED_ORIGINS=
 make dev
 ```
 
-Esse comando:
-
-- formata o código Go
-- sobe o backend
-- usa as variáveis do `.env`
+Esse comando formata o código Go e sobe o backend com as variáveis do `.env`.
 
 ### 3. Build do frontend
 
@@ -214,52 +292,39 @@ make build-web
 make build
 ```
 
-O binário será gerado em:
+O binário é gerado em `bin/pingou`.
 
-```bash
-bin/pingou
-```
+Ainda não há workflow de GitHub Actions: a validação é local. Rode `make test` (testes Go) e, no frontend, `npm test` dentro de `web/`. `make build` e `make docker-build` completam a checagem quando necessário.
 
-Ainda não há workflow de GitHub Actions neste momento. Também não há suíte de testes automatizados no primeiro momento; a validação do projeto é local e manual, via `make build` e `make docker-build` quando necessário.
+### Convenções de formatação
+
+O `.editorconfig` na raiz padroniza:
+
+- UTF-8, line endings LF e newline final
+- remoção de espaços finais
+- tabs para Go e Makefile
+- 2 espaços para JS, JSX, JSON, CSS, Markdown, YAML, SQL, Dockerfile e `.env*`
+
+Ele complementa o `gofumpt` no backend e o ESLint/Vite no frontend.
+
+---
 
 ## Como rodar com Docker
 
-O Dockerfile inclui um `HEALTHCHECK` que verifica o status da aplicação a cada 30 segundos via endpoint público `/healthz`.
-
-### Build da imagem
+O Dockerfile inclui um `HEALTHCHECK` que consulta o endpoint público `/healthz` a cada 30 segundos.
 
 ```bash
-make docker-build
+make docker-build   # build da imagem
+make docker-up      # sobe com Docker Compose
+docker ps           # a coluna STATUS deve mostrar "healthy"
+make docker-down    # derruba os containers
 ```
 
-### Subir com Docker Compose
-
-```bash
-make docker-up
-```
-
-Verifique o status de health do container com:
-
-```bash
-docker ps
-```
-
-Você deverá ver o status `healthy` na coluna `STATUS` se tudo estiver funcionando.
-
-### Derrubar containers
-
-```bash
-make docker-down
-```
+---
 
 ## Login no dashboard
 
-O dashboard exige autenticação por **API Key**.
-
-Ao abrir a aplicação no navegador, a tela de login solicitará a chave.
-Essa chave é validada contra a API e armazenada no `localStorage`.
-
-Use o mesmo valor definido em:
+O dashboard pede uma **API Key**. Ela é validada com uma chamada a `GET /api/info` (rota protegida e barata, sem consultar monitores) e guardada no `localStorage` do navegador. Use o mesmo valor de:
 
 ```env
 PINGOU_API_KEY=...
@@ -267,15 +332,16 @@ PINGOU_API_KEY=...
 
 ## Variáveis de ambiente
 
-| Variável                      | Obrigatória | Default     | Descrição                                                                                                          |
-| ----------------------------- | ----------: | ----------- | ------------------------------------------------------------------------------------------------------------------ |
-| `PINGOU_PORT`                 |         não | `8080`      | Porta HTTP da aplicação                                                                                            |
-| `PINGOU_DATABASE_URL`         |         não | `pingou.db` | Caminho do arquivo SQLite                                                                                          |
-| `PINGOU_API_KEY`              |         sim | -           | Chave usada para proteger o dashboard e as rotas `/api/*`                                                          |
-| `PINGOU_LOG_LEVEL`            |         não | `info`      | Nível de log (`DEBUG` habilita logs debug)                                                                         |
-| `PINGOU_CORS_ALLOWED_ORIGINS` |         não | (vazio)     | Lista separada por vírgula de origins permitidas para CORS; vazio = CORS desabilitado. Ex: `http://localhost:5173` |
-| `PINGOU_MAX_REDIRECTS`        |         não | `5`         | Número máximo de redirects que o checker HTTP segue                                                                |
-| `PINGOU_GLOBAL_TIMEOUT`       |         não | `60`        | Timeout global em segundos para requisições HTTP                                                                   |
+| Variável                      | Obrigatória | Padrão      | Descrição                                                                                             |
+| ----------------------------- | :---------: | ----------- | ----------------------------------------------------------------------------------------------------- |
+| `PINGOU_PORT`                 |     não     | `8080`      | Porta HTTP da aplicação                                                                               |
+| `PINGOU_DATABASE_URL`         |     não     | `pingou.db` | Caminho do arquivo SQLite                                                                             |
+| `PINGOU_API_KEY`              |     sim     | -           | Chave que protege o dashboard e as rotas `/api/*`                                                     |
+| `PINGOU_LOG_LEVEL`            |     não     | `info`      | Nível de log (`DEBUG` habilita logs de debug)                                                         |
+| `PINGOU_CORS_ALLOWED_ORIGINS` |     não     | (vazio)     | Origins permitidas, separadas por vírgula. Vazio desabilita CORS. Ex.: `http://localhost:5173`        |
+| `PINGOU_MAX_REDIRECTS`        |     não     | `5`         | Máximo de redirects seguidos pelo checker HTTP                                                        |
+| `PINGOU_GLOBAL_TIMEOUT`       |     não     | `60`        | Timeout global, em segundos, das requisições HTTP                                                     |
+| `PINGOU_PUBLIC_URL`           |     não     | (vazio)     | Endereço público do dashboard. Preenche `dashboard_url` no webhook. Ex.: `https://pingou.exemplo.com` |
 
 ## SQLite
 
@@ -286,29 +352,29 @@ O backend abre o SQLite com:
 - `_busy_timeout=5000`
 - `SetMaxOpenConns(1)`
 
-Se `PINGOU_DATABASE_URL` ja incluir query params, eles sao preservados e os parametros operacionais acima sao aplicados pelo app.
+Se `PINGOU_DATABASE_URL` já tiver query params, eles são preservados e os parâmetros acima são aplicados pelo app.
+
+---
 
 ## Autenticação da API
 
-Todas as rotas protegidas exigem o header:
+As rotas protegidas exigem o header:
 
 ```http
 X-API-Key: sua-chave
 ```
 
-### Exemplo com `curl`
-
 ```bash
 curl -H "X-API-Key: dev-api-key" http://localhost:8080/api/monitors
 ```
+
+A rota de ping do Heartbeat (`/ping/{token}`) é a exceção: ela é pública, porque o próprio token é o segredo.
 
 ## Middlewares HTTP
 
 ### Recover
 
-O servidor inclui um middleware de `recover` que captura `panic` em handlers, loga internamente com `request_id` e stack trace, e responde ao cliente com JSON `500` (mensagem genérica).
-
-Resposta de erro:
+Captura `panic` nos handlers, registra no log com `request_id` e stack trace, e responde `500` com mensagem genérica:
 
 ```json
 {
@@ -319,79 +385,195 @@ Resposta de erro:
 
 ### CORS
 
-CORS é controlado via variável de ambiente `PINGOU_CORS_ALLOWED_ORIGINS` (lista separada por vírgula). Se vazia (padrão), nenhum cabeçalho CORS é adicionado.
-
-Exemplo para desenvolvimento com Vite:
+Controlado por `PINGOU_CORS_ALLOWED_ORIGINS`. Se vazio (padrão), nenhum cabeçalho CORS é adicionado. Para desenvolvimento com Vite:
 
 ```env
 PINGOU_CORS_ALLOWED_ORIGINS=http://localhost:5173
 ```
 
-O middleware:
+O middleware responde ao preflight `OPTIONS`, permite o header `X-API-Key` e valida a origem contra a lista.
 
-- Responde a preflight `OPTIONS` com cabeçalhos apropriados.
-- Permite header `X-API-Key` em requisições cross-origin.
-- Valida a origem contra a lista de permitidas.
+### Limite de requisições na rota de ping
+
+Como `/ping/{token}` é pública, ela limita **60 tokens inválidos por minuto por IP** (janela fixa, em memória). Acima disso, tokens inválidos recebem `429` com o header `Retry-After`. Ping com token válido **nunca** é bloqueado nem contado, então uma varredura de tokens não derruba os heartbeats reais.
+
+- O IP considerado é o da conexão (`RemoteAddr`). Atrás de um proxy reverso, todos os clientes aparecem com o IP do proxy e dividem o mesmo limite de tokens inválidos. Suporte a `X-Forwarded-For` fica para uma versão futura.
+- O caminho `/ping/<token>` aparece como `/ping/[redacted]` nos logs: o token é um segredo.
 
 ---
 
-## Endpoints principais
+## Endpoints
 
-### Público
+### Públicos
 
-#### `GET /healthz`
+| Método              | Rota            | Descrição                             |
+| ------------------- | --------------- | ------------------------------------- |
+| `GET`               | `/healthz`      | Status básico da aplicação            |
+| `GET` `POST` `HEAD` | `/ping/{token}` | Recebe o ping de um monitor Heartbeat |
 
-Retorna o status básico da aplicação.
+Sobre `/ping/{token}`:
+
+- Responde `200` quando o token é válido (mesmo com o monitor pausado).
+- Responde `404` quando o token não existe, sem revelar detalhes.
+- O corpo da requisição é ignorado.
 
 ### Protegidos
 
-#### `GET /api/monitors`
+| Método   | Rota                          | Descrição                                                       |
+| -------- | ----------------------------- | --------------------------------------------------------------- |
+| `GET`    | `/api/monitors`               | Lista os monitores                                              |
+| `POST`   | `/api/monitors`               | Cria um monitor                                                 |
+| `GET`    | `/api/monitors/:id`           | Busca um monitor                                                |
+| `PATCH`  | `/api/monitors/:id`           | Atualiza um monitor                                             |
+| `DELETE` | `/api/monitors/:id`           | Remove um monitor                                               |
+| `POST`   | `/api/monitors/:id/token`     | Gera um novo token de ping (Heartbeat)                          |
+| `GET`    | `/api/monitors/:id/checks`    | Histórico de checks, paginado (`limit`, `offset`)               |
+| `GET`    | `/api/monitors/:id/incidents` | Incidentes do monitor (mesmos filtros de `/api/incidents`)      |
+| `GET`    | `/api/monitors/:id/stats`     | Estatísticas numa janela (`range=24h\|7d\|14d\|30d`)            |
+| `GET`    | `/api/incidents`              | Lista incidentes (`status`, `monitor_id`, `limit`, `offset`)    |
+| `GET`    | `/api/settings`               | Busca as configurações globais                                  |
+| `PATCH`  | `/api/settings`               | Atualiza as configurações globais (`webhook_url` só http/https) |
+| `POST`   | `/api/settings/webhook/test`  | Envia um evento `test` ao webhook (5 por minuto por IP)         |
+| `GET`    | `/api/info`                   | Versão, commit, data do build e tamanho do banco                |
+| `GET`    | `/api/export`                 | Baixa um dump do SQLite (`pingou-AAAA-MM-DD.db`, `VACUUM INTO`) |
 
-Lista os monitores.
+### Info
 
-#### `POST /api/monitors`
+```bash
+curl -H "X-API-Key: dev-api-key" http://localhost:8080/api/info
+```
 
-Cria um novo monitor.
+```json
+{
+  "version": "v1.0",
+  "commit": "abc1234",
+  "build_date": "2026-10-29T12:00:00Z",
+  "database_size_bytes": 13002342
+}
+```
 
-#### `GET /api/monitors/:id`
+`database_size_bytes` soma o arquivo do banco com o `-wal` e o `-shm`. O backup sai um pouco menor.
 
-Busca um monitor por ID.
+### Listando incidentes
 
-#### `PATCH /api/monitors/:id`
+`GET /api/incidents` aceita:
 
-Atualiza um monitor.
+- `status=open|resolved` (vazio = todos; `open=true` continua aceito como `status=open`; outro valor → `400`)
+- `monitor_id=<id>`
+- `limit` (padrão 20, máximo 100) e `offset`
 
-#### `DELETE /api/monitors/:id`
+Abertos vêm por `started_at` decrescente; resolvidos, por `ended_at` decrescente. `total` é a contagem real do filtro, independente de `limit`.
 
-Remove um monitor.
+```bash
+curl -H "X-API-Key: dev-api-key" "http://localhost:8080/api/incidents?status=open&limit=1"
+```
 
-#### `GET /api/monitors/:id/checks`
+Cada item traz o monitor e a contagem de falhas:
 
-Histórico de checks de um monitor, paginado (`limit`, `offset`).
+```json
+{
+  "id": "0192…",
+  "monitor_id": "0191…",
+  "monitor": {
+    "id": "0191…",
+    "name": "API",
+    "type": "http",
+    "target": "https://api.exemplo.com/health"
+  },
+  "started_at": "2026-10-27T14:43:00Z",
+  "ended_at": null,
+  "last_error": "dial tcp 10.0.0.5:443: connect: connection refused",
+  "failure_count": 42,
+  "duration_seconds": 3600,
+  "notification_sent": true,
+  "open": true
+}
+```
 
-#### `GET /api/monitors/:id/incidents`
+`target` é a URL (http), `host:porta` (tcp) ou `null` (heartbeat). `last_error` é o erro que abriu o incidente; `failure_count` soma os checks com falha enquanto ele esteve aberto.
 
-Incidentes de um monitor, paginado (`limit`, `offset`, `open=true` filtra apenas abertos).
+### Estatísticas de um monitor
 
-#### `GET /api/incidents`
+`GET /api/monitors/:id/stats?range=24h` resume o monitor numa janela. `range` aceita `24h` (padrão), `7d`, `14d` e `30d`; outro valor → `400`.
 
-Lista incidentes (mesma paginação e filtro `open` acima).
+| `range` | Balde  | Pontos em `series` |
+| ------- | ------ | ------------------ |
+| `24h`   | 10 min | 144                |
+| `7d`    | 1 h    | 168                |
+| `14d`   | 3 h    | 112                |
+| `30d`   | 6 h    | 120                |
 
-#### `GET /api/settings`
+```bash
+curl -H "X-API-Key: dev-api-key" "http://localhost:8080/api/monitors/<id>/stats?range=7d"
+```
 
-Busca as configurações globais.
+```json
+{
+  "range": "24h",
+  "since": "2026-10-28T14:10:00Z",
+  "until": "2026-10-29T14:10:00Z",
+  "bucket_seconds": 600,
+  "uptime": 99.93,
+  "avg_latency_ms": 214,
+  "checks": 1440,
+  "incidents": 1,
+  "downtime_seconds": 60,
+  "series": [
+    {
+      "t": "2026-10-28T14:10:00Z",
+      "avg_latency_ms": 203,
+      "checks": 10,
+      "failures": 0
+    }
+  ],
+  "down": [{ "start": "2026-10-29T10:12:00Z", "end": "2026-10-29T10:13:00Z" }]
+}
+```
 
-#### `PATCH /api/settings`
+- `since` e `until` ficam alinhados ao balde; o último balde é o corrente (parcial). `series` sempre tem o mesmo tamanho, com baldes vazios incluídos.
+- `avg_latency_ms` (total e por balde) usa só checks com sucesso; `null` quando não há nenhum. `uptime` é `null` sem checks na janela.
+- `down` são os incidentes que se sobrepõem à janela, recortados a ela; um incidente aberto termina no momento da consulta. `incidents` é o tamanho de `down` e `downtime_seconds` a soma das durações.
+- A API aceita qualquer dos 4 períodos; a tela desabilita os maiores que `retention_days`, já que não há dados para eles.
 
-Atualiza configurações globais.
+### Criando monitores de cada tipo
 
-#### `GET /api/export`
+HTTP:
 
-Baixa um dump do banco SQLite gerado com `VACUUM INTO` em arquivo temporário.
+```bash
+curl -X POST http://localhost:8080/api/monitors \
+  -H "X-API-Key: dev-api-key" -H "Content-Type: application/json" \
+  -d '{"name":"API","type":"http","url":"https://api.exemplo.com/health","interval_seconds":60,"timeout_seconds":5,"failure_threshold":3}'
+```
+
+TCP:
+
+```bash
+curl -X POST http://localhost:8080/api/monitors \
+  -H "X-API-Key: dev-api-key" -H "Content-Type: application/json" \
+  -d '{"name":"Postgres","type":"tcp","config":{"host":"db.interno","port":5432},"interval_seconds":60,"timeout_seconds":5,"failure_threshold":3}'
+```
+
+Heartbeat:
+
+```bash
+curl -X POST http://localhost:8080/api/monitors \
+  -H "X-API-Key: dev-api-key" -H "Content-Type: application/json" \
+  -d '{"name":"Backup diário","type":"heartbeat","interval_seconds":86400,"config":{"grace_seconds":3600}}'
+```
+
+A resposta do Heartbeat inclui o `ping_token` para montar a URL de ping.
+
+> Se `type` não for enviado, o monitor é criado como `http`. Se `enabled` não for enviado, o monitor é criado ativo.
+
+Limites de `interval_seconds`: 10 a 86400 para `http` e `tcp`; 60 a 604800 (1 semana) para `heartbeat`.
+
+`GET /api/monitors` também traz, por monitor, o resumo usado pelo painel: `history` (últimos 30 checks, `true` = sucesso, mais recente por último), `uptime_24h` (percentual, `null` sem checks), `last_latency_ms` e, só para monitores `DOWN`, `last_error` e `down_since` (erro e início do incidente aberto; `null` nos outros estados).
+
+---
 
 ## Webhook
 
-Quando `webhook_url` estiver configurado em settings, o Pingou envia um `POST` JSON nas transições de estado.
+Quando `webhook_url` está configurado em settings, o Pingou envia um `POST` JSON a cada transição para `DOWN` ou de volta para `UP`.
 
 Evento de queda:
 
@@ -401,11 +583,14 @@ Evento de queda:
   "monitor": {
     "id": "018f2f7a-...",
     "name": "API",
-    "url": "https://api.example.com/health"
+    "type": "http",
+    "target": "https://api.exemplo.com/health",
+    "url": "https://api.exemplo.com/health"
   },
   "timestamp": "2026-05-01T12:00:00Z",
   "last_error": "unexpected status code: 500",
-  "downtime_duration_seconds": null
+  "downtime_duration_seconds": null,
+  "dashboard_url": "https://pingou.exemplo.com/monitors/018f2f7a-..."
 }
 ```
 
@@ -417,267 +602,285 @@ Evento de recuperação:
   "monitor": {
     "id": "018f2f7a-...",
     "name": "API",
-    "url": "https://api.example.com/health"
+    "type": "http",
+    "target": "https://api.exemplo.com/health",
+    "url": "https://api.exemplo.com/health"
   },
   "timestamp": "2026-05-01T12:05:00Z",
   "last_error": null,
-  "downtime_duration_seconds": 300
+  "downtime_duration_seconds": 300,
+  "dashboard_url": "https://pingou.exemplo.com/monitors/018f2f7a-..."
 }
 ```
 
-## Comandos disponíveis no Makefile
+Campos `type` e `target`:
 
-Os alvos do `Makefile` e seu propósito (uso típico):
+| Tipo        | `target`     | `url`                                |
+| ----------- | ------------ | ------------------------------------ |
+| `http`      | a URL        | a URL (mantido para compatibilidade) |
+| `tcp`       | `host:porta` | `null`                               |
+| `heartbeat` | `null`       | `null`                               |
 
-- `start`: Compila e executa o binário usando as variáveis do `.env`.
-  - Uso: `make start`
+`dashboard_url` leva à página de detalhe do monitor. É `null` sem `PINGOU_PUBLIC_URL` (o Pingou não sabe o próprio endereço público) e no evento `test`.
 
-- `dev`: Roda a aplicação em modo desenvolvimento usando as variáveis de `.env`.
-  - Uso: `make dev`
+> A URL de ping do Heartbeat **nunca** é enviada no webhook, porque ela contém o token secreto e webhooks costumam ir para serviços de terceiros (Slack, Discord etc.).
 
-- `fmt`: Formata o código Go com `gofumpt`.
-  - Uso: `make fmt`
+### Testando o webhook
 
-- `build`: Compila o frontend e o binário Go (usa `CGO_ENABLED=1`). Gera `bin/pingou`.
-  - Uso: `make build` (invoca `build-web` internamente)
+`POST /api/settings/webhook/test` envia um evento `test` sem gravar nada no banco. Com `{"url": "..."}` no corpo, testa essa URL (sem salvar). Sem corpo, testa a URL salva.
 
-- `test`: Executa os testes Go em todo o módulo.
-  - Uso: `make test`
+```bash
+curl -X POST http://localhost:8080/api/settings/webhook/test \
+  -H "X-API-Key: dev-api-key" \
+  -d '{"url":"https://webhook.site/<id>"}'
+```
 
-- `clean`: Remove artefatos locais como `bin/`.
-  - Uso: `make clean`
+```json
+{
+  "ok": false,
+  "status_code": 404,
+  "duration_ms": 142,
+  "error": "unexpected status code: 404"
+}
+```
 
-- `build-web`: Instala dependências do frontend e gera o bundle via Vite.
-  - Uso: `make build-web`
+- A resposta é sempre `200` quando o teste roda. `ok` diz se o destino respondeu 2xx.
+- `status_code` é `null` quando não houve resposta (ex.: `"error": "timeout após 5s"`).
+- Timeout de 5 s, redirects **não** são seguidos e o corpo do destino nunca é devolvido.
+- `400` sem URL (nem no corpo, nem salva) ou com esquema que não seja http/https. `429` com `Retry-After` depois de 5 testes por minuto.
 
-- `docker-build`: Constrói a imagem Docker multi-stage e a marca com `$(VERSION)` e `latest`.
-  - Uso: `make docker-build`
+O payload tem o mesmo formato dos eventos reais:
 
-- `docker-up`: Sobe os serviços via `docker compose up --build` (desenvolvimento/integração local).
-  - Uso: `make docker-up`
+```json
+{
+  "event": "test",
+  "monitor": {
+    "id": "00000000-0000-0000-0000-000000000000",
+    "name": "Teste do Pingou",
+    "type": "http",
+    "target": "https://exemplo.com",
+    "url": "https://exemplo.com"
+  },
+  "timestamp": "2026-10-29T12:00:00Z",
+  "last_error": null,
+  "downtime_duration_seconds": null,
+  "dashboard_url": null
+}
+```
 
-- `docker-down`: Derruba os serviços levantados via `docker compose`.
-  - Uso: `make docker-down`
+> Integrações que tratam `event` devem **ignorar valores desconhecidos**. Novos eventos podem surgir sem aviso.
 
-- `docker-size`: Constrói uma imagem temporária `pingou:size-check`, imprime informação de tamanho e remove a imagem.
-  - Objetivo: validar automaticamente o requisito de tamanho da imagem (PRD).
-  - Uso: `make docker-size`
+---
 
-- `docker-startup-test`: Mede o tempo de startup do `docker compose` (aguarda healthcheck), considera < 30s como sucesso.
-  - Objetivo: validar o critério de sucesso `docker compose up < 30s` automaticamente.
-  - Uso: `make docker-startup-test`
+## Comandos do Makefile
 
-- `release`: Gera o build final (compila e imprime o local do binário em `bin/pingou`).
-  - Uso: `make release`
+| Comando                    | Descrição                                                                |
+| -------------------------- | ------------------------------------------------------------------------ |
+| `make start`               | Compila e executa o binário com as variáveis do `.env`                   |
+| `make dev`                 | Roda em modo desenvolvimento com as variáveis do `.env`                  |
+| `make fmt`                 | Formata o código Go com `gofumpt`                                        |
+| `make build`               | Compila frontend e binário Go (`CGO_ENABLED=1`). Gera `bin/pingou`       |
+| `make test`                | Executa os testes Go do módulo                                           |
+| `make clean`               | Remove artefatos locais, como `bin/`                                     |
+| `make build-web`           | Instala dependências do frontend e gera o bundle com Vite                |
+| `make docker-build`        | Constrói a imagem multi-stage, com tags `$(VERSION)` e `latest`          |
+| `make docker-up`           | Sobe os serviços com `docker compose up --build`                         |
+| `make docker-down`         | Derruba os serviços do Compose                                           |
+| `make docker-size`         | Mede o tamanho da imagem (requisito do PRD) e remove a imagem temporária |
+| `make docker-startup-test` | Mede o tempo de startup do Compose; sucesso se < 30s                     |
+| `make release`             | Gera o build final em `bin/pingou`                                       |
 
-Cada target tem comentários e comportamentos encadeados no `Makefile` (por exemplo, `build` roda `build-web` antes de compilar o binário). Use `make <target>` para executar o fluxo desejado.
+Alguns targets são encadeados. Por exemplo, `build` roda `build-web` antes de compilar o binário.
+
+---
 
 ## CLI
 
-O Pingou inclui um binário CLI para operações de banco de dados e debug sem passar pela API.
+O binário inclui comandos para operar o banco e depurar sem passar pela API.
 
 ### Instalação
 
 ```bash
 make build
-# ou compilar diretamente
+# ou
 go build -o pingou ./cmd/pingou
 ```
 
 ### Comandos
 
-| Comando                 | Descrição                                                |
-| ----------------------- | -------------------------------------------------------- |
-| `pingou add`            | Cria um novo monitor                                     |
-| `pingou rm`             | Remove um monitor pelo ID                                |
-| `pingou serve`          | Inicia o servidor API + dashboard (comportamento padrão) |
-| `pingou migrate up`     | Executa migrations pendentes                             |
-| `pingou migrate down`   | Reverte a última migration                               |
-| `pingou migrate status` | Mostra o status das migrations                           |
-| `pingou export-db`      | Exporta o banco SQLite                                   |
-| `pingou version`        | Exibe versão do binário                                  |
-| `pingou config`         | Exibe configuração atual                                 |
+| Comando                 | Descrição                                       |
+| ----------------------- | ----------------------------------------------- |
+| `pingou serve`          | Inicia a API + dashboard (comportamento padrão) |
+| `pingou add`            | Cria um monitor                                 |
+| `pingou rm`             | Remove um monitor pelo ID                       |
+| `pingou migrate up`     | Executa migrations pendentes                    |
+| `pingou migrate down`   | Reverte a última migration                      |
+| `pingou migrate status` | Mostra o status das migrations                  |
+| `pingou export-db`      | Exporta o banco SQLite                          |
+| `pingou version`        | Mostra a versão do binário                      |
+| `pingou config`         | Mostra a configuração atual (sem secrets)       |
 
-### Detalhes
-
-#### serve
-
-Inicia o servidor HTTP com API REST e dashboard SPA.
+### serve
 
 ```bash
-# Porta padrão
 ./pingou serve
-
-# Porta customizada
 PINGOU_PORT=9999 ./pingou serve
 ```
 
-**Proteção anti-multinstância**: O comando usa um lock file em `~/.pingou/pingou.lock` para evitar múltiplas instâncias. Se já houver um servidor rodando, retorna erro.
+**Proteção contra múltiplas instâncias:** usa um lock file em `~/.pingou/pingou.lock`. Se já houver um servidor rodando, retorna erro.
 
-#### add
-
-Cria um novo monitor de health check.
+### add
 
 ```bash
-# Exemplo básico
-./pingou add -n "Meu Servico" -u "https://api.exemplo.com/health" --key <API_KEY>
-
-# Com flags opcionais
+# HTTP
 ./pingou add -n "API" -u "https://api.exemplo.com/health" -i 30 -t 10 -K 5 --key <API_KEY>
+
+# TCP
+./pingou add -n "Postgres" --type tcp --host db.interno --port 5432 --key <API_KEY>
+
+# Heartbeat
+./pingou add -n "Backup diário" --type heartbeat -i 86400 --grace 3600 --key <API_KEY>
 ```
 
-**Flags**:
+| Flag          | Abrev | Padrão        | Descrição                                                     |
+| ------------- | ----- | ------------- | ------------------------------------------------------------- |
+| `--name`      | `-n`  | (obrigatório) | Nome do monitor                                               |
+| `--type`      |       | `http`        | `http`, `tcp` ou `heartbeat`                                  |
+| `--url`       | `-u`  |               | URL a verificar (obrigatório para `http`)                     |
+| `--host`      |       |               | Host (obrigatório para `tcp`)                                 |
+| `--port`      |       |               | Porta (obrigatório para `tcp`)                                |
+| `--grace`     |       | `60`          | Tolerância em segundos (`heartbeat`)                          |
+| `--interval`  | `-i`  | `60`          | Intervalo em segundos                                         |
+| `--timeout`   | `-t`  | `5`           | Timeout em segundos (não se aplica a `heartbeat`)             |
+| `--threshold` | `-K`  | `3`           | Falhas seguidas antes de `DOWN` (não se aplica a `heartbeat`) |
 
-| Flag          | Abrev | Padrão        | Descrição                        |
-| ------------- | ----- | ------------- | -------------------------------- |
-| `--name`      | `-n`  | (obrigatório) | Nome do monitor                  |
-| `--url`       | `-u`  | (obrigatório) | URL para verificar health        |
-| `--interval`  | `-i`  | `60`          | Intervalo em segundos            |
-| `--timeout`   | `-t`  | `5`           | Timeout em segundos              |
-| `--threshold` | `-K`  | `3`           | Falhas antes de marcar como down |
+O monitor é sempre criado com `enabled: true`. Para `heartbeat`, o comando imprime a URL de ping.
 
-O monitor é sempre criado com `enabled: true`.
-
-#### rm
-
-Remove um monitor pelo ID.
+### rm
 
 ```bash
 ./pingou rm --id 019def55-0c92-76a5-a7c4-b573ab447ac2 --key <API_KEY>
 ```
 
-**Flags**:
-
 | Flag   | Abrev | Padrão        | Descrição     |
 | ------ | ----- | ------------- | ------------- |
 | `--id` | `-i`  | (obrigatório) | ID do monitor |
 
-#### migrate
-
-Gerencia migrations do banco de dados.
+### migrate
 
 ```bash
-# Aplicar migrations
 ./pingou migrate up --key <API_KEY>
-
-# Reverter última migration
 ./pingou migrate down --key <API_KEY>
-
-# Ver status
 ./pingou migrate status --key <API_KEY>
 ```
 
-> **Nota**: Requer `--key` igual ao `PINGOU_API_KEY` do `.env`.
+> Requer `--key` igual ao `PINGOU_API_KEY` do `.env`.
 
-#### export-db
-
-Exporta o banco de dados atual para um arquivo SQLite.
+### export-db
 
 ```bash
-# Sem argumento: cria exported_<banco>.db no PWD
+# Sem argumento: cria exported_<banco>.db no diretório atual
 ./pingou export-db --key <API_KEY>
 
-#指定 output path
+# Com caminho de saída
 ./pingou export-db -o /tmp/backup.db --key <API_KEY>
 ```
 
-#### version
+> O export inclui os tokens de ping dos monitores Heartbeat e a URL do webhook, que costuma conter um segredo (a do Slack, por exemplo). Guarde o arquivo com o mesmo cuidado que a API Key.
 
-Exibe informações de versão.
+### version
 
 ```bash
 ./pingou version
-# Output:
 # pingou dev
 # commit: none
 # build date: unknown
 ```
 
-#### config
-
-Exibe a configuração atual (sem secrets).
+### config
 
 ```bash
 ./pingou config --key <API_KEY>
-# Output:
 # {
 #   "DatabaseURL": "./pingou.db",
 #   "Port": "8080",
 #   "LogLevel": "debug",
 #   "CORSAllowedOrigins": null,
 #   "MaxRedirects": 5,
-#   "GlobalTimeout": 60
+#   "GlobalTimeout": 60,
+#   "PublicURL": ""
 # }
 ```
 
 ### Flags globais
 
-| Flag            | Descrição                                                           |
-| --------------- | ------------------------------------------------------------------- |
-| `--key`         | API key para comandos protegidos (`migrate`, `export-db`, `config`) |
-| `-v, --verbose` | Modo verboso                                                        |
+| Flag              | Descrição                                                           |
+| ----------------- | ------------------------------------------------------------------- |
+| `--key`           | API Key para comandos protegidos (`migrate`, `export-db`, `config`) |
+| `-v`, `--verbose` | Modo verboso                                                        |
 
 ### Exit codes
 
-- `0`: Sucesso
-- `1`: Erro
+- `0`: sucesso
+- `1`: erro
+
+---
 
 ## Release
-
-Para gerar uma release local:
 
 ```bash
 make release
 ```
 
-Esse processo gera o build da aplicação e deixa o binário pronto em:
+Gera o build final em `bin/pingou`.
 
-```bash
-bin/pingou
-```
+---
 
 ## Objetivos do projeto
 
-O Pingou nasceu com alguns objetivos bem claros:
-
-- ser um health checker simples
+- ser um monitor de uptime simples
 - rodar com poucos recursos
-- usar SQLite para reduzir complexidade operacional
+- usar SQLite para reduzir a complexidade operacional
 - embutir o frontend no backend
-- funcionar bem como projeto real e também como estudo de Go
+- funcionar bem como projeto real e como estudo de Go
 
-## Limites e foco do MVP
+A ideia não é competir com ferramentas enterprise nem com plataformas completas de observabilidade. É entregar um monitor funcional, leve e fácil de entender.
 
-O projeto foi pensado para manter escopo controlado.
-A ideia não é competir com ferramentas enterprise, e sim entregar um monitor funcional, leve e compreensível.
+## Roadmap
 
-Foco do MVP:
+### v1.1 (concluída)
 
-- checks HTTP
-- incidentes básicos
-- webhook global
-- dashboard embutido
-- export do banco
+- [x] Interface `Checker` (refatoração, sem mudança de comportamento)
+- [x] Monitor TCP
+- [x] Monitor Heartbeat
+- [x] Redesign do dashboard com a nova identidade visual (tema claro)
 
-## Pós-MVP
+### Próxima versão
 
-Ideias futuras:
+- [ ] Verificação de palavra-chave na resposta HTTP
+- [ ] Aviso de expiração de certificado SSL (via webhook, sem estado novo)
 
-- TCP checks
-- status page pública
-- métricas e gráficos
-- integração com Prometheus
-- webhook por monitor
-- templates para Discord e Slack
-- multi-tenancy
+### Depois
+
+- Monitor DNS
+- Ping ICMP (depende de resolver as permissões sem complicar a instalação)
+- Tema escuro
+- Status page pública
+- Integração com Prometheus
+- Webhook por monitor
+- Templates para Discord e Slack
+- Multi-tenancy
+- Limite de ping por cliente atrás de proxy: ler `X-Forwarded-For` só quando a conexão vier de um proxy confiável (`PINGOU_TRUSTED_PROXIES`)
+
+---
 
 ## Identidade visual
 
-A marca, cores, tipografia e grafismos do Pingou estão documentados em:
+A marca, as cores, a tipografia e os grafismos do Pingou estão documentados em:
 
-- [`DESIGN.md`](DESIGN.md) — design system resumido (tokens de cor, tipografia, componentes), fonte da verdade para UI, README e assets.
-- [`docs/pingou-manual-identidade-visual.pdf`](docs/pingou-manual-identidade-visual.pdf) — Manual de Identidade Visual completo.
-- [`assets/`](assets/) — logos, símbolos, favicons e grafismos oficiais em SVG/PNG.
+- [`DESIGN.md`](DESIGN.md): design system resumido (tokens, tipografia, componentes). Fonte da verdade para UI, README e assets.
+- [`docs/pingou-manual-identidade-visual.pdf`](docs/pingou-manual-identidade-visual.pdf): manual de identidade visual completo.
+- [`assets/`](assets/): marca, símbolos, favicons e grafismos oficiais em SVG e PNG.
 
 ## Licença
 

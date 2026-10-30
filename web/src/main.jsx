@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "./index.css";
 import { injectGlobalStyles } from "./theme/globalStyles";
 import { ConnectionProvider } from "./hooks/useConnection";
@@ -9,6 +11,7 @@ import { Shell } from "./components/layout/Shell";
 import { Dashboard } from "./pages/Dashboard";
 import { Incidents } from "./pages/Incidents";
 import { Settings } from "./pages/Settings";
+import { MonitorDetail } from "./pages/MonitorDetail";
 import { Login } from "./pages/Login";
 
 injectGlobalStyles();
@@ -30,14 +33,19 @@ function App() {
   }
 
   return (
-    <ConnectionProvider>
+    <ConnectionProvider onUnauthorized={handleLogout}>
+      <ToastContainer position="bottom-right" autoClose={3000} />
       <ConnectionOverlay>
         <BrowserRouter>
           <Shell onLogout={handleLogout}>
             <Routes>
               <Route path="/" element={<Dashboard />} />
+              <Route path="/monitors/:id" element={<MonitorDetail />} />
               <Route path="/incidents" element={<Incidents />} />
-              <Route path="/settings" element={<Settings />} />
+              <Route
+                path="/settings"
+                element={<Settings onLogout={handleLogout} />}
+              />
             </Routes>
           </Shell>
         </BrowserRouter>

@@ -108,6 +108,8 @@ theme: {
 
 Tailwind v4: declare os mesmos valores em `@theme` (`--color-pg-ciano: #1E9BB3;` etc.).
 
+> **Migração gradual (`web/`):** o projeto já tinha tokens Tailwind próprios antes deste design system. Para não quebrá-los, `fontFamily`, `fontSize` e `borderRadius` usam chaves com prefixo `pg-` (`font-pg-heading`, `text-pg-h1`, `rounded-pg-card`, ver `web/tailwind.config.js`) em vez de sobrescrever `heading`/`sans`/`h1`/`sm` existentes. `colors.pg` não precisa de prefixo extra: já é um namespace próprio. Conforme os componentes forem migrados, as chaves antigas somem e o prefixo `pg-` pode cair.
+
 ### 3.3 Proporção
 
 ~60% nuvem/branco · ~25% ardósia · ~10% ciano · ~5% ciano-fundo/névoa. Status só onde houver estado.
@@ -141,7 +143,7 @@ Tailwind v4: declare os mesmos valores em `@theme` (`--color-pg-ciano: #1E9BB3;`
 | UNKNOWN | `--pg-unknown` | `--pg-unknown-bg` | ? | `UNKNOWN` |
 
 - **SEMPRE** mostre status com **texto + ícone**, além da cor. **NUNCA** só a cor (daltonismo).
-- Badge de status: pílula (`border-radius: 9999px`), fundo `*-bg`, texto e ícone na cor forte, Inter Medium 12–13 px.
+- Badge de status: pílula (`border-radius: 9999px`), fundo `*-bg`, ícone na cor forte e texto em `--pg-ardosia` (o texto na cor forte dá 4,1:1 e 4,2:1 sobre `*-bg`, abaixo de AA), Inter Medium 12–13 px.
 - Bolinha de status (dot) pode acompanhar, mas nunca substitui o badge com texto.
 
 ## 5. Tipografia
@@ -162,7 +164,9 @@ Tailwind v4: declare os mesmos valores em `@theme` (`--color-pg-ciano: #1E9BB3;`
 - URLs, IDs e logs: fonte mono na cor `--pg-ciano-fundo`.
 - Números no dashboard (tempo de resposta, %, contagens): `font-variant-numeric: tabular-nums`.
 - Nada menor que 12 px.
-- Fontes: Google Fonts, licença SIL OFL 1.1. Carregar só `Rubik:wght@400;500` e `Inter:wght@400;500`.
+- Fontes: **self-hosted**, licença SIL OFL 1.1. **NUNCA** carregar via Google Fonts ou outro CDN externo em runtime.
+  - Arquivos `.woff2`, subset latin, só pesos 400/500, versionados em `web/src/assets/fonts/` (`inter-latin-400.woff2`, `inter-latin-500.woff2`, `rubik-latin-400.woff2`, `rubik-latin-500.woff2`), com as licenças `OFL-Inter.txt` e `OFL-Rubik.txt` ao lado.
+  - Carregamento via `@font-face` em `web/src/index.css`, com `font-display: swap`. O Vite empacota os arquivos com hash e o binário Go os serve via `go:embed` — nenhuma requisição de fonte sai do próprio host.
 
 ## 6. Forma e espaço
 
@@ -174,11 +178,11 @@ Tailwind v4: declare os mesmos valores em `@theme` (`--color-pg-ciano: #1E9BB3;`
 
 ## 7. Componentes base
 
-- **Botão primário**: fundo `--pg-ciano-fundo`, texto branco, Inter 500 14 px, raio 8 px. No máximo **um** por tela.
+- **Botão primário**: fundo `--pg-ciano-fundo`, texto branco, Inter 500 14 px, raio 8 px. No máximo **um** por tela. Hover: `brightness-90` sobre a própria cor (sem token novo).
 - **Botão secundário**: fundo transparente, borda `--pg-borda`, texto `--pg-ardosia`.
 - **Botão destrutivo** (ex.: remover monitor): texto/borda `--pg-down`; fundo sólido só na confirmação.
 - **Link**: `--pg-ciano-fundo`, sublinhado no hover.
-- **Input**: fundo branco, borda `--pg-borda`, raio 8 px; foco com anel `--pg-ciano`.
+- **Input**: fundo branco, borda `1px solid var(--pg-neblina)` (não `--pg-borda`: 5,5:1 contra o fundo, contra ~1,3:1 e abaixo dos 3:1 exigidos para componentes de interface), raio 8 px; foco com anel `--pg-ciano`.
 - **Card**: fundo branco sobre `--pg-nuvem`, borda `--pg-borda`, raio 12 px.
 - **Tabela**: header com fundo `--pg-ciano-nevoa` e texto `--pg-ciano-fundo`; linhas separadas por `--pg-borda`.
 - **Header do dashboard**: símbolo (24–32 px) + logotipo, via SVG oficial.
@@ -197,6 +201,7 @@ Tailwind v4: declare os mesmos valores em `@theme` (`--color-pg-ciano: #1E9BB3;`
 - Ondas nascem de um ponto (canto, borda ou símbolo), máx. 5 anéis, transparência crescente.
 - Grafismos **só em ciano** (ou branco sobre ciano). Nunca verde/vermelho.
 - Barras decorativas têm **altura igual**; variar altura parece dado real.
+- Barras que mostram **dados** (ex.: histórico de checks do monitor) **podem** usar as cores de status (`--pg-up`, `--pg-down`, `--pg-unknown`), pois representam estado real. Barras **decorativas** (divisórias, rodapés) **NUNCA**: só ciano.
 - **NUNCA** grafismo atrás de texto pequeno.
 - Telas de trabalho (listas, formulários) ficam limpas: no máximo o arco divisor.
 
@@ -205,6 +210,8 @@ Tailwind v4: declare os mesmos valores em `@theme` (`--color-pg-ciano: #1E9BB3;`
 - Português, frases curtas, voz ativa, verbo primeiro: "Criar monitor", "Salvar".
 - Sem "por favor", sem "com sucesso", sem exclamação em mensagens do sistema.
 - Erros: o que aconteceu + o que fazer. Ex.: "Não foi possível conectar. Verifique a URL."
+- Estados de status ficam em inglês (`UP`, `DOWN`, `UNKNOWN`), por serem termos técnicos de monitoramento, mesmo com a interface em português.
+- Aba de configurações: no celular, o rótulo da aba é **"Ajustes"** (cabe na barra inferior); a tela e o menu no desktop continuam "Configurações".
 - Slogan oficial: **"Rodou, pingou."**
 
 ## 10. Pendências (não definidas na v1.0)

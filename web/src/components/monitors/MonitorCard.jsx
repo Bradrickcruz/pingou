@@ -1,103 +1,74 @@
+import { Link } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
 import { Badge } from "../ui/Badge";
-import { Button } from "../ui/Button";
-import { tokens as t } from "../../theme/tokens";
+import { HistoryBar } from "./HistoryBar";
+import {
+  cardFooter,
+  heartbeatExpectation,
+  statusOf,
+  targetOf,
+} from "../../lib/monitors";
 
-export function MonitorCard({ monitor, onEdit, onDelete }) {
-  const {
-    name,
-    url,
-    current_state,
-    last_checked_at,
-    interval_seconds,
-    enabled,
-  } = monitor;
+const stateLabel = {
+  UP: "no ar",
+  DOWN: "fora do ar",
+  UNKNOWN: "desconhecido",
+  PAUSED: "pausado",
+};
 
-  const stateColor =
-    current_state === "UP"
-      ? t.colors.success
-      : current_state === "DOWN"
-        ? t.colors.danger
-        : t.colors.unknown;
-
-  const stateGlow =
-    current_state === "UP"
-      ? `0 0 6px ${t.colors.success}`
-      : current_state === "DOWN"
-        ? `0 0 6px ${t.colors.danger}`
-        : "none";
+// Card do painel no mobile (< md). O card todo leva ao detalhe, onde ficam
+// editar, pausar e excluir; a tabela do desktop é o MonitorRow.
+export function MonitorCard({ monitor, now }) {
+  const status = statusOf(monitor);
+  const down = status === "DOWN";
+  const paused = status === "PAUSED";
+  const isHeartbeat = monitor.type === "heartbeat";
 
   return (
-    <div
-      className="flex items-center gap-4 p-4 rounded-md border"
-      style={{
-        background: t.colors.surface,
-        borderColor: t.colors.border,
-        borderRadius: t.radius.md,
-      }}
+    <li
+      className={`relative p-4 rounded-pg-card border bg-pg-branco has-[:focus-visible]:outline-2 has-[:focus-visible]:outline has-[:focus-visible]:outline-pg-ciano ${
+        down ? "border-[#EDC4C8]" : "border-pg-borda"
+      }`}
     >
-      {/* state dot */}
-      <div
-        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-        style={{
-          background: stateColor,
-          boxShadow: stateGlow,
-        }}
-      />
-
-      {/* info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <span className="font-semibold text-sm">{name}</span>
-          {!enabled && (
-            <span
-              className="text-[10px] px-1.5 py-0.5 rounded"
-              style={{
-                color: t.colors.textMuted,
-                background: t.colors.surfaceAlt,
-              }}
-            >
-              PAUSED
-            </span>
-          )}
-        </div>
-        <div
-          className="text-xs overflow-hidden text-ellipsis whitespace-nowrap"
-          style={{
-            color: t.colors.textMuted,
-          }}
+      <div className="flex items-center gap-2 min-w-0">
+        <Badge state={status} />
+        <Link
+          to={`/monitors/${monitor.id}`}
+          aria-label={`${monitor.name}, ${stateLabel[status]}`}
+          className={`flex-1 min-w-0 truncate text-pg-body font-medium no-underline outline-none after:absolute after:inset-0 after:content-[''] ${
+            paused ? "text-pg-neblina" : "text-pg-ardosia"
+          }`}
         >
-          {url}
-        </div>
-        <div
-          className="text-[11px] mt-1"
-          style={{
-            color: t.colors.textMuted,
-          }}
-        >
-          every {interval_seconds}s
-          {last_checked_at &&
-            ` · last check ${new Date(last_checked_at).toLocaleTimeString()}`}
-        </div>
+          {monitor.name}
+        </Link>
+        <ChevronRight
+          size={18}
+          aria-hidden="true"
+          className="shrink-0 text-pg-neblina"
+        />
       </div>
 
-      <Badge state={current_state} />
+      <p
+        className={`mt-1 truncate text-pg-caption text-pg-neblina ${isHeartbeat ? "" : "font-pg-mono"}`}
+      >
+        {isHeartbeat
+          ? `Heartbeat · ${heartbeatExpectation(monitor.interval_seconds)}`
+          : targetOf(monitor)}
+      </p>
 
-      <div className="flex gap-2">
-        <Button
-          variant="ghost"
-          onClick={() => onEdit(monitor)}
-          className="py-1.5 px-3 text-xs"
-        >
-          Edit
-        </Button>
-        <Button
-          variant="danger"
-          onClick={() => onDelete(monitor)}
-          className="py-1.5 px-3 text-xs"
-        >
-          Delete
-        </Button>
+      {down && monitor.last_error && (
+        <p className="mt-3 p-3 rounded-pg-control bg-pg-nuvem font-pg-mono text-pg-caption text-pg-ardosia break-words">
+          {monitor.last_error}
+        </p>
+      )}
+
+      <div className="mt-3">
+        <HistoryBar history={monitor.history} dimmed={paused} fluid />
       </div>
-    </div>
+
+      <p className="mt-2 text-pg-caption text-pg-neblina">
+        {cardFooter(monitor, now)}
+      </p>
+    </li>
   );
 }

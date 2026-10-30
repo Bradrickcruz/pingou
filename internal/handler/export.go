@@ -36,7 +36,7 @@ func (s *Server) handleExportDB(w http.ResponseWriter, r *http.Request) {
 	}
 	defer f.Close()
 
-	filename := "pingou-backup-" + time.Now().UTC().Format("20060102-150405") + ".db"
+	filename := "pingou-" + time.Now().UTC().Format("2006-01-02") + ".db"
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Content-Disposition", `attachment; filename="`+filename+`"`)
 

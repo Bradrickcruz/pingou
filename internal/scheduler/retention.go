@@ -42,6 +42,7 @@ func (w *RetentionWorker) run(ctx context.Context) {
 	}
 }
 
+// purge apaga só os checks; incidentes são histórico e nunca expiram.
 func (w *RetentionWorker) purge(ctx context.Context) {
 	retentionStr, err := w.settings.Get(ctx, "retention_days")
 	if err != nil {

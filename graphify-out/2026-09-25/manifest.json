@@ -486,9 +486,9 @@
     "semantic_hash": "c7cbb47765f8248e3137599f24de44e0"
   },
   "README.md": {
-    "mtime": 1790363801.9171278,
-    "seen": 1790368292.8510664,
-    "ast_hash": "686c33955eda71b886a94de72c41042f",
+    "mtime": 1790368822.5050068,
+    "seen": 1790368831.8691468,
+    "ast_hash": "3ed8b9cbe608a6df322900bbac7a1c64",
     "semantic_hash": ""
   },
   "docker-compose.yml": {
@@ -642,8 +642,8 @@
     "semantic_hash": ""
   },
   "DESIGN.md": {
-    "mtime": 1790367908.8403416,
-    "seen": 1790368292.8510633,
+    "mtime": 1790368822.5040066,
+    "seen": 1790368831.8691416,
     "ast_hash": "d1bb459056f13317cdde5e72a325536e",
     "semantic_hash": ""
   },
@@ -690,152 +690,152 @@
     "semantic_hash": ""
   },
   "docs/pingou-manual-identidade-visual.pdf": {
-    "mtime": 1790368266.1886086,
-    "seen": 1790368292.851072,
+    "mtime": 1790368822.5170066,
+    "seen": 1790368831.869157,
     "ast_hash": "42a8ecbf8e78fcfb230b6be1bd8fa765",
     "semantic_hash": ""
   },
   "assets/capa-readme.png": {
-    "mtime": 1790368135.713944,
-    "seen": 1790368292.8510725,
+    "mtime": 1790368822.5060067,
+    "seen": 1790368831.8691585,
     "ast_hash": "489340c7c53d7a38757f4de50248b07d",
     "semantic_hash": ""
   },
   "assets/como-nao-utilizar-logo.png": {
-    "mtime": 1790368135.725944,
-    "seen": 1790368292.851073,
+    "mtime": 1790368822.5060067,
+    "seen": 1790368831.8691595,
     "ast_hash": "8924bad25917a1c102e0b00c72b8429b",
     "semantic_hash": ""
   },
   "assets/espa\u00e7o-sangria-logo.png": {
-    "mtime": 1790368135.7319438,
-    "seen": 1790368292.851077,
+    "mtime": 1790368822.5070066,
+    "seen": 1790368831.8691614,
     "ast_hash": "5e3d121d9c735210bc7fb237392b6efa",
     "semantic_hash": ""
   },
   "assets/exemplo-logotipo.png": {
-    "mtime": 1790368135.738944,
-    "seen": 1790368292.8510778,
+    "mtime": 1790368822.5070066,
+    "seen": 1790368831.8691628,
     "ast_hash": "35fb67b438be4fdb396d38ac1dd28e52",
     "semantic_hash": ""
   },
   "assets/exemplos-uso-marca.png": {
-    "mtime": 1790368135.7779438,
-    "seen": 1790368292.8510785,
+    "mtime": 1790368822.5080068,
+    "seen": 1790368831.8691638,
     "ast_hash": "3274f60cecc7f46484c14c396e61eb94",
     "semantic_hash": ""
   },
   "assets/exemplos.png": {
-    "mtime": 1790368135.758944,
-    "seen": 1790368292.851079,
+    "mtime": 1790368822.5080068,
+    "seen": 1790368831.8691647,
     "ast_hash": "6f5307fae6afc71de4d29fd2d9bfaa7c",
     "semantic_hash": ""
   },
   "assets/favicon-16.png": {
-    "mtime": 1790367949.7835863,
-    "seen": 1790368292.8510795,
+    "mtime": 1790368822.5080068,
+    "seen": 1790368831.8691664,
     "ast_hash": "7a3661a421b8095123c0890cbe07321e",
     "semantic_hash": ""
   },
   "assets/favicon-180.png": {
-    "mtime": 1790367949.8025863,
-    "seen": 1790368292.85108,
+    "mtime": 1790368822.5080068,
+    "seen": 1790368831.8691673,
     "ast_hash": "0b34f658cf18ef9e58899382c066b2a0",
     "semantic_hash": ""
   },
   "assets/favicon-32.png": {
-    "mtime": 1790367949.7955863,
-    "seen": 1790368292.8510804,
+    "mtime": 1790368822.5080068,
+    "seen": 1790368831.8691688,
     "ast_hash": "5c29fce03068cfdd84f145b95192a256",
     "semantic_hash": ""
   },
   "assets/favicon-512.png": {
-    "mtime": 1790367949.8065863,
-    "seen": 1790368292.851081,
+    "mtime": 1790368822.5090067,
+    "seen": 1790368831.86917,
     "ast_hash": "1fe01fe9cad5896e28368d9b06ca0ec3",
     "semantic_hash": ""
   },
   "assets/grafismos-exemplos-de-uso.png": {
-    "mtime": 1790368135.839944,
-    "seen": 1790368292.8510816,
+    "mtime": 1790368822.5090067,
+    "seen": 1790368831.869171,
     "ast_hash": "5f30a1f3b9a58a10f4d83d319f143906",
     "semantic_hash": ""
   },
   "assets/grafismos.png": {
-    "mtime": 1790368135.8149438,
-    "seen": 1790368292.8510823,
+    "mtime": 1790368822.5090067,
+    "seen": 1790368831.8691719,
     "ast_hash": "3628cfcb884cdfdf02a3cce3fb01c8ae",
     "semantic_hash": ""
   },
   "assets/hierarquia-tipografica.png": {
-    "mtime": 1790368135.8729439,
-    "seen": 1790368292.8510828,
+    "mtime": 1790368822.5100067,
+    "seen": 1790368831.869173,
     "ast_hash": "a6e1d60075245e919e092250b477c158",
     "semantic_hash": ""
   },
   "assets/pingou-marca-horizontal-mono.svg": {
-    "mtime": 1790367949.8145864,
-    "seen": 1790368292.8510833,
+    "mtime": 1790368822.5100067,
+    "seen": 1790368831.869174,
     "ast_hash": "56da822c1ff7e8382c3e2b79e99e32d4",
     "semantic_hash": ""
   },
   "assets/pingou-marca-horizontal-negativa.svg": {
-    "mtime": 1790367949.8195865,
-    "seen": 1790368292.8510838,
+    "mtime": 1790368822.5100067,
+    "seen": 1790368831.869175,
     "ast_hash": "7413fafe978a80b551ec528a51e14554",
     "semantic_hash": ""
   },
   "assets/pingou-marca-horizontal.svg": {
-    "mtime": 1790367949.8105865,
-    "seen": 1790368292.8510842,
+    "mtime": 1790368822.5100067,
+    "seen": 1790368831.8691764,
     "ast_hash": "29923e2b2941c7e24c439cba3ec2c0ae",
     "semantic_hash": ""
   },
   "assets/pingou-marca-vertical.svg": {
-    "mtime": 1790367949.8345864,
-    "seen": 1790368292.8510847,
+    "mtime": 1790368822.5100067,
+    "seen": 1790368831.8691773,
     "ast_hash": "56fae486373075bd217fe9d16638d164",
     "semantic_hash": ""
   },
   "assets/pingou-simbolo-invertido.svg": {
-    "mtime": 1790367949.8545866,
-    "seen": 1790368292.8510854,
+    "mtime": 1790368822.5100067,
+    "seen": 1790368831.8691783,
     "ast_hash": "0446f75aa41d138e126899e5719756f4",
     "semantic_hash": ""
   },
   "assets/pingou-simbolo-livre.svg": {
-    "mtime": 1790367949.8685868,
-    "seen": 1790368292.851086,
+    "mtime": 1790368822.5100067,
+    "seen": 1790368831.8691795,
     "ast_hash": "8ac021e5a6ce4c724bb5d5ef52513d42",
     "semantic_hash": ""
   },
   "assets/pingou-simbolo-mono.svg": {
-    "mtime": 1790367949.8905869,
-    "seen": 1790368292.8510866,
+    "mtime": 1790368822.5100067,
+    "seen": 1790368831.8691804,
     "ast_hash": "fad2cffc2b6eecac40032e1641d69649",
     "semantic_hash": ""
   },
   "assets/pingou-simbolo.svg": {
-    "mtime": 1790367949.8405864,
-    "seen": 1790368292.851087,
+    "mtime": 1790368822.5100067,
+    "seen": 1790368831.8691814,
     "ast_hash": "bd2d80625558194c2a4b9a6ff5c88bc4",
     "semantic_hash": ""
   },
   "assets/proporcao-cores.png": {
-    "mtime": 1790368135.8939438,
-    "seen": 1790368292.8510876,
+    "mtime": 1790368822.5110066,
+    "seen": 1790368831.8691828,
     "ast_hash": "72df540769d12f4538ef88f46e50b6de",
     "semantic_hash": ""
   },
   "assets/tamanhos-logo.png": {
-    "mtime": 1790368135.9139438,
-    "seen": 1790368292.851088,
+    "mtime": 1790368822.5110066,
+    "seen": 1790368831.8691838,
     "ast_hash": "c1f3114e80fcf8eff71683b088e4e5b9",
     "semantic_hash": ""
   },
   "assets/tipografia.png": {
-    "mtime": 1790368135.9209437,
-    "seen": 1790368292.8510885,
+    "mtime": 1790368822.5110066,
+    "seen": 1790368831.8691847,
     "ast_hash": "928acd473150ed9956092c9ba104accb",
     "semantic_hash": ""
   }

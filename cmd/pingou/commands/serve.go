@@ -13,6 +13,7 @@ import (
 	"github.com/Bradrickcruz/pingou/internal/checker"
 	"github.com/Bradrickcruz/pingou/internal/config"
 	"github.com/Bradrickcruz/pingou/internal/database"
+	"github.com/Bradrickcruz/pingou/internal/domain"
 	"github.com/Bradrickcruz/pingou/internal/handler"
 	"github.com/Bradrickcruz/pingou/internal/repository"
 	"github.com/Bradrickcruz/pingou/internal/scheduler"
@@ -60,6 +61,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("config error: %w", err)
 	}
+	loadedConfig.Version, loadedConfig.Commit, loadedConfig.BuildDate = version, commit, date
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: loadedConfig.LogLevel,
@@ -87,10 +89,13 @@ func runServe(cmd *cobra.Command, args []string) error {
 	webhookNotifier := service.NewWebhookNotifier(func() string {
 		url, _ := settingsRepository.Get(context.Background(), "webhook_url")
 		return url
-	})
+	}, loadedConfig.PublicURL)
 
-	// checker
-	httpChecker := checker.NewHTTPChecker(loadedConfig.MaxRedirects, loadedConfig.GlobalTimeout)
+	// checkers: o registry escolhe pelo tipo (heartbeat não tem check ativo)
+	monitorChecker := checker.NewRegistry(map[domain.MonitorType]domain.Checker{
+		domain.TypeHTTP: checker.NewHTTPChecker(loadedConfig.MaxRedirects, loadedConfig.GlobalTimeout),
+		domain.TypeTCP:  checker.NewTCPChecker(),
+	})
 
 	// services
 	monitorService := service.NewMonitorService(monitorRepository, checkRepository, incidentRepository)
@@ -98,8 +103,9 @@ func runServe(cmd *cobra.Command, args []string) error {
 	settingsService := service.NewSettingsService(settingsRepository)
 
 	// scheduler
-	monitorScheduler := scheduler.NewScheduler(monitorRepository, httpChecker, db, checkRepoTx, monitorRepoTx, incidentRepoTx, webhookNotifier)
+	monitorScheduler := scheduler.NewScheduler(monitorRepository, monitorChecker, db, checkRepoTx, monitorRepoTx, incidentRepoTx, webhookNotifier)
 	monitorService.SetReloader(monitorScheduler)
+	monitorService.SetRecorder(monitorScheduler)
 
 	// Context com signal
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

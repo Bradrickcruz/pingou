@@ -1,12 +1,25 @@
 import { useState } from "react";
+import { Check, LogOut } from "lucide-react";
 import { useSettings } from "../hooks/useSettings";
 import { Button } from "../components/ui/Button";
 import { Spinner } from "../components/ui/Spinner";
-import { tokens as t } from "../theme/tokens";
-import { client } from "../api/client";
+import { WebhookCard } from "../components/settings/WebhookCard";
+import { RetentionCard } from "../components/settings/RetentionCard";
+import { BackupCard } from "../components/settings/BackupCard";
+import { UnsavedBar } from "../components/settings/UnsavedBar";
+import { MobileHeader } from "../components/layout/MobileHeader";
 
-export function Settings() {
-  const { settings, loading, update } = useSettings();
+const REPO = "https://github.com/Bradrickcruz/pingou";
+
+export function Settings({ onLogout }) {
+  const {
+    settings,
+    info,
+    loading,
+    error: loadError,
+    update,
+    reload,
+  } = useSettings({ withInfo: true });
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -14,19 +27,52 @@ export function Settings() {
 
   if (loading)
     return (
-      <div className="flex justify-center py-12">
-        <Spinner />
+      <>
+        <MobileHeader title="Configurações" />
+        <div className="flex justify-center py-12">
+          <Spinner />
+        </div>
+      </>
+    );
+
+  if (!settings)
+    return (
+      <div className="max-w-[760px]">
+        <MobileHeader title="Configurações" />
+        <h1 className="hidden md:block text-pg-h1 my-0">Configurações</h1>
+        <p role="alert" className="mt-4 text-pg-ui text-pg-down">
+          Não foi possível carregar as configurações
+          {loadError ? `: ${loadError}` : "."}
+        </p>
+        <Button variant="ghost" onClick={reload}>
+          Tentar de novo
+        </Button>
       </div>
     );
 
   const current = form ?? settings;
+  const webhookURL = current.webhook_url ?? "";
+  const dirty =
+    webhookURL !== (settings.webhook_url ?? "") ||
+    current.retention_days !== settings.retention_days;
+  const size = info?.database_size_bytes;
+
+  const set = (k, v) => {
+    setSaved(false);
+    setForm((f) => ({ ...(f ?? settings), [k]: v }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!dirty) return;
     setSaving(true);
     setError(null);
     try {
-      await update(current);
+      await update({
+        webhook_url: webhookURL,
+        retention_days: current.retention_days,
+      });
+      setForm(null);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (e) {
@@ -36,175 +82,135 @@ export function Settings() {
     }
   };
 
-  const set = (k, v) => setForm((f) => ({ ...(f ?? settings), [k]: v }));
-
-  const handleExport = async () => {
-    try {
-      const res = await client.get("/export", { responseType: "blob" });
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute(
-        "download",
-        `pingou_bkp_${new Date().toISOString().slice(0, 19).replace(/[-:]/g, "")}.db`,
-      );
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (e) {
-      setError(e.message);
-    }
+  const discard = () => {
+    setForm(null);
+    setError(null);
   };
 
   return (
-    <div className="max-w-[480px]">
-      <h1 className="text-xl font-bold mb-6">Settings</h1>
+    <div className={`max-w-[760px] ${dirty ? "pb-20 md:pb-0" : ""}`}>
+      <MobileHeader title="Configurações" />
+      <h1 className="hidden md:block text-pg-h1 my-0">Configurações</h1>
+      <p className="hidden md:block mt-1 mb-6 text-pg-ui text-pg-neblina">
+        Valem para todos os monitores.
+      </p>
 
-      <form onSubmit={handleSubmit}>
-        <div
-          className="p-6 rounded-md border flex flex-col gap-4.5"
-          style={{
-            background: t.colors.surface,
-            borderColor: t.colors.border,
-            borderRadius: t.radius.md,
-          }}
-        >
-          <div>
-            <label
-              className="block mb-1.5 text-xs font-medium"
-              style={{
-                color: t.colors.textMuted,
-              }}
-            >
-              Webhook URL
-            </label>
-            <input
-              type="url"
-              value={current.webhook_url ?? ""}
-              onChange={(e) => set("webhook_url", e.target.value)}
-              placeholder="https://hooks.example.com/..."
-              className="w-full px-3 py-2 rounded text-sm bg-[var(--bg)] border border-[var(--border)] text-[var(--text-h)] focus:outline-none focus:border-[var(--accent)]"
-            />
-            <p
-              className="text-[11px] mt-1"
-              style={{
-                color: t.colors.textMuted,
-              }}
-            >
-              Receives <code>down</code> and <code>up</code> events.
-            </p>
-          </div>
+      <form
+        id="settings-form"
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-4 md:gap-6"
+      >
+        <WebhookCard
+          value={webhookURL}
+          onChange={(v) => set("webhook_url", v)}
+        />
+        <RetentionCard
+          value={current.retention_days}
+          savedValue={settings.retention_days}
+          onChange={(v) => set("retention_days", v)}
+          databaseSize={size}
+        />
 
-          <div>
-            <label
-              className="block mb-1.5 text-xs font-medium"
-              style={{
-                color: t.colors.textMuted,
-              }}
-            >
-              Retention (days)
-            </label>
-            <div className="grid grid-cols-5 gap-2">
-              {[7, 14, 30, 60, 90].map((days) => (
-                <label
-                  key={days}
-                  className="flex items-center justify-center gap-2 py-2 rounded cursor-pointer border transition-colors"
-                  style={{
-                    background:
-                      current.retention_days === days
-                        ? t.colors.primary
-                        : t.colors.surface,
-                    borderColor:
-                      current.retention_days === days
-                        ? t.colors.primary
-                        : t.colors.border,
-                    color:
-                      current.retention_days === days
-                        ? "#fff"
-                        : t.colors.textPrimary,
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="retention_days"
-                    value={days}
-                    checked={current.retention_days === days}
-                    onChange={() => set("retention_days", days)}
-                    className="sr-only"
-                  />
-                  <span className="text-sm font-medium">{days}</span>
-                </label>
-              ))}
-            </div>
-            <p
-              className="text-[11px] mt-1.5"
-              style={{
-                color: t.colors.textMuted,
-              }}
-            >
-              Checks older than this are automatically deleted.
-            </p>
-          </div>
-
+        <div className="flex flex-wrap items-center justify-end gap-3">
           {error && (
             <p
-              className="text-sm"
-              style={{
-                color: t.colors.danger,
-              }}
+              role="alert"
+              className="hidden md:block m-0 mr-auto text-pg-ui text-pg-down"
             >
               {error}
             </p>
           )}
-
-          <div className="flex items-center gap-3">
-            <Button type="submit" disabled={saving}>
-              {saving ? "Saving..." : "Save Settings"}
-            </Button>
+          <span
+            role="status"
+            className="text-pg-ui inline-flex items-center gap-1 text-pg-up"
+          >
             {saved && (
-              <span
-                className="text-sm"
-                style={{
-                  color: t.colors.success,
-                }}
-              >
-                ✓ Saved
-              </span>
+              <>
+                <Check size={14} aria-hidden="true" />
+                Salvo
+              </>
             )}
-          </div>
+          </span>
+          <Button
+            type="submit"
+            disabled={!dirty || saving}
+            className="hidden md:inline-flex"
+          >
+            {saving ? "Salvando…" : "Salvar alterações"}
+          </Button>
         </div>
       </form>
 
-      <div
-        className="mt-6 p-5 rounded-md border"
-        style={{
-          background: t.colors.surface,
-          borderColor: t.colors.border,
-          borderRadius: t.radius.md,
-        }}
-      >
-        <p className="font-semibold mb-3 text-sm">Database Export</p>
-        <p
-          className="text-xs mb-3.5"
-          style={{
-            color: t.colors.textMuted,
-          }}
-        >
-          Download a full SQLite dump of all monitors, checks and incidents.
-        </p>
-        <button
-          onClick={handleExport}
-          className="inline-block px-4 py-2 rounded text-sm font-semibold border cursor-pointer"
-          style={{
-            background: t.colors.surfaceAlt,
-            color: t.colors.textPrimary,
-            borderColor: t.colors.border,
-          }}
-        >
-          ↓ Download dump
-        </button>
+      <div className="mt-4 md:mt-6">
+        <BackupCard databaseSize={size} />
       </div>
+
+      <Button
+        variant="ghost"
+        onClick={onLogout}
+        className="md:hidden w-full min-h-[44px] mt-6 gap-2 bg-pg-branco"
+      >
+        <LogOut size={16} aria-hidden="true" />
+        Sair
+      </Button>
+      <p className="md:hidden mt-3 text-center text-pg-caption text-pg-neblina">
+        pingou {info?.version ?? "v1.0"} ·{" "}
+        <a
+          href={REPO}
+          target="_blank"
+          rel="noreferrer"
+          className="text-pg-ciano-fundo underline"
+        >
+          GitHub
+        </a>{" "}
+        ·{" "}
+        <a
+          href={`${REPO}/issues/new`}
+          target="_blank"
+          rel="noreferrer"
+          className="text-pg-ciano-fundo underline"
+        >
+          Relatar problema
+        </a>
+      </p>
+
+      <footer className="hidden md:flex mt-6 pt-3 border-t border-pg-borda flex-wrap justify-between gap-x-5 gap-y-2 text-pg-caption text-pg-neblina">
+        <span>
+          {info && `pingou ${info.version} · `}
+          {info &&
+            info.commit &&
+            info.commit !== "none" &&
+            `commit ${info.commit} · `}
+          Apache 2.0
+        </span>
+        <span className="flex gap-5">
+          <a
+            href={REPO}
+            target="_blank"
+            rel="noreferrer"
+            className="text-pg-ciano-fundo underline"
+          >
+            Código no GitHub
+          </a>
+          <a
+            href={`${REPO}/issues/new`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-pg-ciano-fundo underline"
+          >
+            Relatar um problema
+          </a>
+        </span>
+      </footer>
+
+      {dirty && (
+        <UnsavedBar
+          formId="settings-form"
+          onDiscard={discard}
+          saving={saving}
+          error={error}
+        />
+      )}
     </div>
   );
 }

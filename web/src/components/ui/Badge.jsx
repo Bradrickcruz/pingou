@@ -1,23 +1,37 @@
-import { tokens as t } from "../../theme/tokens";
+import { Check, X, CircleHelp, Pause } from "lucide-react";
 
-const stateColors = {
-  UP: { bg: "#14532d", color: t.colors.success },
-  DOWN: { bg: "#450a0a", color: t.colors.danger },
-  UNKNOWN: { bg: "#1f2937", color: t.colors.unknown },
+const stateStyles = {
+  UP: { bg: "bg-pg-up-bg", iconColor: "text-pg-up", icon: Check, label: "UP" },
+  DOWN: {
+    bg: "bg-pg-down-bg",
+    iconColor: "text-pg-down",
+    icon: X,
+    label: "DOWN",
+  },
+  UNKNOWN: {
+    bg: "bg-pg-unknown-bg",
+    iconColor: "text-pg-unknown",
+    icon: CircleHelp,
+    label: "UNKNOWN",
+  },
+  PAUSED: {
+    bg: "bg-pg-branco border border-pg-borda",
+    iconColor: "text-pg-neblina",
+    icon: Pause,
+    label: "PAUSADO",
+    text: "text-pg-neblina",
+  },
 };
 
 export function Badge({ state }) {
-  const c = stateColors[state] ?? stateColors.UNKNOWN;
+  const s = stateStyles[state] ?? stateStyles.UNKNOWN;
+  const Icon = s.icon;
   return (
     <span
-      className="inline-block px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider rounded"
-      style={{
-        background: c.bg,
-        color: c.color,
-        borderRadius: t.radius.sm,
-      }}
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-pg-caption font-medium uppercase tracking-wider whitespace-nowrap ${s.text ?? "text-pg-ardosia"} ${s.bg}`}
     >
-      {state}
+      <Icon size={12} aria-hidden="true" className={s.iconColor} />
+      {s.label}
     </span>
   );
 }

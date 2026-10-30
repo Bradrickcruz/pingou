@@ -14,5 +14,7 @@ internal/handler/dist/
 
 .windsurf
 
+inspiration/
+
 graphify-out/cost.json        # local only
 graphify-out/cache

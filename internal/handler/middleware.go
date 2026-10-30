@@ -42,11 +42,20 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		slog.Info("request",
 			"request_id", requestID,
 			"method", r.Method,
-			"path", r.URL.Path,
+			"path", redactPath(r.URL.Path),
 			"status", rw.status,
 			"latency_ms", time.Since(start).Milliseconds(),
 		)
 	})
+}
+
+// redactPath esconde o token de /ping/{token}: ele é o segredo do heartbeat
+// e não pode ir para os logs.
+func redactPath(path string) string {
+	if strings.HasPrefix(path, "/ping/") {
+		return "/ping/[redacted]"
+	}
+	return path
 }
 
 // responseWriter captura o status code para o logger
@@ -82,7 +91,7 @@ func recoverMiddleware(next http.Handler) http.Handler {
 				slog.Error("panic recovered",
 					"request_id", requestID,
 					"method", r.Method,
-					"path", r.URL.Path,
+					"path", redactPath(r.URL.Path),
 					"panic", rec,
 					"stack", string(debug.Stack()),
 				)

@@ -6,9 +6,15 @@ export const monitorsApi = {
   create: (data) => client.post("/monitors", data).then((r) => r.data),
   update: (id, data) =>
     client.patch(`/monitors/${id}`, data).then((r) => r.data),
+  regenerateToken: (id) =>
+    client.post(`/monitors/${id}/token`).then((r) => r.data),
   delete: (id) => client.delete(`/monitors/${id}`).then((r) => r.data),
   checks: (id, params) =>
     client.get(`/monitors/${id}/checks`, { params }).then((r) => r.data),
   incidents: (id, params) =>
     client.get(`/monitors/${id}/incidents`, { params }).then((r) => r.data),
+  stats: (id, range) =>
+    client
+      .get(`/monitors/${id}/stats`, { params: { range } })
+      .then((r) => r.data),
 };

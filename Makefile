@@ -109,3 +109,14 @@ docker-startup-test:
 # ── release ────────────────────────────────────────────────────
 release: build
 	@echo "✓ Release $(VERSION) pronto em $(BIN)"
+
+# make bump-patch | bump-minor | bump-major
+# Tag git é a fonte da verdade; web/package.json é sincronizado e commitado junto.
+bump-patch bump-minor bump-major: bump-%:
+	@test -z "$$(git status --porcelain)" || { echo "❌ working tree sujo"; exit 1; }
+	cd web && npm version $* --no-git-tag-version
+	@NEW=v$$(node -p "require('./web/package.json').version"); \
+	git add web/package.json web/package-lock.json && \
+	git commit -m "chore(release): $$NEW" && \
+	git tag -a $$NEW -m "$$NEW" && \
+	echo "✓ $$NEW criado (git push --follow-tags para publicar)"

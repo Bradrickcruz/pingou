@@ -14,11 +14,18 @@ type Reloader interface {
 	Reload(ctx context.Context, monitorID string) error
 }
 
+// Recorder grava um resultado de check pela state machine (Scheduler).
+// pingedAt != nil indica um ping de heartbeat.
+type Recorder interface {
+	Record(ctx context.Context, monitorID string, result domain.CheckResult, pingedAt *time.Time) error
+}
+
 type MonitorService struct {
 	monitors  domain.MonitorRepository
 	checks    domain.CheckRepository
 	incidents domain.IncidentRepository
 	reloader  Reloader
+	recorder  Recorder
 }
 
 func NewMonitorService(
@@ -33,11 +40,25 @@ func (s *MonitorService) SetReloader(r Reloader) {
 	s.reloader = r
 }
 
-const maxMonitors = 100
+func (s *MonitorService) SetRecorder(r Recorder) {
+	s.recorder = r
+}
+
+const (
+	maxMonitors = 100
+	historySize = 30
+	// heartbeat não usa timeout nem threshold; grava valores fixos válidos
+	heartbeatTimeout   = 10
+	heartbeatThreshold = 1
+)
 
 type CreateMonitorInput struct {
 	Name             string
+	Type             string // vazio = http
 	URL              string
+	Host             string
+	Port             int
+	GraceSeconds     *int // nil = padrão (60)
 	IntervalSeconds  int
 	TimeoutSeconds   int
 	FailureThreshold int
@@ -46,7 +67,11 @@ type CreateMonitorInput struct {
 
 type UpdateMonitorInput struct {
 	Name             *string
+	Type             *string // só aceito se igual ao atual
 	URL              *string
+	Host             *string
+	Port             *int
+	GraceSeconds     *int
 	IntervalSeconds  *int
 	TimeoutSeconds   *int
 	FailureThreshold *int
@@ -54,7 +79,36 @@ type UpdateMonitorInput struct {
 }
 
 func (s *MonitorService) Create(ctx context.Context, in CreateMonitorInput) (*domain.Monitor, error) {
-	if err := validateCreateInput(in); err != nil {
+	now := time.Now().UTC()
+	m := &domain.Monitor{
+		Name:             in.Name,
+		Type:             domain.MonitorType(in.Type),
+		IntervalSeconds:  in.IntervalSeconds,
+		TimeoutSeconds:   in.TimeoutSeconds,
+		FailureThreshold: in.FailureThreshold,
+		Enabled:          in.Enabled,
+		CurrentState:     domain.StateUnknown,
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+	if m.Type == "" {
+		m.Type = domain.TypeHTTP
+	}
+
+	switch m.Type {
+	case domain.TypeHTTP:
+		m.URL = in.URL
+	case domain.TypeTCP:
+		m.Config.Host, m.Config.Port = in.Host, in.Port
+	case domain.TypeHeartbeat:
+		m.TimeoutSeconds, m.FailureThreshold = heartbeatTimeout, heartbeatThreshold
+		m.Config.GraceSeconds = defaultGraceSeconds
+		if in.GraceSeconds != nil {
+			m.Config.GraceSeconds = *in.GraceSeconds
+		}
+	}
+
+	if err := validateMonitor(m); err != nil {
 		return nil, err
 	}
 
@@ -66,22 +120,18 @@ func (s *MonitorService) Create(ctx context.Context, in CreateMonitorInput) (*do
 		return nil, fmt.Errorf("%w", ErrLimitReached)
 	}
 
-	now := time.Now().UTC()
 	id, err := newUUIDv7()
 	if err != nil {
 		return nil, fmt.Errorf("generate monitor id: %w", err)
 	}
-	m := &domain.Monitor{
-		ID:               id,
-		Name:             in.Name,
-		URL:              in.URL,
-		IntervalSeconds:  in.IntervalSeconds,
-		TimeoutSeconds:   in.TimeoutSeconds,
-		FailureThreshold: in.FailureThreshold,
-		Enabled:          in.Enabled,
-		CurrentState:     domain.StateUnknown,
-		CreatedAt:        now,
-		UpdatedAt:        now,
+	m.ID = id
+
+	if m.Type == domain.TypeHeartbeat {
+		token, err := newPingToken()
+		if err != nil {
+			return nil, err
+		}
+		m.PingToken = &token
 	}
 
 	if err := s.monitors.Create(ctx, m); err != nil {
@@ -108,35 +158,64 @@ func (s *MonitorService) List(ctx context.Context, f domain.MonitorFilter) ([]*d
 }
 
 func (s *MonitorService) Update(ctx context.Context, id string, in UpdateMonitorInput) (*domain.Monitor, error) {
-	if err := validateUpdateInput(in); err != nil {
-		return nil, err
-	}
-
 	m, err := s.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
+	if in.Type != nil && domain.MonitorType(*in.Type) != m.Type {
+		return nil, fmt.Errorf("%w: type cannot be changed", ErrValidation)
+	}
+
+	wasEnabled := m.Enabled
 	if in.Name != nil {
 		m.Name = *in.Name
 	}
-	if in.URL != nil {
-		m.URL = *in.URL
-	}
 	if in.IntervalSeconds != nil {
 		m.IntervalSeconds = *in.IntervalSeconds
-	}
-	if in.TimeoutSeconds != nil {
-		m.TimeoutSeconds = *in.TimeoutSeconds
-	}
-	if in.FailureThreshold != nil {
-		m.FailureThreshold = *in.FailureThreshold
 	}
 	if in.Enabled != nil {
 		m.Enabled = *in.Enabled
 	}
 
-	m.UpdatedAt = time.Now().UTC()
+	// campos de outros tipos são ignorados
+	switch m.Type {
+	case domain.TypeHTTP:
+		if in.URL != nil {
+			m.URL = *in.URL
+		}
+	case domain.TypeTCP:
+		if in.Host != nil {
+			m.Config.Host = *in.Host
+		}
+		if in.Port != nil {
+			m.Config.Port = *in.Port
+		}
+	case domain.TypeHeartbeat:
+		if in.GraceSeconds != nil {
+			m.Config.GraceSeconds = *in.GraceSeconds
+		}
+	}
+	if m.Type != domain.TypeHeartbeat {
+		if in.TimeoutSeconds != nil {
+			m.TimeoutSeconds = *in.TimeoutSeconds
+		}
+		if in.FailureThreshold != nil {
+			m.FailureThreshold = *in.FailureThreshold
+		}
+	}
+
+	if err := validateMonitor(m); err != nil {
+		return nil, err
+	}
+
+	now := time.Now().UTC()
+	// Heartbeat retomado: o ping recebido durante a pausa não foi registrado,
+	// então o prazo recomeça agora (senão cairia logo após retomar).
+	if m.Type == domain.TypeHeartbeat && !wasEnabled && m.Enabled && m.LastPingAt != nil {
+		m.LastPingAt = &now
+	}
+	m.UpdatedAt = now
 
 	if err := s.monitors.Update(ctx, m); err != nil {
 		return nil, err
@@ -144,6 +223,75 @@ func (s *MonitorService) Update(ctx context.Context, id string, in UpdateMonitor
 
 	s.reload(ctx, m.ID)
 	return m, nil
+}
+
+// RegenerateToken troca o token de ping de um heartbeat; o antigo deixa de valer na hora.
+func (s *MonitorService) RegenerateToken(ctx context.Context, id string) (*domain.Monitor, error) {
+	m, err := s.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if m.Type != domain.TypeHeartbeat {
+		return nil, fmt.Errorf("%w: only heartbeat monitors have a ping token", ErrValidation)
+	}
+
+	token, err := newPingToken()
+	if err != nil {
+		return nil, err
+	}
+	m.PingToken = &token
+	m.UpdatedAt = time.Now().UTC()
+
+	if err := s.monitors.Update(ctx, m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// Ping registra o ping de um heartbeat. Token desconhecido → ErrNotFound.
+// Monitor pausado aceita o ping, mas nada é registrado.
+func (s *MonitorService) Ping(ctx context.Context, token string) error {
+	m, err := s.monitors.FindByPingToken(ctx, token)
+	if err != nil {
+		return err
+	}
+	if m == nil || m.Type != domain.TypeHeartbeat {
+		return ErrNotFound
+	}
+	if !m.Enabled || s.recorder == nil {
+		return nil
+	}
+	now := time.Now().UTC()
+	return s.recorder.Record(ctx, m.ID, domain.CheckResult{Success: true}, &now)
+}
+
+// Summaries devolve histórico, uptime 24 h e última latência dos monitores e,
+// para os DOWN, o erro e o início do incidente aberto.
+func (s *MonitorService) Summaries(ctx context.Context, monitors []*domain.Monitor) (map[string]*domain.MonitorSummary, error) {
+	ids := make([]string, len(monitors))
+	var downIDs []string
+	for i, m := range monitors {
+		ids[i] = m.ID
+		if m.CurrentState == domain.StateDown {
+			downIDs = append(downIDs, m.ID)
+		}
+	}
+	out, err := s.checks.Summaries(ctx, ids, historySize, time.Now().Add(-24*time.Hour))
+	if err != nil || len(downIDs) == 0 {
+		return out, err
+	}
+	open, err := s.incidents.FindOpenByMonitors(ctx, downIDs)
+	if err != nil {
+		return nil, err
+	}
+	for id, inc := range open {
+		if sum := out[id]; sum != nil {
+			startedAt := inc.StartedAt
+			sum.LastError = inc.LastError
+			sum.DownSince = &startedAt
+		}
+	}
+	return out, nil
 }
 
 func (s *MonitorService) Delete(ctx context.Context, id string) error {

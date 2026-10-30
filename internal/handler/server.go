@@ -19,6 +19,9 @@ type Server struct {
 	monitorService  *service.MonitorService
 	incidentService *service.IncidentService
 	settingsService *service.SettingsService
+	pingLimiter     *rateLimiter
+	// webhookTestLimiter: o teste faz uma requisição de saída por chamada
+	webhookTestLimiter *rateLimiter
 }
 
 func NewServer(
@@ -29,12 +32,14 @@ func NewServer(
 	settingsService *service.SettingsService,
 ) *Server {
 	s := &Server{
-		cfg:             cfg,
-		db:              db,
-		router:          http.NewServeMux(),
-		monitorService:  monitorService,
-		incidentService: incidentService,
-		settingsService: settingsService,
+		cfg:                cfg,
+		db:                 db,
+		router:             http.NewServeMux(),
+		monitorService:     monitorService,
+		incidentService:    incidentService,
+		settingsService:    settingsService,
+		pingLimiter:        newRateLimiter(pingRateLimit, time.Minute),
+		webhookTestLimiter: newRateLimiter(webhookTestRateLimit, time.Minute),
 	}
 	s.registerRoutes()
 	return s
@@ -66,6 +71,9 @@ func (s *Server) Shutdown(ctx context.Context) error {
 func (s *Server) registerRoutes() {
 	s.router.HandleFunc("GET /healthz", s.handleHealthz)
 
+	// ping de heartbeat: público (sem API Key), protegido por limite por IP
+	s.router.Handle("/ping/{token}", http.HandlerFunc(s.handlePing))
+
 	api := http.NewServeMux()
 
 	// monitors
@@ -74,8 +82,10 @@ func (s *Server) registerRoutes() {
 	api.HandleFunc("GET /monitors/{id}", s.handleGetMonitor)
 	api.HandleFunc("PATCH /monitors/{id}", s.handleUpdateMonitor)
 	api.HandleFunc("DELETE /monitors/{id}", s.handleDeleteMonitor)
+	api.HandleFunc("POST /monitors/{id}/token", s.handleRegenerateToken)
 	api.HandleFunc("GET /monitors/{id}/checks", s.handleListMonitorChecks)
 	api.HandleFunc("GET /monitors/{id}/incidents", s.handleListMonitorIncidents)
+	api.HandleFunc("GET /monitors/{id}/stats", s.handleMonitorStats)
 
 	// incidents
 	api.HandleFunc("GET /incidents", s.handleListIncidents)
@@ -83,6 +93,10 @@ func (s *Server) registerRoutes() {
 	// settings
 	api.HandleFunc("GET /settings", s.handleGetSettings)
 	api.HandleFunc("PATCH /settings", s.handleUpdateSettings)
+	api.Handle("POST /settings/webhook/test", s.webhookTestLimiter.middleware(http.HandlerFunc(s.handleTestWebhook)))
+
+	// info
+	api.HandleFunc("GET /info", s.handleInfo)
 
 	// export
 	api.HandleFunc("GET /export", s.handleExportDB)

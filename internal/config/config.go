@@ -16,6 +16,12 @@ type Config struct {
 	CORSAllowedOrigins []string
 	MaxRedirects       int
 	GlobalTimeout      int
+	PublicURL          string // endereço público do dashboard, para links no webhook
+
+	// Dados do build (-ldflags), preenchidos pelo comando serve. Expostos em /api/info.
+	Version   string
+	Commit    string
+	BuildDate string
 }
 
 // Load carrega configuracao completa (requer API key)
@@ -74,6 +80,8 @@ func loadConfigWithAPIKey(apiKey string) (*Config, error) {
 		}
 	}
 
+	publicURL := strings.TrimRight(os.Getenv("PINGOU_PUBLIC_URL"), "/")
+
 	return &Config{
 		APIKey:             apiKey,
 		DatabaseURL:        dbURL,
@@ -82,6 +90,7 @@ func loadConfigWithAPIKey(apiKey string) (*Config, error) {
 		CORSAllowedOrigins: corsOrigins,
 		MaxRedirects:       maxRedirects,
 		GlobalTimeout:      globalTimeout,
+		PublicURL:          publicURL,
 	}, nil
 }
 
