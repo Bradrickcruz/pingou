@@ -106,24 +106,53 @@ export function ResolvedTable({ incidents, total, onLoadMore, loadingMore }) {
             </h3>
             <ul className="list-none m-0 p-0">
               {g.items.map((i) => (
-                <li key={i.id} className="px-4 py-3 border-b border-pg-borda">
-                  <MonitorCell incident={i} />
-                  <div className="mt-1.5 pl-9 text-pg-ui text-pg-ardosia tabular-nums">
-                    {timeRange(i.started_at, i.ended_at)} · <strong className="font-medium">{formatDuration(i.duration_seconds)}</strong>
+                <li key={i.id} className="flex gap-3 px-4 py-3 border-b border-pg-borda">
+                  <span className="flex-shrink-0 inline-flex items-center justify-center w-6 h-6 mt-0.5 rounded-full bg-pg-up-bg text-pg-up">
+                    <Check size={14} aria-hidden="true" />
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline justify-between gap-3">
+                      {i.monitor ? (
+                        <Link
+                          to={`/monitors/${i.monitor.id}`}
+                          className="text-pg-ui font-medium text-pg-ardosia truncate no-underline hover:underline"
+                        >
+                          {i.monitor.name}
+                        </Link>
+                      ) : (
+                        <span className="text-pg-ui font-medium text-pg-ardosia truncate">Monitor removido</span>
+                      )}
+                      <span className="text-pg-ui font-medium text-pg-ardosia whitespace-nowrap">
+                        {formatDuration(i.duration_seconds)}
+                      </span>
+                    </div>
+                    <div className="text-pg-caption text-pg-neblina tabular-nums">
+                      {timeRange(i.started_at, i.ended_at)}
+                    </div>
+                    {i.last_error && (
+                      <p className="mt-0.5 mb-0 font-pg-mono text-pg-caption text-pg-neblina break-words line-clamp-2">
+                        {i.last_error}
+                      </p>
+                    )}
                   </div>
-                  {i.last_error && (
-                    <p className="mt-1 mb-0 pl-9 font-pg-mono text-pg-caption text-pg-neblina break-words line-clamp-2">
-                      {i.last_error}
-                    </p>
-                  )}
                 </li>
               ))}
             </ul>
           </section>
         ))}
+        {incidents.length < total && (
+          <button
+            type="button"
+            onClick={onLoadMore}
+            disabled={loadingMore}
+            className="w-full min-h-[48px] text-pg-ui font-medium text-pg-ciano-fundo disabled:opacity-50 focus-visible:outline-2 focus-visible:outline focus-visible:-outline-offset-2 focus-visible:outline-pg-ciano"
+          >
+            {loadingMore ? "Carregando…" : "Carregar mais"}
+          </button>
+        )}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-pg-borda md:border-t">
+      <div className="hidden md:flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-t border-pg-borda">
         <span className="text-pg-caption text-pg-neblina" aria-live="polite">
           Mostrando {incidents.length} de {total} {total === 1 ? "incidente resolvido" : "incidentes resolvidos"}
         </span>
