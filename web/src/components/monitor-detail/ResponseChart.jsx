@@ -167,6 +167,12 @@ export function ResponseChart({ stats, now }) {
               vectorEffect="non-scaling-stroke"
             />
           ))}
+          {/* mobile: faixa cinza nos intervalos sem dados (legenda "sem dados") */}
+          {series.map((s, i) =>
+            s.avg_latency_ms == null && !isDown(s, bucketSeconds, down) ? (
+              <rect key={s.t} className="md:hidden" x={(i / n) * W} y="0" width={W / n} height={H} fill="var(--pg-unknown-bg)" />
+            ) : null,
+          )}
           {down.map((w) => {
             const x = Math.max(0, xAt(w.start));
             // mínimo de ~2 px (num gráfico de ~1000 px) para quedas curtas aparecerem em 30 d
@@ -256,13 +262,19 @@ export function ResponseChart({ stats, now }) {
 
 export function ChartLegend({ bucketSeconds }) {
   return (
-    <div className="flex gap-4 text-pg-caption text-pg-neblina" aria-hidden="true">
+    <div className="flex gap-3 md:gap-4 text-pg-caption text-pg-neblina" aria-hidden="true">
       <span className="inline-flex items-center gap-1.5">
         <span className="w-3.5 h-0.5 rounded bg-pg-ciano" />{" "}
-        {bucketSeconds ? `média a cada ${formatDuration(bucketSeconds)}` : "média por intervalo"}
+        <span className="md:hidden">média</span>
+        <span className="hidden md:inline">
+          {bucketSeconds ? `média a cada ${formatDuration(bucketSeconds)}` : "média por intervalo"}
+        </span>
       </span>
       <span className="inline-flex items-center gap-1.5">
         <span className="w-3 h-3 rounded-[2px] border border-pg-down bg-pg-down-bg" /> fora do ar
+      </span>
+      <span className="md:hidden inline-flex items-center gap-1.5">
+        <span className="w-3 h-3 rounded-[2px] border border-pg-neblina bg-pg-unknown-bg" /> sem dados
       </span>
     </div>
   );

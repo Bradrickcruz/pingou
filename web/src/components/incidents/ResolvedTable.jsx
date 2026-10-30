@@ -98,7 +98,7 @@ export function ResolvedTable({ incidents, total, onLoadMore, loadingMore }) {
       </table>
 
       {/* mobile: lista, sem scroll horizontal */}
-      <div className="md:hidden">
+      <div className="md:hidden [&>section:last-of-type_li:last-child]:border-b-0">
         {groups.map((g) => (
           <section key={g.key} aria-label={g.label}>
             <h3 className="m-0 px-4 py-2 bg-pg-nuvem border-b border-pg-borda text-pg-caption font-normal text-pg-neblina">
@@ -145,7 +145,7 @@ export function ResolvedTable({ incidents, total, onLoadMore, loadingMore }) {
             type="button"
             onClick={onLoadMore}
             disabled={loadingMore}
-            className="w-full min-h-[48px] text-pg-ui font-medium text-pg-ciano-fundo disabled:opacity-50 focus-visible:outline-2 focus-visible:outline focus-visible:-outline-offset-2 focus-visible:outline-pg-ciano"
+            className="w-full min-h-[48px] border-t border-pg-borda text-pg-ui font-medium text-pg-ciano-fundo disabled:opacity-50 focus-visible:outline-2 focus-visible:outline focus-visible:-outline-offset-2 focus-visible:outline-pg-ciano"
           >
             {loadingMore ? "Carregando…" : "Carregar mais"}
           </button>

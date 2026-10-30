@@ -1,6 +1,8 @@
 // Regras de apresentação dos monitores no painel.
 import { formatDuration, formatUptime, timeAgo } from "./format.js";
 
+export const typeLabel = { http: "HTTP", tcp: "TCP", heartbeat: "Heartbeat" };
+
 // Situação do monitor para o painel: pausado vence o estado do check.
 export function statusOf(m) {
   return m.enabled ? m.current_state : "PAUSED";
