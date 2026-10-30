@@ -79,14 +79,14 @@
   },
   "internal/database/migrations/0001_init.sql": {
     "mtime": 1777012405.3893824,
-    "seen": 1793383345.4733374,
-    "ast_hash": "",
+    "seen": 1793383505.323326,
+    "ast_hash": "cdf3d4043c780543a27d4cc148cf5555",
     "semantic_hash": ""
   },
   "internal/database/migrations/0002_add_duration_seconds_to_incidents.sql": {
     "mtime": 1777061129.9355462,
-    "seen": 1793383345.4733386,
-    "ast_hash": "",
+    "seen": 1793383505.3233275,
+    "ast_hash": "ab52761c5aed638df004b2cddba66e83",
     "semantic_hash": ""
   },
   "internal/domain/check.go": {
@@ -919,8 +919,8 @@
   },
   "internal/database/migrations/0003_monitor_types.sql": {
     "mtime": 1793381619.2904093,
-    "seen": 1793383345.4733398,
-    "ast_hash": "",
+    "seen": 1793383505.3233283,
+    "ast_hash": "acc29bbbdeb940baaf9ab1e94647b53e",
     "semantic_hash": ""
   },
   "internal/database/migrations_test.go": {
@@ -1051,8 +1051,8 @@
   },
   "internal/database/migrations/0004_incidents_page.sql": {
     "mtime": 1793381619.2904093,
-    "seen": 1793383345.4733412,
-    "ast_hash": "",
+    "seen": 1793383505.3233294,
+    "ast_hash": "b6bac1548426042243e703bf72f471e7",
     "semantic_hash": ""
   },
   "plan-settings-page.md": {
