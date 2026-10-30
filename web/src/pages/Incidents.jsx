@@ -15,16 +15,38 @@ const PAGE_SIZE = 20;
 
 // Abertos: uma busca só (até 100), recarregada a cada 15 s como o painel.
 function useOpenIncidents(monitorId) {
-  const [state, setState] = useState({ items: [], total: 0, loading: true, error: null });
+  const [state, setState] = useState({
+    items: [],
+    total: 0,
+    loading: true,
+    error: null,
+  });
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let alive = true; // descarta resposta atrasada de um filtro anterior
     const load = () =>
       incidentsApi
-        .list({ status: "open", monitor_id: monitorId || undefined, limit: 100 })
-        .then((res) => alive && setState({ items: res.data, total: res.total, loading: false, error: null }))
-        .catch((e) => alive && setState((s) => ({ ...s, loading: false, error: e.message })));
+        .list({
+          status: "open",
+          monitor_id: monitorId || undefined,
+          limit: 100,
+        })
+        .then(
+          (res) =>
+            alive &&
+            setState({
+              items: res.data,
+              total: res.total,
+              loading: false,
+              error: null,
+            }),
+        )
+        .catch(
+          (e) =>
+            alive &&
+            setState((s) => ({ ...s, loading: false, error: e.message })),
+        );
     const first = setTimeout(() => {
       setState((s) => ({ ...s, loading: true, error: null }));
       void load();
@@ -42,13 +64,23 @@ function useOpenIncidents(monitorId) {
 
 // Resolvidos: paginados com "Carregar mais"; não fazem polling.
 function useResolvedIncidents(monitorId) {
-  const [state, setState] = useState({ items: [], total: 0, loading: true, loadingMore: false, error: null });
+  const [state, setState] = useState({
+    items: [],
+    total: 0,
+    loading: true,
+    loadingMore: false,
+    error: null,
+  });
   const generation = useRef(0); // muda a cada filtro; respostas de outra geração são ignoradas
 
   const load = useCallback(
     async (offset) => {
       const gen = generation.current;
-      setState((s) => (offset === 0 ? { ...s, loading: true, error: null } : { ...s, loadingMore: true, error: null }));
+      setState((s) =>
+        offset === 0
+          ? { ...s, loading: true, error: null }
+          : { ...s, loadingMore: true, error: null },
+      );
       try {
         const res = await incidentsApi.list({
           status: "resolved",
@@ -60,12 +92,26 @@ function useResolvedIncidents(monitorId) {
         setState((s) => {
           // um incidente resolvido entre as páginas desloca o offset: evita repetir
           const seen = new Set(offset === 0 ? [] : s.items.map((i) => i.id));
-          const items = [...(offset === 0 ? [] : s.items), ...res.data.filter((i) => !seen.has(i.id))];
-          return { items, total: res.total, loading: false, loadingMore: false, error: null };
+          const items = [
+            ...(offset === 0 ? [] : s.items),
+            ...res.data.filter((i) => !seen.has(i.id)),
+          ];
+          return {
+            items,
+            total: res.total,
+            loading: false,
+            loadingMore: false,
+            error: null,
+          };
         });
       } catch (e) {
         if (gen !== generation.current) return;
-        setState((s) => ({ ...s, loading: false, loadingMore: false, error: e.message }));
+        setState((s) => ({
+          ...s,
+          loading: false,
+          loadingMore: false,
+          error: e.message,
+        }));
       }
     },
     [monitorId],
@@ -92,8 +138,13 @@ const TABS = [
 
 function LoadError({ message, onRetry }) {
   return (
-    <div role="alert" className="flex flex-wrap items-center gap-3 p-4 rounded-pg-card border border-pg-borda bg-pg-branco">
-      <span className="text-pg-ui text-pg-down">Não foi possível carregar: {message}</span>
+    <div
+      role="alert"
+      className="flex flex-wrap items-center gap-3 p-4 rounded-pg-card border border-pg-borda bg-pg-branco"
+    >
+      <span className="text-pg-ui text-pg-down">
+        Não foi possível carregar: {message}
+      </span>
       <Button variant="ghost" onClick={onRetry}>
         Tentar de novo
       </Button>
@@ -111,7 +162,9 @@ function Empty({ children }) {
 
 export function Incidents() {
   const [params, setParams] = useSearchParams();
-  const tab = TABS.some((t) => t.key === params.get("tab")) ? params.get("tab") : "all";
+  const tab = TABS.some((t) => t.key === params.get("tab"))
+    ? params.get("tab")
+    : "all";
   const monitorId = params.get("monitor") ?? "";
 
   const now = useNow(1000);
@@ -123,7 +176,11 @@ export function Incidents() {
   useEffect(() => {
     monitorsApi
       .list({ limit: 100 })
-      .then((res) => setMonitors([...res.data].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))))
+      .then((res) =>
+        setMonitors(
+          [...res.data].sort((a, b) => a.name.localeCompare(b.name, "pt-BR")),
+        ),
+      )
       .catch(() => {}); // sem a lista, o filtro só mostra "Todos os monitores"
   }, []);
 
@@ -146,12 +203,15 @@ export function Incidents() {
   return (
     <div className="max-w-[1180px]">
       <MobileHeader title="Incidentes" />
-      <h1 className="hidden md:block text-pg-h1 font-medium text-pg-ardosia my-0">Incidentes</h1>
+      <h1 className="hidden md:block text-pg-h1 font-medium text-pg-ardosia my-0">
+        Incidentes
+      </h1>
       <p className="hidden md:block mt-2 mb-6 text-pg-ui text-pg-neblina">
         Cada vez que um monitor caiu e quando voltou.
         {days && (
           <>
-            {" "}Guardados por {days} dias (
+            {" "}
+            Guardados por {days} dias (
             <Link to="/settings" className="text-pg-ciano-fundo underline">
               mudar em Configurações
             </Link>
@@ -165,13 +225,19 @@ export function Incidents() {
           label="Filtrar incidentes"
           options={TABS.map((t) => ({
             ...t,
-            count: t.key === "open" && !open.loading && !open.error ? open.total : null,
+            count:
+              t.key === "open" && !open.loading && !open.error
+                ? open.total
+                : null,
           }))}
           value={tab}
           onChange={(key) => setParam("tab", key === "all" ? "" : key)}
         />
         <div className="flex flex-col gap-1.5 md:flex-row md:items-center md:gap-3">
-          <label htmlFor="incident-monitor" className="text-pg-caption md:text-pg-ui text-pg-neblina">
+          <label
+            htmlFor="incident-monitor"
+            className="text-pg-caption md:text-pg-ui text-pg-neblina"
+          >
             Monitor
           </label>
           <select
@@ -192,7 +258,10 @@ export function Incidents() {
 
       {showOpen && (
         <section aria-labelledby="open-title" className="mb-7 md:mb-9">
-          <h2 id="open-title" className="flex items-center gap-2.5 text-pg-h3 font-medium text-pg-ardosia mt-0 mb-3">
+          <h2
+            id="open-title"
+            className="flex items-center gap-2.5 text-pg-h3 font-medium text-pg-ardosia mt-0 mb-3"
+          >
             Abertos agora
             {open.total > 0 && (
               <span className="min-w-[22px] px-1.5 rounded-full bg-pg-down-bg text-pg-down text-pg-caption font-medium text-center tabular-nums">
@@ -208,7 +277,9 @@ export function Incidents() {
             <LoadError message={open.error} onRetry={open.retry} />
           ) : open.items.length === 0 ? (
             <Empty>
-              {selected ? `${selected.name} não tem incidente aberto.` : "Nenhum incidente aberto. Tudo no ar."}
+              {selected
+                ? `${selected.name} não tem incidente aberto.`
+                : "Nenhum incidente aberto. Tudo no ar."}
             </Empty>
           ) : (
             <div className="flex flex-col gap-3">
@@ -222,7 +293,10 @@ export function Incidents() {
 
       {showResolved && (
         <section aria-labelledby="resolved-title">
-          <h2 id="resolved-title" className="text-pg-h3 font-medium text-pg-ardosia mt-0 mb-3">
+          <h2
+            id="resolved-title"
+            className="text-pg-h3 font-medium text-pg-ardosia mt-0 mb-3"
+          >
             Resolvidos
           </h2>
           {resolved.loading ? (
@@ -233,7 +307,9 @@ export function Incidents() {
             <LoadError message={resolved.error} onRetry={resolved.retry} />
           ) : resolved.items.length === 0 ? (
             <Empty>
-              {selected ? `${selected.name} não teve incidentes resolvidos` : "Nenhum incidente resolvido"}
+              {selected
+                ? `${selected.name} não teve incidentes resolvidos`
+                : "Nenhum incidente resolvido"}
               {days ? ` nos últimos ${days} dias.` : "."}
             </Empty>
           ) : (

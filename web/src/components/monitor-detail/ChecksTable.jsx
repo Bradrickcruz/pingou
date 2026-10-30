@@ -17,7 +17,15 @@ const COMPACT = 5;
 // Últimos checks do monitor, do mais recente ao mais antigo. "ver mais"
 // acrescenta mais 20 na própria página. No mobile vira lista (hora, status,
 // resposta e o erro embaixo); compact = ainda na primeira página.
-export function ChecksTable({ checks, total, type, now, onMore, loadingMore, compact = false }) {
+export function ChecksTable({
+  checks,
+  total,
+  type,
+  now,
+  onMore,
+  loadingMore,
+  compact = false,
+}) {
   const heartbeat = type === "heartbeat";
   const mobile = compact ? checks.slice(0, COMPACT) : checks;
 
@@ -33,19 +41,37 @@ export function ChecksTable({ checks, total, type, now, onMore, loadingMore, com
     <div className="rounded-pg-card border border-pg-borda bg-pg-branco overflow-hidden">
       <ul className="md:hidden list-none m-0 p-0">
         {mobile.map((c) => (
-          <li key={c.id} className="px-4 py-2.5 border-t border-pg-borda first:border-t-0">
+          <li
+            key={c.id}
+            className="px-4 py-2.5 border-t border-pg-borda first:border-t-0"
+          >
             <div className="flex items-center gap-3">
-              <span className="text-pg-ui text-pg-ardosia tabular-nums">{checkTime(c.checked_at, now)}</span>
-              <span className={`inline-flex items-center gap-1 text-pg-caption font-medium ${c.success ? "text-pg-up" : "text-pg-down"}`}>
-                {c.success ? <Check size={12} aria-hidden="true" /> : <X size={12} aria-hidden="true" />}
+              <span className="text-pg-ui text-pg-ardosia tabular-nums">
+                {checkTime(c.checked_at, now)}
+              </span>
+              <span
+                className={`inline-flex items-center gap-1 text-pg-caption font-medium ${c.success ? "text-pg-up" : "text-pg-down"}`}
+              >
+                {c.success ? (
+                  <Check size={12} aria-hidden="true" />
+                ) : (
+                  <X size={12} aria-hidden="true" />
+                )}
                 {c.success ? "OK" : "Falha"}
               </span>
               <span className="ml-auto text-pg-ui text-pg-ardosia tabular-nums whitespace-nowrap">
-                {heartbeat || !c.success ? <span aria-label="sem dados">—</span> : `${c.latency_ms} ms`}
+                {heartbeat || !c.success ? (
+                  <span aria-label="sem dados">—</span>
+                ) : (
+                  `${c.latency_ms} ms`
+                )}
               </span>
             </div>
             {!c.success && (
-              <div className="font-pg-mono text-pg-caption text-pg-neblina truncate" title={detailOf(c, type)}>
+              <div
+                className="font-pg-mono text-pg-caption text-pg-neblina truncate"
+                title={detailOf(c, type)}
+              >
                 {detailOf(c, type)}
               </div>
             )}
@@ -64,7 +90,9 @@ export function ChecksTable({ checks, total, type, now, onMore, loadingMore, com
       )}
 
       <table className="hidden md:table w-full table-fixed border-collapse text-left">
-        <caption className="sr-only">Últimos checks, do mais recente ao mais antigo</caption>
+        <caption className="sr-only">
+          Últimos checks, do mais recente ao mais antigo
+        </caption>
         <colgroup>
           <col className="w-[112px] sm:w-[148px]" />
           <col className="sm:w-[150px]" />
@@ -73,10 +101,21 @@ export function ChecksTable({ checks, total, type, now, onMore, loadingMore, com
         </colgroup>
         <thead>
           <tr className="bg-pg-ciano-nevoa text-pg-caption text-pg-ciano-fundo">
-            <th scope="col" className="px-4 py-3 font-medium">Horário</th>
-            <th scope="col" className="px-4 py-3 font-medium">Status</th>
-            <th scope="col" className="px-4 py-3 font-medium text-right">Resposta</th>
-            <th scope="col" className="px-4 py-3 font-medium hidden sm:table-cell">Detalhe</th>
+            <th scope="col" className="px-4 py-3 font-medium">
+              Horário
+            </th>
+            <th scope="col" className="px-4 py-3 font-medium">
+              Status
+            </th>
+            <th scope="col" className="px-4 py-3 font-medium text-right">
+              Resposta
+            </th>
+            <th
+              scope="col"
+              className="px-4 py-3 font-medium hidden sm:table-cell"
+            >
+              Detalhe
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -84,23 +123,44 @@ export function ChecksTable({ checks, total, type, now, onMore, loadingMore, com
             const detail = detailOf(c, type);
             return (
               <tr key={c.id} className="border-t border-pg-borda">
-                <td className={`${cell} text-pg-ui text-pg-ardosia tabular-nums`}>{checkTime(c.checked_at, now)}</td>
+                <td
+                  className={`${cell} text-pg-ui text-pg-ardosia tabular-nums`}
+                >
+                  {checkTime(c.checked_at, now)}
+                </td>
                 <td className={cell}>
-                  <span className={`inline-flex items-center gap-1.5 text-pg-caption font-medium ${c.success ? "text-pg-up" : "text-pg-down"}`}>
-                    {c.success ? <Check size={14} aria-hidden="true" /> : <X size={14} aria-hidden="true" />}
+                  <span
+                    className={`inline-flex items-center gap-1.5 text-pg-caption font-medium ${c.success ? "text-pg-up" : "text-pg-down"}`}
+                  >
+                    {c.success ? (
+                      <Check size={14} aria-hidden="true" />
+                    ) : (
+                      <X size={14} aria-hidden="true" />
+                    )}
                     {c.success ? "Sucesso" : "Falha"}
                   </span>
                   {/* mobile: sem a coluna Detalhe, o erro aparece sob o status */}
                   {!c.success && (
-                    <div className="sm:hidden mt-0.5 font-pg-mono text-pg-caption text-pg-neblina truncate" title={detail}>
+                    <div
+                      className="sm:hidden mt-0.5 font-pg-mono text-pg-caption text-pg-neblina truncate"
+                      title={detail}
+                    >
                       {detail}
                     </div>
                   )}
                 </td>
-                <td className={`${cell} text-right text-pg-ui text-pg-ardosia tabular-nums whitespace-nowrap`}>
-                  {heartbeat || !c.success ? <span aria-label="sem dados">—</span> : `${c.latency_ms} ms`}
+                <td
+                  className={`${cell} text-right text-pg-ui text-pg-ardosia tabular-nums whitespace-nowrap`}
+                >
+                  {heartbeat || !c.success ? (
+                    <span aria-label="sem dados">—</span>
+                  ) : (
+                    `${c.latency_ms} ms`
+                  )}
                 </td>
-                <td className={`${cell} hidden sm:table-cell font-pg-mono text-pg-caption text-pg-neblina`}>
+                <td
+                  className={`${cell} hidden sm:table-cell font-pg-mono text-pg-caption text-pg-neblina`}
+                >
                   <div className="truncate" title={detail}>
                     {detail}
                   </div>
@@ -110,8 +170,14 @@ export function ChecksTable({ checks, total, type, now, onMore, loadingMore, com
           })}
         </tbody>
       </table>
-      <div className="hidden md:block px-4 py-3 border-t border-pg-borda text-pg-caption text-pg-neblina" aria-live="polite">
-        Mostrando {checks.length === 1 ? "o mais recente" : `os ${checks.length} mais recentes`}
+      <div
+        className="hidden md:block px-4 py-3 border-t border-pg-borda text-pg-caption text-pg-neblina"
+        aria-live="polite"
+      >
+        Mostrando{" "}
+        {checks.length === 1
+          ? "o mais recente"
+          : `os ${checks.length} mais recentes`}
         {checks.length < total && (
           <>
             {" · "}

@@ -1,7 +1,9 @@
 const variants = {
   primary: "bg-pg-ciano-fundo text-pg-branco hover:brightness-90",
-  ghost: "bg-transparent border border-pg-borda text-pg-ardosia hover:bg-pg-ciano-nevoa",
-  destructive: "bg-transparent border border-pg-down text-pg-down hover:bg-pg-down-bg",
+  ghost:
+    "bg-transparent border border-pg-borda text-pg-ardosia hover:bg-pg-ciano-nevoa",
+  destructive:
+    "bg-transparent border border-pg-down text-pg-down hover:bg-pg-down-bg",
   danger: "bg-pg-down text-pg-branco hover:brightness-90",
 };
 

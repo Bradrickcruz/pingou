@@ -14,7 +14,12 @@ import marca from "../../assets/brand/pingou-marca-horizontal.svg";
 const nav = [
   { to: "/", label: "Painel", icon: LayoutDashboard },
   { to: "/incidents", label: "Incidentes", icon: TriangleAlert },
-  { to: "/settings", label: "Configurações", short: "Ajustes", icon: SettingsIcon },
+  {
+    to: "/settings",
+    label: "Configurações",
+    short: "Ajustes",
+    icon: SettingsIcon,
+  },
 ];
 
 // Contagem de incidentes abertos para o badge da sidebar e da barra de abas. Atualiza junto com o
@@ -50,7 +55,9 @@ export function Shell({ children, onLogout }) {
       <aside className="hidden md:flex md:w-[220px] md:flex-shrink-0 flex-col py-6 bg-pg-branco border-r border-pg-borda">
         <div className="px-5 pb-6 border-b border-pg-borda">
           <img src={marca} alt="Pingou" className="h-7 w-auto" />
-          <div className="text-pg-caption text-pg-neblina mt-1">monitor de saúde</div>
+          <div className="text-pg-caption text-pg-neblina mt-1">
+            monitor de saúde
+          </div>
         </div>
 
         <nav className="py-4 px-3 flex-1">
@@ -72,7 +79,12 @@ export function Shell({ children, onLogout }) {
               {to === "/incidents" && openIncidents > 0 && (
                 <span className="ml-auto min-w-[22px] px-1.5 rounded-full bg-pg-down-bg text-pg-down text-pg-caption font-medium text-center tabular-nums">
                   {openIncidents}
-                  <span className="sr-only"> {openIncidents === 1 ? "incidente aberto" : "incidentes abertos"}</span>
+                  <span className="sr-only">
+                    {" "}
+                    {openIncidents === 1
+                      ? "incidente aberto"
+                      : "incidentes abertos"}
+                  </span>
                 </span>
               )}
             </NavLink>

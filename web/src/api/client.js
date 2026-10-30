@@ -16,7 +16,9 @@ export function createClient() {
     (res) => res,
     (err) =>
       Promise.reject(
-        Object.assign(new Error(err.response?.data?.error || err.message), { status: err.response?.status }),
+        Object.assign(new Error(err.response?.data?.error || err.message), {
+          status: err.response?.status,
+        }),
       ),
   );
   return instance;

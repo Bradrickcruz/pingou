@@ -9,7 +9,10 @@ export function ConfigCard({ monitor: m }) {
     heartbeat
       ? ["Tolerância", formatDuration(m.config?.grace_seconds ?? 0)]
       : ["Tempo limite", formatDuration(m.timeout_seconds)],
-    !heartbeat && ["Cai depois de", plural(m.failure_threshold, "falha", "falhas seguidas")],
+    !heartbeat && [
+      "Cai depois de",
+      plural(m.failure_threshold, "falha", "falhas seguidas"),
+    ],
     ["Criado em", fullDate(m.created_at)],
   ].filter(Boolean);
 

@@ -13,7 +13,9 @@ export function OpenIncidentCard({ incident, now }) {
   const titleId = useId();
   const monitor = incident.monitor;
   const name = monitor?.name ?? "Monitor removido";
-  const down = formatDuration((now - new Date(incident.started_at).getTime()) / 1000);
+  const down = formatDuration(
+    (now - new Date(incident.started_at).getTime()) / 1000,
+  );
 
   return (
     <article
@@ -25,7 +27,10 @@ export function OpenIncidentCard({ incident, now }) {
           <X size={18} aria-hidden="true" />
         </span>
         <div className="flex-1 min-w-0">
-          <h3 id={titleId} className="flex flex-col md:flex-row md:flex-wrap md:items-baseline gap-x-3 my-0 text-pg-ui">
+          <h3
+            id={titleId}
+            className="flex flex-col md:flex-row md:flex-wrap md:items-baseline gap-x-3 my-0 text-pg-ui"
+          >
             {monitor ? (
               <Link
                 to={`/monitors/${monitor.id}`}
@@ -34,7 +39,9 @@ export function OpenIncidentCard({ incident, now }) {
                 {name}
               </Link>
             ) : (
-              <span className="text-[17px] font-medium text-pg-ardosia break-words">{name}</span>
+              <span className="text-[17px] font-medium text-pg-ardosia break-words">
+                {name}
+              </span>
             )}
             <span className="text-pg-down">
               <span className="sr-only">, </span>Fora do ar há {down}
@@ -59,7 +66,9 @@ export function OpenIncidentCard({ incident, now }) {
       <div className="hidden md:flex flex-col gap-3 md:items-end md:w-[200px] md:flex-shrink-0">
         <dl className="grid grid-cols-[auto_auto] gap-x-6 gap-y-0.5 my-0 text-pg-caption w-fit md:w-full">
           <dt className="text-pg-neblina">Começou</dt>
-          <dd className="m-0 text-right text-pg-ardosia whitespace-nowrap">{startedLabel(incident.started_at, now)}</dd>
+          <dd className="m-0 text-right text-pg-ardosia whitespace-nowrap">
+            {startedLabel(incident.started_at, now)}
+          </dd>
           <dt className="text-pg-neblina">Falhas seguidas</dt>
           <dd className="m-0 text-right text-pg-ardosia tabular-nums">
             {incident.failure_count.toLocaleString("pt-BR")}
@@ -85,7 +94,12 @@ export function OpenIncidentCard({ incident, now }) {
             Ver monitor
           </Link>
           {monitor.type === "http" && monitor.target && (
-            <a href={monitor.target} target="_blank" rel="noopener noreferrer" className={mobileAction}>
+            <a
+              href={monitor.target}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={mobileAction}
+            >
               <ExternalLink size={16} aria-hidden="true" />
               Abrir URL
               <span className="sr-only"> de {name} (abre em nova aba)</span>

@@ -27,7 +27,8 @@ export function countByStatus(monitors) {
 // Texto do alvo: URL (http), host:porta (tcp) ou a expectativa do heartbeat.
 export function targetOf(m) {
   if (m.type === "tcp") return `${m.config.host}:${m.config.port}`;
-  if (m.type === "heartbeat") return `Espera um ping a cada ${formatDuration(m.interval_seconds)}`;
+  if (m.type === "heartbeat")
+    return `Espera um ping a cada ${formatDuration(m.interval_seconds)}`;
   return m.url;
 }
 
@@ -48,18 +49,29 @@ export function cardFooter(m, now = Date.now()) {
   const status = statusOf(m);
   const heartbeat = m.type === "heartbeat";
   if (status === "PAUSED") return "Pausado";
-  if (status === "UNKNOWN") return heartbeat ? "Aguardando o primeiro ping" : "Aguardando o primeiro check";
+  if (status === "UNKNOWN")
+    return heartbeat
+      ? "Aguardando o primeiro ping"
+      : "Aguardando o primeiro check";
 
   const uptime = formatUptime(m.uptime_24h);
   const parts = [];
   if (status === "DOWN") {
-    parts.push(m.down_since ? `Fora há ${formatDuration((now - new Date(m.down_since)) / 1000)}` : "Fora do ar");
+    parts.push(
+      m.down_since
+        ? `Fora há ${formatDuration((now - new Date(m.down_since)) / 1000)}`
+        : "Fora do ar",
+    );
     if (uptime) parts.push(`${uptime} em 24 h`);
     return parts.join(" · ");
   }
   if (uptime) parts.push(`${uptime} em 24 h`);
-  if (!heartbeat && m.last_latency_ms != null) parts.push(`${m.last_latency_ms} ms`);
-  const ago = timeAgo(heartbeat ? (m.last_ping_at ?? m.last_checked_at) : m.last_checked_at, now);
+  if (!heartbeat && m.last_latency_ms != null)
+    parts.push(`${m.last_latency_ms} ms`);
+  const ago = timeAgo(
+    heartbeat ? (m.last_ping_at ?? m.last_checked_at) : m.last_checked_at,
+    now,
+  );
   if (ago) parts.push(heartbeat ? `ping ${ago}` : ago);
   return parts.join(" · ");
 }

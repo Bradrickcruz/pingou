@@ -1,7 +1,12 @@
 // Últimos N checks como barras: verde (no ar), vermelho (fora), cinza (sem dados).
 // history vem do mais antigo para o mais recente; completa à direita com cinza.
 // fluid: ocupa a largura toda (card do mobile) em vez dos 198 px da tabela.
-export function HistoryBar({ history = [], size = 30, dimmed = false, fluid = false }) {
+export function HistoryBar({
+  history = [],
+  size = 30,
+  dimmed = false,
+  fluid = false,
+}) {
   const bars = history.slice(-size);
   const empty = size - bars.length;
   const ok = bars.filter(Boolean).length;

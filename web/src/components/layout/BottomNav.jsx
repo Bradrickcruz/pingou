@@ -28,7 +28,12 @@ export function BottomNav({ items, openIncidents }) {
                 {to === "/incidents" && openIncidents > 0 && (
                   <span className="absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] px-1 rounded-full bg-pg-down text-pg-branco text-[11px] leading-[18px] font-medium text-center tabular-nums">
                     {openIncidents}
-                    <span className="sr-only"> {openIncidents === 1 ? "incidente aberto" : "incidentes abertos"}</span>
+                    <span className="sr-only">
+                      {" "}
+                      {openIncidents === 1
+                        ? "incidente aberto"
+                        : "incidentes abertos"}
+                    </span>
                   </span>
                 )}
               </span>

@@ -2,8 +2,18 @@ import { Check, X, CircleHelp, Pause } from "lucide-react";
 
 const stateStyles = {
   UP: { bg: "bg-pg-up-bg", iconColor: "text-pg-up", icon: Check, label: "UP" },
-  DOWN: { bg: "bg-pg-down-bg", iconColor: "text-pg-down", icon: X, label: "DOWN" },
-  UNKNOWN: { bg: "bg-pg-unknown-bg", iconColor: "text-pg-unknown", icon: CircleHelp, label: "UNKNOWN" },
+  DOWN: {
+    bg: "bg-pg-down-bg",
+    iconColor: "text-pg-down",
+    icon: X,
+    label: "DOWN",
+  },
+  UNKNOWN: {
+    bg: "bg-pg-unknown-bg",
+    iconColor: "text-pg-unknown",
+    icon: CircleHelp,
+    label: "UNKNOWN",
+  },
   PAUSED: {
     bg: "bg-pg-branco border border-pg-borda",
     iconColor: "text-pg-neblina",

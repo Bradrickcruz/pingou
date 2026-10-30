@@ -32,10 +32,15 @@ function MonitorCell({ incident }) {
             {m.name}
           </Link>
         ) : (
-          <div className="text-pg-ui font-medium text-pg-ardosia truncate">Monitor removido</div>
+          <div className="text-pg-ui font-medium text-pg-ardosia truncate">
+            Monitor removido
+          </div>
         )}
         {m?.target && (
-          <div className="font-pg-mono text-pg-caption text-pg-neblina truncate" title={m.target}>
+          <div
+            className="font-pg-mono text-pg-caption text-pg-neblina truncate"
+            title={m.target}
+          >
             {m.target}
           </div>
         )}
@@ -53,7 +58,9 @@ export function ResolvedTable({ incidents, total, onLoadMore, loadingMore }) {
     <div className="rounded-pg-card border border-pg-borda bg-pg-branco overflow-hidden">
       {/* desktop: tabela */}
       <table className="hidden md:table w-full table-fixed border-collapse text-left">
-        <caption className="sr-only">Incidentes resolvidos, agrupados pelo dia em que terminaram</caption>
+        <caption className="sr-only">
+          Incidentes resolvidos, agrupados pelo dia em que terminaram
+        </caption>
         <colgroup>
           <col className="w-[34%]" />
           <col className="w-[200px]" />
@@ -62,16 +69,28 @@ export function ResolvedTable({ incidents, total, onLoadMore, loadingMore }) {
         </colgroup>
         <thead>
           <tr className="bg-pg-ciano-nevoa text-pg-caption text-pg-ciano-fundo">
-            <th scope="col" className="px-5 py-3 font-medium">Monitor</th>
-            <th scope="col" className="px-5 py-3 font-medium">Período</th>
-            <th scope="col" className="px-5 py-3 font-medium text-right">Duração</th>
-            <th scope="col" className="px-5 py-3 font-medium">Motivo da queda</th>
+            <th scope="col" className="px-5 py-3 font-medium">
+              Monitor
+            </th>
+            <th scope="col" className="px-5 py-3 font-medium">
+              Período
+            </th>
+            <th scope="col" className="px-5 py-3 font-medium text-right">
+              Duração
+            </th>
+            <th scope="col" className="px-5 py-3 font-medium">
+              Motivo da queda
+            </th>
           </tr>
         </thead>
         {groups.map((g) => (
           <tbody key={g.key}>
             <tr className="border-t border-pg-borda bg-pg-nuvem">
-              <th scope="rowgroup" colSpan={4} className="px-5 py-2 text-pg-caption font-normal text-pg-neblina">
+              <th
+                scope="rowgroup"
+                colSpan={4}
+                className="px-5 py-2 text-pg-caption font-normal text-pg-neblina"
+              >
                 {g.label}
               </th>
             </tr>
@@ -80,13 +99,19 @@ export function ResolvedTable({ incidents, total, onLoadMore, loadingMore }) {
                 <td className={cell}>
                   <MonitorCell incident={i} />
                 </td>
-                <td className={`${cell} text-pg-ui text-pg-ardosia whitespace-nowrap tabular-nums`}>
+                <td
+                  className={`${cell} text-pg-ui text-pg-ardosia whitespace-nowrap tabular-nums`}
+                >
                   {timeRange(i.started_at, i.ended_at)}
                 </td>
-                <td className={`${cell} text-right text-pg-ui font-medium text-pg-ardosia whitespace-nowrap`}>
+                <td
+                  className={`${cell} text-right text-pg-ui font-medium text-pg-ardosia whitespace-nowrap`}
+                >
                   {formatDuration(i.duration_seconds)}
                 </td>
-                <td className={`${cell} font-pg-mono text-pg-caption text-pg-neblina`}>
+                <td
+                  className={`${cell} font-pg-mono text-pg-caption text-pg-neblina`}
+                >
                   <div className="truncate" title={i.last_error ?? undefined}>
                     {i.last_error ?? "—"}
                   </div>
@@ -106,7 +131,10 @@ export function ResolvedTable({ incidents, total, onLoadMore, loadingMore }) {
             </h3>
             <ul className="list-none m-0 p-0">
               {g.items.map((i) => (
-                <li key={i.id} className="flex gap-3 px-4 py-3 border-b border-pg-borda">
+                <li
+                  key={i.id}
+                  className="flex gap-3 px-4 py-3 border-b border-pg-borda"
+                >
                   <span className="flex-shrink-0 inline-flex items-center justify-center w-6 h-6 mt-0.5 rounded-full bg-pg-up-bg text-pg-up">
                     <Check size={14} aria-hidden="true" />
                   </span>
@@ -120,7 +148,9 @@ export function ResolvedTable({ incidents, total, onLoadMore, loadingMore }) {
                           {i.monitor.name}
                         </Link>
                       ) : (
-                        <span className="text-pg-ui font-medium text-pg-ardosia truncate">Monitor removido</span>
+                        <span className="text-pg-ui font-medium text-pg-ardosia truncate">
+                          Monitor removido
+                        </span>
                       )}
                       <span className="text-pg-ui font-medium text-pg-ardosia whitespace-nowrap">
                         {formatDuration(i.duration_seconds)}
@@ -154,7 +184,8 @@ export function ResolvedTable({ incidents, total, onLoadMore, loadingMore }) {
 
       <div className="hidden md:flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-t border-pg-borda">
         <span className="text-pg-caption text-pg-neblina" aria-live="polite">
-          Mostrando {incidents.length} de {total} {total === 1 ? "incidente resolvido" : "incidentes resolvidos"}
+          Mostrando {incidents.length} de {total}{" "}
+          {total === 1 ? "incidente resolvido" : "incidentes resolvidos"}
         </span>
         {incidents.length < total && (
           <Button variant="ghost" onClick={onLoadMore} disabled={loadingMore}>

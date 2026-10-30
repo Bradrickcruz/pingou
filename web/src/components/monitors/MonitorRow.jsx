@@ -52,19 +52,30 @@ export function MonitorRow({ monitor, now, onEdit, onToggle, onDelete }) {
       <td className={`${cell} hidden lg:table-cell`}>
         <HistoryBar history={monitor.history} dimmed={paused} />
       </td>
-      <td className={`${cell} hidden md:table-cell text-right tabular-nums text-pg-ui ${
-        status === "DOWN" ? "text-pg-down" : muted
-      }`}>
+      <td
+        className={`${cell} hidden md:table-cell text-right tabular-nums text-pg-ui ${
+          status === "DOWN" ? "text-pg-down" : muted
+        }`}
+      >
         {uptime ?? <span aria-label="sem dados">—</span>}
       </td>
-      <td className={`${cell} hidden md:table-cell text-right tabular-nums text-pg-ui whitespace-nowrap ${muted}`}>
+      <td
+        className={`${cell} hidden md:table-cell text-right tabular-nums text-pg-ui whitespace-nowrap ${muted}`}
+      >
         {latency ?? <span aria-label="sem dados">—</span>}
       </td>
-      <td className={`${cell} hidden sm:table-cell text-pg-caption text-pg-neblina whitespace-nowrap`}>
+      <td
+        className={`${cell} hidden sm:table-cell text-pg-caption text-pg-neblina whitespace-nowrap`}
+      >
         {lastCheck ?? "—"}
       </td>
       <td className={`${cell} pl-0 text-right`}>
-        <RowMenu monitor={monitor} onEdit={onEdit} onToggle={onToggle} onDelete={onDelete} />
+        <RowMenu
+          monitor={monitor}
+          onEdit={onEdit}
+          onToggle={onToggle}
+          onDelete={onDelete}
+        />
       </td>
     </tr>
   );

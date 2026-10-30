@@ -1,6 +1,19 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Activity, ChevronLeft, Globe, Pause, Pencil, Play, Server } from "lucide-react";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
+import {
+  Activity,
+  ChevronLeft,
+  Globe,
+  Pause,
+  Pencil,
+  Play,
+  Server,
+} from "lucide-react";
 import { toast } from "react-toastify";
 import { monitorsApi } from "../api/monitors";
 import { useNow } from "../hooks/useNow";
@@ -12,7 +25,10 @@ import { RowMenu } from "../components/monitors/RowMenu";
 import { MonitorModals } from "../components/monitors/MonitorModals";
 import { RangeTabs } from "../components/monitor-detail/RangeTabs";
 import { RANGES, clampRange } from "../lib/ranges";
-import { ChartLegend, ResponseChart } from "../components/monitor-detail/ResponseChart";
+import {
+  ChartLegend,
+  ResponseChart,
+} from "../components/monitor-detail/ResponseChart";
 import { ChecksTable } from "../components/monitor-detail/ChecksTable";
 import { RecentIncidents } from "../components/monitor-detail/RecentIncidents";
 import { ConfigCard } from "../components/monitor-detail/ConfigCard";
@@ -29,7 +45,15 @@ const MAX_CHECKS = 200; // limite da API por request
 // Monitor, últimos checks e incidentes recentes, a cada 15 s (ritmo do painel).
 // `alive` descarta respostas atrasadas ao trocar de monitor.
 function useMonitorDetail(id, checkLimit) {
-  const [state, setState] = useState({ monitor: null, checks: [], checksTotal: 0, incidents: [], loading: true, error: null, notFound: false });
+  const [state, setState] = useState({
+    monitor: null,
+    checks: [],
+    checksTotal: 0,
+    incidents: [],
+    loading: true,
+    error: null,
+    notFound: false,
+  });
 
   const load = useCallback(
     async (alive = () => true) => {
@@ -51,7 +75,12 @@ function useMonitorDetail(id, checkLimit) {
         });
       } catch (e) {
         if (!alive()) return;
-        setState((s) => ({ ...s, loading: false, error: e.message, notFound: e.status === 404 }));
+        setState((s) => ({
+          ...s,
+          loading: false,
+          error: e.message,
+          notFound: e.status === 404,
+        }));
       }
     },
     [id, checkLimit],
@@ -106,9 +135,19 @@ function useStats(id, range) {
 
 // short/shortValue: rótulo e valor do mobile (< md), que não mostra a nota;
 // alert: valor em vermelho no mobile.
-function StatCard({ label, short, value, shortValue, note, alert = false, className = "" }) {
+function StatCard({
+  label,
+  short,
+  value,
+  shortValue,
+  note,
+  alert = false,
+  className = "",
+}) {
   return (
-    <div className={`p-4 rounded-pg-card border border-pg-borda bg-pg-branco min-w-0 ${className}`}>
+    <div
+      className={`p-4 rounded-pg-card border border-pg-borda bg-pg-branco min-w-0 ${className}`}
+    >
       <div className="text-pg-caption text-pg-neblina">
         <span className="md:hidden">{short ?? label}</span>
         <span className="hidden md:inline">{label}</span>
@@ -127,7 +166,9 @@ function StatCard({ label, short, value, shortValue, note, alert = false, classN
           value
         )}
       </div>
-      <div className="hidden md:block mt-1 text-pg-caption text-pg-neblina">{note}</div>
+      <div className="hidden md:block mt-1 text-pg-caption text-pg-neblina">
+        {note}
+      </div>
     </div>
   );
 }
@@ -135,15 +176,27 @@ function StatCard({ label, short, value, shortValue, note, alert = false, classN
 function SectionTitle({ children, action }) {
   return (
     <div className="flex items-baseline justify-between gap-3 mb-3">
-      <h2 className="text-pg-h3 font-medium text-pg-ardosia my-0">{children}</h2>
+      <h2 className="text-pg-h3 font-medium text-pg-ardosia my-0">
+        {children}
+      </h2>
       {action}
     </div>
   );
 }
 
-const linkClass = "text-pg-ui text-pg-ciano-fundo underline focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano";
+const linkClass =
+  "text-pg-ui text-pg-ciano-fundo underline focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano";
 
-function Performance({ monitor, stats, statsError, range, onRange, retentionDays, now, onRetry }) {
+function Performance({
+  monitor,
+  stats,
+  statsError,
+  range,
+  onRange,
+  retentionDays,
+  now,
+  onRetry,
+}) {
   const heartbeat = monitor.type === "heartbeat";
   const current = RANGES.find((r) => r.key === range);
   const since = current?.since ?? "";
@@ -152,22 +205,35 @@ function Performance({ monitor, stats, statsError, range, onRange, retentionDays
   return (
     <section aria-labelledby="desempenho" className="mb-6 md:mb-9">
       <div className="flex flex-col md:flex-row md:flex-wrap md:items-center md:justify-between gap-3 mb-3 md:mb-4">
-        <h2 id="desempenho" className="text-pg-h3 font-medium text-pg-ardosia my-0">
+        <h2
+          id="desempenho"
+          className="text-pg-h3 font-medium text-pg-ardosia my-0"
+        >
           Desempenho
         </h2>
-        <RangeTabs value={range} onChange={onRange} retentionDays={retentionDays} />
+        <RangeTabs
+          value={range}
+          onChange={onRange}
+          retentionDays={retentionDays}
+        />
       </div>
 
       {statsError && !stats && (
         <p className="text-pg-ui text-pg-down mb-4" role="alert">
           {statsError}{" "}
-          <button type="button" onClick={onRetry} className={`${linkClass} p-0 border-0 bg-transparent cursor-pointer`}>
+          <button
+            type="button"
+            onClick={onRetry}
+            className={`${linkClass} p-0 border-0 bg-transparent cursor-pointer`}
+          >
             Tentar de novo
           </button>
         </p>
       )}
 
-      <div className={`grid grid-cols-2 gap-3 mb-3 ${heartbeat ? "lg:grid-cols-3" : "lg:grid-cols-4"}`}>
+      <div
+        className={`grid grid-cols-2 gap-3 mb-3 ${heartbeat ? "lg:grid-cols-3" : "lg:grid-cols-4"}`}
+      >
         <StatCard
           label="Uptime"
           short={`Uptime ${current?.short ?? ""}`}
@@ -178,17 +244,36 @@ function Performance({ monitor, stats, statsError, range, onRange, retentionDays
         {!heartbeat && (
           <StatCard
             label="Resposta média"
-            value={stats?.avg_latency_ms != null ? `${stats.avg_latency_ms} ms` : empty}
+            value={
+              stats?.avg_latency_ms != null
+                ? `${stats.avg_latency_ms} ms`
+                : empty
+            }
             note="só checks com sucesso"
           />
         )}
-        <StatCard label="Incidentes" value={stats ? stats.incidents : empty} note={since} alert={stats?.incidents > 0} />
+        <StatCard
+          label="Incidentes"
+          value={stats ? stats.incidents : empty}
+          note={since}
+          alert={stats?.incidents > 0}
+        />
         <StatCard
           label="Tempo fora do ar"
           short="Tempo fora"
           className={heartbeat ? "col-span-2 md:col-span-1" : ""}
-          value={stats ? (stats.downtime_seconds > 0 ? formatDuration(stats.downtime_seconds) : "nenhum") : empty}
-          shortValue={stats?.downtime_seconds > 0 ? formatDuration(stats.downtime_seconds).replace(" e ", " ") : null}
+          value={
+            stats
+              ? stats.downtime_seconds > 0
+                ? formatDuration(stats.downtime_seconds)
+                : "nenhum"
+              : empty
+          }
+          shortValue={
+            stats?.downtime_seconds > 0
+              ? formatDuration(stats.downtime_seconds).replace(" e ", " ")
+              : null
+          }
           note={`somado ${since}`}
         />
       </div>
@@ -196,13 +281,17 @@ function Performance({ monitor, stats, statsError, range, onRange, retentionDays
       {!heartbeat && (
         <div className="p-4 sm:p-5 rounded-pg-card border border-pg-borda bg-pg-branco">
           <div className="flex flex-col md:flex-row md:flex-wrap md:items-center md:justify-between gap-1 md:gap-2 mb-4">
-            <h3 className="text-pg-ui font-medium text-pg-ardosia my-0">Tempo de resposta</h3>
+            <h3 className="text-pg-ui font-medium text-pg-ardosia my-0">
+              Tempo de resposta
+            </h3>
             <ChartLegend bucketSeconds={stats?.bucket_seconds} />
           </div>
           {stats ? (
             <ResponseChart stats={stats} now={now} />
           ) : (
-            <div className="flex justify-center items-center h-[200px]">{!statsError && <Spinner />}</div>
+            <div className="flex justify-center items-center h-[200px]">
+              {!statsError && <Spinner />}
+            </div>
           )}
         </div>
       )}
@@ -224,19 +313,35 @@ export function MonitorDetail() {
   // período: só 24h e 7d valem antes de saber a retenção (mínimo 7 dias)
   const retentionDays = settings?.retention_days ?? 7;
   const asked = params.get("range") ?? "24h";
-  const range = settingsLoading ? (["24h", "7d"].includes(asked) ? asked : null) : clampRange(asked, retentionDays);
+  const range = settingsLoading
+    ? ["24h", "7d"].includes(asked)
+      ? asked
+      : null
+    : clampRange(asked, retentionDays);
 
   // link antigo ou retenção reduzida: reescreve a URL com o período permitido
   useEffect(() => {
     if (settingsLoading || !params.has("range") || asked === range) return;
-    setParams((p) => {
-      const next = new URLSearchParams(p);
-      next.set("range", range);
-      return next;
-    }, { replace: true });
+    setParams(
+      (p) => {
+        const next = new URLSearchParams(p);
+        next.set("range", range);
+        return next;
+      },
+      { replace: true },
+    );
   }, [settingsLoading, asked, range, params, setParams]);
 
-  const { monitor, checks, checksTotal, incidents, loading, error, notFound, reload } = useMonitorDetail(id, checkLimit);
+  const {
+    monitor,
+    checks,
+    checksTotal,
+    incidents,
+    loading,
+    error,
+    notFound,
+    reload,
+  } = useMonitorDetail(id, checkLimit);
   const { stats, error: statsError, reload: reloadStats } = useStats(id, range);
 
   const setRange = (key) =>
@@ -247,7 +352,8 @@ export function MonitorDetail() {
       return next;
     });
 
-  const loadMore = () => setCheckLimit((l) => Math.min(MAX_CHECKS, l + MORE_CHECKS));
+  const loadMore = () =>
+    setCheckLimit((l) => Math.min(MAX_CHECKS, l + MORE_CHECKS));
   // pediu mais do que chegou: a página seguinte ainda está a caminho
   const loadingMore = checks.length < Math.min(checkLimit, checksTotal);
 
@@ -276,7 +382,10 @@ export function MonitorDetail() {
   };
 
   const back = (
-    <Link to="/" className="hidden md:inline-flex items-center gap-1 mb-5 text-pg-ui text-pg-ciano-fundo no-underline hover:underline">
+    <Link
+      to="/"
+      className="hidden md:inline-flex items-center gap-1 mb-5 text-pg-ui text-pg-ciano-fundo no-underline hover:underline"
+    >
       <ChevronLeft size={16} aria-hidden="true" />
       Monitores
     </Link>
@@ -301,8 +410,12 @@ export function MonitorDetail() {
         {back}
         {notFound ? (
           <div className="text-center py-16 px-4 rounded-pg-card border border-dashed border-pg-borda">
-            <p className="font-medium text-pg-ardosia mb-1.5">Monitor não encontrado</p>
-            <p className="text-pg-ui text-pg-neblina mb-5">Ele pode ter sido excluído.</p>
+            <p className="font-medium text-pg-ardosia mb-1.5">
+              Monitor não encontrado
+            </p>
+            <p className="text-pg-ui text-pg-neblina mb-5">
+              Ele pode ter sido excluído.
+            </p>
             <Link to="/" className={linkClass}>
               Voltar ao painel
             </Link>
@@ -326,11 +439,20 @@ export function MonitorDetail() {
   const target = targetOf(monitor);
   const lastAt = heartbeat ? monitor.last_ping_at : monitor.last_checked_at;
   const lastLabel = heartbeat ? "último ping" : "último check";
-  const last = paused ? "pausado" : lastAt ? `${lastLabel} ${timeAgo(lastAt, now)}` : `${lastLabel}: ainda não houve`;
+  const last = paused
+    ? "pausado"
+    : lastAt
+      ? `${lastLabel} ${timeAgo(lastAt, now)}`
+      : `${lastLabel}: ainda não houve`;
   // o incidente aberto é sempre o mais novo; fora dos 3 carregados, o cartão não aparece
   const openIncident = status === "DOWN" ? incidents.find((i) => i.open) : null;
   const menu = (
-    <RowMenu monitor={monitor} onEdit={openModal("edit")} onToggle={handleToggle} onDelete={openModal("delete")} />
+    <RowMenu
+      monitor={monitor}
+      onEdit={openModal("edit")}
+      onToggle={handleToggle}
+      onDelete={openModal("delete")}
+    />
   );
 
   return (
@@ -341,7 +463,9 @@ export function MonitorDetail() {
       <header className="flex items-start justify-between gap-4 mb-4 md:mb-8">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-pg-h1 font-medium text-pg-ardosia my-0 break-words min-w-0">{monitor.name}</h1>
+            <h1 className="text-pg-h1 font-medium text-pg-ardosia my-0 break-words min-w-0">
+              {monitor.name}
+            </h1>
             <Badge state={status} />
           </div>
           <div className="flex flex-col items-start md:flex-row md:flex-wrap md:items-center gap-x-4 gap-y-1 mt-2 text-pg-ui text-pg-neblina">
@@ -360,38 +484,69 @@ export function MonitorDetail() {
                   <span className="sr-only"> (abre em nova aba)</span>
                 </a>
               ) : (
-                <span className={`truncate ${heartbeat ? "" : "font-pg-mono text-pg-caption"}`} title={target}>
+                <span
+                  className={`truncate ${heartbeat ? "" : "font-pg-mono text-pg-caption"}`}
+                  title={target}
+                >
                   {target}
                 </span>
               )}
             </span>
             <span className="text-pg-caption md:text-pg-ui">
-              <span className="md:hidden">{typeLabel[monitor.type] ?? monitor.type} · </span>
+              <span className="md:hidden">
+                {typeLabel[monitor.type] ?? monitor.type} ·{" "}
+              </span>
               a cada {formatDuration(monitor.interval_seconds)} · {last}
             </span>
           </div>
         </div>
         <div className="flex flex-shrink-0 items-center gap-2">
-          <Button variant="ghost" onClick={() => handleToggle(monitor)} className="hidden md:inline-flex gap-1.5 h-10 bg-pg-branco">
-            {monitor.enabled ? <Pause size={16} aria-hidden="true" /> : <Play size={16} aria-hidden="true" />}
+          <Button
+            variant="ghost"
+            onClick={() => handleToggle(monitor)}
+            className="hidden md:inline-flex gap-1.5 h-10 bg-pg-branco"
+          >
+            {monitor.enabled ? (
+              <Pause size={16} aria-hidden="true" />
+            ) : (
+              <Play size={16} aria-hidden="true" />
+            )}
             {monitor.enabled ? "Pausar" : "Retomar"}
           </Button>
-          <Button variant="ghost" onClick={() => openModal("edit")(monitor)} className="hidden md:inline-flex gap-1.5 h-10 bg-pg-branco">
+          <Button
+            variant="ghost"
+            onClick={() => openModal("edit")(monitor)}
+            className="hidden md:inline-flex gap-1.5 h-10 bg-pg-branco"
+          >
             <Pencil size={16} aria-hidden="true" />
             Editar
           </Button>
-          <div className="hidden md:block rounded-pg-control border border-pg-borda bg-pg-branco">{menu}</div>
+          <div className="hidden md:block rounded-pg-control border border-pg-borda bg-pg-branco">
+            {menu}
+          </div>
         </div>
       </header>
 
       {openIncident && <DownAlert incident={openIncident} now={now} />}
 
       <div className="md:hidden grid grid-cols-2 gap-2 mb-6">
-        <Button variant="ghost" onClick={() => handleToggle(monitor)} className="gap-1.5 min-h-[44px] bg-pg-branco">
-          {monitor.enabled ? <Pause size={16} aria-hidden="true" /> : <Play size={16} aria-hidden="true" />}
+        <Button
+          variant="ghost"
+          onClick={() => handleToggle(monitor)}
+          className="gap-1.5 min-h-[44px] bg-pg-branco"
+        >
+          {monitor.enabled ? (
+            <Pause size={16} aria-hidden="true" />
+          ) : (
+            <Play size={16} aria-hidden="true" />
+          )}
           {monitor.enabled ? "Pausar" : "Retomar"}
         </Button>
-        <Button variant="ghost" onClick={() => openModal("edit")(monitor)} className="gap-1.5 min-h-[44px] bg-pg-branco">
+        <Button
+          variant="ghost"
+          onClick={() => openModal("edit")(monitor)}
+          className="gap-1.5 min-h-[44px] bg-pg-branco"
+        >
           <Pencil size={16} aria-hidden="true" />
           Editar
         </Button>
@@ -415,7 +570,10 @@ export function MonitorDetail() {
       />
 
       <div className="grid gap-6 md:gap-8 lg:grid-cols-3">
-        <section aria-labelledby="ultimos-checks" className="lg:col-span-2 min-w-0">
+        <section
+          aria-labelledby="ultimos-checks"
+          className="lg:col-span-2 min-w-0"
+        >
           <SectionTitle>
             <span id="ultimos-checks">Últimos checks</span>
           </SectionTitle>
@@ -434,7 +592,10 @@ export function MonitorDetail() {
           <section aria-labelledby="incidentes">
             <SectionTitle
               action={
-                <Link to={`/incidents?monitor=${encodeURIComponent(monitor.id)}`} className={linkClass}>
+                <Link
+                  to={`/incidents?monitor=${encodeURIComponent(monitor.id)}`}
+                  className={linkClass}
+                >
                   Ver todos
                 </Link>
               }

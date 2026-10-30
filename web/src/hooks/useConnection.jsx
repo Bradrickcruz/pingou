@@ -44,7 +44,9 @@ export function ConnectionProvider({ children }) {
   }, []);
 
   return (
-    <ConnectionContext.Provider value={{ online, checking, offlineSince, nextCheckAt }}>
+    <ConnectionContext.Provider
+      value={{ online, checking, offlineSince, nextCheckAt }}
+    >
       {children}
     </ConnectionContext.Provider>
   );

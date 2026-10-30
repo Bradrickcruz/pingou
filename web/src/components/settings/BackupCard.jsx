@@ -36,10 +36,14 @@ export function BackupCard({ databaseSize }) {
       description="Baixa uma cópia completa do banco SQLite: monitores, checks, incidentes e configurações."
     >
       <div className="flex gap-2.5 items-start mb-4 px-4 py-3 rounded-pg-control bg-pg-ciano-nevoa text-pg-caption text-pg-ardosia">
-        <Lock size={16} aria-hidden="true" className="shrink-0 mt-px text-pg-ciano-fundo" />
+        <Lock
+          size={16}
+          aria-hidden="true"
+          className="shrink-0 mt-px text-pg-ciano-fundo"
+        />
         <p className="m-0">
-          O arquivo inclui a URL do webhook e os tokens de ping dos monitores Heartbeat. Guarde com o mesmo cuidado que
-          a API Key.
+          O arquivo inclui a URL do webhook e os tokens de ping dos monitores
+          Heartbeat. Guarde com o mesmo cuidado que a API Key.
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-3">
@@ -55,7 +59,8 @@ export function BackupCard({ databaseSize }) {
           ) : (
             <>
               <span className="md:hidden">
-                Baixar backup{databaseSize != null && ` · ${formatBytes(databaseSize)}`}
+                Baixar backup
+                {databaseSize != null && ` · ${formatBytes(databaseSize)}`}
               </span>
               <span className="hidden md:inline">Baixar backup (.db)</span>
             </>

@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { bucketLabel, clock, dayMonth, formatDuration, plural } from "../../lib/format";
+import {
+  bucketLabel,
+  clock,
+  dayMonth,
+  formatDuration,
+  plural,
+} from "../../lib/format";
 
 const W = 1000; // viewBox; o SVG estica na largura (preserveAspectRatio="none")
 const H = 200;
@@ -37,29 +43,38 @@ function axisTicks(since, until) {
   if (days <= 1) {
     const t = new Date(start);
     t.setMinutes(0, 0, 0);
-    t.setHours(Math.ceil((t < start ? t.getHours() + 1 : t.getHours()) / 4) * 4);
-    for (; t < end; t.setHours(t.getHours() + 4)) ticks.push({ t: new Date(t), label: clock(t) });
+    t.setHours(
+      Math.ceil((t < start ? t.getHours() + 1 : t.getHours()) / 4) * 4,
+    );
+    for (; t < end; t.setHours(t.getHours() + 4))
+      ticks.push({ t: new Date(t), label: clock(t) });
     return ticks;
   }
   const step = days <= 7 ? 1 : days <= 14 ? 2 : 5;
   const t = new Date(start);
   t.setHours(0, 0, 0, 0);
   if (t < start) t.setDate(t.getDate() + 1);
-  for (; t < end; t.setDate(t.getDate() + step)) ticks.push({ t: new Date(t), label: dayMonth(t) });
+  for (; t < end; t.setDate(t.getDate() + step))
+    ticks.push({ t: new Date(t), label: dayMonth(t) });
   return ticks;
 }
 
 function isDown(bucket, bucketSeconds, down) {
   const start = new Date(bucket.t).getTime();
   const end = start + bucketSeconds * 1000;
-  return down.some((w) => new Date(w.start).getTime() < end && new Date(w.end).getTime() > start);
+  return down.some(
+    (w) =>
+      new Date(w.start).getTime() < end && new Date(w.end).getTime() > start,
+  );
 }
 
 function summary(series, down) {
   const values = series.map((b) => b.avg_latency_ms).filter((v) => v != null);
   if (values.length === 0) return "Tempo de resposta: sem dados neste período.";
   const avg = Math.round(values.reduce((a, b) => a + b, 0) / values.length);
-  const quedas = down.length ? plural(down.length, "período fora do ar", "períodos fora do ar") : "nenhum período fora do ar";
+  const quedas = down.length
+    ? plural(down.length, "período fora do ar", "períodos fora do ar")
+    : "nenhum período fora do ar";
   return `Tempo de resposta médio ${avg} ms, pico ${Math.max(...values)} ms, ${quedas}.`;
 }
 
@@ -90,7 +105,9 @@ export function ResponseChart({ stats, now }) {
   const hasData = series.some((b) => b.avg_latency_ms != null);
   if (!hasData) {
     return (
-      <p className="m-0 py-16 text-center text-pg-ui text-pg-neblina">Sem dados de resposta neste período.</p>
+      <p className="m-0 py-16 text-center text-pg-ui text-pg-neblina">
+        Sem dados de resposta neste período.
+      </p>
     );
   }
 
@@ -102,7 +119,12 @@ export function ResponseChart({ stats, now }) {
 
   const onKeyDown = (e) => {
     const cur = active ?? n - 1;
-    const moves = { ArrowLeft: cur - 1, ArrowRight: cur + 1, Home: 0, End: n - 1 };
+    const moves = {
+      ArrowLeft: cur - 1,
+      ArrowRight: cur + 1,
+      Home: 0,
+      End: n - 1,
+    };
     if (e.key in moves) {
       e.preventDefault();
       setActive(Math.min(n - 1, Math.max(0, moves[e.key])));
@@ -117,7 +139,9 @@ export function ResponseChart({ stats, now }) {
   const tipText = b
     ? [
         bucketLabel(b.t, bucketSeconds, now),
-        b.avg_latency_ms != null ? `média ${b.avg_latency_ms} ms` : "sem resposta",
+        b.avg_latency_ms != null
+          ? `média ${b.avg_latency_ms} ms`
+          : "sem resposta",
         `${plural(b.checks, "check", "checks")}, ${plural(b.failures, "falha", "falhas")}`,
         pointDown ? "fora do ar" : null,
       ]
@@ -128,9 +152,16 @@ export function ResponseChart({ stats, now }) {
   return (
     <div className="flex gap-3 pb-6">
       {/* rótulos do eixo Y em HTML: texto não deforma com o SVG */}
-      <div className="relative w-12 flex-shrink-0 h-[200px] text-pg-caption text-pg-neblina tabular-nums" aria-hidden="true">
+      <div
+        className="relative w-12 flex-shrink-0 h-[200px] text-pg-caption text-pg-neblina tabular-nums"
+        aria-hidden="true"
+      >
         {ticks.map((t) => (
-          <span key={t} className="absolute right-0 -translate-y-1/2 whitespace-nowrap" style={{ top: `${(yOf(t) / H) * 100}%` }}>
+          <span
+            key={t}
+            className="absolute right-0 -translate-y-1/2 whitespace-nowrap"
+            style={{ top: `${(yOf(t) / H) * 100}%` }}
+          >
             {t === 0 ? "0" : `${t} ms`}
           </span>
         ))}
@@ -170,7 +201,15 @@ export function ResponseChart({ stats, now }) {
           {/* mobile: faixa cinza nos intervalos sem dados (legenda "sem dados") */}
           {series.map((s, i) =>
             s.avg_latency_ms == null && !isDown(s, bucketSeconds, down) ? (
-              <rect key={s.t} className="md:hidden" x={(i / n) * W} y="0" width={W / n} height={H} fill="var(--pg-unknown-bg)" />
+              <rect
+                key={s.t}
+                className="md:hidden"
+                x={(i / n) * W}
+                y="0"
+                width={W / n}
+                height={H}
+                fill="var(--pg-unknown-bg)"
+              />
             ) : null,
           )}
           {down.map((w) => {
@@ -179,7 +218,13 @@ export function ResponseChart({ stats, now }) {
             const width = Math.max(2, Math.min(W, xAt(w.end)) - x);
             return (
               <g key={w.start}>
-                <rect x={x} y="0" width={width} height={H} fill="var(--pg-down-bg)" />
+                <rect
+                  x={x}
+                  y="0"
+                  width={width}
+                  height={H}
+                  fill="var(--pg-down-bg)"
+                />
                 <line
                   x1={x}
                   x2={x}
@@ -205,11 +250,17 @@ export function ResponseChart({ stats, now }) {
 
         {b && (
           <>
-            <div className="absolute top-0 bottom-0 w-px bg-pg-borda pointer-events-none" style={{ left: `${leftPct}%` }} />
+            <div
+              className="absolute top-0 bottom-0 w-px bg-pg-borda pointer-events-none"
+              style={{ left: `${leftPct}%` }}
+            />
             {b.avg_latency_ms != null && (
               <div
                 className="absolute w-2.5 h-2.5 -ml-[5px] -mt-[5px] rounded-full bg-pg-ciano border-2 border-pg-branco pointer-events-none"
-                style={{ left: `${leftPct}%`, top: `${(yOf(b.avg_latency_ms) / H) * 100}%` }}
+                style={{
+                  left: `${leftPct}%`,
+                  top: `${(yOf(b.avg_latency_ms) / H) * 100}%`,
+                }}
               />
             )}
             <div
@@ -219,11 +270,16 @@ export function ResponseChart({ stats, now }) {
               }`}
               style={{ left: `${leftPct}%` }}
             >
-              <div className="font-medium mb-1">{bucketLabel(b.t, bucketSeconds, now)}</div>
+              <div className="font-medium mb-1">
+                {bucketLabel(b.t, bucketSeconds, now)}
+              </div>
               <div>
                 {b.avg_latency_ms != null ? (
                   <>
-                    Média <strong className="font-medium tabular-nums">{b.avg_latency_ms} ms</strong>
+                    Média{" "}
+                    <strong className="font-medium tabular-nums">
+                      {b.avg_latency_ms} ms
+                    </strong>
                   </>
                 ) : (
                   <span className="text-pg-neblina">Sem resposta</span>
@@ -231,14 +287,21 @@ export function ResponseChart({ stats, now }) {
               </div>
               <div className="text-pg-neblina tabular-nums">
                 {plural(b.checks, "check", "checks")} ·{" "}
-                <span className={b.failures > 0 ? "text-pg-down" : ""}>{plural(b.failures, "falha", "falhas")}</span>
+                <span className={b.failures > 0 ? "text-pg-down" : ""}>
+                  {plural(b.failures, "falha", "falhas")}
+                </span>
               </div>
-              {pointDown && <div className="mt-1 font-medium text-pg-down">Fora do ar</div>}
+              {pointDown && (
+                <div className="mt-1 font-medium text-pg-down">Fora do ar</div>
+              )}
             </div>
           </>
         )}
         {/* eixo X: rótulos que encostariam nas bordas do card ficam de fora */}
-        <div className="absolute left-0 right-0 top-full mt-2 h-4 text-pg-caption text-pg-neblina tabular-nums" aria-hidden="true">
+        <div
+          className="absolute left-0 right-0 top-full mt-2 h-4 text-pg-caption text-pg-neblina tabular-nums"
+          aria-hidden="true"
+        >
           {axisTicks(since, until)
             .map(({ t, label }) => ({ label, pct: (xAt(t) / W) * 100 }))
             .filter(({ pct }) => pct > 4 && pct < 96)
@@ -262,19 +325,26 @@ export function ResponseChart({ stats, now }) {
 
 export function ChartLegend({ bucketSeconds }) {
   return (
-    <div className="flex gap-3 md:gap-4 text-pg-caption text-pg-neblina" aria-hidden="true">
+    <div
+      className="flex gap-3 md:gap-4 text-pg-caption text-pg-neblina"
+      aria-hidden="true"
+    >
       <span className="inline-flex items-center gap-1.5">
         <span className="w-3.5 h-0.5 rounded bg-pg-ciano" />{" "}
         <span className="md:hidden">média</span>
         <span className="hidden md:inline">
-          {bucketSeconds ? `média a cada ${formatDuration(bucketSeconds)}` : "média por intervalo"}
+          {bucketSeconds
+            ? `média a cada ${formatDuration(bucketSeconds)}`
+            : "média por intervalo"}
         </span>
       </span>
       <span className="inline-flex items-center gap-1.5">
-        <span className="w-3 h-3 rounded-[2px] border border-pg-down bg-pg-down-bg" /> fora do ar
+        <span className="w-3 h-3 rounded-[2px] border border-pg-down bg-pg-down-bg" />{" "}
+        fora do ar
       </span>
       <span className="md:hidden inline-flex items-center gap-1.5">
-        <span className="w-3 h-3 rounded-[2px] border border-pg-neblina bg-pg-unknown-bg" /> sem dados
+        <span className="w-3 h-3 rounded-[2px] border border-pg-neblina bg-pg-unknown-bg" />{" "}
+        sem dados
       </span>
     </div>
   );

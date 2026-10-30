@@ -9,7 +9,11 @@ const UNITS = [
 ];
 
 function bestUnit(seconds) {
-  return [...UNITS].reverse().find((u) => seconds % u.factor === 0 && seconds >= u.factor) ?? UNITS[0];
+  return (
+    [...UNITS]
+      .reverse()
+      .find((u) => seconds % u.factor === 0 && seconds >= u.factor) ?? UNITS[0]
+  );
 }
 
 const chip = (active) =>
@@ -43,7 +47,11 @@ export function ChipGroup({ label, options, value, onChange, min, max }) {
       <div id={labelId} className="mb-2 text-pg-ui font-medium text-pg-ardosia">
         {label}
       </div>
-      <div role="group" aria-labelledby={labelId} className="flex flex-wrap gap-2">
+      <div
+        role="group"
+        aria-labelledby={labelId}
+        className="flex flex-wrap gap-2"
+      >
         {options.map((o) => (
           <button
             key={o.value}
@@ -55,7 +63,12 @@ export function ChipGroup({ label, options, value, onChange, min, max }) {
             {o.label}
           </button>
         ))}
-        <button type="button" aria-pressed={custom} onClick={openCustom} className={chip(custom)}>
+        <button
+          type="button"
+          aria-pressed={custom}
+          onClick={openCustom}
+          className={chip(custom)}
+        >
           Outro…
         </button>
       </div>
@@ -72,14 +85,18 @@ export function ChipGroup({ label, options, value, onChange, min, max }) {
             min={Math.max(0, Math.ceil((min ?? 0) / unit.factor))}
             max={max ? Math.floor(max / unit.factor) : undefined}
             value={Math.round(value / unit.factor)}
-            onChange={(e) => onChange(Math.max(0, Number(e.target.value)) * unit.factor)}
+            onChange={(e) =>
+              onChange(Math.max(0, Number(e.target.value)) * unit.factor)
+            }
             className="w-28 px-3 py-2 rounded-pg-control text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda"
           />
           <select
             aria-label={`${label} (unidade)`}
             value={unit.factor}
             onChange={(e) => {
-              const next = UNITS.find((u) => u.factor === Number(e.target.value));
+              const next = UNITS.find(
+                (u) => u.factor === Number(e.target.value),
+              );
               onChange(Math.round(value / unit.factor) * next.factor);
               setUnit(next);
             }}

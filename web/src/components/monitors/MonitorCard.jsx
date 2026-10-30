@@ -2,9 +2,19 @@ import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { Badge } from "../ui/Badge";
 import { HistoryBar } from "./HistoryBar";
-import { cardFooter, heartbeatExpectation, statusOf, targetOf } from "../../lib/monitors";
+import {
+  cardFooter,
+  heartbeatExpectation,
+  statusOf,
+  targetOf,
+} from "../../lib/monitors";
 
-const stateLabel = { UP: "no ar", DOWN: "fora do ar", UNKNOWN: "desconhecido", PAUSED: "pausado" };
+const stateLabel = {
+  UP: "no ar",
+  DOWN: "fora do ar",
+  UNKNOWN: "desconhecido",
+  PAUSED: "pausado",
+};
 
 // Card do painel no mobile (< md). O card todo leva ao detalhe, onde ficam
 // editar, pausar e excluir; a tabela do desktop é o MonitorRow.
@@ -31,11 +41,19 @@ export function MonitorCard({ monitor, now }) {
         >
           {monitor.name}
         </Link>
-        <ChevronRight size={18} aria-hidden="true" className="shrink-0 text-pg-neblina" />
+        <ChevronRight
+          size={18}
+          aria-hidden="true"
+          className="shrink-0 text-pg-neblina"
+        />
       </div>
 
-      <p className={`mt-1 truncate text-pg-caption text-pg-neblina ${isHeartbeat ? "" : "font-pg-mono"}`}>
-        {isHeartbeat ? `Heartbeat · ${heartbeatExpectation(monitor.interval_seconds)}` : targetOf(monitor)}
+      <p
+        className={`mt-1 truncate text-pg-caption text-pg-neblina ${isHeartbeat ? "" : "font-pg-mono"}`}
+      >
+        {isHeartbeat
+          ? `Heartbeat · ${heartbeatExpectation(monitor.interval_seconds)}`
+          : targetOf(monitor)}
       </p>
 
       {down && monitor.last_error && (
@@ -48,7 +66,9 @@ export function MonitorCard({ monitor, now }) {
         <HistoryBar history={monitor.history} dimmed={paused} fluid />
       </div>
 
-      <p className="mt-2 text-pg-caption text-pg-neblina">{cardFooter(monitor, now)}</p>
+      <p className="mt-2 text-pg-caption text-pg-neblina">
+        {cardFooter(monitor, now)}
+      </p>
     </li>
   );
 }

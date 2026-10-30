@@ -21,7 +21,15 @@ function TypeNote({ type }) {
 // Modais de editar e excluir um monitor, usados no painel e na página de
 // detalhe. `modal` é "edit", "delete" ou null; criar fica no painel.
 // onSaved/onDeleted rodam antes de fechar (ex.: refetch ou navegar).
-export function MonitorModals({ modal, selected, onModalChange, onSelectedChange, onClose, onSaved, onDeleted }) {
+export function MonitorModals({
+  modal,
+  selected,
+  onModalChange,
+  onSelectedChange,
+  onClose,
+  onSaved,
+  onDeleted,
+}) {
   const [saving, setSaving] = useState(false);
 
   const run = async (fn, after) => {
@@ -35,8 +43,10 @@ export function MonitorModals({ modal, selected, onModalChange, onSelectedChange
     }
   };
 
-  const handleEdit = (data) => run(() => monitorsApi.update(selected.id, data), onSaved);
-  const handleDelete = () => run(() => monitorsApi.delete(selected.id), onDeleted);
+  const handleEdit = (data) =>
+    run(() => monitorsApi.update(selected.id, data), onSaved);
+  const handleDelete = () =>
+    run(() => monitorsApi.delete(selected.id), onDeleted);
 
   const handleRegenerate = async () => {
     const updated = await monitorsApi.regenerateToken(selected.id);
@@ -48,7 +58,11 @@ export function MonitorModals({ modal, selected, onModalChange, onSelectedChange
 
   if (modal === "edit") {
     return (
-      <Modal title="Editar monitor" subtitle={<TypeNote type={selected.type} />} onClose={onClose}>
+      <Modal
+        title="Editar monitor"
+        subtitle={<TypeNote type={selected.type} />}
+        onClose={onClose}
+      >
         <MonitorForm
           initial={selected}
           onSubmit={handleEdit}
@@ -65,8 +79,12 @@ export function MonitorModals({ modal, selected, onModalChange, onSelectedChange
     return (
       <Modal title="Excluir monitor" onClose={onClose}>
         <p className="mb-5 text-pg-neblina">
-          Excluir <strong className="font-medium text-pg-ardosia">{selected.name}</strong>? O histórico de
-          checks e incidentes também é apagado. Esta ação não pode ser desfeita.
+          Excluir{" "}
+          <strong className="font-medium text-pg-ardosia">
+            {selected.name}
+          </strong>
+          ? O histórico de checks e incidentes também é apagado. Esta ação não
+          pode ser desfeita.
         </p>
         <div className="flex gap-2.5 justify-end">
           <Button variant="ghost" onClick={onClose}>

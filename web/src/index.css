@@ -1,30 +1,30 @@
 @font-face {
-  font-family: 'Inter';
-  src: url('./assets/fonts/inter-latin-400.woff2') format('woff2');
+  font-family: "Inter";
+  src: url("./assets/fonts/inter-latin-400.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Inter';
-  src: url('./assets/fonts/inter-latin-500.woff2') format('woff2');
+  font-family: "Inter";
+  src: url("./assets/fonts/inter-latin-500.woff2") format("woff2");
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Rubik';
-  src: url('./assets/fonts/rubik-latin-400.woff2') format('woff2');
+  font-family: "Rubik";
+  src: url("./assets/fonts/rubik-latin-400.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Rubik';
-  src: url('./assets/fonts/rubik-latin-500.woff2') format('woff2');
+  font-family: "Rubik";
+  src: url("./assets/fonts/rubik-latin-500.woff2") format("woff2");
   font-weight: 500;
   font-style: normal;
   font-display: swap;
@@ -52,24 +52,24 @@
 
 :root {
   /* marca */
-  --pg-ciano: #1E9BB3;
-  --pg-ciano-fundo: #146E80;
-  --pg-ciano-nevoa: #E3F2F5;
+  --pg-ciano: #1e9bb3;
+  --pg-ciano-fundo: #146e80;
+  --pg-ciano-nevoa: #e3f2f5;
 
   /* neutros */
-  --pg-ardosia: #1E2B33;
-  --pg-neblina: #5B6B75;
-  --pg-nuvem: #F3F7F8;
-  --pg-branco: #FFFFFF;
-  --pg-borda: #D9E3E6;
+  --pg-ardosia: #1e2b33;
+  --pg-neblina: #5b6b75;
+  --pg-nuvem: #f3f7f8;
+  --pg-branco: #ffffff;
+  --pg-borda: #d9e3e6;
 
   /* status — uso exclusivo para estado */
-  --pg-up: #1F8456;
-  --pg-up-bg: #E4F3EC;
-  --pg-down: #C93A46;
-  --pg-down-bg: #F8E6E8;
-  --pg-unknown: #5B6B75;
-  --pg-unknown-bg: #EDF1F3;
+  --pg-up: #1f8456;
+  --pg-up-bg: #e4f3ec;
+  --pg-down: #c93a46;
+  --pg-down-bg: #f8e6e8;
+  --pg-unknown: #5b6b75;
+  --pg-unknown-bg: #edf1f3;
 }
 
 @media (max-width: 1024px) {
@@ -87,7 +87,8 @@
     @apply w-full min-h-[100svh] flex flex-col box-border;
   }
 
-  h1, h2 {
+  h1,
+  h2 {
     @apply font-[var(--heading)] font-medium text-pg-ardosia;
   }
 

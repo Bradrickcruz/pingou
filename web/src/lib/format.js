@@ -46,7 +46,9 @@ export function formatUptime(value) {
 
 // formatBytes(13002342) → "12,4 MB"
 const BYTE_UNITS = ["B", "KB", "MB", "GB", "TB"];
-const bytesFormat = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 });
+const bytesFormat = new Intl.NumberFormat("pt-BR", {
+  maximumFractionDigits: 1,
+});
 export function formatBytes(bytes) {
   if (bytes == null) return null;
   let value = bytes;
@@ -69,23 +71,51 @@ export function plural(n, one, many) {
 
 // ── datas dos incidentes ───────────────────────────────────────────────────
 // Meses e dias à mão: o Intl em pt-BR escreve "28 de out.", e a tela usa "28 out".
-const MONTHS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
-const WEEKDAYS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+const MONTHS = [
+  "jan",
+  "fev",
+  "mar",
+  "abr",
+  "mai",
+  "jun",
+  "jul",
+  "ago",
+  "set",
+  "out",
+  "nov",
+  "dez",
+];
+const WEEKDAYS = [
+  "Domingo",
+  "Segunda",
+  "Terça",
+  "Quarta",
+  "Quinta",
+  "Sexta",
+  "Sábado",
+];
 
 // dias de calendário (locais) entre a data e hoje: 0 = hoje, 1 = ontem
 function daysAgo(date, now) {
-  const start = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const start = (d) =>
+    new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
   return Math.round((start(new Date(now)) - start(date)) / 86_400_000);
 }
 
 function shortDate(date, now) {
-  const year = date.getFullYear() !== new Date(now).getFullYear() ? ` ${date.getFullYear()}` : "";
+  const year =
+    date.getFullYear() !== new Date(now).getFullYear()
+      ? ` ${date.getFullYear()}`
+      : "";
   return `${date.getDate()} ${MONTHS[date.getMonth()]}${year}`;
 }
 
 // clock(iso) → "08:03"
 export function clock(iso) {
-  return new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  return new Date(iso).toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 // dayKey(iso) → "2026-10-28" no fuso local, para agrupar por dia
@@ -117,7 +147,9 @@ export function startedLabel(iso, now = Date.now()) {
 // senão "08:00 → 09:00" esconderia o dia que passou.
 export function timeRange(startIso, endIso, now = Date.now()) {
   const long = new Date(endIso) - new Date(startIso) >= 86_400_000;
-  const start = long ? `${shortDate(new Date(startIso), now)}, ${clock(startIso)}` : clock(startIso);
+  const start = long
+    ? `${shortDate(new Date(startIso), now)}, ${clock(startIso)}`
+    : clock(startIso);
   return `${start} → ${clock(endIso)}`;
 }
 
@@ -150,14 +182,20 @@ export function whenLabel(iso, now = Date.now()) {
 // bucketLabel → "Hoje, 14:10 – 14:20", "27 out, 06:00 – 12:00". Balde que vira
 // a meia-noite leva só a data do início.
 export function bucketLabel(startIso, bucketSeconds, now = Date.now()) {
-  const end = new Date(new Date(startIso).getTime() + bucketSeconds * 1000).toISOString();
+  const end = new Date(
+    new Date(startIso).getTime() + bucketSeconds * 1000,
+  ).toISOString();
   return `${whenLabel(startIso, now)} – ${clock(end)}`;
 }
 
 // checkTime → "14:02:41" hoje; "Ontem, 14:02", "24 out, 03:20" em outros dias
 export function checkTime(iso, now = Date.now()) {
   if (daysAgo(new Date(iso), now) === 0) {
-    return new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    return new Date(iso).toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
   }
   return whenLabel(iso, now);
 }

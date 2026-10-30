@@ -10,7 +10,9 @@ export function Modal({ title, subtitle, onClose, children }) {
 
   useEffect(() => {
     const previous = document.activeElement;
-    const field = dialogRef.current?.querySelector("input:not([disabled]):not([readonly]):not([type=radio]), textarea:not([disabled]), select:not([disabled])");
+    const field = dialogRef.current?.querySelector(
+      "input:not([disabled]):not([readonly]):not([type=radio]), textarea:not([disabled]), select:not([disabled])",
+    );
     (field ?? dialogRef.current?.querySelector(FOCUSABLE))?.focus();
     return () => previous?.focus?.();
   }, []);
@@ -53,10 +55,17 @@ export function Modal({ title, subtitle, onClose, children }) {
       >
         <div className="flex justify-between items-start mb-5">
           <div>
-            <h2 id={titleId} className="text-pg-h3 font-medium text-pg-ardosia my-0">
+            <h2
+              id={titleId}
+              className="text-pg-h3 font-medium text-pg-ardosia my-0"
+            >
               {title}
             </h2>
-            {subtitle && <div className="mt-1 text-pg-caption text-pg-neblina">{subtitle}</div>}
+            {subtitle && (
+              <div className="mt-1 text-pg-caption text-pg-neblina">
+                {subtitle}
+              </div>
+            )}
           </div>
           <button
             type="button"

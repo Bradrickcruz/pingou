@@ -28,7 +28,8 @@ const FILTERS = [
 ];
 
 export function Dashboard() {
-  const { monitors, loading, error, refetch, isFetching, updatedAt } = useMonitors();
+  const { monitors, loading, error, refetch, isFetching, updatedAt } =
+    useMonitors();
   const now = useNow(1000);
   const [modal, setModal] = useState(null);
   const [selected, setSelected] = useState(null);
@@ -40,14 +41,19 @@ export function Dashboard() {
   const counts = useMemo(() => countByStatus(monitors), [monitors]);
   const sorted = useMemo(() => [...monitors].sort(bySeverity), [monitors]);
 
-  const filterCount = (f) => monitors.filter((m) => f.match(statusOf(m))).length;
+  const filterCount = (f) =>
+    monitors.filter((m) => f.match(statusOf(m))).length;
   // "Todos" sempre aparece; os demais só se houver monitor no filtro
-  const shownFilters = FILTERS.filter((f) => f.key === "all" || filterCount(f) > 0);
+  const shownFilters = FILTERS.filter(
+    (f) => f.key === "all" || filterCount(f) > 0,
+  );
   // se o filtro ativo sumiu (ex.: último monitor fora do ar voltou), cai em "Todos"
   const active = shownFilters.find((f) => f.key === filter) ?? FILTERS[0];
   const q = query.trim().toLocaleLowerCase("pt-BR");
   const visible = sorted.filter(
-    (m) => active.match(statusOf(m)) && (!q || m.name.toLocaleLowerCase("pt-BR").includes(q)),
+    (m) =>
+      active.match(statusOf(m)) &&
+      (!q || m.name.toLocaleLowerCase("pt-BR").includes(q)),
   );
 
   const openEdit = (m) => {
@@ -118,7 +124,10 @@ export function Dashboard() {
         actions={
           <>
             {refreshButton}
-            <Button onClick={() => setModal("create")} className="w-11 h-11 !p-0">
+            <Button
+              onClick={() => setModal("create")}
+              className="w-11 h-11 !p-0"
+            >
               <Plus size={20} aria-hidden="true" />
               <span className="sr-only">Novo monitor</span>
             </Button>
@@ -127,15 +136,23 @@ export function Dashboard() {
       />
 
       <div className="hidden md:flex md:flex-row gap-4 md:justify-between md:items-center mb-7">
-        <h1 className="text-pg-h1 font-medium text-pg-ardosia my-0">Monitores</h1>
+        <h1 className="text-pg-h1 font-medium text-pg-ardosia my-0">
+          Monitores
+        </h1>
         <div className="flex items-center gap-3">
           {updatedAt && (
-            <span className="text-pg-caption text-pg-neblina whitespace-nowrap" aria-live="off">
+            <span
+              className="text-pg-caption text-pg-neblina whitespace-nowrap"
+              aria-live="off"
+            >
               Atualizado {timeAgo(updatedAt, now)}
             </span>
           )}
           {refreshButton}
-          <Button onClick={() => setModal("create")} className="inline-flex items-center gap-1.5 h-11">
+          <Button
+            onClick={() => setModal("create")}
+            className="inline-flex items-center gap-1.5 h-11"
+          >
             <Plus size={16} aria-hidden="true" />
             Novo monitor
           </Button>
@@ -161,12 +178,23 @@ export function Dashboard() {
 
       {!loading && monitors.length === 0 && (
         <div className="text-center py-16 px-4 rounded-pg-card border border-dashed border-pg-borda text-pg-neblina">
-          <img src={logo} alt="" width={40} height={40} className="mx-auto mb-3" />
-          <p className="font-medium text-pg-ardosia mb-1.5">Nenhum monitor ainda</p>
+          <img
+            src={logo}
+            alt=""
+            width={40}
+            height={40}
+            className="mx-auto mb-3"
+          />
+          <p className="font-medium text-pg-ardosia mb-1.5">
+            Nenhum monitor ainda
+          </p>
           <p className="text-pg-ui mb-5">
             Monitore um site, uma porta TCP ou um job agendado.
           </p>
-          <Button onClick={() => setModal("create")} className="inline-flex items-center gap-1.5">
+          <Button
+            onClick={() => setModal("create")}
+            className="inline-flex items-center gap-1.5"
+          >
             <Plus size={16} aria-hidden="true" />
             Novo monitor
           </Button>
@@ -226,25 +254,50 @@ export function Dashboard() {
               <MonitorCard key={m.id} monitor={m} now={now} />
             ))}
             {visible.length === 0 && (
-              <li className="py-10 text-center text-pg-ui text-pg-neblina">Nenhum monitor neste filtro.</li>
+              <li className="py-10 text-center text-pg-ui text-pg-neblina">
+                Nenhum monitor neste filtro.
+              </li>
             )}
           </ul>
 
           <div className="hidden md:block rounded-pg-card border border-pg-borda bg-pg-branco">
             <table className="w-full border-collapse text-left">
-              <caption className="sr-only">Monitores, ordenados por gravidade</caption>
+              <caption className="sr-only">
+                Monitores, ordenados por gravidade
+              </caption>
               <thead>
                 <tr className="bg-pg-ciano-nevoa text-pg-caption text-pg-ciano-fundo">
-                  <th scope="col" className="px-5 py-3 font-medium rounded-tl-pg-card">Status</th>
-                  <th scope="col" className="px-5 py-3 font-medium">Monitor</th>
-                  <th scope="col" className="px-5 py-3 font-medium hidden lg:table-cell whitespace-nowrap">
+                  <th
+                    scope="col"
+                    className="px-5 py-3 font-medium rounded-tl-pg-card"
+                  >
+                    Status
+                  </th>
+                  <th scope="col" className="px-5 py-3 font-medium">
+                    Monitor
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-5 py-3 font-medium hidden lg:table-cell whitespace-nowrap"
+                  >
                     Últimos 30 checks
                   </th>
-                  <th scope="col" className="px-5 py-3 font-medium hidden md:table-cell text-right whitespace-nowrap">
+                  <th
+                    scope="col"
+                    className="px-5 py-3 font-medium hidden md:table-cell text-right whitespace-nowrap"
+                  >
                     Uptime 24 h
                   </th>
-                  <th scope="col" className="px-5 py-3 font-medium hidden md:table-cell text-right">Resposta</th>
-                  <th scope="col" className="px-5 py-3 font-medium hidden sm:table-cell whitespace-nowrap">
+                  <th
+                    scope="col"
+                    className="px-5 py-3 font-medium hidden md:table-cell text-right"
+                  >
+                    Resposta
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-5 py-3 font-medium hidden sm:table-cell whitespace-nowrap"
+                  >
                     Último check
                   </th>
                   <th scope="col" className="px-5 py-3 rounded-tr-pg-card">
@@ -265,7 +318,10 @@ export function Dashboard() {
                 ))}
                 {visible.length === 0 && (
                   <tr className="border-t border-pg-borda">
-                    <td colSpan={7} className="px-5 py-10 text-center text-pg-ui text-pg-neblina">
+                    <td
+                      colSpan={7}
+                      className="px-5 py-10 text-center text-pg-ui text-pg-neblina"
+                    >
                       Nenhum monitor neste filtro.
                     </td>
                   </tr>
@@ -279,10 +335,12 @@ export function Dashboard() {
                   <span className="w-1.5 h-3 rounded-[1px] bg-pg-up" /> no ar
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <span className="w-1.5 h-3 rounded-[1px] bg-pg-down" /> fora do ar
+                  <span className="w-1.5 h-3 rounded-[1px] bg-pg-down" /> fora
+                  do ar
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <span className="w-1.5 h-3 rounded-[1px] bg-pg-borda" /> sem dados
+                  <span className="w-1.5 h-3 rounded-[1px] bg-pg-borda" /> sem
+                  dados
                 </span>
               </span>
             </div>
@@ -292,7 +350,11 @@ export function Dashboard() {
 
       {modal === "create" && (
         <Modal title="Novo monitor" onClose={closeModal}>
-          <MonitorForm onSubmit={handleCreate} onCancel={closeModal} loading={saving} />
+          <MonitorForm
+            onSubmit={handleCreate}
+            onCancel={closeModal}
+            loading={saving}
+          />
         </Modal>
       )}
 

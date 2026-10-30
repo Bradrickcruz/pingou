@@ -40,7 +40,10 @@ export function RetentionCard({ value, savedValue, onChange, databaseSize }) {
             );
           })}
         </div>
-        <p aria-hidden="true" className="md:hidden mt-1.5 mb-0 text-pg-caption text-pg-neblina">
+        <p
+          aria-hidden="true"
+          className="md:hidden mt-1.5 mb-0 text-pg-caption text-pg-neblina"
+        >
           dias
         </p>
       </fieldset>
@@ -49,10 +52,15 @@ export function RetentionCard({ value, savedValue, onChange, databaseSize }) {
           role="status"
           className="flex gap-2.5 items-start mt-4 mb-0 px-4 py-3 rounded-pg-control border border-pg-neblina bg-pg-nuvem text-pg-caption text-pg-ardosia"
         >
-          <CircleAlert size={16} aria-hidden="true" className="shrink-0 mt-px" />
+          <CircleAlert
+            size={16}
+            aria-hidden="true"
+            className="shrink-0 mt-px"
+          />
           <span>
-            Ao salvar, checks e incidentes resolvidos com mais de <strong className="font-medium">{value} dias</strong>{" "}
-            serão apagados. Isso não pode ser desfeito.
+            Ao salvar, checks e incidentes resolvidos com mais de{" "}
+            <strong className="font-medium">{value} dias</strong> serão
+            apagados. Isso não pode ser desfeito.
           </span>
         </p>
       )}

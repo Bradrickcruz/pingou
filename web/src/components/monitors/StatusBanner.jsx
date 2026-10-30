@@ -3,7 +3,8 @@ import { plural } from "../../lib/format";
 
 function joinNames(names) {
   if (names.length <= 1) return names[0] ?? "";
-  if (names.length > 3) return `${names.slice(0, 2).join(", ")} e mais ${names.length - 2}`;
+  if (names.length > 3)
+    return `${names.slice(0, 2).join(", ")} e mais ${names.length - 2}`;
   return `${names.slice(0, -1).join(", ")} e ${names.at(-1)}`;
 }
 
@@ -16,13 +17,17 @@ export function StatusBanner({ monitors, counts }) {
   if (down.length > 0) {
     tone = { box: "bg-pg-down-bg border-pg-down", icon: "bg-pg-down" };
     Icon = X;
-    title = down.length === 1 ? "1 monitor fora do ar" : `${down.length} monitores fora do ar`;
+    title =
+      down.length === 1
+        ? "1 monitor fora do ar"
+        : `${down.length} monitores fora do ar`;
     detail = `${joinNames(down.map((m) => m.name))} ${down.length === 1 ? "não está respondendo" : "não estão respondendo"}.`;
   } else if (counts.UNKNOWN > 0 && counts.UP === 0) {
     tone = { box: "bg-pg-branco border-pg-borda", icon: "bg-pg-unknown" };
     Icon = CircleHelp;
     title = "Aguardando os primeiros checks";
-    detail = "Os monitores aparecem como no ar ou fora do ar depois do primeiro resultado.";
+    detail =
+      "Os monitores aparecem como no ar ou fora do ar depois do primeiro resultado.";
   } else {
     tone = { box: "bg-pg-up-bg border-pg-borda", icon: "bg-pg-up" };
     Icon = Check;
@@ -36,7 +41,10 @@ export function StatusBanner({ monitors, counts }) {
   const stats = [
     { n: counts.UP, label: "no ar" },
     { n: counts.DOWN, label: "fora do ar", strong: counts.DOWN > 0 },
-    { n: counts.UNKNOWN, label: counts.UNKNOWN === 1 ? "desconhecido" : "desconhecidos" },
+    {
+      n: counts.UNKNOWN,
+      label: counts.UNKNOWN === 1 ? "desconhecido" : "desconhecidos",
+    },
     { n: counts.PAUSED, label: counts.PAUSED === 1 ? "pausado" : "pausados" },
   ];
 
@@ -44,7 +52,10 @@ export function StatusBanner({ monitors, counts }) {
   const short = [
     { n: counts.UP, label: "no ar" },
     { n: counts.DOWN, label: "fora", strong: true },
-    { n: counts.UNKNOWN, label: counts.UNKNOWN === 1 ? "desconhecido" : "desconhecidos" },
+    {
+      n: counts.UNKNOWN,
+      label: counts.UNKNOWN === 1 ? "desconhecido" : "desconhecidos",
+    },
     { n: counts.PAUSED, label: counts.PAUSED === 1 ? "pausado" : "pausados" },
   ].filter((s) => s.n > 0);
 
@@ -54,11 +65,15 @@ export function StatusBanner({ monitors, counts }) {
       className={`flex flex-col gap-3 md:gap-4 lg:flex-row lg:items-center lg:justify-between p-4 md:p-5 mb-4 md:mb-7 rounded-pg-card border ${tone.box}`}
     >
       <div className="flex items-center gap-4 min-w-0">
-        <span className={`flex-shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-full text-pg-branco ${tone.icon}`}>
+        <span
+          className={`flex-shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-full text-pg-branco ${tone.icon}`}
+        >
           <Icon size={20} aria-hidden="true" />
         </span>
         <div className="min-w-0">
-          <h2 className="text-pg-h3 font-medium text-pg-ardosia my-0">{title}</h2>
+          <h2 className="text-pg-h3 font-medium text-pg-ardosia my-0">
+            {title}
+          </h2>
           <p className="hidden md:block text-pg-ui text-pg-ardosia">{detail}</p>
         </div>
       </div>

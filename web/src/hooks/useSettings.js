@@ -12,7 +12,10 @@ export function useSettings({ withInfo = false } = {}) {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const [s, i] = await Promise.allSettled([settingsApi.get(), withInfo ? settingsApi.info() : null]);
+    const [s, i] = await Promise.allSettled([
+      settingsApi.get(),
+      withInfo ? settingsApi.info() : null,
+    ]);
     if (s.status === "fulfilled") setSettings(s.value);
     else setError(s.reason.message);
     if (i.status === "fulfilled") setInfo(i.value);

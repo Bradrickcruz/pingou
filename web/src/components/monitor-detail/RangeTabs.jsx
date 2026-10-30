@@ -28,7 +28,11 @@ export function RangeTabs({ value, onChange, retentionDays = MIN_RETENTION }) {
               aria-pressed={on}
               aria-disabled={off || undefined}
               aria-describedby={off ? tipId : undefined}
-              onClick={() => (off ? setTip((t) => (t === r.key ? null : r.key)) : onChange(r.key))}
+              onClick={() =>
+                off
+                  ? setTip((t) => (t === r.key ? null : r.key))
+                  : onChange(r.key)
+              }
               onBlur={() => setTip(null)}
               className={`w-full md:w-auto min-h-[40px] md:min-h-0 px-2 md:px-4 py-1.5 rounded-pg-control text-pg-ui whitespace-nowrap transition-colors duration-150 focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano ${
                 on
@@ -49,8 +53,8 @@ export function RangeTabs({ value, onChange, retentionDays = MIN_RETENTION }) {
                   last ? "right-0" : "left-1/2 -translate-x-1/2"
                 }`}
               >
-                Os checks são guardados por {retentionDays} dias. Aumente a retenção em Configurações para ver{" "}
-                {r.label}.
+                Os checks são guardados por {retentionDays} dias. Aumente a
+                retenção em Configurações para ver {r.label}.
               </span>
             )}
           </div>
