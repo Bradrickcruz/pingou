@@ -185,7 +185,7 @@ func TestPingRoute(t *testing.T) {
 func TestPingRateLimit(t *testing.T) {
 	_, h, _ := newTestServer(t)
 
-	// 404 também conta: limita varredura de token
+	// só token inválido conta: limita varredura de token
 	for i := range pingRateLimit {
 		if rec := ping(h, "GET", fmt.Sprintf("x%d", i), "10.0.0.2"); rec.Code != http.StatusNotFound {
 			t.Fatalf("req %d: %d, want 404", i, rec.Code)
@@ -194,6 +194,11 @@ func TestPingRateLimit(t *testing.T) {
 	rec := ping(h, "GET", "x", "10.0.0.2")
 	if rec.Code != http.StatusTooManyRequests || rec.Header().Get("Retry-After") == "" {
 		t.Fatalf("excesso: %d Retry-After=%q, want 429 com Retry-After", rec.Code, rec.Header().Get("Retry-After"))
+	}
+	// IP bloqueado, mas ping válido passa (atrás de proxy, não derruba heartbeats)
+	hb := createHeartbeat(t, h)
+	if rec := ping(h, "GET", *hb.PingToken, "10.0.0.2"); rec.Code != http.StatusOK {
+		t.Fatalf("ping válido com IP bloqueado: %d, want 200", rec.Code)
 	}
 	// outro IP não é afetado
 	if rec := ping(h, "GET", "x", "10.0.0.3"); rec.Code != http.StatusNotFound {

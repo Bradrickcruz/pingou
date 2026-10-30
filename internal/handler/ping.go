@@ -29,6 +29,11 @@ func (s *Server) handlePing(w http.ResponseWriter, r *http.Request) {
 	err := s.monitorService.Ping(context.WithoutCancel(r.Context()), r.PathValue("token"))
 	switch {
 	case errors.Is(err, service.ErrNotFound):
+		// só token inválido conta no limite (varredura de tokens)
+		if ok, retry := s.pingLimiter.allow(clientIP(r)); !ok {
+			rejectRateLimited(w, retry)
+			return
+		}
 		http.NotFound(w, r)
 		return
 	case err != nil:

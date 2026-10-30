@@ -72,7 +72,7 @@ func (s *Server) registerRoutes() {
 	s.router.HandleFunc("GET /healthz", s.handleHealthz)
 
 	// ping de heartbeat: público (sem API Key), protegido por limite por IP
-	s.router.Handle("/ping/{token}", s.pingLimiter.middleware(http.HandlerFunc(s.handlePing)))
+	s.router.Handle("/ping/{token}", http.HandlerFunc(s.handlePing))
 
 	api := http.NewServeMux()
 

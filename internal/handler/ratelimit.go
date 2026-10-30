@@ -8,8 +8,9 @@ import (
 	"time"
 )
 
-// pingRateLimit: pings por IP por minuto em /ping/{token}. Generoso: um cron
-// pinga poucas vezes por hora, e atrás de um proxy todos dividem o mesmo IP.
+// pingRateLimit: pings com token inválido por IP por minuto em /ping/{token}.
+// Ping válido nunca conta nem é bloqueado: atrás de um proxy todos dividem o
+// mesmo IP, e um atacante não pode derrubar os heartbeats de verdade.
 const pingRateLimit = 60
 
 // webhookTestRateLimit: testes de webhook por IP por minuto. Cada teste é uma
@@ -51,14 +52,17 @@ func (l *rateLimiter) allow(ip string) (bool, time.Duration) {
 	return true, 0
 }
 
-// middleware conta toda requisição, inclusive 404: limita varredura de tokens.
+// reject responde 429 com Retry-After.
+func rejectRateLimited(w http.ResponseWriter, retry time.Duration) {
+	w.Header().Set("Retry-After", strconv.Itoa(int(retry.Seconds())+1))
+	writeError(w, http.StatusTooManyRequests, "too many requests", "RATE_LIMITED")
+}
+
+// middleware conta toda requisição.
 func (l *rateLimiter) middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ok, retry := l.allow(clientIP(r))
-		if !ok {
-			secs := int(retry.Seconds()) + 1
-			w.Header().Set("Retry-After", strconv.Itoa(secs))
-			writeError(w, http.StatusTooManyRequests, "too many requests", "RATE_LIMITED")
+		if ok, retry := l.allow(clientIP(r)); !ok {
+			rejectRateLimited(w, retry)
 			return
 		}
 		next.ServeHTTP(w, r)

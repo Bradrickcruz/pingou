@@ -395,9 +395,9 @@ O middleware responde ao preflight `OPTIONS`, permite o header `X-API-Key` e val
 
 ### Limite de requisições na rota de ping
 
-Como `/ping/{token}` é pública, ela tem limite de **60 requisições por minuto por IP** (janela fixa, em memória). Acima disso, responde `429` com o header `Retry-After`. Tokens inválidos também contam, o que dificulta tentar adivinhar tokens.
+Como `/ping/{token}` é pública, ela limita **60 tokens inválidos por minuto por IP** (janela fixa, em memória). Acima disso, tokens inválidos recebem `429` com o header `Retry-After`. Ping com token válido **nunca** é bloqueado nem contado, então uma varredura de tokens não derruba os heartbeats reais.
 
-- O IP considerado é o da conexão (`RemoteAddr`). Atrás de um proxy reverso, todos os clientes aparecem com o IP do proxy e dividem o mesmo limite. Suporte a `X-Forwarded-For` fica para uma versão futura.
+- O IP considerado é o da conexão (`RemoteAddr`). Atrás de um proxy reverso, todos os clientes aparecem com o IP do proxy e dividem o mesmo limite de tokens inválidos. Suporte a `X-Forwarded-For` fica para uma versão futura.
 - O caminho `/ping/<token>` aparece como `/ping/[redacted]` nos logs: o token é um segredo.
 
 ---
@@ -867,6 +867,7 @@ A ideia não é competir com ferramentas enterprise nem com plataformas completa
 - Webhook por monitor
 - Templates para Discord e Slack
 - Multi-tenancy
+- Limite de ping por cliente atrás de proxy: ler `X-Forwarded-For` só quando a conexão vier de um proxy confiável (`PINGOU_TRUSTED_PROXIES`)
 
 ---
 
