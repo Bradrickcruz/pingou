@@ -847,22 +847,24 @@ A ideia não é competir com ferramentas enterprise nem com plataformas completa
 
 ## Roadmap
 
-### Próxima versão
+### v1.1 (concluída)
 
 - [x] Interface `Checker` (refatoração, sem mudança de comportamento)
 - [x] Monitor TCP
 - [x] Monitor Heartbeat
 - [x] Redesign do dashboard com a nova identidade visual (tema claro)
 
+### Próxima versão
+
+- [ ] Verificação de palavra-chave na resposta HTTP
+- [ ] Aviso de expiração de certificado SSL (via webhook, sem estado novo)
+
 ### Depois
 
-- Verificação de palavra-chave na resposta HTTP
 - Monitor DNS
-- Aviso de expiração de certificado SSL (via webhook, sem estado novo)
 - Ping ICMP (depende de resolver as permissões sem complicar a instalação)
 - Tema escuro
 - Status page pública
-- Métricas e gráficos
 - Integração com Prometheus
 - Webhook por monitor
 - Templates para Discord e Slack
