@@ -17,11 +17,11 @@ O projeto tem quatro objetivos:
 
 ## Tipos de monitor
 
-| Tipo        | O que verifica                                  | Direção          | Status                   |
-| ----------- | ----------------------------------------------- | ---------------- | ------------------------ |
-| `http`      | Uma URL responde com sucesso                    | Pingou → serviço | Disponível               |
-| `tcp`       | Uma porta aceita conexões                       | Pingou → serviço | Disponível               |
-| `heartbeat` | Um serviço avisou que está vivo dentro do prazo | Serviço → Pingou | Disponível               |
+| Tipo        | O que verifica                                  | Direção          | Status     |
+| ----------- | ----------------------------------------------- | ---------------- | ---------- |
+| `http`      | Uma URL responde com sucesso                    | Pingou → serviço | Disponível |
+| `tcp`       | Uma porta aceita conexões                       | Pingou → serviço | Disponível |
+| `heartbeat` | Um serviço avisou que está vivo dentro do prazo | Serviço → Pingou | Disponível |
 
 Os três tipos usam os mesmos estados (`UNKNOWN`, `UP`, `DOWN`), o mesmo registro de incidentes e o mesmo webhook. Só muda **como** o check é feito.
 
@@ -327,15 +327,16 @@ PINGOU_API_KEY=...
 
 ## Variáveis de ambiente
 
-| Variável                      | Obrigatória | Padrão      | Descrição                                                                                      |
-| ----------------------------- | :---------: | ----------- | ---------------------------------------------------------------------------------------------- |
-| `PINGOU_PORT`                 |     não     | `8080`      | Porta HTTP da aplicação                                                                        |
-| `PINGOU_DATABASE_URL`         |     não     | `pingou.db` | Caminho do arquivo SQLite                                                                      |
-| `PINGOU_API_KEY`              |     sim     | -           | Chave que protege o dashboard e as rotas `/api/*`                                              |
-| `PINGOU_LOG_LEVEL`            |     não     | `info`      | Nível de log (`DEBUG` habilita logs de debug)                                                  |
-| `PINGOU_CORS_ALLOWED_ORIGINS` |     não     | (vazio)     | Origins permitidas, separadas por vírgula. Vazio desabilita CORS. Ex.: `http://localhost:5173` |
-| `PINGOU_MAX_REDIRECTS`        |     não     | `5`         | Máximo de redirects seguidos pelo checker HTTP                                                 |
-| `PINGOU_GLOBAL_TIMEOUT`       |     não     | `60`        | Timeout global, em segundos, das requisições HTTP                                              |
+| Variável                      | Obrigatória | Padrão      | Descrição                                                                                             |
+| ----------------------------- | :---------: | ----------- | ----------------------------------------------------------------------------------------------------- |
+| `PINGOU_PORT`                 |     não     | `8080`      | Porta HTTP da aplicação                                                                               |
+| `PINGOU_DATABASE_URL`         |     não     | `pingou.db` | Caminho do arquivo SQLite                                                                             |
+| `PINGOU_API_KEY`              |     sim     | -           | Chave que protege o dashboard e as rotas `/api/*`                                                     |
+| `PINGOU_LOG_LEVEL`            |     não     | `info`      | Nível de log (`DEBUG` habilita logs de debug)                                                         |
+| `PINGOU_CORS_ALLOWED_ORIGINS` |     não     | (vazio)     | Origins permitidas, separadas por vírgula. Vazio desabilita CORS. Ex.: `http://localhost:5173`        |
+| `PINGOU_MAX_REDIRECTS`        |     não     | `5`         | Máximo de redirects seguidos pelo checker HTTP                                                        |
+| `PINGOU_GLOBAL_TIMEOUT`       |     não     | `60`        | Timeout global, em segundos, das requisições HTTP                                                     |
+| `PINGOU_PUBLIC_URL`           |     não     | (vazio)     | Endereço público do dashboard. Preenche `dashboard_url` no webhook. Ex.: `https://pingou.exemplo.com` |
 
 ## SQLite
 
@@ -400,9 +401,9 @@ Como `/ping/{token}` é pública, ela tem limite de **60 requisições por minut
 
 ### Públicos
 
-| Método              | Rota            | Descrição                                                      |
-| ------------------- | --------------- | -------------------------------------------------------------- |
-| `GET`               | `/healthz`      | Status básico da aplicação                                     |
+| Método              | Rota            | Descrição                             |
+| ------------------- | --------------- | ------------------------------------- |
+| `GET`               | `/healthz`      | Status básico da aplicação            |
 | `GET` `POST` `HEAD` | `/ping/{token}` | Recebe o ping de um monitor Heartbeat |
 
 Sobre `/ping/{token}`:
@@ -413,23 +414,23 @@ Sobre `/ping/{token}`:
 
 ### Protegidos
 
-| Método   | Rota                          | Descrição                                                        |
-| -------- | ----------------------------- | ---------------------------------------------------------------- |
-| `GET`    | `/api/monitors`               | Lista os monitores                                               |
-| `POST`   | `/api/monitors`               | Cria um monitor                                                  |
-| `GET`    | `/api/monitors/:id`           | Busca um monitor                                                 |
-| `PATCH`  | `/api/monitors/:id`           | Atualiza um monitor                                              |
-| `DELETE` | `/api/monitors/:id`           | Remove um monitor                                                |
-| `POST`   | `/api/monitors/:id/token`     | Gera um novo token de ping (Heartbeat)  |
-| `GET`    | `/api/monitors/:id/checks`    | Histórico de checks, paginado (`limit`, `offset`)                |
-| `GET`    | `/api/monitors/:id/incidents` | Incidentes do monitor (mesmos filtros de `/api/incidents`)       |
+| Método   | Rota                          | Descrição                                                       |
+| -------- | ----------------------------- | --------------------------------------------------------------- |
+| `GET`    | `/api/monitors`               | Lista os monitores                                              |
+| `POST`   | `/api/monitors`               | Cria um monitor                                                 |
+| `GET`    | `/api/monitors/:id`           | Busca um monitor                                                |
+| `PATCH`  | `/api/monitors/:id`           | Atualiza um monitor                                             |
+| `DELETE` | `/api/monitors/:id`           | Remove um monitor                                               |
+| `POST`   | `/api/monitors/:id/token`     | Gera um novo token de ping (Heartbeat)                          |
+| `GET`    | `/api/monitors/:id/checks`    | Histórico de checks, paginado (`limit`, `offset`)               |
+| `GET`    | `/api/monitors/:id/incidents` | Incidentes do monitor (mesmos filtros de `/api/incidents`)      |
 | `GET`    | `/api/monitors/:id/stats`     | Estatísticas numa janela (`range=24h\|7d\|14d\|30d`)            |
-| `GET`    | `/api/incidents`              | Lista incidentes (`status`, `monitor_id`, `limit`, `offset`)     |
-| `GET`    | `/api/settings`               | Busca as configurações globais                                   |
-| `PATCH`  | `/api/settings`               | Atualiza as configurações globais (`webhook_url` só http/https)  |
-| `POST`   | `/api/settings/webhook/test`  | Envia um evento `test` ao webhook (5 por minuto por IP)          |
-| `GET`    | `/api/info`                   | Versão, commit, data do build e tamanho do banco                 |
-| `GET`    | `/api/export`                 | Baixa um dump do SQLite (`pingou-AAAA-MM-DD.db`, `VACUUM INTO`)  |
+| `GET`    | `/api/incidents`              | Lista incidentes (`status`, `monitor_id`, `limit`, `offset`)    |
+| `GET`    | `/api/settings`               | Busca as configurações globais                                  |
+| `PATCH`  | `/api/settings`               | Atualiza as configurações globais (`webhook_url` só http/https) |
+| `POST`   | `/api/settings/webhook/test`  | Envia um evento `test` ao webhook (5 por minuto por IP)         |
+| `GET`    | `/api/info`                   | Versão, commit, data do build e tamanho do banco                |
+| `GET`    | `/api/export`                 | Baixa um dump do SQLite (`pingou-AAAA-MM-DD.db`, `VACUUM INTO`) |
 
 ### Info
 
@@ -438,7 +439,12 @@ curl -H "X-API-Key: dev-api-key" http://localhost:8080/api/info
 ```
 
 ```json
-{ "version": "v1.0", "commit": "abc1234", "build_date": "2026-10-29T12:00:00Z", "database_size_bytes": 13002342 }
+{
+  "version": "v1.0",
+  "commit": "abc1234",
+  "build_date": "2026-10-29T12:00:00Z",
+  "database_size_bytes": 13002342
+}
 ```
 
 `database_size_bytes` soma o arquivo do banco com o `-wal` e o `-shm`. O backup sai um pouco menor.
@@ -463,7 +469,12 @@ Cada item traz o monitor e a contagem de falhas:
 {
   "id": "0192…",
   "monitor_id": "0191…",
-  "monitor": { "id": "0191…", "name": "API", "type": "http", "target": "https://api.exemplo.com/health" },
+  "monitor": {
+    "id": "0191…",
+    "name": "API",
+    "type": "http",
+    "target": "https://api.exemplo.com/health"
+  },
   "started_at": "2026-10-27T14:43:00Z",
   "ended_at": null,
   "last_error": "dial tcp 10.0.0.5:443: connect: connection refused",
@@ -502,7 +513,14 @@ curl -H "X-API-Key: dev-api-key" "http://localhost:8080/api/monitors/<id>/stats?
   "checks": 1440,
   "incidents": 1,
   "downtime_seconds": 60,
-  "series": [{ "t": "2026-10-28T14:10:00Z", "avg_latency_ms": 203, "checks": 10, "failures": 0 }],
+  "series": [
+    {
+      "t": "2026-10-28T14:10:00Z",
+      "avg_latency_ms": 203,
+      "checks": 10,
+      "failures": 0
+    }
+  ],
   "down": [{ "start": "2026-10-29T10:12:00Z", "end": "2026-10-29T10:13:00Z" }]
 }
 ```
@@ -566,7 +584,8 @@ Evento de queda:
   },
   "timestamp": "2026-05-01T12:00:00Z",
   "last_error": "unexpected status code: 500",
-  "downtime_duration_seconds": null
+  "downtime_duration_seconds": null,
+  "dashboard_url": "https://pingou.exemplo.com/monitors/018f2f7a-..."
 }
 ```
 
@@ -584,7 +603,8 @@ Evento de recuperação:
   },
   "timestamp": "2026-05-01T12:05:00Z",
   "last_error": null,
-  "downtime_duration_seconds": 300
+  "downtime_duration_seconds": 300,
+  "dashboard_url": "https://pingou.exemplo.com/monitors/018f2f7a-..."
 }
 ```
 
@@ -595,6 +615,8 @@ Campos `type` e `target`:
 | `http`      | a URL        | a URL (mantido para compatibilidade) |
 | `tcp`       | `host:porta` | `null`                               |
 | `heartbeat` | `null`       | `null`                               |
+
+`dashboard_url` leva à página de detalhe do monitor. É `null` sem `PINGOU_PUBLIC_URL` (o Pingou não sabe o próprio endereço público) e no evento `test`.
 
 > A URL de ping do Heartbeat **nunca** é enviada no webhook, porque ela contém o token secreto e webhooks costumam ir para serviços de terceiros (Slack, Discord etc.).
 
@@ -609,7 +631,12 @@ curl -X POST http://localhost:8080/api/settings/webhook/test \
 ```
 
 ```json
-{ "ok": false, "status_code": 404, "duration_ms": 142, "error": "unexpected status code: 404" }
+{
+  "ok": false,
+  "status_code": 404,
+  "duration_ms": 142,
+  "error": "unexpected status code: 404"
+}
 ```
 
 - A resposta é sempre `200` quando o teste roda. `ok` diz se o destino respondeu 2xx.
@@ -631,7 +658,8 @@ O payload tem o mesmo formato dos eventos reais:
   },
   "timestamp": "2026-10-29T12:00:00Z",
   "last_error": null,
-  "downtime_duration_seconds": null
+  "downtime_duration_seconds": null,
+  "dashboard_url": null
 }
 ```
 
@@ -712,11 +740,11 @@ PINGOU_PORT=9999 ./pingou serve
 | Flag          | Abrev | Padrão        | Descrição                                                     |
 | ------------- | ----- | ------------- | ------------------------------------------------------------- |
 | `--name`      | `-n`  | (obrigatório) | Nome do monitor                                               |
-| `--type`      |       | `http`        | `http`, `tcp` ou `heartbeat`         |
+| `--type`      |       | `http`        | `http`, `tcp` ou `heartbeat`                                  |
 | `--url`       | `-u`  |               | URL a verificar (obrigatório para `http`)                     |
-| `--host`      |       |               | Host (obrigatório para `tcp`)        |
-| `--port`      |       |               | Porta (obrigatório para `tcp`)       |
-| `--grace`     |       | `60`          | Tolerância em segundos (`heartbeat`) |
+| `--host`      |       |               | Host (obrigatório para `tcp`)                                 |
+| `--port`      |       |               | Porta (obrigatório para `tcp`)                                |
+| `--grace`     |       | `60`          | Tolerância em segundos (`heartbeat`)                          |
 | `--interval`  | `-i`  | `60`          | Intervalo em segundos                                         |
 | `--timeout`   | `-t`  | `5`           | Timeout em segundos (não se aplica a `heartbeat`)             |
 | `--threshold` | `-K`  | `3`           | Falhas seguidas antes de `DOWN` (não se aplica a `heartbeat`) |

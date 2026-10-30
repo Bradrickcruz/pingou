@@ -19,7 +19,7 @@ func TestWebhookPayloadByType(t *testing.T) {
 		bodies <- string(b)
 	}))
 	defer srv.Close()
-	n := NewWebhookNotifier(func() string { return srv.URL })
+	n := NewWebhookNotifier(func() string { return srv.URL }, "")
 
 	token := "segredo-do-token"
 	incident := &domain.Incident{ID: "i1", StartedAt: time.Now()}
@@ -56,6 +56,34 @@ func TestWebhookPayloadByType(t *testing.T) {
 			if p.Monitor.Type != string(c.m.Type) || !eqPtr(p.Monitor.Target, c.target) || !eqPtr(p.Monitor.URL, c.url) {
 				t.Fatalf("%s: payload %s", c.m.Type, body)
 			}
+		}
+	}
+}
+
+func TestWebhookDashboardURL(t *testing.T) {
+	bodies := make(chan string, 1)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		bodies <- string(b)
+	}))
+	defer srv.Close()
+	m := &domain.Monitor{ID: "abc", Name: "API", Type: domain.TypeHTTP, URL: "https://x.test"}
+	incident := &domain.Incident{ID: "i1", StartedAt: time.Now()}
+	str := func(s string) *string { return &s }
+
+	for publicURL, want := range map[string]*string{
+		"":                           nil,
+		"https://pingou.exemplo.com": str("https://pingou.exemplo.com/monitors/abc"),
+	} {
+		NewWebhookNotifier(func() string { return srv.URL }, publicURL).NotifyDown(t.Context(), m, incident)
+		var p struct {
+			DashboardURL *string `json:"dashboard_url"`
+		}
+		if err := json.Unmarshal([]byte(<-bodies), &p); err != nil {
+			t.Fatal(err)
+		}
+		if !eqPtr(p.DashboardURL, want) {
+			t.Fatalf("publicURL %q: dashboard_url = %v", publicURL, p.DashboardURL)
 		}
 	}
 }

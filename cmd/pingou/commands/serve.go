@@ -89,7 +89,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 	webhookNotifier := service.NewWebhookNotifier(func() string {
 		url, _ := settingsRepository.Get(context.Background(), "webhook_url")
 		return url
-	})
+	}, loadedConfig.PublicURL)
 
 	// checkers: o registry escolhe pelo tipo (heartbeat não tem check ativo)
 	monitorChecker := checker.NewRegistry(map[domain.MonitorType]domain.Checker{
