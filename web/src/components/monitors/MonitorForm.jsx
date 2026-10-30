@@ -1,14 +1,37 @@
 import { useId, useState } from "react";
-import { Globe, Server, Activity, Copy, Check, RefreshCw, Trash2 } from "lucide-react";
+import {
+  Globe,
+  Server,
+  Activity,
+  Copy,
+  Check,
+  RefreshCw,
+  Trash2,
+} from "lucide-react";
 import { Button } from "../ui/Button";
 import { ChipGroup } from "../ui/ChipGroup";
 import { formatDuration, plural, timeAgo } from "../../lib/format";
 import { pingUrl } from "../../lib/monitors";
 
 const TYPES = [
-  { value: "http", label: "HTTP", hint: "Um site ou API responde", icon: Globe },
-  { value: "tcp", label: "TCP", hint: "Uma porta aceita conexão", icon: Server },
-  { value: "heartbeat", label: "Heartbeat", hint: "Seu job avisa que rodou", icon: Activity },
+  {
+    value: "http",
+    label: "HTTP",
+    hint: "Um site ou API responde",
+    icon: Globe,
+  },
+  {
+    value: "tcp",
+    label: "Porta (TCP)",
+    hint: "Uma porta aceita conexão",
+    icon: Server,
+  },
+  {
+    value: "heartbeat",
+    label: "Heartbeat",
+    hint: "Seu job avisa que rodou",
+    icon: Activity,
+  },
 ];
 
 const CHECK_EVERY = [
@@ -65,7 +88,10 @@ const inputCls =
 function Field({ label, children, id }) {
   return (
     <div className="mb-5 min-w-0">
-      <label htmlFor={id} className="block mb-2 text-pg-ui font-medium text-pg-ardosia">
+      <label
+        htmlFor={id}
+        className="block mb-2 text-pg-ui font-medium text-pg-ardosia"
+      >
         {label}
       </label>
       {children}
@@ -76,7 +102,10 @@ function Field({ label, children, id }) {
 function NumberWithUnit({ id, label, unit, value, onChange, min, max }) {
   return (
     <div className="min-w-0">
-      <label htmlFor={id} className="block mb-2 text-pg-ui font-medium text-pg-ardosia">
+      <label
+        htmlFor={id}
+        className="block mb-2 text-pg-ui font-medium text-pg-ardosia"
+      >
         {label}
       </label>
       <div className="flex items-center rounded-pg-control border border-pg-borda bg-pg-branco pr-3 focus-within:outline-2 focus-within:outline focus-within:outline-pg-ciano">
@@ -134,7 +163,9 @@ function PingBlock({ monitor, onRegenerate }) {
 
   return (
     <section className="mb-6 p-4 sm:p-5 rounded-pg-card border border-pg-borda bg-pg-nuvem">
-      <h3 className="text-pg-ui font-medium text-pg-ardosia my-0">URL de ping</h3>
+      <h3 className="text-pg-ui font-medium text-pg-ardosia my-0">
+        URL de ping
+      </h3>
       <p className="mt-1 mb-3 text-pg-caption text-pg-neblina">
         Chame esta URL sempre que o job terminar com sucesso.
       </p>
@@ -149,8 +180,16 @@ function PingBlock({ monitor, onRegenerate }) {
           onFocus={(e) => e.target.select()}
           className="flex-1 min-w-0 px-3 py-2.5 rounded-pg-control font-pg-mono text-pg-caption text-pg-ciano-fundo bg-pg-branco border border-pg-borda"
         />
-        <Button variant="ghost" onClick={copy} className="gap-1.5 bg-pg-branco flex-shrink-0">
-          {copied ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
+        <Button
+          variant="ghost"
+          onClick={copy}
+          className="gap-1.5 bg-pg-branco flex-shrink-0"
+        >
+          {copied ? (
+            <Check size={16} aria-hidden="true" />
+          ) : (
+            <Copy size={16} aria-hidden="true" />
+          )}
           {copied ? "Copiado" : "Copiar"}
         </Button>
       </div>
@@ -158,18 +197,29 @@ function PingBlock({ monitor, onRegenerate }) {
         {copied ? "URL copiada" : ""}
       </span>
 
-      <div className="mt-4 mb-1.5 text-pg-caption text-pg-neblina">Exemplo com cron</div>
+      <div className="mt-4 mb-1.5 text-pg-caption text-pg-neblina">
+        Exemplo com cron
+      </div>
       <pre className="m-0 p-3 rounded-pg-control bg-pg-ardosia text-pg-branco font-pg-mono text-pg-caption whitespace-pre-wrap break-all">
         {cron}
       </pre>
 
       {confirming ? (
-        <div role="alertdialog" aria-label="Gerar nova URL" className="mt-4 p-3 rounded-pg-control border border-pg-borda bg-pg-branco">
+        <div
+          role="alertdialog"
+          aria-label="Gerar nova URL"
+          className="mt-4 p-3 rounded-pg-control border border-pg-borda bg-pg-branco"
+        >
           <p className="text-pg-ui text-pg-ardosia mb-3">
-            Gerar uma nova URL? A atual para de funcionar na hora, e o cron precisa ser atualizado.
+            Gerar uma nova URL? A atual para de funcionar na hora, e o cron
+            precisa ser atualizado.
           </p>
           <div className="flex gap-2 justify-end">
-            <Button variant="ghost" onClick={() => setConfirming(false)} disabled={busy}>
+            <Button
+              variant="ghost"
+              onClick={() => setConfirming(false)}
+              disabled={busy}
+            >
               Cancelar
             </Button>
             <Button variant="danger" onClick={regenerate} disabled={busy}>
@@ -204,9 +254,18 @@ function PingBlock({ monitor, onRegenerate }) {
 }
 
 // Formulário de Novo/Editar monitor. Com `initial`, edita (tipo travado).
-export function MonitorForm({ initial, onSubmit, onCancel, onDelete, onRegenerate, loading }) {
+export function MonitorForm({
+  initial,
+  onSubmit,
+  onCancel,
+  onDelete,
+  onRegenerate,
+  loading,
+}) {
   const editing = Boolean(initial);
-  const [form, setForm] = useState(() => (editing ? fromMonitor(initial) : blank));
+  const [form, setForm] = useState(() =>
+    editing ? fromMonitor(initial) : blank,
+  );
   const [error, setError] = useState(null);
   const ids = {
     name: useId(),
@@ -225,21 +284,33 @@ export function MonitorForm({ initial, onSubmit, onCancel, onDelete, onRegenerat
       ...f,
       type,
       // intervalos de heartbeat e de check têm faixas diferentes
-      interval_seconds: type === "heartbeat" ? 86400 : f.type === "heartbeat" ? 60 : f.interval_seconds,
+      interval_seconds:
+        type === "heartbeat"
+          ? 86400
+          : f.type === "heartbeat"
+            ? 60
+            : f.interval_seconds,
     }));
 
   const payload = () => {
-    const base = { name: form.name.trim(), interval_seconds: Number(form.interval_seconds) };
+    const base = {
+      name: form.name.trim(),
+      interval_seconds: Number(form.interval_seconds),
+    };
     if (!editing) {
       base.type = form.type;
       base.enabled = true;
     }
-    if (isHeartbeat) return { ...base, config: { grace_seconds: Number(form.grace_seconds) } };
+    if (isHeartbeat)
+      return { ...base, config: { grace_seconds: Number(form.grace_seconds) } };
 
     base.timeout_seconds = Number(form.timeout_seconds);
     base.failure_threshold = Number(form.failure_threshold);
     if (form.type === "tcp") {
-      return { ...base, config: { host: form.host.trim(), port: Number(form.port) } };
+      return {
+        ...base,
+        config: { host: form.host.trim(), port: Number(form.port) },
+      };
     }
     return { ...base, url: form.url.trim() };
   };
@@ -255,19 +326,25 @@ export function MonitorForm({ initial, onSubmit, onCancel, onDelete, onRegenerat
     try {
       await onSubmit(payload());
     } catch (err) {
-      setError(err.message.replace(/^validation error: /, "Verifique os campos: "));
+      setError(
+        err.message.replace(/^validation error: /, "Verifique os campos: "),
+      );
     }
   };
 
   const threshold = Number(form.failure_threshold) || 0;
   const downAfter = formatDuration(threshold * Number(form.interval_seconds));
-  const deadline = formatDuration(Number(form.interval_seconds) + Number(form.grace_seconds));
+  const deadline = formatDuration(
+    Number(form.interval_seconds) + Number(form.grace_seconds),
+  );
 
   return (
     <form onSubmit={handleSubmit}>
       {!editing && (
         <fieldset className="mb-5 border-0 p-0 m-0">
-          <legend className="mb-2 text-pg-ui font-medium text-pg-ardosia">O que você quer monitorar?</legend>
+          <legend className="mb-2 text-pg-ui font-medium text-pg-ardosia">
+            O que você quer monitorar?
+          </legend>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {TYPES.map(({ value, label, hint, icon: Icon }) => {
               const active = form.type === value;
@@ -289,10 +366,16 @@ export function MonitorForm({ initial, onSubmit, onCancel, onDelete, onRegenerat
                     className="sr-only"
                   />
                   <span className="flex items-center gap-2 text-pg-ui font-medium text-pg-ardosia">
-                    <Icon size={16} aria-hidden="true" className="text-pg-ciano-fundo" />
+                    <Icon
+                      size={16}
+                      aria-hidden="true"
+                      className="text-pg-ciano-fundo"
+                    />
                     {label}
                   </span>
-                  <span className="text-pg-caption text-pg-neblina">{hint}</span>
+                  <span className="text-pg-caption text-pg-neblina">
+                    {hint}
+                  </span>
                 </label>
               );
             })}
@@ -396,7 +479,9 @@ export function MonitorForm({ initial, onSubmit, onCancel, onDelete, onRegenerat
             max={86400}
           />
           <fieldset className="mb-5 px-4 pt-2 pb-4 rounded-pg-card border border-pg-borda">
-            <legend className="px-1.5 text-pg-caption text-pg-neblina">Avançado</legend>
+            <legend className="px-1.5 text-pg-caption text-pg-neblina">
+              Avançado
+            </legend>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <NumberWithUnit
                 id={ids.timeout}
@@ -419,8 +504,9 @@ export function MonitorForm({ initial, onSubmit, onCancel, onDelete, onRegenerat
             </div>
             {threshold > 0 && (
               <p className="mt-3 text-pg-caption text-pg-neblina">
-                Fica fora do ar depois de {plural(threshold, "falha", "falhas seguidas")}, ou seja, em cerca de{" "}
-                {downAfter}.
+                Fica fora do ar depois de{" "}
+                {plural(threshold, "falha", "falhas seguidas")}, ou seja, em
+                cerca de {downAfter}.
               </p>
             )}
           </fieldset>
