@@ -123,10 +123,10 @@ export function timeRange(startIso, endIso, now = Date.now()) {
 
 // ── datas da página de detalhe ─────────────────────────────────────────────
 
-// fullDate → "20 out 2026" (sempre com o ano)
+// fullDate → "20 out 2026, 14:32" (sempre com o ano e a hora)
 export function fullDate(iso) {
   const d = new Date(iso);
-  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}, ${clock(iso)}`;
 }
 
 // dayMonth → "27 out" (rótulo do eixo X do gráfico)
