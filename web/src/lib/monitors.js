@@ -36,6 +36,26 @@ export function pingUrl(token) {
   return `${window.location.origin}/ping/${token}`;
 }
 
+// copyText copia para a área de transferência; devolve se deu certo.
+export async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    // sem HTTPS a Clipboard API não existe: textarea temporário e o comando antigo
+    const el = document.createElement("textarea");
+    el.value = text;
+    el.setAttribute("readonly", "");
+    el.style.position = "fixed";
+    el.style.opacity = "0";
+    document.body.appendChild(el);
+    el.select();
+    const ok = document.execCommand?.("copy") ?? false;
+    el.remove();
+    return ok;
+  }
+}
+
 // heartbeatExpectation(86400) → "espera um ping por dia"; 7200 → "espera um ping a cada 2 h"
 const PER = { 3600: "por hora", 86400: "por dia", 604800: "por semana" };
 export function heartbeatExpectation(seconds) {

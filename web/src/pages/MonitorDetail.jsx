@@ -23,6 +23,7 @@ import { Button } from "../components/ui/Button";
 import { Spinner } from "../components/ui/Spinner";
 import { RowMenu } from "../components/monitors/RowMenu";
 import { MonitorModals } from "../components/monitors/MonitorModals";
+import { PingBlock } from "../components/monitors/MonitorForm";
 import { RangeTabs } from "../components/monitor-detail/RangeTabs";
 import { RANGES, clampRange } from "../lib/ranges";
 import {
@@ -560,6 +561,16 @@ export function MonitorDetail() {
         <p className="text-pg-ui text-pg-down mb-4" role="alert">
           {actionError ?? error}
         </p>
+      )}
+
+      {heartbeat && monitor.ping_token && (
+        <PingBlock
+          monitor={monitor}
+          onRegenerate={async () => {
+            await monitorsApi.regenerateToken(monitor.id);
+            await reload();
+          }}
+        />
       )}
 
       <Performance

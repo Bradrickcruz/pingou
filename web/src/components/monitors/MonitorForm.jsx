@@ -11,7 +11,7 @@ import {
 import { Button } from "../ui/Button";
 import { ChipGroup } from "../ui/ChipGroup";
 import { formatDuration, plural, timeAgo } from "../../lib/format";
-import { pingUrl } from "../../lib/monitors";
+import { copyText, pingUrl } from "../../lib/monitors";
 
 const TYPES = [
   {
@@ -125,8 +125,8 @@ function NumberWithUnit({ id, label, unit, value, onChange, min, max }) {
   );
 }
 
-// Bloco da URL de ping do heartbeat (só na edição).
-function PingBlock({ monitor, onRegenerate }) {
+// Bloco da URL de ping do heartbeat (edição e página de detalhe).
+export function PingBlock({ monitor, onRegenerate }) {
   const [copied, setCopied] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -136,13 +136,10 @@ function PingBlock({ monitor, onRegenerate }) {
   const cron = `0 3 * * * backup.sh && curl -fsS -m 10 --retry 3 ${url}`;
 
   const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(url);
-    } catch {
-      // sem HTTPS a Clipboard API não existe: seleciona e usa o comando antigo
-      const input = document.getElementById(inputId);
-      input?.select();
-      document.execCommand?.("copy");
+    if (!(await copyText(url))) {
+      // nem o fallback copiou: deixa selecionado para Ctrl+C
+      document.getElementById(inputId)?.select();
+      return;
     }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);

@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { useMatch, useNavigate } from "react-router-dom";
 import {
+  Copy,
   EllipsisVertical,
   Eye,
   Pencil,
@@ -8,6 +9,8 @@ import {
   Play,
   Trash2,
 } from "lucide-react";
+import { toast } from "react-toastify";
+import { copyText, pingUrl } from "../../lib/monitors";
 
 // Menu ⋮ da linha. "Ver detalhes" abre a página do monitor (some nela mesma).
 export function RowMenu({ monitor, onEdit, onToggle, onDelete }) {
@@ -115,6 +118,21 @@ export function RowMenu({ monitor, onEdit, onToggle, onDelete }) {
             >
               <Eye size={16} aria-hidden="true" />
               Ver detalhes
+            </button>
+          )}
+          {monitor.ping_token && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={run(async (m) => {
+                if (await copyText(pingUrl(m.ping_token)))
+                  toast.success("URL de ping copiada");
+                else toast.error("Não foi possível copiar a URL");
+              })}
+              className={`${item} text-pg-ardosia`}
+            >
+              <Copy size={16} aria-hidden="true" />
+              Copiar URL de ping
             </button>
           )}
           <div className="my-1.5 border-t border-pg-borda" role="separator" />
