@@ -69,4 +69,6 @@ type MonitorSummary struct {
 	History       []bool   // últimos checks, mais antigo primeiro
 	Uptime24h     *float64 // nil sem checks nas últimas 24 h
 	LastLatencyMs *int64
+	LastError     *string    // só DOWN, do incidente aberto
+	DownSince     *time.Time // só DOWN, início do incidente aberto
 }

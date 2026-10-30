@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/Bradrickcruz/pingou/internal/domain"
@@ -30,6 +31,35 @@ func (r *IncidentRepo) FindOpenByMonitor(ctx context.Context, monitorID string) 
 		SELECT `+incidentColumns+`
 		FROM incidents WHERE monitor_id = ? AND ended_at IS NULL`, monitorID)
 	return scanIncident(row)
+}
+
+// FindOpenByMonitors devolve o incidente aberto de cada monitor em uma query,
+// indexado pelo monitor_id. Monitores sem incidente aberto ficam fora do mapa.
+func (r *IncidentRepo) FindOpenByMonitors(ctx context.Context, monitorIDs []string) (map[string]*domain.Incident, error) {
+	out := make(map[string]*domain.Incident, len(monitorIDs))
+	if len(monitorIDs) == 0 {
+		return out, nil
+	}
+	in := strings.TrimSuffix(strings.Repeat("?,", len(monitorIDs)), ",")
+	args := make([]any, len(monitorIDs))
+	for i, id := range monitorIDs {
+		args[i] = id
+	}
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT `+incidentColumns+`
+		FROM incidents WHERE ended_at IS NULL AND monitor_id IN (`+in+`)`, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		i, err := scanIncident(rows)
+		if err != nil {
+			return nil, err
+		}
+		out[i.MonitorID] = i
+	}
+	return out, rows.Err()
 }
 
 func (r *IncidentRepo) Close(ctx context.Context, id string, endedAt string, durationSeconds int) error {

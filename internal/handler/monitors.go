@@ -66,6 +66,8 @@ type monitorListItem struct {
 	History       []bool   `json:"history"` // últimos 30 checks, mais recente por último
 	Uptime24h     *float64 `json:"uptime_24h"`
 	LastLatencyMs *int64   `json:"last_latency_ms"`
+	LastError     *string  `json:"last_error"` // só DOWN, do incidente aberto
+	DownSince     *string  `json:"down_since"` // só DOWN, início do incidente aberto
 }
 
 type paginatedResponse struct {
@@ -148,6 +150,11 @@ func (s *Server) handleListMonitors(w http.ResponseWriter, r *http.Request) {
 			item.History = sum.History
 			item.Uptime24h = sum.Uptime24h
 			item.LastLatencyMs = sum.LastLatencyMs
+			item.LastError = sum.LastError
+			if sum.DownSince != nil {
+				v := sum.DownSince.UTC().Format(time.RFC3339)
+				item.DownSince = &v
+			}
 		}
 		data[i] = item
 	}

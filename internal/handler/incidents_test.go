@@ -110,3 +110,35 @@ func TestListIncidentsResolvedOrderAndFilters(t *testing.T) {
 		t.Fatalf("status inválido: %d, want 400", rec.Code)
 	}
 }
+
+// O painel recebe erro e início da queda só dos monitores DOWN, vindos do
+// incidente aberto; nos outros estados os campos são null.
+func TestListMonitorsDownFields(t *testing.T) {
+	s, h, _ := newTestServer(t)
+	seedIncidents(t, s)
+	if _, err := s.db.Exec(`UPDATE monitors SET current_state = 'DOWN' WHERE id = 'a'`); err != nil {
+		t.Fatal(err)
+	}
+
+	rec := do(t, h, "GET", "/api/monitors", "")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("list: %d %s", rec.Code, rec.Body)
+	}
+	page := decode[struct {
+		Data []monitorListItem `json:"data"`
+	}](t, rec)
+
+	got := map[string]monitorListItem{}
+	for _, m := range page.Data {
+		got[m.ID] = m
+	}
+	a, b := got["a"], got["b"]
+	if a.LastError == nil || *a.LastError != "dial tcp: connection refused" ||
+		a.DownSince == nil || *a.DownSince != "2026-10-28T10:00:00Z" {
+		t.Fatalf("DOWN: last_error=%v down_since=%v", a.LastError, a.DownSince)
+	}
+	// b tem incidente aberto, mas não está DOWN
+	if b.LastError != nil || b.DownSince != nil {
+		t.Fatalf("não DOWN: last_error=%v down_since=%v", b.LastError, b.DownSince)
+	}
+}
