@@ -51,7 +51,7 @@ Como funciona:
 2. A tarefa chama essa URL quando termina com sucesso.
 3. Cada chamada registra um check `UP`.
 4. Se passar do **intervalo + tolerância** sem nenhuma chamada, o monitor vira `DOWN`.
-5. Antes da primeira chamada, o monitor fica `UNKNOWN`.
+5. Antes da primeira chamada, o monitor fica `UNKNOWN`. Se passar do **intervalo + tolerância** desde a criação (ou da última edição/retomada) sem nenhuma chamada, ele vira `DOWN`: assim, esquecer de colocar o `curl` na tarefa também gera alerta.
 
 Regras:
 
@@ -61,6 +61,7 @@ Regras:
 - O `timeout` também não se aplica.
 - Monitor pausado aceita o ping, mas não registra nada. Ao retomar, o prazo recomeça a contar a partir da retomada (os pings da pausa não foram registrados).
 - O avaliador de prazos roda a cada 10 segundos e gera **um** check `DOWN` por queda, não um por rodada.
+- Prazo que venceu enquanto o Pingou estava fora do ar não vira `DOWN` na volta: o ping pode ter se perdido. Esse monitor ganha mais um intervalo + tolerância a partir da subida. Os demais seguem o prazo normal.
 - A URL de ping fica sempre visível no dashboard e pode ser **regenerada** a qualquer momento (o token antigo deixa de funcionar na hora).
 
 Exemplo com cron:
