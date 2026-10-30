@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `aecbd8ac`
+- Built from commit: `f273b289`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -273,20 +273,20 @@
 6. `Task Breakdown` - 25 edges
 7. `lucide-react` - 24 edges
 8. `runServe()` - 23 edges
-9. `react` - 23 edges
-10. `Scheduler` - 23 edges
+9. `Scheduler` - 23 edges
+10. `react` - 23 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Task T13: `ResolvedTable` agrupada por dia` --references--> `ResolvedTable()`  [INFERRED]
   plan-incidents-page.md → web/src/components/incidents/ResolvedTable.jsx
-- `Rollback Strategy` --references--> `MonitorModals()`  [INFERRED]
-  plan-monitor-details.md → web/src/components/monitors/MonitorModals.jsx
-- `Tech Stack` --references--> `MonitorModals()`  [INFERRED]
-  plan-monitor-details.md → web/src/components/monitors/MonitorModals.jsx
 - `Evidências de verificação` --references--> `useMonitors()`  [INFERRED]
   plan-incidents-page.md → web/src/hooks/useMonitors.js
 - `🔍 Contexto` --references--> `useMonitors()`  [INFERRED]
   tasks/tarefa-sistema-websocket-tempo-real.md → web/src/hooks/useMonitors.js
+- `Desvios na implementação` --references--> `clampRange()`  [INFERRED]
+  plan-monitor-details.md → web/src/lib/ranges.js
+- `Rollback Strategy` --references--> `Shell()`  [INFERRED]
+  plan-mobile-redesign.md → web/src/components/layout/Shell.jsx
 
 ## Import Cycles
 - None detected.
@@ -622,7 +622,7 @@ Cohesion: 0.29
 Nodes (7): dependencies, axios, lucide-react, react, react-dom, react-router-dom, react-toastify
 
 ## Knowledge Gaps
-- **533 isolated node(s):** `OPTIONS`, `TABS`, `MonitorEnabled`, `infoResponse`, `paginatedResponse` (+528 more)
+- **533 isolated node(s):** `0. Como usar este arquivo`, `1. Conceito`, `Arquivos oficiais`, `3.1 Tokens`, `3.2 Tailwind` (+528 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 767 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **167 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -630,14 +630,14 @@ Nodes (7): dependencies, axios, lucide-react, react, react-dom, react-router-dom
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Task Breakdown` connect `Task Breakdown` to `Settings.jsx`?**
-  _High betweenness centrality (0.015) - this node is a cross-community bridge._
-- **Why does `Plano de Desenvolvimento: Reconstrução da página de Incidentes` connect `Task Breakdown` to `plan-settings-page.md`, `Dashboard.jsx`?**
-  _High betweenness centrality (0.013) - this node is a cross-community bridge._
-- **Why does `Task Breakdown` connect `Task Breakdown` to `format.js`, `Settings.jsx`?**
   _High betweenness centrality (0.012) - this node is a cross-community bridge._
+- **Why does `Plano de Desenvolvimento: Reconstrução da página de Incidentes` connect `Task Breakdown` to `plan-settings-page.md`, `Dashboard.jsx`?**
+  _High betweenness centrality (0.012) - this node is a cross-community bridge._
+- **Why does `Monitor` connect `Monitor` to `serve.go`, `time.Time`, `Incident`, `checker_test.go`, `Scheduler`, `Check`, `net/http.ResponseWriter`, `MonitorService`, `testing.T`, `UnitOfWork`, `WebhookNotifier`?**
+  _High betweenness centrality (0.011) - this node is a cross-community bridge._
 - **Are the 11 inferred relationships involving `newTestServer()` (e.g. with `loggingMiddleware()` and `NewServer()`) actually correct?**
   _`newTestServer()` has 11 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `OPTIONS`, `TABS`, `MonitorEnabled` to the rest of the system?**
+- **What connects `0. Como usar este arquivo`, `1. Conceito`, `Arquivos oficiais` to the rest of the system?**
   _533 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `serve.go` be split into smaller, more focused modules?**
   _Cohesion score 0.09948387096774193 - nodes in this community are weakly interconnected._

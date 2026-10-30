@@ -15850,7 +15850,7 @@
       "node_kind": "heading",
       "norm_label": "10. pendencias (nao definidas na v1.0)",
       "source_file": "DESIGN.md",
-      "source_location": "L215"
+      "source_location": "L217"
     },
     {
       "id": "design_11_checklist_antes_de_entregar",
@@ -15862,7 +15862,7 @@
       "node_kind": "heading",
       "norm_label": "11. checklist antes de entregar",
       "source_file": "DESIGN.md",
-      "source_location": "L220"
+      "source_location": "L222"
     },
     {
       "id": "design_1_conceito",
@@ -15958,7 +15958,7 @@
       "node_kind": "heading",
       "norm_label": "9. tom de voz (ui)",
       "source_file": "DESIGN.md",
-      "source_location": "L207"
+      "source_location": "L208"
     },
     {
       "id": "design_arquivos_oficiais",
@@ -45842,7 +45842,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DESIGN.md",
-      "source_location": "L207",
+      "source_location": "L208",
       "weight": 1.0
     },
     {
@@ -45853,7 +45853,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DESIGN.md",
-      "source_location": "L215",
+      "source_location": "L217",
       "weight": 1.0
     },
     {
@@ -45864,7 +45864,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DESIGN.md",
-      "source_location": "L220",
+      "source_location": "L222",
       "weight": 1.0
     },
     {
@@ -61411,5 +61411,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "aecbd8acb2ee6ef5b57f965a81da94c8df985002"
+  "built_at_commit": "f273b289d704e9c764420c91611b3f7637054fd5"
 }
