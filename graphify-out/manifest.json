@@ -966,9 +966,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1793556565.237602,
-    "seen": 1793556724.1203704,
-    "ast_hash": "c2342991a289ab5010b3c1877c68c9b1",
+    "mtime": 1793561229.5819726,
+    "seen": 1793562900.6941822,
+    "ast_hash": "c296a6b8ef2028780268f15db8d93b48",
     "semantic_hash": ""
   },
   "docker-compose.yml": {
@@ -1311,6 +1311,18 @@
     "mtime": 1777051783.7977967,
     "seen": 1793556441.3715265,
     "ast_hash": "9960a24288958394ac50e57ff638b036",
+    "semantic_hash": ""
+  },
+  "IDEAS.md": {
+    "mtime": 1793562710.5402217,
+    "seen": 1793562900.6941795,
+    "ast_hash": "5da061572a0f1046a0f15a519a87d561",
+    "semantic_hash": ""
+  },
+  "plan-largura-busca.md": {
+    "mtime": 1793562815.698214,
+    "seen": 1793562900.6941853,
+    "ast_hash": "f8cdde0ba28d7a95958f40967d82f5de",
     "semantic_hash": ""
   }
 }
