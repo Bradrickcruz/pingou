@@ -233,6 +233,8 @@ type settingsBody struct {
 	RetentionDays   int    `json:"retention_days"`
 	EmailRecipients string `json:"email_recipients"`
 	EmailAvailable  bool   `json:"email_available"`
+	NtfyTopic       string `json:"ntfy_topic"`
+	NtfyAvailable   bool   `json:"ntfy_available"`
 }
 
 func TestSettingsEmailWithoutSMTP(t *testing.T) {
@@ -316,6 +318,96 @@ func TestEmailTestRateLimit(t *testing.T) {
 		}
 	}
 	rec := do(t, h, "POST", "/api/settings/email/test", "")
+	if rec.Code != http.StatusTooManyRequests || rec.Header().Get("Retry-After") == "" {
+		t.Fatalf("excesso: %d, want 429", rec.Code)
+	}
+}
+
+func TestSettingsNtfyWithoutURL(t *testing.T) {
+	_, h, _ := newTestServer(t)
+
+	got := decode[settingsBody](t, do(t, h, "GET", "/api/settings", ""))
+	if got.NtfyAvailable || got.NtfyTopic != "" {
+		t.Fatalf("GET: %+v", got)
+	}
+	if rec := do(t, h, "PATCH", "/api/settings", `{"ntfy_topic":"alertas"}`); rec.Code != http.StatusBadRequest {
+		t.Fatalf("PATCH sem ntfy: %d, want 400", rec.Code)
+	}
+	if rec := do(t, h, "PATCH", "/api/settings", `{"ntfy_topic":""}`); rec.Code != http.StatusOK {
+		t.Fatalf("PATCH vazio: %d %s", rec.Code, rec.Body)
+	}
+	if rec := do(t, h, "POST", "/api/settings/ntfy/test", `{"topic":"alertas"}`); rec.Code != http.StatusBadRequest {
+		t.Fatalf("teste sem ntfy: %d, want 400", rec.Code)
+	}
+}
+
+func TestSettingsNtfyWithURL(t *testing.T) {
+	var published atomic.Int64
+	var lastPath, lastAuth atomic.Value
+	ntfy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		published.Add(1)
+		lastPath.Store(r.URL.Path)
+		lastAuth.Store(r.Header.Get("Authorization"))
+	}))
+	defer ntfy.Close()
+	_, h, _ := newTestServerEnv(t, config.SMTPConfig{}, config.NtfyConfig{URL: ntfy.URL, Token: "tk_segredo"})
+
+	if got := decode[settingsBody](t, do(t, h, "GET", "/api/settings", "")); !got.NtfyAvailable {
+		t.Fatalf("GET: %+v", got)
+	}
+
+	// sem tópico salvo
+	if rec := do(t, h, "POST", "/api/settings/ntfy/test", ""); rec.Code != http.StatusBadRequest {
+		t.Fatalf("teste sem tópico: %d, want 400", rec.Code)
+	}
+
+	rec := do(t, h, "PATCH", "/api/settings", `{"ntfy_topic":" alertas_prod "}`)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("PATCH: %d %s", rec.Code, rec.Body)
+	}
+	if got := decode[settingsBody](t, rec); got.NtfyTopic != "alertas_prod" {
+		t.Fatalf("tópico: %q", got.NtfyTopic)
+	}
+	for _, topic := range []string{"com espaço", "a/b", strings.Repeat("x", 65)} {
+		if rec := do(t, h, "PATCH", "/api/settings", `{"ntfy_topic":"`+topic+`"}`); rec.Code != http.StatusBadRequest {
+			t.Fatalf("%q: %d, want 400", topic, rec.Code)
+		}
+	}
+	body := do(t, h, "GET", "/api/settings", "").Body.String()
+	if strings.Contains(body, "tk_segredo") || strings.Contains(body, ntfy.URL) {
+		t.Fatalf("GET vazou token ou URL: %s", body)
+	}
+
+	// sem corpo: usa o tópico salvo
+	rec = do(t, h, "POST", "/api/settings/ntfy/test", "")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("teste: %d %s", rec.Code, rec.Body)
+	}
+	res := decode[struct {
+		OK    bool    `json:"ok"`
+		Error *string `json:"error"`
+	}](t, rec)
+	if !res.OK || res.Error != nil || published.Load() != 1 || lastPath.Load() != "/alertas_prod" || lastAuth.Load() != "Bearer tk_segredo" {
+		t.Fatalf("teste: %s (publicações %d, path %v)", rec.Body, published.Load(), lastPath.Load())
+	}
+
+	// tópico do corpo tem prioridade
+	if rec := do(t, h, "POST", "/api/settings/ntfy/test", `{"topic":"outro"}`); rec.Code != http.StatusOK || lastPath.Load() != "/outro" {
+		t.Fatalf("tópico do corpo: %d %v", rec.Code, lastPath.Load())
+	}
+	if rec := do(t, h, "POST", "/api/settings/ntfy/test", `{"topic":"a b"}`); rec.Code != http.StatusBadRequest {
+		t.Fatalf("tópico inválido: %d, want 400", rec.Code)
+	}
+}
+
+func TestNtfyTestRateLimit(t *testing.T) {
+	_, h, _ := newTestServer(t)
+	for i := range ntfyTestRateLimit {
+		if rec := do(t, h, "POST", "/api/settings/ntfy/test", ""); rec.Code != http.StatusBadRequest {
+			t.Fatalf("req %d: %d, want 400", i, rec.Code)
+		}
+	}
+	rec := do(t, h, "POST", "/api/settings/ntfy/test", "")
 	if rec.Code != http.StatusTooManyRequests || rec.Header().Get("Retry-After") == "" {
 		t.Fatalf("excesso: %d, want 429", rec.Code)
 	}
