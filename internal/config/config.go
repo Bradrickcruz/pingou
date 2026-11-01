@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/mail"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -22,6 +23,7 @@ type Config struct {
 	GlobalTimeout      int
 	PublicURL          string // endereço público do dashboard, para links no webhook
 	SMTP               SMTPConfig
+	Ntfy               NtfyConfig
 
 	// Dados do build (-ldflags), preenchidos pelo comando serve. Expostos em /api/info.
 	Version   string
@@ -43,6 +45,10 @@ func Load() (*Config, error) {
 
 	// SMTP só no serve: um erro aqui não deve travar comandos como o migrate.
 	if cfg.SMTP, err = LoadSMTP(); err != nil {
+		return nil, err
+	}
+	// ntfy também só no serve, pelo mesmo motivo.
+	if cfg.Ntfy, err = LoadNtfy(); err != nil {
 		return nil, err
 	}
 	return cfg, nil
@@ -181,4 +187,40 @@ func LoadSMTP() (SMTPConfig, error) {
 	}
 
 	return c, nil
+}
+
+// NtfyConfig vem toda do ambiente (PINGOU_NTFY_*). Nada disso vai para o banco
+// nem para o export. Token e URL nunca aparecem em log (só o host), API ou
+// `pingou config`.
+type NtfyConfig struct {
+	URL   string // sem "/" final
+	Token string // opcional; vazio = servidor aberto
+}
+
+// Enabled diz se o ntfy está disponível (PINGOU_NTFY_URL setado).
+func (c NtfyConfig) Enabled() bool { return c.URL != "" }
+
+// Host é o host do servidor, a única parte da URL que pode ir para o log.
+func (c NtfyConfig) Host() string {
+	if u, err := url.Parse(c.URL); err == nil {
+		return u.Host
+	}
+	return ""
+}
+
+// LoadNtfy lê PINGOU_NTFY_*. Sem URL, devolve config vazia e ignora o token.
+// URL inválida devolve erro: o serve não sobe, como no SMTP.
+func LoadNtfy() (NtfyConfig, error) {
+	raw := strings.TrimRight(strings.TrimSpace(os.Getenv("PINGOU_NTFY_URL")), "/")
+	if raw == "" {
+		return NtfyConfig{}, nil
+	}
+	u, err := url.Parse(raw)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return NtfyConfig{}, fmt.Errorf("PINGOU_NTFY_URL must be a valid http(s) URL (ex.: https://ntfy.sh)")
+	}
+	if u.RawQuery != "" || u.Fragment != "" || u.User != nil {
+		return NtfyConfig{}, fmt.Errorf("PINGOU_NTFY_URL must not have query, fragment or user info (use PINGOU_NTFY_TOKEN for auth)")
+	}
+	return NtfyConfig{URL: raw, Token: strings.TrimSpace(os.Getenv("PINGOU_NTFY_TOKEN"))}, nil
 }
