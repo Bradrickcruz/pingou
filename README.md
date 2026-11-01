@@ -10,8 +10,27 @@ O projeto tem quatro objetivos:
 
 - **simples de rodar**: um binário ou um container, sem banco separado
 - **simples de manter**: SQLite em arquivo, sem serviços extras
-- **leve**: roda numa VPS mínima ou num Raspberry Pi
+- **leve**: baixo uso de memória RAM, roda numa VPS mínima ou num Raspberry Pi (veja [abaixo](#baixo-uso-de-memória))
 - **focado**: faz uma coisa só (dizer se algo está no ar) e faz bem
+
+## Baixo uso de memória
+
+Uma das características mais importantes do Pingou é consumir pouca RAM. Medido com **100 monitores** (o limite do projeto) checando a cada 10 s, sendo 50 deles `https://google.com`, mais o dashboard e as estatísticas sendo consultados a cada ciclo, durante **1 hora**:
+
+| Métrica                  | Resultado                 |
+| ------------------------ | ------------------------- |
+| Pico de RAM (RSS)        | **29 MB** (meta: < 50 MB) |
+| RAM em regime            | 27 a 30 MB, estável       |
+| Threads                  | 17 a 18                   |
+| Tendência de crescimento | nenhuma (sem vazamento)   |
+
+Para reproduzir (Linux, `make build` antes):
+
+```bash
+HTTPS_N=50 scripts/memtest.sh 3600
+```
+
+Detalhes do teste em [`scripts/README.md`](scripts/README.md). O resultado vale para o hardware e a rede em que foi medido; seu consumo pode variar um pouco.
 
 ---
 
