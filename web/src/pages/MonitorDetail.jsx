@@ -398,7 +398,7 @@ export function MonitorDetail() {
 
   if (loading) {
     return (
-      <div className="max-w-[1180px]">
+      <div className="max-w-[1680px]">
         <DetailTopBar />
         {back}
         <div className="flex justify-center py-12">
@@ -410,7 +410,7 @@ export function MonitorDetail() {
 
   if (!monitor) {
     return (
-      <div className="max-w-[1180px]">
+      <div className="max-w-[1680px]">
         <DetailTopBar />
         {back}
         {notFound ? (
@@ -461,7 +461,7 @@ export function MonitorDetail() {
   );
 
   return (
-    <div className="max-w-[1180px]">
+    <div className="max-w-[1680px]">
       <DetailTopBar menu={menu} />
       {back}
 

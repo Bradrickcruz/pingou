@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Plus, RefreshCw, Search } from "lucide-react";
 import { toast } from "react-toastify";
 import { useMonitors } from "../hooks/useMonitors";
@@ -14,11 +15,13 @@ import { Modal } from "../components/ui/Modal";
 import { Button } from "../components/ui/Button";
 import { Spinner } from "../components/ui/Spinner";
 import { timeAgo } from "../lib/format";
-import { bySeverity, countByStatus, statusOf } from "../lib/monitors";
+import {
+  bySeverity,
+  countByStatus,
+  matchesQuery,
+  statusOf,
+} from "../lib/monitors";
 import logo from "../assets/brand/pingou-simbolo.svg";
-
-// a busca só aparece quando a lista fica longa (decisão do plano)
-const SEARCH_FROM = 10;
 
 const FILTERS = [
   { key: "all", label: "Todos", match: () => true },
@@ -35,7 +38,18 @@ export function Dashboard() {
   const [selected, setSelected] = useState(null);
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState("all");
-  const [query, setQuery] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const query = searchParams.get("q") ?? "";
+  const setQuery = (value) =>
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (value) next.set("q", value);
+        else next.delete("q");
+        return next;
+      },
+      { replace: true },
+    );
   const [actionError, setActionError] = useState(null);
 
   const counts = useMemo(() => countByStatus(monitors), [monitors]);
@@ -49,11 +63,23 @@ export function Dashboard() {
   );
   // se o filtro ativo sumiu (ex.: último monitor fora do ar voltou), cai em "Todos"
   const active = shownFilters.find((f) => f.key === filter) ?? FILTERS[0];
-  const q = query.trim().toLocaleLowerCase("pt-BR");
+  const searching = query.trim() !== "";
   const visible = sorted.filter(
-    (m) =>
-      active.match(statusOf(m)) &&
-      (!q || m.name.toLocaleLowerCase("pt-BR").includes(q)),
+    (m) => active.match(statusOf(m)) && matchesQuery(m, query),
+  );
+  const emptyMessage = searching ? (
+    <>
+      Nenhum monitor encontrado para “{query.trim()}”.{" "}
+      <button
+        type="button"
+        onClick={() => setQuery("")}
+        className="text-pg-ciano-fundo underline hover:no-underline focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano"
+      >
+        Limpar busca
+      </button>
+    </>
+  ) : (
+    "Nenhum monitor neste filtro."
   );
 
   const openEdit = (m) => {
@@ -117,7 +143,7 @@ export function Dashboard() {
   );
 
   return (
-    <div className="max-w-[1180px]">
+    <div className="max-w-[1680px]">
       <MobileHeader
         title="Monitores"
         subtitle={updatedAt && `Atualizado ${timeAgo(updatedAt, now)}`}
@@ -230,23 +256,21 @@ export function Dashboard() {
                 );
               })}
             </div>
-            {monitors.length >= SEARCH_FROM && (
-              <div className="relative sm:w-[280px]">
-                <Search
-                  size={16}
-                  aria-hidden="true"
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-pg-neblina"
-                />
-                <input
-                  type="search"
-                  aria-label="Buscar por nome"
-                  placeholder="Buscar por nome"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 rounded-pg-control text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda placeholder:text-pg-neblina"
-                />
-              </div>
-            )}
+            <div className="relative sm:w-[280px]">
+              <Search
+                size={16}
+                aria-hidden="true"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-pg-neblina"
+              />
+              <input
+                type="search"
+                aria-label="Buscar por nome ou endereço"
+                placeholder="Buscar por nome ou endereço"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="w-full pl-9 pr-3 py-2.5 rounded-pg-control text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda placeholder:text-pg-neblina"
+              />
+            </div>
           </div>
 
           <ul className="md:hidden flex flex-col gap-3">
@@ -255,7 +279,7 @@ export function Dashboard() {
             ))}
             {visible.length === 0 && (
               <li className="py-10 text-center text-pg-ui text-pg-neblina">
-                Nenhum monitor neste filtro.
+                {emptyMessage}
               </li>
             )}
           </ul>
@@ -322,7 +346,7 @@ export function Dashboard() {
                       colSpan={7}
                       className="px-5 py-10 text-center text-pg-ui text-pg-neblina"
                     >
-                      Nenhum monitor neste filtro.
+                      {emptyMessage}
                     </td>
                   </tr>
                 )}
