@@ -1,14 +1,18 @@
 # Histórico de implementações (planos aplicados)
 
-Consolida o que os planos `plan-*.md` entregaram. Datas vêm do `git log` (commits e merges de PR). O comportamento atual de API e CLI está no [README.md](../README.md); aqui fica o **o quê, quando e por quê**.
+Consolida o que os planos `plan-*.md` (já removidos; ficam no `git log`) entregaram. Datas vêm do `git log` (commits e merges de PR). O comportamento atual de API e CLI está no [README.md](../README.md); aqui fica o **o quê, quando e por quê**.
 
-| Data (commits)     | Plano                                                                                           | Branch / PR                 |
-| ------------------ | ----------------------------------------------------------------------------------------------- | --------------------------- |
-| 2026-10-27 → 10-28 | [Tipos de check + redesign do painel](#1-tipos-de-check-http-tcp-heartbeat--redesign-do-painel) | `feat/check-types` (#2)     |
-| 2026-10-28 → 10-29 | [Página de Incidentes](#2-página-de-incidentes)                                                 | `feat/incidents-page` (#3)  |
-| 2026-10-29         | [Página de Configurações](#3-página-de-configurações)                                           | `feat/settings-page` (#4)   |
-| 2026-10-29 → 10-30 | [Detalhe do monitor](#4-detalhe-do-monitor)                                                     | `feat/monitor-details` (#5) |
-| 2026-10-30         | [Remodelagem mobile](#5-remodelagem-mobile)                                                     | `feat/mobile-redesign` (#6) |
+| Data (commits)     | Plano                                                                                           | Branch / PR                     |
+| ------------------ | ----------------------------------------------------------------------------------------------- | ------------------------------- |
+| 2026-10-27 → 10-28 | [Tipos de check + redesign do painel](#1-tipos-de-check-http-tcp-heartbeat--redesign-do-painel) | `feat/check-types` (#2)         |
+| 2026-10-28 → 10-29 | [Página de Incidentes](#2-página-de-incidentes)                                                 | `feat/incidents-page` (#3)      |
+| 2026-10-29         | [Página de Configurações](#3-página-de-configurações)                                           | `feat/settings-page` (#4)       |
+| 2026-10-29 → 10-30 | [Detalhe do monitor](#4-detalhe-do-monitor)                                                     | `feat/monitor-details` (#5)     |
+| 2026-10-30         | [Remodelagem mobile](#5-remodelagem-mobile)                                                     | `feat/mobile-redesign` (#6)     |
+| 2026-11-01         | [E-mail (SMTP) e envio fora do lock](#6-e-mail-smtp-e-envio-fora-do-lock)                       | `feat/email-notifications` (#9) |
+| 2026-11-01         | [Largura no desktop + busca parcial](#7-largura-no-desktop--busca-parcial)                      | `feature/largura-busca` (#10)   |
+| 2026-11-01         | [Notificação via ntfy](#8-notificação-via-ntfy)                                                 | `feat/ntfy-notifications` (#11) |
+| 2026-11-01         | [Eixo Y dinâmico + gráfico de pings](#9-eixo-y-dinâmico--gráfico-de-pings)                      | `develop` (sem PR)              |
 
 Pendências de validação manual ainda abertas estão no [fim do documento](#pendências-abertas).
 
@@ -162,9 +166,110 @@ Rotas `/m/...`; hook `useIsMobile` (flash no primeiro render); lib de bottom she
 
 ---
 
+## 6. E-mail (SMTP) e envio fora do lock
+
+**2026-11-01** (`eadc1b6`, docs `65ca5d6`), merge do PR #9 em 2026-11-01.
+
+### Entregue
+
+- **Fase 0 (correção):** o envio da notificação rodava dentro do lock global do banco, então um webhook lento travava todos os monitores. Agora `MultiNotifier` ([multi_notifier.go](../internal/service/multi_notifier.go)) envia cada canal em goroutine própria (falha ou panic de um não afeta os outros) e o shutdown espera até 10 s (`Wait`). `StateMachine` e `Scheduler` não mudaram.
+- Canal de e-mail com a stdlib (`net/smtp`, `crypto/tls`, `net/mail`), texto simples, modos `none`, `starttls` (obrigatório, sem rebaixar) e TLS direto. Sem dependência nova.
+- Servidor SMTP **todo no ambiente** (`PINGOU_SMTP_*`, inclusive a senha); `config.LoadSMTP()` roda só no `serve`, para um SMTP inválido não travar o `migrate`. A tela guarda só os destinatários (`settings.email_recipients`, até 10, separados por vírgula). Sem migration.
+- `POST /api/settings/email/test` (atrás do login, 5 por minuto por IP). Sem SMTP no ambiente, o card aparece bloqueado listando as variáveis que faltam.
+- `EmailCard`; botão e resultado de teste extraídos para `TestControls.jsx`, compartilhados com o card do webhook.
+- Segurança conferida: senha só no `PlainAuth` (fora de log, `pingou config`, `GET /settings` e export); cabeçalhos sem quebra de linha (`oneLine`, teste com `\r\nBcc:`); `tls.Config` sem `InsecureSkipVerify`, TLS 1.2+; log só com `recipients_count`; e-mail nunca leva o `ping_token`.
+
+### Decisões
+
+- Um canal de cada tipo (1 webhook + 1 e-mail com vários destinatários), em vez de tabela de canais.
+- Subir com SMTP incompleto **falha** (mesmo padrão do `PINGOU_API_KEY`), em vez de desabilitar o card em silêncio.
+- A goroutine dentro do `MultiNotifier` resolve o lock sem mudar a assinatura do `Process`.
+
+### Limitações conhecidas
+
+- Sem retry nem outbox: aviso perdido em crash não é reenviado. Próximo passo natural: tabela `notification_outbox` gravada na transação do `Process` + worker.
+- `webhook_url` também é segredo (Slack/Discord) e continua indo no export.
+
+### Descartado
+
+Tabela `notification_channels` com CRUD; `NotificationEvent` + `Channel` + `Dispatcher`; `go-mail`; host/porta/usuário editáveis na tela; `email_available` em `/api/info`; destinatários como array JSON; tirar o `notify()` de dentro do `withMonitor`.
+
+---
+
+## 7. Largura no desktop + busca parcial
+
+**2026-11-01** (`50c642a`, ajuste `7ab5185`), merge do PR #10 em 2026-11-01. Só frontend.
+
+### Entregue
+
+- Limite de largura de Painel, Incidentes e Detalhe subiu de 1180 px para **1680 px** (`max-w-[1680px]`); Configurações segue em 760 px. Mobile inalterado.
+- `matchesQuery` em [monitors.js](../web/src/lib/monitors.js) (com testes): busca parcial sem acento nem caixa ("servico" acha "Serviço") no nome e no alvo (URL ou `host:porta`); heartbeat só pelo nome.
+- A busca fica na URL (`?q=`), com mensagem de vazio "Nenhum monitor encontrado para “…”" e botão "Limpar busca".
+- Placeholder passou a "Buscar por nome ou endereço". O campo ficou sempre visível (`7ab5185` removeu o limite de 10 monitores, `SEARCH_FROM`).
+
+### Decisões
+
+- Evolui o campo que já existia; filtro combinado (E) com os de estado.
+- Aumentar o limite, não remover (linhas ilegíveis em ultrawide).
+
+### Descartado
+
+Busca no backend (a lista já traz até 100 monitores); debounce (filtro em memória).
+
+---
+
+## 8. Notificação via ntfy
+
+**2026-11-01** (`bf317e5` e demais, docs `094b94f`), merge do PR #11 em 2026-11-01.
+
+### Entregue
+
+- Terceiro canal, no molde do e-mail. Servidor no ambiente: `PINGOU_NTFY_URL` (liga o canal) e `PINGOU_NTFY_TOKEN` (opcional); a tela guarda só o tópico (`settings.ntfy_topic`; vazio = desligado). Sem migration, sem dependência.
+- Envio: POST de texto em `<URL>/<tópico>` com `Authorization: Bearer`, `Title` (RFC 2047), `Priority`, `Tags` (emoji) e `Click` (link do painel). Queda: prioridade 4; volta: prioridade 3. Texto reaproveita as funções do e-mail.
+- `POST /api/settings/ntfy/test` (5 por minuto por IP); `GET/PATCH /api/settings` ganham `ntfy_topic` e `ntfy_available`. Sem `PINGOU_NTFY_URL`, `PATCH` do tópico e o teste dão 400 e o card fica bloqueado.
+- `LoadNtfy` recusa URL inválida, com query, fragmento ou usuário (o token vai só em `PINGOU_NTFY_TOKEN`). 401/403 no teste ganham a dica "token inválido ou sem permissão no tópico".
+- `slog`, API, export e `pingou config` nunca expõem token, URL completa nem tópico (só `NtfyHost` e `NtfyTokenSet`); o `ping_token` não vai na mensagem.
+- README ganhou a seção geral "Entrega das notificações", válida para os três canais.
+- Validado com ntfy 2.36.0 em Docker (`deny-all` + token): queda, volta, heartbeat expirado, token errado, tópico inválido, 429.
+
+### Decisões
+
+- Token e servidor no ambiente (não no banco): o export já vaza o segredo do webhook, não repetir.
+- Auth por header, não por `?auth=` (não aparece em log de proxy).
+
+### Descartado
+
+Só documentar a URL com template no README; templates genéricos de webhook; token/servidor editáveis na tela; JSON na API do ntfy.
+
+---
+
+## 9. Eixo Y dinâmico + gráfico de pings
+
+**2026-11-01** (`3e8b970`, `d636b4a`), direto em `develop`. Só frontend.
+
+### Entregue
+
+- `niceScale(peak, floor)` em [chartScale.js](../web/src/lib/chartScale.js) (com testes): passo em {1,2,5}×10ⁿ com no máximo 5 intervalos. 70 → 100, 350 → 400, 2300 → 2500; piso de 100 ms em HTTP/TCP. Substitui o `scaleOf` (3 passos de 100 ms, que dava 402 → 600).
+- Heartbeat ganhou o card **"Pings recebidos"**: barras por intervalo (`checks - failures`, porque prazo perdido é check com falha), eixo inteiro com piso 1, sem faixa cinza (zero ping é normal); vermelho só nos períodos "fora do ar". Tooltip, legenda e `aria-label` falam de pings.
+- O eixo é derivado de `stats`, então trocar 24h/7d/14d/30d recalcula.
+
+### Decisões
+
+- O plano dizia 101 → 120 (passo 20), mas pela própria regra o passo é 50 e dá 150; o teste usa 150 (e 402 → 500).
+- Sem componente novo: o modo heartbeat é uma prop do `ResponseChart`.
+
+### Descartado
+
+Lib de gráfico; p95 como teto; manter 3 intervalos fixos.
+
+---
+
 ## Pendências abertas
 
 - **Migrations 0003 e 0004** foram testadas em bancos de teste e de QA, mas **não** rodadas no `pingou.db` real. Fazer backup antes e conferir `failure_count` / `last_error`.
 - **Configurações (T12)**: webhook.site real, destino que não responde (5 s), navegação só por teclado, nome do arquivo baixado no navegador.
 - **Mobile**: teste em dispositivo real (teclado virtual com a barra "Alterações não salvas", safe-area no iPhone, leitor de tela).
 - **Observação de infraestrutura**: o incidente do monitor `c10` vinha de certificado de outro domínio servido em `api.c10.site` (provável proxy roteando errado). Não é bug do Pingou.
+- **E-mail (T14)**: QA manual com Mailpit e provedor real (587/465); o ambiente de desenvolvimento não tinha Docker nem SMTP real.
+- **Eixo Y**: verificação manual (T5) dos 4 ranges nos 3 tipos, tema claro/escuro e mobile; conferir em um `/stats` real que `checks`/`failures` do heartbeat batem com pings e prazos perdidos.
+- **Pausar fecha o incidente** (`docs/plan-pause-closes-incident.md`): plano **não implementado** (sem `closed_manually` no código); por isso o arquivo foi mantido.
