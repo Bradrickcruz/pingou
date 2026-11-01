@@ -863,12 +863,6 @@
     "ast_hash": "7413fafe978a80b551ec528a51e14554",
     "semantic_hash": ""
   },
-  "plan-check-types.md": {
-    "mtime": 1793391650.2151127,
-    "seen": 1793393132.983352,
-    "ast_hash": "e50ee8531f4777fa6ef15fe0d32eca7d",
-    "semantic_hash": ""
-  },
   "concept-design/Editar-monitor.png": {
     "mtime": 1793391650.1351123,
     "seen": 1793393132.983386,
@@ -1019,12 +1013,6 @@
     "ast_hash": "456bd4b95dba4b483055158c770f741a",
     "semantic_hash": ""
   },
-  "plan-incidents-page.md": {
-    "mtime": 1793391650.2161129,
-    "seen": 1793393132.983353,
-    "ast_hash": "ce37976886e5b6da1b710364d68415e1",
-    "semantic_hash": ""
-  },
   "concept-design/Incidentes.png": {
     "mtime": 1793391650.1361125,
     "seen": 1793393132.983387,
@@ -1053,12 +1041,6 @@
     "mtime": 1793391650.2071128,
     "seen": 1793554299.1315503,
     "ast_hash": "b6bac1548426042243e703bf72f471e7",
-    "semantic_hash": ""
-  },
-  "plan-settings-page.md": {
-    "mtime": 1793391650.2161129,
-    "seen": 1793393132.9833558,
-    "ast_hash": "4c0b4db596ed3d76f4baa84982c11929",
     "semantic_hash": ""
   },
   "concept-design/Configuracoes.png": {
@@ -1101,12 +1083,6 @@
     "mtime": 1793391650.2241127,
     "seen": 1793393132.9833128,
     "ast_hash": "1b7983347665d13c40eeb7f42606d14d",
-    "semantic_hash": ""
-  },
-  "plan-monitor-details.md": {
-    "mtime": 1793391650.2161129,
-    "seen": 1793393132.9833548,
-    "ast_hash": "b6d5755aafb990c36bb0998b679bd6d7",
     "semantic_hash": ""
   },
   "concept-design/Detalhes.png": {
@@ -1187,12 +1163,6 @@
     "ast_hash": "464edd412312749414c891b1a71a16a0",
     "semantic_hash": ""
   },
-  "plan-mobile-redesign.md": {
-    "mtime": 1793391650.2161129,
-    "seen": 1793393132.983354,
-    "ast_hash": "4ac9ba64caf2db7d30a83b5d0cbf0686",
-    "semantic_hash": ""
-  },
   "concept-design/mobile-Configura\u00e7\u00f5es \u00b7 reten\u00e7\u00e3o alterada@1x.png": {
     "mtime": 1793391650.1401124,
     "seen": 1793393132.9833922,
@@ -1269,6 +1239,12 @@
     "mtime": 1793554260.4129658,
     "seen": 1793554299.1316435,
     "ast_hash": "b58365858f9b464d34929d6cad7c7d0e",
+    "semantic_hash": ""
+  },
+  "docs/implementacoes.md": {
+    "mtime": 1793554547.1589377,
+    "seen": 1793554617.8841996,
+    "ast_hash": "b292786c02220b5eea24640c0446dd60",
     "semantic_hash": ""
   }
 }
