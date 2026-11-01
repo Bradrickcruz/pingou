@@ -56,6 +56,15 @@ func runConfig(cmd *cobra.Command, args []string) error {
 		cfg["SMTPPasswordSet"] = smtp.Password != ""
 	}
 
+	// ntfy: só o host e se há token; nunca a URL completa nem o token
+	ntfy, err := config.LoadNtfy()
+	if err != nil {
+		cfg["NtfyError"] = err.Error()
+	} else if ntfy.Enabled() {
+		cfg["NtfyHost"] = ntfy.Host()
+		cfg["NtfyTokenSet"] = ntfy.Token != ""
+	}
+
 	out, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		return fmt.Errorf("json error: %w", err)
