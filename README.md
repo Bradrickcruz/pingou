@@ -118,7 +118,7 @@ Um novo tipo de check só entra no Pingou se passar nas quatro perguntas:
 - Dashboard web embutido no binário
 - Página de detalhe por monitor (`/monitors/:id`): uptime, resposta média, incidentes e tempo fora do ar em 24h / 7 / 14 / 30 dias, gráfico de tempo de resposta, últimos checks e configuração
 - Login com API Key
-- Notificações de queda e recuperação por webhook e por e-mail (SMTP), ligados ao mesmo tempo se quiser
+- Notificações de queda e recuperação por webhook, por e-mail (SMTP) e pelo [ntfy](https://ntfy.sh), ligados ao mesmo tempo se quiser
 - Retenção configurável: checks expiram após `retention_days`; incidentes são mantidos. A limpeza roda na subida e a cada 1 h
 - Export do banco SQLite
 - Atomicidade na state machine (transações SQL)
@@ -389,8 +389,10 @@ A porta HTTP é fixa em `8956` e não é configurável. Para expor em outra port
 | `PINGOU_SMTP_PASSWORD`        | com usuário | (vazio)     | Senha do SMTP. Nunca aparece em log, na API nem no `pingou config`                                                       |
 | `PINGOU_SMTP_FROM`            | com `HOST`  | -           | Remetente. Ex.: `Pingou <alerta@exemplo.com>`                                                                            |
 | `PINGOU_SMTP_TLS`             |     não     | `starttls`  | `starttls`, `tls` ou `none`. Padrão: `tls` na porta 465, `starttls` nas outras. `none` só sem usuário                    |
+| `PINGOU_NTFY_URL`             |     não     | (vazio)     | Servidor ntfy (http/https, sem query). Liga o ntfy. Ex.: `https://ntfy.sh`. Vazio = ntfy indisponível                    |
+| `PINGOU_NTFY_TOKEN`           |     não     | (vazio)     | Token de acesso do ntfy (`tk_...`), enviado como `Authorization: Bearer`. Nunca aparece em log, na API nem no `pingou config` |
 
-Com `PINGOU_SMTP_HOST` setado e alguma regra violada (ex.: falta `PINGOU_SMTP_FROM`), o `serve` não sobe e mostra o motivo, como acontece quando falta `PINGOU_API_KEY`.
+Com `PINGOU_SMTP_HOST` setado e alguma regra violada (ex.: falta `PINGOU_SMTP_FROM`), o `serve` não sobe e mostra o motivo, como acontece quando falta `PINGOU_API_KEY`. O mesmo vale para `PINGOU_NTFY_URL` inválida.
 
 ## SQLite
 
@@ -484,6 +486,7 @@ Sobre `/ping/{token}`:
 | `PATCH`  | `/api/settings`               | Atualiza as configurações globais (`webhook_url` só http/https) |
 | `POST`   | `/api/settings/webhook/test`  | Envia um evento `test` ao webhook (5 por minuto por IP)         |
 | `POST`   | `/api/settings/email/test`    | Envia um e-mail de teste (5 por minuto por IP)                  |
+| `POST`   | `/api/settings/ntfy/test`     | Publica uma notificação de teste no ntfy (5 por minuto por IP)  |
 | `GET`    | `/api/info`                   | Versão, commit, data do build e tamanho do banco                |
 | `GET`    | `/api/export`                 | Baixa um dump do SQLite (`pingou-AAAA-MM-DD.db`, `VACUUM INTO`) |
 
@@ -809,9 +812,92 @@ curl -X POST http://localhost:8956/api/settings/email/test \
 - A resposta é `200` quando o teste roda. `ok` diz se o servidor aceitou a mensagem; senão, `error` explica (ex.: `"timeout após 30s"`).
 - `400` sem SMTP no ambiente, sem destinatários ou com endereço inválido. `429` com `Retry-After` depois de 5 testes por minuto.
 
-### Entrega
+## ntfy
 
-Webhook e e-mail são enviados **fora** do processamento dos checks: um destino lento não atrasa os outros monitores. O Pingou avisa **uma vez por transição**, sem retry. No desligamento (SIGTERM), envios em andamento têm até 10 s para terminar; um crash ou `kill -9` pode perder o aviso.
+O [ntfy](https://ntfy.sh) manda notificações push para o celular (Android, iOS) e para o navegador. O Pingou publica num **tópico** do ntfy a cada queda e a cada volta, junto com webhook e e-mail se eles estiverem ligados.
+
+### Como ligar
+
+1. Configure o servidor no ambiente: `PINGOU_NTFY_URL` e, se o servidor exigir login, `PINGOU_NTFY_TOKEN` (veja [Variáveis de ambiente](#variáveis-de-ambiente)). Servidor e token ficam **só no ambiente**: nada vai para o banco nem para o export.
+2. Reinicie o Pingou. O log mostra `ntfy notifications available` com o host.
+3. Em **Configurações → ntfy**, informe o tópico (1 a 64 caracteres: letras sem acento, números, `_` ou `-`) e use **Enviar teste**.
+4. No app do ntfy, assine o mesmo tópico no mesmo servidor.
+
+Sem `PINGOU_NTFY_URL`, o card do ntfy aparece bloqueado. Se você remover a variável depois, o tópico continua salvo, mas nada é enviado. Tópico vazio desliga o ntfy.
+
+> **Atenção:** num servidor aberto (como o `ntfy.sh` público), qualquer pessoa que souber o nome do tópico lê os alertas. Use um nome difícil de adivinhar (ex.: `pingou-7f3k9q2x`) ou um servidor próprio com token.
+
+### Exemplos
+
+Servidor público `ntfy.sh`, sem conta:
+
+```bash
+PINGOU_NTFY_URL=https://ntfy.sh
+```
+
+Servidor próprio protegido (`auth-default-access: deny-all`), com um token:
+
+```bash
+docker run -d --name ntfy -p 8080:80 -v ntfy-data:/var/lib/ntfy \
+  -e NTFY_BASE_URL=http://localhost:8080 \
+  -e NTFY_AUTH_FILE=/var/lib/ntfy/auth.db \
+  -e NTFY_AUTH_DEFAULT_ACCESS=deny-all \
+  binwiederhier/ntfy serve
+docker exec -it ntfy ntfy user add --role=admin pingou
+docker exec ntfy ntfy token add pingou   # mostra tk_...
+```
+
+```bash
+PINGOU_NTFY_URL=http://localhost:8080
+PINGOU_NTFY_TOKEN=tk_...
+```
+
+Com um usuário comum (`--role=user`), dê permissão de escrita no tópico: `docker exec ntfy ntfy access pingou pingou-alertas write-only`.
+
+### Formato da notificação
+
+O texto é o mesmo do e-mail. Exemplo de queda:
+
+```
+Título: API de pagamentos está fora do ar
+Prioridade: alta · Tag: 🚨
+
+Monitor: API de pagamentos
+Tipo: http
+Alvo: https://api.exemplo.com/health
+Caiu em: 2026-11-01 14:03:12 UTC
+Erro: connection refused
+Detalhes: https://pingou.exemplo.com/monitors/<id>
+```
+
+Na volta, o título é `API de pagamentos voltou (fora por 5 min)`, com prioridade normal e a tag ✅.
+
+- Com `PINGOU_PUBLIC_URL`, tocar na notificação abre a página do monitor (header `Click`).
+- `Alvo` não aparece no Heartbeat, e o token de ping **nunca** vai na notificação.
+- O log registra só o host do servidor e o status, nunca o token, a URL completa nem o tópico.
+
+### Testando o ntfy
+
+`POST /api/settings/ntfy/test` publica uma notificação de teste sem gravar nada. Com `{"topic": "..."}` no corpo, usa esse tópico (sem salvar). Sem corpo, usa o salvo.
+
+```bash
+curl -X POST http://localhost:8956/api/settings/ntfy/test \
+  -H "X-API-Key: dev-api-key" \
+  -d '{"topic":"pingou-alertas"}'
+```
+
+```json
+{ "ok": true, "status_code": 200, "duration_ms": 6, "error": null }
+```
+
+- A resposta é `200` quando o teste roda. `ok` diz se o ntfy aceitou; senão, `error` explica (ex.: `"unexpected status code: 401 (token inválido ou sem permissão no tópico)"`).
+- `400` sem `PINGOU_NTFY_URL`, sem tópico ou com tópico inválido. `429` com `Retry-After` depois de 5 testes por minuto.
+
+> Já usa o webhook? Ele também funciona com o ntfy via template na URL, mas aí o token fica salvo no banco e vai junto no export. O canal próprio evita isso.
+
+## Entrega das notificações
+
+Webhook, e-mail e ntfy são enviados **fora** do processamento dos checks: um destino lento não atrasa os outros monitores. O Pingou avisa **uma vez por transição**, sem retry. No desligamento (SIGTERM), envios em andamento têm até 10 s para terminar; um crash ou `kill -9` pode perder o aviso.
 
 ---
 
@@ -1019,6 +1105,7 @@ A ideia não é competir com ferramentas enterprise nem com plataformas completa
 - Integração com Prometheus
 - Webhook por monitor
 - Templates para Discord e Slack
+- Mais canais de notificação (Telegram)
 - Multi-tenancy
 - Limite de ping por cliente atrás de proxy: ler `X-Forwarded-For` só quando a conexão vier de um proxy confiável (`PINGOU_TRUSTED_PROXIES`)
 
