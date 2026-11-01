@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { niceScale } from "../../lib/chartScale";
 import {
   bucketLabel,
   clock,
@@ -10,12 +11,10 @@ import {
 const W = 1000; // viewBox; o SVG estica na largura (preserveAspectRatio="none")
 const H = 200;
 
-// Escala Y em 3 passos "redondos" de 100 ms: pico 402 ms → 0 / 200 / 400 / 600.
-function scaleOf(values) {
-  const peak = Math.max(0, ...values);
-  const step = Math.max(100, Math.ceil(peak / 300) * 100);
-  return { max: step * 3, ticks: [0, step, step * 2, step * 3] };
-}
+// Valor plotado por balde: latência média (HTTP/TCP) ou pings recebidos
+// (heartbeat: prazo perdido é check com falha, então checks - failures).
+const valueOf = (b, heartbeat) =>
+  heartbeat ? b.checks - b.failures : b.avg_latency_ms;
 
 // Linha da série; balde sem média quebra o traço (novo "M") em vez de ligar
 // por cima do buraco.
@@ -88,7 +87,14 @@ function gapBuckets(series, bucketSeconds, intervalSeconds, down) {
   return gaps;
 }
 
-function summary(series, down) {
+function summary(series, down, heartbeat) {
+  if (heartbeat) {
+    const total = series.reduce((a, b) => a + valueOf(b, true), 0);
+    const quedas = down.length
+      ? plural(down.length, "período fora do ar", "períodos fora do ar")
+      : "nenhum período fora do ar";
+    return `${plural(total, "ping recebido", "pings recebidos")}, ${quedas}.`;
+  }
   const values = series.map((b) => b.avg_latency_ms).filter((v) => v != null);
   if (values.length === 0) return "Tempo de resposta: sem dados neste período.";
   const avg = Math.round(values.reduce((a, b) => a + b, 0) / values.length);
@@ -100,17 +106,23 @@ function summary(series, down) {
 
 // Gráfico de tempo de resposta (SVG à mão) com tooltip por ponto: mouse,
 // toque (toque fixa o ponto, tocar fora limpa) e setas do teclado.
-export function ResponseChart({ stats, now, intervalSeconds }) {
+export function ResponseChart({ stats, now, intervalSeconds, heartbeat }) {
   const { series, down, since, until, bucket_seconds: bucketSeconds } = stats;
   const n = series.length;
-  const gaps = gapBuckets(series, bucketSeconds, intervalSeconds, down);
+  // heartbeat: zero pings é normal, então sem faixa cinza
+  const gaps = heartbeat
+    ? new Set()
+    : gapBuckets(series, bucketSeconds, intervalSeconds, down);
   const [active, setActive] = useState(null);
   const plotRef = useRef(null);
 
   const span = new Date(until) - new Date(since);
   const xOf = (i) => ((i + 0.5) / n) * W;
   const xAt = (iso) => ((new Date(iso) - new Date(since)) / span) * W;
-  const { max, ticks } = scaleOf(series.map((b) => b.avg_latency_ms ?? 0));
+  const { max, ticks } = niceScale(
+    Math.max(0, ...series.map((b) => valueOf(b, heartbeat) ?? 0)),
+    heartbeat ? 1 : 100,
+  );
   const yOf = (ms) => H - (ms / max) * H;
 
   // toque: tocar fora do gráfico limpa o ponto fixado
@@ -123,11 +135,15 @@ export function ResponseChart({ stats, now, intervalSeconds }) {
     return () => document.removeEventListener("pointerdown", onDown);
   }, [active]);
 
-  const hasData = series.some((b) => b.avg_latency_ms != null);
+  const hasData = heartbeat
+    ? down.length > 0 || series.some((b) => valueOf(b, true) > 0)
+    : series.some((b) => b.avg_latency_ms != null);
   if (!hasData) {
     return (
       <p className="m-0 py-16 text-center text-pg-ui text-pg-neblina">
-        Sem dados de resposta neste período.
+        {heartbeat
+          ? "Sem pings neste período."
+          : "Sem dados de resposta neste período."}
       </p>
     );
   }
@@ -157,15 +173,23 @@ export function ResponseChart({ stats, now, intervalSeconds }) {
   const b = active != null ? series[active] : null;
   const pointDown = b && isDown(b, bucketSeconds, down);
   const leftPct = active != null ? (xOf(active) / W) * 100 : 0;
+  const pings = b ? valueOf(b, true) : 0;
   const tipText = b
-    ? [
-        bucketLabel(b.t, bucketSeconds, now),
-        b.avg_latency_ms != null
-          ? `média ${b.avg_latency_ms} ms`
-          : "sem resposta",
-        `${plural(b.checks, "check", "checks")}, ${plural(b.failures, "falha", "falhas")}`,
-        pointDown ? "fora do ar" : null,
-      ]
+    ? (heartbeat
+        ? [
+            bucketLabel(b.t, bucketSeconds, now),
+            plural(pings, "ping", "pings"),
+            pointDown ? "fora do ar" : null,
+          ]
+        : [
+            bucketLabel(b.t, bucketSeconds, now),
+            b.avg_latency_ms != null
+              ? `média ${b.avg_latency_ms} ms`
+              : "sem resposta",
+            `${plural(b.checks, "check", "checks")}, ${plural(b.failures, "falha", "falhas")}`,
+            pointDown ? "fora do ar" : null,
+          ]
+      )
         .filter(Boolean)
         .join(", ")
     : "";
@@ -183,7 +207,7 @@ export function ResponseChart({ stats, now, intervalSeconds }) {
             className="absolute right-0 -translate-y-1/2 whitespace-nowrap"
             style={{ top: `${(yOf(t) / H) * 100}%` }}
           >
-            {t === 0 ? "0" : `${t} ms`}
+            {t === 0 || heartbeat ? t : `${t} ms`}
           </span>
         ))}
       </div>
@@ -192,7 +216,7 @@ export function ResponseChart({ stats, now, intervalSeconds }) {
         ref={plotRef}
         tabIndex={0}
         role="group"
-        aria-label={`${summary(series, down)} Use as setas para ler cada intervalo.`}
+        aria-label={`${summary(series, down, heartbeat)} Use as setas para ler cada intervalo.`}
         onPointerMove={(e) => e.pointerType === "mouse" && pick(e)}
         onPointerDown={pick}
         onPointerLeave={(e) => e.pointerType === "mouse" && setActive(null)}
@@ -258,14 +282,31 @@ export function ResponseChart({ stats, now, intervalSeconds }) {
               </g>
             );
           })}
-          <path
-            d={linePath(series, xOf, yOf)}
-            fill="none"
-            stroke="var(--pg-ciano)"
-            strokeWidth="2"
-            strokeLinejoin="round"
-            vectorEffect="non-scaling-stroke"
-          />
+          {heartbeat ? (
+            series.map((s, i) => {
+              const h = (valueOf(s, true) / max) * H;
+              return h > 0 ? (
+                <rect
+                  key={s.t}
+                  x={(i / n) * W + (W / n) * 0.15}
+                  y={H - h}
+                  width={(W / n) * 0.7}
+                  height={h}
+                  fill="var(--pg-ciano)"
+                  opacity={active == null || active === i ? 1 : 0.6}
+                />
+              ) : null;
+            })
+          ) : (
+            <path
+              d={linePath(series, xOf, yOf)}
+              fill="none"
+              stroke="var(--pg-ciano)"
+              strokeWidth="2"
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
+            />
+          )}
         </svg>
 
         {b && (
@@ -274,7 +315,7 @@ export function ResponseChart({ stats, now, intervalSeconds }) {
               className="absolute top-0 bottom-0 w-px bg-pg-borda pointer-events-none"
               style={{ left: `${leftPct}%` }}
             />
-            {b.avg_latency_ms != null && (
+            {!heartbeat && b.avg_latency_ms != null && (
               <div
                 className="absolute w-2.5 h-2.5 -ml-[5px] -mt-[5px] rounded-full bg-pg-ciano border-2 border-pg-branco pointer-events-none"
                 style={{
@@ -293,24 +334,34 @@ export function ResponseChart({ stats, now, intervalSeconds }) {
               <div className="font-medium mb-1">
                 {bucketLabel(b.t, bucketSeconds, now)}
               </div>
-              <div>
-                {b.avg_latency_ms != null ? (
-                  <>
-                    Média{" "}
-                    <strong className="font-medium tabular-nums">
-                      {b.avg_latency_ms} ms
-                    </strong>
-                  </>
-                ) : (
-                  <span className="text-pg-neblina">Sem resposta</span>
-                )}
-              </div>
-              <div className="text-pg-neblina tabular-nums">
-                {plural(b.checks, "check", "checks")} ·{" "}
-                <span className={b.failures > 0 ? "text-pg-down" : ""}>
-                  {plural(b.failures, "falha", "falhas")}
-                </span>
-              </div>
+              {heartbeat ? (
+                <div className="tabular-nums">
+                  <strong className="font-medium">
+                    {plural(pings, "ping", "pings")}
+                  </strong>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    {b.avg_latency_ms != null ? (
+                      <>
+                        Média{" "}
+                        <strong className="font-medium tabular-nums">
+                          {b.avg_latency_ms} ms
+                        </strong>
+                      </>
+                    ) : (
+                      <span className="text-pg-neblina">Sem resposta</span>
+                    )}
+                  </div>
+                  <div className="text-pg-neblina tabular-nums">
+                    {plural(b.checks, "check", "checks")} ·{" "}
+                    <span className={b.failures > 0 ? "text-pg-down" : ""}>
+                      {plural(b.failures, "falha", "falhas")}
+                    </span>
+                  </div>
+                </>
+              )}
               {pointDown && (
                 <div className="mt-1 font-medium text-pg-down">Fora do ar</div>
               )}
@@ -343,29 +394,39 @@ export function ResponseChart({ stats, now, intervalSeconds }) {
   );
 }
 
-export function ChartLegend({ bucketSeconds }) {
+export function ChartLegend({ bucketSeconds, heartbeat }) {
   return (
     <div
       className="flex gap-3 md:gap-4 text-pg-caption text-pg-neblina"
       aria-hidden="true"
     >
       <span className="inline-flex items-center gap-1.5">
-        <span className="w-3.5 h-0.5 rounded bg-pg-ciano" />{" "}
-        <span className="md:hidden">média</span>
-        <span className="hidden md:inline">
-          {bucketSeconds
-            ? `média a cada ${formatDuration(bucketSeconds)}`
-            : "média por intervalo"}
-        </span>
+        <span
+          className={`bg-pg-ciano ${heartbeat ? "w-3 h-3 rounded-[2px]" : "w-3.5 h-0.5 rounded"}`}
+        />{" "}
+        {heartbeat ? (
+          "pings por intervalo"
+        ) : (
+          <>
+            <span className="md:hidden">média</span>
+            <span className="hidden md:inline">
+              {bucketSeconds
+                ? `média a cada ${formatDuration(bucketSeconds)}`
+                : "média por intervalo"}
+            </span>
+          </>
+        )}
       </span>
       <span className="inline-flex items-center gap-1.5">
         <span className="w-3 h-3 rounded-[2px] border border-pg-down bg-pg-down-bg" />{" "}
         fora do ar
       </span>
-      <span className="inline-flex items-center gap-1.5">
-        <span className="w-3 h-3 rounded-[2px] border border-pg-neblina bg-pg-unknown-bg" />{" "}
-        sem dados
-      </span>
+      {!heartbeat && (
+        <span className="inline-flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-[2px] border border-pg-neblina bg-pg-unknown-bg" />{" "}
+          sem dados
+        </span>
+      )}
     </div>
   );
 }

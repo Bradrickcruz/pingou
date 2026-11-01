@@ -279,27 +279,29 @@ function Performance({
         />
       </div>
 
-      {!heartbeat && (
-        <div className="p-4 sm:p-5 rounded-pg-card border border-pg-borda bg-pg-branco">
-          <div className="flex flex-col md:flex-row md:flex-wrap md:items-center md:justify-between gap-1 md:gap-2 mb-4">
-            <h3 className="text-pg-ui font-medium text-pg-ardosia my-0">
-              Tempo de resposta
-            </h3>
-            <ChartLegend bucketSeconds={stats?.bucket_seconds} />
-          </div>
-          {stats ? (
-            <ResponseChart
-              stats={stats}
-              now={now}
-              intervalSeconds={monitor.interval_seconds}
-            />
-          ) : (
-            <div className="flex justify-center items-center h-[200px]">
-              {!statsError && <Spinner />}
-            </div>
-          )}
+      <div className="p-4 sm:p-5 rounded-pg-card border border-pg-borda bg-pg-branco">
+        <div className="flex flex-col md:flex-row md:flex-wrap md:items-center md:justify-between gap-1 md:gap-2 mb-4">
+          <h3 className="text-pg-ui font-medium text-pg-ardosia my-0">
+            {heartbeat ? "Pings recebidos" : "Tempo de resposta"}
+          </h3>
+          <ChartLegend
+            bucketSeconds={stats?.bucket_seconds}
+            heartbeat={heartbeat}
+          />
         </div>
-      )}
+        {stats ? (
+          <ResponseChart
+            stats={stats}
+            now={now}
+            intervalSeconds={monitor.interval_seconds}
+            heartbeat={heartbeat}
+          />
+        ) : (
+          <div className="flex justify-center items-center h-[200px]">
+            {!statsError && <Spinner />}
+          </div>
+        )}
+      </div>
     </section>
   );
 }
