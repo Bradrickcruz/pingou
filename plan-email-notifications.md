@@ -484,18 +484,31 @@ curl -s -X POST  -H "X-API-Key: $PINGOU_API_KEY" localhost:8956/api/settings/ema
 
 ## Cronograma Sugerido
 
-| Fase                       | Tarefas                     | Complexity | Esforço | Target                                                                    | Status      |
-| -------------------------- | --------------------------- | ---------- | ------- | ------------------------------------------------------------------------- | ----------- |
-| Fase 0: Envio fora do lock | T1, T2, T3                  | S          | ~35 min | Webhook lento não trava outros monitores (pode ir para `develop` sozinha) | ⬜ Pendente |
-| Fase 1: E-mail no backend  | T4, T5, T6, T7, T8, T9, T10 | L          | ~2 h 30 | `curl` envia o teste ao Mailpit; testes verdes                            | ⬜ Pendente |
-| Fase 2: Tela               | T11, T12                    | M          | ~45 min | Card bloqueado e desbloqueado funcionando                                 | ⬜ Pendente |
-| Fase 3: Polimento          | T13, T14, T15               | M          | ~1 h 15 | Segurança, QA com provedor real e README                                  | ⬜ Pendente |
+| Fase                       | Tarefas                     | Complexity | Esforço | Target                                                                    | Status       |
+| -------------------------- | --------------------------- | ---------- | ------- | ------------------------------------------------------------------------- | ------------ |
+| Fase 0: Envio fora do lock | T1, T2, T3                  | S          | ~35 min | Webhook lento não trava outros monitores (pode ir para `develop` sozinha) | ✅ Feito     |
+| Fase 1: E-mail no backend  | T4, T5, T6, T7, T8, T9, T10 | L          | ~2 h 30 | `curl` envia o teste ao Mailpit; testes verdes                            | ✅ Feito     |
+| Fase 2: Tela               | T11, T12                    | M          | ~45 min | Card bloqueado e desbloqueado funcionando                                 | ✅ Feito     |
+| Fase 3: Polimento          | T13, T14, T15               | M          | ~1 h 15 | Segurança, QA com provedor real e README                                  | 🟡 Falta T14 |
 
 ## Status de Execução
 
 ### Concluído
 
--
+- T1–T3 (Fase 0): `MultiNotifier` em `internal/service/multi_notifier.go` (arquivo próprio, em vez de `notifier.go`), com `Add()` para o `serve` incluir o e-mail. `Wait(10s)` no shutdown
+- T4: `config.LoadSMTP()` exportada e chamada só no `Load()` do `serve`, para um SMTP inválido não travar o `migrate`. `pingou config` mostra `SMTPError` quando a config é inválida
+- T5–T7: `email_notifier.go` + testes (mensagem, SMTP falso nos modos `none`, timeout e STARTTLS obrigatório). O corpo da volta também mostra `Voltou em`
+- T8–T10: settings, rota `POST /api/settings/email/test` (`emailTestRateLimit = 5`) e testes de handler
+- T11–T12: `EmailCard`, `Settings.jsx`; botão e resultado de teste extraídos para `TestControls.jsx` (usados pelos dois cards) e `testErrorText` para `lib/testError.js`
+- T13 (checklist de segurança):
+  1. Senha só usada em `smtp.PlainAuth`; não aparece em `slog`, `pingou config` (só `SMTPPasswordSet`), `GET /settings` (teste `TestSettingsEmailWithSMTP`) nem no export (não vai para o banco) ✅
+  2. Sem injeção de cabeçalho: `oneLine()` em todos os cabeçalhos; teste com `\r\nBcc:`; destinatários validados por `net/mail` ✅
+  3. `starttls` falha sem `STARTTLS` (`TestStartTLSRequired`), sem rebaixar ✅
+  4. `tls.Config` sem `InsecureSkipVerify` (com `MinVersion: TLS 1.2`) ✅
+  5. Rota de teste atrás do `authMiddleware` + rate limit; máximo de 10 destinatários ✅
+  6. Log só com `recipients_count` ✅
+- T15: README (variáveis, seção `## E-mail`, endpoint, `pingou config`), `.env.example` e `docker-compose.yml`
+- Verificação: `go vet ./...`, `go test -race ./...`, `gofumpt -l` (só o `rm.go`, que já estava assim), `npm run lint`, `format:check`, `npm test`, `npm run build`. Tela conferida em 1440 e 375 px com e sem `PINGOU_SMTP_HOST`
 
 ### Em andamento
 
@@ -503,7 +516,7 @@ curl -s -X POST  -H "X-API-Key: $PINGOU_API_KEY" localhost:8956/api/settings/ema
 
 ### Pendente
 
-- T1 a T15
+- T14: QA manual com Mailpit e provedor real (587/465). O ambiente de desenvolvimento não tinha Docker nem acesso a um SMTP real
 
 ## Notes
 
