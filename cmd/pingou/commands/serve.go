@@ -91,6 +91,9 @@ func runServe(cmd *cobra.Command, args []string) error {
 		return url
 	}, loadedConfig.PublicURL)
 
+	// notifier: repassa cada evento para todos os canais, fora do lock do scheduler
+	notifier := service.NewMultiNotifier(webhookNotifier)
+
 	// checkers: o registry escolhe pelo tipo (heartbeat não tem check ativo)
 	monitorChecker := checker.NewRegistry(map[domain.MonitorType]domain.Checker{
 		domain.TypeHTTP: checker.NewHTTPChecker(loadedConfig.MaxRedirects, loadedConfig.GlobalTimeout),
@@ -103,7 +106,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 	settingsService := service.NewSettingsService(settingsRepository)
 
 	// scheduler
-	monitorScheduler := scheduler.NewScheduler(monitorRepository, monitorChecker, db, checkRepoTx, monitorRepoTx, incidentRepoTx, webhookNotifier)
+	monitorScheduler := scheduler.NewScheduler(monitorRepository, monitorChecker, db, checkRepoTx, monitorRepoTx, incidentRepoTx, notifier)
 	monitorService.SetReloader(monitorScheduler)
 	monitorService.SetRecorder(monitorScheduler)
 
@@ -139,6 +142,11 @@ func runServe(cmd *cobra.Command, args []string) error {
 	}
 
 	monitorScheduler.Stop()
+
+	// avisos já decididos têm até 10 s para sair antes do processo terminar
+	if !notifier.Wait(10 * time.Second) {
+		slog.Warn("notifications still pending at shutdown")
+	}
 
 	return nil
 }
