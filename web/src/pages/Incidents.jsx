@@ -198,7 +198,7 @@ export function Incidents() {
   const showResolved = tab !== "open";
 
   return (
-    <div className="max-w-[1180px]">
+    <div className="max-w-[1680px]">
       <MobileHeader title="Incidentes" />
       <h1 className="hidden md:block text-pg-h1 font-medium text-pg-ardosia my-0">
         Incidentes
