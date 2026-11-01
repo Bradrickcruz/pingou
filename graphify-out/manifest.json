@@ -978,15 +978,9 @@
     "semantic_hash": ""
   },
   "docs/implementacoes.md": {
-    "mtime": 1793564518.9566789,
-    "seen": 1793564681.7064693,
-    "ast_hash": "b292786c02220b5eea24640c0446dd60",
-    "semantic_hash": ""
-  },
-  "plan-email-notifications.md": {
-    "mtime": 1793564518.9766784,
-    "seen": 1793564681.7064724,
-    "ast_hash": "605bf44c05b7c58828ded6249ff9362b",
+    "mtime": 1793565085.2081249,
+    "seen": 1793565095.1105301,
+    "ast_hash": "fb8378f6dcd541f770b0dfdc0c553680",
     "semantic_hash": ""
   },
   "scripts/README.md": {
@@ -1319,18 +1313,6 @@
     "ast_hash": "5da061572a0f1046a0f15a519a87d561",
     "semantic_hash": ""
   },
-  "plan-largura-busca.md": {
-    "mtime": 1793564518.9766784,
-    "seen": 1793564681.7064736,
-    "ast_hash": "f8cdde0ba28d7a95958f40967d82f5de",
-    "semantic_hash": ""
-  },
-  "plan-ntfy-notifications.md": {
-    "mtime": 1793564530.6823845,
-    "seen": 1793564681.7064748,
-    "ast_hash": "d97604d88d174c33fc6059737b0564d8",
-    "semantic_hash": ""
-  },
   "plan-pause-closes-incident.md": {
     "mtime": 1793564518.9766784,
     "seen": 1793564681.706476,
@@ -1353,12 +1335,6 @@
     "mtime": 1793564530.6833844,
     "seen": 1793564681.7063847,
     "ast_hash": "e8b46f74561fcf467d0ce63652d8a60b",
-    "semantic_hash": ""
-  },
-  "plan-eixo-y-dinamico.md": {
-    "mtime": 1793564671.6190794,
-    "seen": 1793564681.706471,
-    "ast_hash": "ab015e4c78104645e3f41dd0b8cd00db",
     "semantic_hash": ""
   },
   "web/src/lib/chartScale.js": {

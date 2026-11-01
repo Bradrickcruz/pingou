@@ -103,26 +103,26 @@
   },
   "internal/database/migrations/0001_init.sql": {
     "mtime": 1777012405.3893824,
-    "seen": 1793564681.706245,
-    "ast_hash": "",
+    "seen": 1793564939.2665944,
+    "ast_hash": "cdf3d4043c780543a27d4cc148cf5555",
     "semantic_hash": ""
   },
   "internal/database/migrations/0002_add_duration_seconds_to_incidents.sql": {
     "mtime": 1777061129.9355462,
-    "seen": 1793564681.7062464,
-    "ast_hash": "",
+    "seen": 1793564939.2665958,
+    "ast_hash": "ab52761c5aed638df004b2cddba66e83",
     "semantic_hash": ""
   },
   "internal/database/migrations/0003_monitor_types.sql": {
     "mtime": 1793391650.2071128,
-    "seen": 1793564681.706248,
-    "ast_hash": "",
+    "seen": 1793564939.266597,
+    "ast_hash": "acc29bbbdeb940baaf9ab1e94647b53e",
     "semantic_hash": ""
   },
   "internal/database/migrations/0004_incidents_page.sql": {
     "mtime": 1793391650.2071128,
-    "seen": 1793564681.7062495,
-    "ast_hash": "",
+    "seen": 1793564939.2665985,
+    "ast_hash": "b6bac1548426042243e703bf72f471e7",
     "semantic_hash": ""
   },
   "internal/database/migrations_test.go": {
@@ -576,8 +576,8 @@
     "semantic_hash": ""
   },
   "web/src/components/monitor-detail/ResponseChart.jsx": {
-    "mtime": 1793564762.3111458,
-    "seen": 1793564775.1911407,
+    "mtime": 1793564785.9046636,
+    "seen": 1793564939.2666845,
     "ast_hash": "978a5972205722f1bc930815290aeb96",
     "semantic_hash": ""
   },
@@ -792,8 +792,8 @@
     "semantic_hash": ""
   },
   "web/src/pages/MonitorDetail.jsx": {
-    "mtime": 1793564763.0861297,
-    "seen": 1793564775.19214,
+    "mtime": 1793564785.9046636,
+    "seen": 1793564939.2667253,
     "ast_hash": "cb1064f7b275c4912bd1b33d42684b3b",
     "semantic_hash": ""
   },
@@ -1362,9 +1362,9 @@
     "semantic_hash": ""
   },
   "web/src/lib/chartScale.js": {
-    "mtime": 1793564720.4610214,
-    "seen": 1793564775.1919222,
-    "ast_hash": "2eecc55e8c632d6fe68df11de73316c3",
+    "mtime": 1793564781.3687556,
+    "seen": 1793564939.2667134,
+    "ast_hash": "06d30b1953cdbce80890ce1e28560dfd",
     "semantic_hash": ""
   },
   "web/src/lib/chartScale.test.js": {
