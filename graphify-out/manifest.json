@@ -474,9 +474,9 @@
     "semantic_hash": ""
   },
   "web/package.json": {
-    "mtime": 1793394606.0752585,
-    "seen": 1793556441.37142,
-    "ast_hash": "a36c84574901666f3ebff4781164df14",
+    "mtime": 1793565373.1054878,
+    "seen": 1793565373.9000545,
+    "ast_hash": "d5ab67108cc464b4c1d2f122494db014",
     "semantic_hash": ""
   },
   "web/postcss.config.js": {
@@ -1353,6 +1353,12 @@
     "mtime": 1793565186.075442,
     "seen": 1793565210.591942,
     "ast_hash": "da795ddc79157546fecab240a2da1f89",
+    "semantic_hash": ""
+  },
+  "internal/database/migrations/0005_incident_closed_manually.sql": {
+    "mtime": 1793565155.0309525,
+    "seen": 1793565373.8999848,
+    "ast_hash": "657004d6f307a019e1515d89e7089ecc",
     "semantic_hash": ""
   }
 }
