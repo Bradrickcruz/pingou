@@ -14,7 +14,8 @@ LOG=$OUT/mem.log
 cleanup() { kill "${PINGOU_PID:-}" "${TARGET_PID:-}" 2>/dev/null || true; }
 trap cleanup EXIT
 
-go build -o "$OUT/target" ./scripts/memtest/target.go && "$OUT/target" & TARGET_PID=$!
+go build -o "$OUT/target" ./scripts/memtest/target.go
+"$OUT/target" & TARGET_PID=$!
 PINGOU_API_KEY=$KEY PINGOU_DATABASE_URL=$OUT/pingou.db ./bin/pingou >"$OUT/pingou.log" 2>&1 & PINGOU_PID=$!
 until curl -sf -H "X-API-Key: $KEY" $API/info >/dev/null; do sleep 0.5; done
 
