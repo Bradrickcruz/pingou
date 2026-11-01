@@ -44,6 +44,18 @@ func runConfig(cmd *cobra.Command, args []string) error {
 		"GlobalTimeout":      getEnvInt("PINGOU_GLOBAL_TIMEOUT", 60),
 	}
 
+	// SMTP: a senha nunca é mostrada, só se está definida
+	smtp, err := config.LoadSMTP()
+	if err != nil {
+		cfg["SMTPError"] = err.Error()
+	} else if smtp.Enabled() {
+		cfg["SMTPHost"] = smtp.Host
+		cfg["SMTPPort"] = smtp.Port
+		cfg["SMTPFrom"] = smtp.From
+		cfg["SMTPTLS"] = smtp.TLS
+		cfg["SMTPPasswordSet"] = smtp.Password != ""
+	}
+
 	out, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		return fmt.Errorf("json error: %w", err)

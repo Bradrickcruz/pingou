@@ -4,27 +4,37 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strings"
 
+	"github.com/Bradrickcruz/pingou/internal/config"
 	"github.com/Bradrickcruz/pingou/internal/repository"
 )
 
 type SettingsService struct {
 	repo *repository.SettingsRepo
+	smtp config.SMTPConfig // vem do ambiente; Enabled() decide o email_available
 }
 
-func NewSettingsService(repo *repository.SettingsRepo) *SettingsService {
-	return &SettingsService{repo: repo}
+func NewSettingsService(repo *repository.SettingsRepo, smtp config.SMTPConfig) *SettingsService {
+	return &SettingsService{repo: repo, smtp: smtp}
 }
 
 type Settings struct {
-	WebhookURL    string `json:"webhook_url"`
-	RetentionDays int    `json:"retention_days"`
+	WebhookURL      string `json:"webhook_url"`
+	RetentionDays   int    `json:"retention_days"`
+	EmailRecipients string `json:"email_recipients"` // "" = e-mail desligado
+	EmailAvailable  bool   `json:"email_available"`  // false = SMTP não configurado no ambiente
 }
 
 type UpdateSettingsInput struct {
-	WebhookURL    *string
-	RetentionDays *int
+	WebhookURL      *string
+	RetentionDays   *int
+	EmailRecipients *string
 }
+
+const settingEmailRecipients = "email_recipients"
+
+var errEmailUnavailable = fmt.Errorf("%w: email is not configured on the server (PINGOU_SMTP_*)", ErrValidation)
 
 func (s *SettingsService) Get(ctx context.Context) (*Settings, error) {
 	webhookURL, err := s.repo.Get(ctx, "webhook_url")
@@ -40,9 +50,16 @@ func (s *SettingsService) Get(ctx context.Context) (*Settings, error) {
 	retention := 30
 	fmt.Sscanf(retentionStr, "%d", &retention)
 
+	recipients, err := s.repo.Get(ctx, settingEmailRecipients)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Settings{
-		WebhookURL:    webhookURL,
-		RetentionDays: retention,
+		WebhookURL:      webhookURL,
+		RetentionDays:   retention,
+		EmailRecipients: recipients,
+		EmailAvailable:  s.smtp.Enabled(),
 	}, nil
 }
 
@@ -63,6 +80,20 @@ func (s *SettingsService) Update(ctx context.Context, in UpdateSettingsInput) (*
 			return nil, fmt.Errorf("%w: retention_days must be between 7 and 90", ErrValidation)
 		}
 		if err := s.repo.Set(ctx, "retention_days", fmt.Sprintf("%d", *in.RetentionDays)); err != nil {
+			return nil, err
+		}
+	}
+
+	if in.EmailRecipients != nil {
+		list, err := parseRecipients(*in.EmailRecipients)
+		if err != nil {
+			return nil, err
+		}
+		// "" sempre aceito: desliga o e-mail mesmo sem SMTP no ambiente
+		if len(list) > 0 && !s.smtp.Enabled() {
+			return nil, errEmailUnavailable
+		}
+		if err := s.repo.Set(ctx, settingEmailRecipients, strings.Join(list, ",")); err != nil {
 			return nil, err
 		}
 	}
@@ -101,5 +132,34 @@ func (s *SettingsService) TestWebhook(ctx context.Context, rawURL *string) (*Web
 	}
 
 	result := SendTestWebhook(ctx, target)
+	return &result, nil
+}
+
+// TestEmail envia o e-mail de teste para raw ou, se vier vazio, para os
+// destinatários salvos. Não salva nada.
+func (s *SettingsService) TestEmail(ctx context.Context, raw *string) (*EmailTestResult, error) {
+	if !s.smtp.Enabled() {
+		return nil, errEmailUnavailable
+	}
+	target := ""
+	if raw != nil {
+		target = *raw
+	}
+	if strings.TrimSpace(target) == "" {
+		saved, err := s.repo.Get(ctx, settingEmailRecipients)
+		if err != nil {
+			return nil, fmt.Errorf("get email_recipients: %w", err)
+		}
+		target = saved
+	}
+	to, err := parseRecipients(target)
+	if err != nil {
+		return nil, err
+	}
+	if len(to) == 0 {
+		return nil, fmt.Errorf("%w: no email recipients to test", ErrValidation)
+	}
+
+	result := SendTestEmail(ctx, s.smtp, to)
 	return &result, nil
 }

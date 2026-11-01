@@ -30,6 +30,12 @@ func (noopNotifier) NotifyRecovery(context.Context, *domain.Monitor, *domain.Inc
 
 func newTestServer(t *testing.T) (*Server, http.Handler, func(id string) int) {
 	t.Helper()
+	return newTestServerSMTP(t, config.SMTPConfig{})
+}
+
+// newTestServerSMTP é o newTestServer com o SMTP do ambiente simulado.
+func newTestServerSMTP(t *testing.T, smtp config.SMTPConfig) (*Server, http.Handler, func(id string) int) {
+	t.Helper()
 	dbPath := filepath.Join(t.TempDir(), "t.db")
 	db, err := database.Open(dbPath)
 	if err != nil {
@@ -48,7 +54,7 @@ func newTestServer(t *testing.T) (*Server, http.Handler, func(id string) int) {
 	svc.SetRecorder(sched)
 
 	s := NewServer(&config.Config{APIKey: testKey, DatabaseURL: dbPath, Version: "v1.2.3", Commit: "abc1234", BuildDate: "2026-10-29"}, db, svc,
-		service.NewIncidentService(incidents), service.NewSettingsService(repository.NewSettingsRepo(db)))
+		service.NewIncidentService(incidents), service.NewSettingsService(repository.NewSettingsRepo(db), smtp))
 
 	countChecks := func(id string) int {
 		var n int

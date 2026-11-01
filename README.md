@@ -99,7 +99,7 @@ Um novo tipo de check só entra no Pingou se passar nas quatro perguntas:
 - Dashboard web embutido no binário
 - Página de detalhe por monitor (`/monitors/:id`): uptime, resposta média, incidentes e tempo fora do ar em 24h / 7 / 14 / 30 dias, gráfico de tempo de resposta, últimos checks e configuração
 - Login com API Key
-- Webhook global para quedas e recuperações
+- Notificações de queda e recuperação por webhook e por e-mail (SMTP), ligados ao mesmo tempo se quiser
 - Retenção configurável: checks expiram após `retention_days`; incidentes são mantidos. A limpeza roda na subida e a cada 1 h
 - Export do banco SQLite
 - Atomicidade na state machine (transações SQL)
@@ -355,15 +355,23 @@ PINGOU_API_KEY=...
 
 A porta HTTP é fixa em `8956` e não é configurável. Para expor em outra porta, mapeie no host (ex.: `-p 9000:8956`).
 
-| Variável                      | Obrigatória | Padrão      | Descrição                                                                                             |
-| ----------------------------- | :---------: | ----------- | ----------------------------------------------------------------------------------------------------- |
-| `PINGOU_DATABASE_URL`         |     não     | `pingou.db` | Caminho do arquivo SQLite                                                                             |
-| `PINGOU_API_KEY`              |     sim     | -           | Chave que protege o dashboard e as rotas `/api/*`                                                     |
-| `PINGOU_LOG_LEVEL`            |     não     | `info`      | Nível de log (`DEBUG` habilita logs de debug)                                                         |
-| `PINGOU_CORS_ALLOWED_ORIGINS` |     não     | (vazio)     | Origins permitidas, separadas por vírgula. Vazio desabilita CORS. Ex.: `http://localhost:5173`        |
-| `PINGOU_MAX_REDIRECTS`        |     não     | `5`         | Máximo de redirects seguidos pelo checker HTTP                                                        |
-| `PINGOU_GLOBAL_TIMEOUT`       |     não     | `60`        | Timeout global, em segundos, das requisições HTTP                                                     |
-| `PINGOU_PUBLIC_URL`           |     não     | (vazio)     | Endereço público do dashboard. Preenche `dashboard_url` no webhook. Ex.: `https://pingou.exemplo.com` |
+| Variável                      | Obrigatória | Padrão      | Descrição                                                                                                                |
+| ----------------------------- | :---------: | ----------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `PINGOU_DATABASE_URL`         |     não     | `pingou.db` | Caminho do arquivo SQLite                                                                                                |
+| `PINGOU_API_KEY`              |     sim     | -           | Chave que protege o dashboard e as rotas `/api/*`                                                                        |
+| `PINGOU_LOG_LEVEL`            |     não     | `info`      | Nível de log (`DEBUG` habilita logs de debug)                                                                            |
+| `PINGOU_CORS_ALLOWED_ORIGINS` |     não     | (vazio)     | Origins permitidas, separadas por vírgula. Vazio desabilita CORS. Ex.: `http://localhost:5173`                           |
+| `PINGOU_MAX_REDIRECTS`        |     não     | `5`         | Máximo de redirects seguidos pelo checker HTTP                                                                           |
+| `PINGOU_GLOBAL_TIMEOUT`       |     não     | `60`        | Timeout global, em segundos, das requisições HTTP                                                                        |
+| `PINGOU_PUBLIC_URL`           |     não     | (vazio)     | Endereço público do dashboard. Preenche `dashboard_url` no webhook e o link no e-mail. Ex.: `https://pingou.exemplo.com` |
+| `PINGOU_SMTP_HOST`            |     não     | (vazio)     | Servidor SMTP. Liga o e-mail. Vazio = e-mail indisponível (as outras `PINGOU_SMTP_*` são ignoradas)                      |
+| `PINGOU_SMTP_PORT`            |     não     | `587`       | Porta do SMTP (1–65535)                                                                                                  |
+| `PINGOU_SMTP_USERNAME`        |     não     | (vazio)     | Usuário do SMTP. Vazio = sem autenticação (relay)                                                                        |
+| `PINGOU_SMTP_PASSWORD`        | com usuário | (vazio)     | Senha do SMTP. Nunca aparece em log, na API nem no `pingou config`                                                       |
+| `PINGOU_SMTP_FROM`            | com `HOST`  | -           | Remetente. Ex.: `Pingou <alerta@exemplo.com>`                                                                            |
+| `PINGOU_SMTP_TLS`             |     não     | `starttls`  | `starttls`, `tls` ou `none`. Padrão: `tls` na porta 465, `starttls` nas outras. `none` só sem usuário                    |
+
+Com `PINGOU_SMTP_HOST` setado e alguma regra violada (ex.: falta `PINGOU_SMTP_FROM`), o `serve` não sobe e mostra o motivo, como acontece quando falta `PINGOU_API_KEY`.
 
 ## SQLite
 
@@ -456,6 +464,7 @@ Sobre `/ping/{token}`:
 | `GET`    | `/api/settings`               | Busca as configurações globais                                  |
 | `PATCH`  | `/api/settings`               | Atualiza as configurações globais (`webhook_url` só http/https) |
 | `POST`   | `/api/settings/webhook/test`  | Envia um evento `test` ao webhook (5 por minuto por IP)         |
+| `POST`   | `/api/settings/email/test`    | Envia um e-mail de teste (5 por minuto por IP)                  |
 | `GET`    | `/api/info`                   | Versão, commit, data do build e tamanho do banco                |
 | `GET`    | `/api/export`                 | Baixa um dump do SQLite (`pingou-AAAA-MM-DD.db`, `VACUUM INTO`) |
 
@@ -692,6 +701,99 @@ O payload tem o mesmo formato dos eventos reais:
 
 > Integrações que tratam `event` devem **ignorar valores desconhecidos**. Novos eventos podem surgir sem aviso.
 
+## E-mail
+
+O Pingou também avisa por e-mail. Webhook e e-mail podem ficar ligados ao mesmo tempo: cada queda e cada volta vai para os dois.
+
+### Como ligar
+
+1. Configure o servidor SMTP no ambiente (`PINGOU_SMTP_*`, veja [Variáveis de ambiente](#variáveis-de-ambiente)). Tudo do servidor, inclusive a senha, fica **só no ambiente**: nada vai para o banco nem para o export.
+2. Reinicie o Pingou. O log mostra `email notifications available`.
+3. Em **Configurações → E-mail**, informe os destinatários separados por vírgula (até 10) e use **Enviar teste**.
+
+Sem `PINGOU_SMTP_HOST`, o card de e-mail aparece bloqueado. Se você remover a variável depois, os destinatários continuam salvos, mas nada é enviado.
+
+### Exemplos
+
+Gmail (porta 587, com [senha de app](https://support.google.com/accounts/answer/185833)):
+
+```bash
+PINGOU_SMTP_HOST=smtp.gmail.com
+PINGOU_SMTP_PORT=587
+PINGOU_SMTP_USERNAME=voce@gmail.com
+PINGOU_SMTP_PASSWORD=<senha-de-app>
+PINGOU_SMTP_FROM="Pingou <voce@gmail.com>"
+```
+
+Relay local, sem TLS e sem autenticação:
+
+```bash
+PINGOU_SMTP_HOST=localhost
+PINGOU_SMTP_PORT=25
+PINGOU_SMTP_TLS=none
+PINGOU_SMTP_FROM="Pingou <pingou@exemplo.com>"
+```
+
+Para testar sem enviar e-mail de verdade, use o [Mailpit](https://mailpit.axllent.org/) e abra `http://localhost:8025`:
+
+```bash
+docker run -d --name mailpit -p 1025:1025 -p 8025:8025 axllent/mailpit
+PINGOU_SMTP_HOST=localhost PINGOU_SMTP_PORT=1025 PINGOU_SMTP_TLS=none \
+PINGOU_SMTP_FROM="Pingou <pingou@localhost>" ./bin/pingou
+```
+
+Modos de TLS:
+
+| `PINGOU_SMTP_TLS` | Como funciona                                                                               |
+| ----------------- | ------------------------------------------------------------------------------------------- |
+| `starttls`        | Conecta sem TLS e exige `STARTTLS`. Se o servidor não oferecer, o envio falha (não rebaixa) |
+| `tls`             | TLS desde a conexão (porta 465)                                                             |
+| `none`            | Sem TLS. Só para relay local e **sem** usuário, para a senha nunca trafegar em texto aberto |
+
+> Provedores que exigem OAuth2 (como o Microsoft 365) não são suportados. Use senha de app, um relay ou um serviço transacional (SES, Brevo, Mailgun). Para o e-mail não cair no spam, use um `FROM` do domínio autenticado no provedor (SPF/DKIM).
+
+### Formato da mensagem
+
+Texto simples (UTF-8). Exemplo de queda:
+
+```
+Subject: [Pingou] 🔴 API de pagamentos está fora do ar
+
+Monitor: API de pagamentos
+Tipo: http
+Alvo: https://api.exemplo.com/health
+Caiu em: 2026-11-01 14:03:12 UTC
+Erro: connection refused
+Detalhes: https://pingou.exemplo.com/monitors/<id>
+```
+
+Na volta, o assunto é `[Pingou] 🟢 API de pagamentos voltou (fora por 5 min)` e o corpo troca `Erro` por `Voltou em` e `Fora do ar por: 5 min 12 s`.
+
+- `Alvo` não aparece no Heartbeat, e o token de ping **nunca** vai no e-mail.
+- `Detalhes` só aparece com `PINGOU_PUBLIC_URL`.
+- O log registra só `recipients_count`, nunca os endereços.
+
+### Testando o e-mail
+
+`POST /api/settings/email/test` envia um e-mail de teste sem gravar nada. Com `{"recipients": "..."}` no corpo, usa esses destinatários (sem salvar). Sem corpo, usa os salvos.
+
+```bash
+curl -X POST http://localhost:8956/api/settings/email/test \
+  -H "X-API-Key: dev-api-key" \
+  -d '{"recipients":"ops@exemplo.com"}'
+```
+
+```json
+{ "ok": true, "duration_ms": 812, "error": null }
+```
+
+- A resposta é `200` quando o teste roda. `ok` diz se o servidor aceitou a mensagem; senão, `error` explica (ex.: `"timeout após 30s"`).
+- `400` sem SMTP no ambiente, sem destinatários ou com endereço inválido. `429` com `Retry-After` depois de 5 testes por minuto.
+
+### Entrega
+
+Webhook e e-mail são enviados **fora** do processamento dos checks: um destino lento não atrasa os outros monitores. O Pingou avisa **uma vez por transição**, sem retry. No desligamento (SIGTERM), envios em andamento têm até 10 s para terminar; um crash ou `kill -9` pode perder o aviso.
+
 ---
 
 ## Comandos do Makefile
@@ -829,8 +931,16 @@ O monitor é sempre criado com `enabled: true`. Para `heartbeat`, o comando impr
 #   "CORSAllowedOrigins": null,
 #   "MaxRedirects": 5,
 #   "GlobalTimeout": 60,
-#   "PublicURL": ""
+#   "PublicURL": "",
+#   "SMTPFrom": "Pingou <alerta@exemplo.com>",
+#   "SMTPHost": "smtp.exemplo.com",
+#   "SMTPPasswordSet": true,
+#   "SMTPPort": 587,
+#   "SMTPTLS": "starttls"
 # }
+#
+# Os campos SMTP* só aparecem com PINGOU_SMTP_HOST. A senha nunca é mostrada.
+# Com a config SMTP inválida, aparece "SMTPError" com o motivo.
 ```
 
 ### Flags globais

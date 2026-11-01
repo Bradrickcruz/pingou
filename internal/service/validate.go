@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"net/mail"
 	"regexp"
 	"strings"
 
@@ -158,4 +159,35 @@ func validateMonitor(m *domain.Monitor) error {
 		return err
 	}
 	return validateThreshold(m.FailureThreshold)
+}
+
+// maxEmailRecipients limita a lista: impede usar o teste de e-mail para spam.
+const maxEmailRecipients = 10
+
+// parseRecipients separa por vírgula, valida cada endereço com net/mail, guarda
+// só o endereço (sem nome), remove duplicados (sem diferenciar maiúsculas) e
+// aceita no máximo 10. "" devolve lista vazia.
+func parseRecipients(s string) ([]string, error) {
+	var out []string
+	seen := map[string]bool{}
+	for _, part := range strings.Split(s, ",") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		a, err := mail.ParseAddress(part)
+		if err != nil || !strings.Contains(a.Address, "@") {
+			return nil, fmt.Errorf("%w: invalid email address in email_recipients", ErrValidation)
+		}
+		key := strings.ToLower(a.Address)
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		out = append(out, a.Address)
+	}
+	if len(out) > maxEmailRecipients {
+		return nil, fmt.Errorf("%w: email_recipients accepts at most %d addresses", ErrValidation, maxEmailRecipients)
+	}
+	return out, nil
 }

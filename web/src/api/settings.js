@@ -10,6 +10,11 @@ export const settingsApi = {
     client
       .post("/settings/webhook/test", url ? { url } : {})
       .then((r) => r.data),
+  // sem destinatários → a API usa os salvos
+  testEmail: (recipients) =>
+    client
+      .post("/settings/email/test", recipients ? { recipients } : {})
+      .then((r) => r.data),
   export: () =>
     client.get("/export", { responseType: "blob" }).then((r) => r.data),
 };

@@ -218,3 +218,65 @@ func TestDisableAndDeleteStopJob(t *testing.T) {
 		t.Fatal("job continua ativo após excluir")
 	}
 }
+
+// slowNotifier segura o envio até release fechar, como um webhook lento.
+type slowNotifier struct {
+	started chan struct{}
+	release chan struct{}
+}
+
+func (n *slowNotifier) NotifyDown(context.Context, *domain.Monitor, *domain.Incident) {
+	n.started <- struct{}{}
+	<-n.release
+}
+func (n *slowNotifier) NotifyRecovery(context.Context, *domain.Monitor, *domain.Incident) {}
+
+// Regressão: o notifier rodava dentro do lock dbMu. Um destino lento no monitor
+// A pausava a gravação de todos os outros monitores.
+func TestSlowNotifierDoesNotBlockOtherMonitors(t *testing.T) {
+	e := newEnv(t, true)
+	slow := &slowNotifier{started: make(chan struct{}, 1), release: make(chan struct{})}
+	multi := service.NewMultiNotifier(slow, e.notifier) // e.notifier lê o banco, como o webhook real
+	e.sched.notifier = multi
+	defer func() {
+		close(slow.release)
+		if !multi.Wait(time.Second) {
+			t.Error("envios pendentes no fim do teste")
+		}
+	}()
+
+	// service sem reloader: sem jobs rodando, só os Record do teste gravam checks
+	ctx := context.Background()
+	svc := service.NewMonitorService(e.monitors, e.checks, repository.NewIncidentRepo(e.db))
+	a, err := svc.Create(ctx, validInput)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := svc.Create(ctx, validInput)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	msg := "boom"
+	if err := e.sched.Record(ctx, a.ID, domain.CheckResult{ErrorMessage: &msg}, nil); err != nil {
+		t.Fatal(err)
+	}
+	<-slow.started // o envio de A está preso
+
+	done := make(chan error, 1)
+	go func() {
+		code := 200
+		done <- e.sched.Record(ctx, b.ID, domain.CheckResult{Success: true, StatusCode: &code}, nil)
+	}()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("Record do monitor B esperou o notifier do monitor A")
+	}
+	if e.countChecks(t, b.ID) != 1 {
+		t.Fatal("check de B não foi gravado")
+	}
+}
