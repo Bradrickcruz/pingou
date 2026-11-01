@@ -13,10 +13,11 @@ import (
 type SettingsService struct {
 	repo *repository.SettingsRepo
 	smtp config.SMTPConfig // vem do ambiente; Enabled() decide o email_available
+	ntfy config.NtfyConfig // vem do ambiente; Enabled() decide o ntfy_available
 }
 
-func NewSettingsService(repo *repository.SettingsRepo, smtp config.SMTPConfig) *SettingsService {
-	return &SettingsService{repo: repo, smtp: smtp}
+func NewSettingsService(repo *repository.SettingsRepo, smtp config.SMTPConfig, ntfy config.NtfyConfig) *SettingsService {
+	return &SettingsService{repo: repo, smtp: smtp, ntfy: ntfy}
 }
 
 type Settings struct {
@@ -24,17 +25,27 @@ type Settings struct {
 	RetentionDays   int    `json:"retention_days"`
 	EmailRecipients string `json:"email_recipients"` // "" = e-mail desligado
 	EmailAvailable  bool   `json:"email_available"`  // false = SMTP não configurado no ambiente
+	NtfyTopic       string `json:"ntfy_topic"`       // "" = ntfy desligado
+	NtfyAvailable   bool   `json:"ntfy_available"`   // false = PINGOU_NTFY_URL não configurado
 }
 
 type UpdateSettingsInput struct {
 	WebhookURL      *string
 	RetentionDays   *int
 	EmailRecipients *string
+	NtfyTopic       *string
 }
 
-const settingEmailRecipients = "email_recipients"
+const (
+	settingEmailRecipients = "email_recipients"
+	settingNtfyTopic       = "ntfy_topic"
+)
 
-var errEmailUnavailable = fmt.Errorf("%w: email is not configured on the server (PINGOU_SMTP_*)", ErrValidation)
+var (
+	errEmailUnavailable = fmt.Errorf("%w: email is not configured on the server (PINGOU_SMTP_*)", ErrValidation)
+	errNtfyUnavailable  = fmt.Errorf("%w: ntfy is not configured on the server (PINGOU_NTFY_URL)", ErrValidation)
+	errNtfyTopicInvalid = fmt.Errorf("%w: ntfy_topic must have 1 to 64 characters: letters, numbers, _ or -", ErrValidation)
+)
 
 func (s *SettingsService) Get(ctx context.Context) (*Settings, error) {
 	webhookURL, err := s.repo.Get(ctx, "webhook_url")
@@ -55,11 +66,18 @@ func (s *SettingsService) Get(ctx context.Context) (*Settings, error) {
 		return nil, err
 	}
 
+	topic, err := s.repo.Get(ctx, settingNtfyTopic)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Settings{
 		WebhookURL:      webhookURL,
 		RetentionDays:   retention,
 		EmailRecipients: recipients,
 		EmailAvailable:  s.smtp.Enabled(),
+		NtfyTopic:       topic,
+		NtfyAvailable:   s.ntfy.Enabled(),
 	}, nil
 }
 
@@ -94,6 +112,22 @@ func (s *SettingsService) Update(ctx context.Context, in UpdateSettingsInput) (*
 			return nil, errEmailUnavailable
 		}
 		if err := s.repo.Set(ctx, settingEmailRecipients, strings.Join(list, ",")); err != nil {
+			return nil, err
+		}
+	}
+
+	if in.NtfyTopic != nil {
+		topic := strings.TrimSpace(*in.NtfyTopic)
+		// "" sempre aceito: desliga o ntfy mesmo sem PINGOU_NTFY_URL
+		if topic != "" {
+			if !s.ntfy.Enabled() {
+				return nil, errNtfyUnavailable
+			}
+			if !validNtfyTopic(topic) {
+				return nil, errNtfyTopicInvalid
+			}
+		}
+		if err := s.repo.Set(ctx, settingNtfyTopic, topic); err != nil {
 			return nil, err
 		}
 	}
@@ -161,5 +195,33 @@ func (s *SettingsService) TestEmail(ctx context.Context, raw *string) (*EmailTes
 	}
 
 	result := SendTestEmail(ctx, s.smtp, to)
+	return &result, nil
+}
+
+// TestNtfy publica a mensagem de teste em raw ou, se vier vazio, no tópico
+// salvo. Não salva nada.
+func (s *SettingsService) TestNtfy(ctx context.Context, raw *string) (*NtfyTestResult, error) {
+	if !s.ntfy.Enabled() {
+		return nil, errNtfyUnavailable
+	}
+	topic := ""
+	if raw != nil {
+		topic = strings.TrimSpace(*raw)
+	}
+	if topic == "" {
+		saved, err := s.repo.Get(ctx, settingNtfyTopic)
+		if err != nil {
+			return nil, fmt.Errorf("get ntfy_topic: %w", err)
+		}
+		topic = saved
+	}
+	if topic == "" {
+		return nil, fmt.Errorf("%w: no ntfy topic to test", ErrValidation)
+	}
+	if !validNtfyTopic(topic) {
+		return nil, errNtfyTopicInvalid
+	}
+
+	result := SendTestNtfy(ctx, s.ntfy, topic)
 	return &result, nil
 }

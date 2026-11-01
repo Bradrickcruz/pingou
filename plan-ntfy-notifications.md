@@ -49,23 +49,23 @@ Vários tópicos ou servidores; configuração por monitor; prioridade e ações
 
 Este plano está concluído quando:
 
-- [ ] Todos os Success Criteria estão marcados
-- [ ] Build, lint e type-check passam
-- [ ] Nenhum item pendente no Status de Execução
-- [ ] Evidências de verificação registradas
+- [x] Todos os Success Criteria estão marcados
+- [x] Build, lint e type-check passam
+- [x] Nenhum item pendente no Status de Execução
+- [x] Evidências de verificação registradas
 
 > Revisar o plano se: escopo mudar, nova dependência for descoberta, ou mais de 2 tasks forem bloqueadas.
 
 ## Success Criteria
 
-- [ ] Com `PINGOU_NTFY_URL` e um tópico salvo, uma queda e uma recuperação chegam ao ntfy, com título legível e link do dashboard (se houver `PINGOU_PUBLIC_URL`)
-- [ ] Com `PINGOU_NTFY_TOKEN`, o envio usa `Authorization: Bearer`; servidor com `deny-all` e token errado devolve erro no teste
-- [ ] Sem `PINGOU_NTFY_URL`, o card fica bloqueado e `PATCH` com `ntfy_topic` devolve 400
-- [ ] Token e URL do servidor não aparecem em log, em `/api/settings`, no export nem no `pingou config`
-- [ ] O `ping_token` não aparece em nenhuma mensagem
-- [ ] Botão **Enviar teste** funciona e respeita o rate limit (5 por minuto por IP)
-- [ ] Falha ou panic do ntfy não impede webhook nem e-mail (teste automatizado)
-- [ ] README documenta as variáveis, o card e um exemplo com ntfy.sh e com servidor protegido
+- [x] Com `PINGOU_NTFY_URL` e um tópico salvo, uma queda e uma recuperação chegam ao ntfy, com título legível e link do dashboard (se houver `PINGOU_PUBLIC_URL`)
+- [x] Com `PINGOU_NTFY_TOKEN`, o envio usa `Authorization: Bearer`; servidor com `deny-all` e token errado devolve erro no teste
+- [x] Sem `PINGOU_NTFY_URL`, o card fica bloqueado e `PATCH` com `ntfy_topic` devolve 400
+- [x] Token e URL do servidor não aparecem em log, em `/api/settings`, no export nem no `pingou config`
+- [x] O `ping_token` não aparece em nenhuma mensagem
+- [x] Botão **Enviar teste** funciona e respeita o rate limit (5 por minuto por IP)
+- [x] Falha ou panic do ntfy não impede webhook nem e-mail (teste automatizado)
+- [x] README documenta as variáveis, o card e um exemplo com ntfy.sh e com servidor protegido
 
 ## Tech Stack
 
@@ -292,17 +292,30 @@ grep -rn "slog\." internal/service/ntfy_notifier.go | grep -i "token\|topic"   #
 
 | Fase | Tarefas | Complexity | Esforço | Target | Status |
 | --- | --- | --- | --- | --- | --- |
-| Fase 0 | T1 | S | ~15 min | Config do ambiente | ⬜ Pendente |
-| Fase 1 | T2, T3, T4 | M | ~1 h 15 | Canal funcionando por API | ⬜ Pendente |
-| Fase 2 | T5 | M | ~30 min | Testes verdes | ⬜ Pendente |
-| Fase 3 | T6 | M | ~30 min | Card em Configurações | ⬜ Pendente |
-| Fase 4 | T7, T8, T9 | S | ~45 min | Validado, documentado e revisado | ⬜ Pendente |
+| Fase 0 | T1 | S | ~15 min | Config do ambiente | ✅ Concluído |
+| Fase 1 | T2, T3, T4 | M | ~1 h 15 | Canal funcionando por API | ✅ Concluído |
+| Fase 2 | T5 | M | ~30 min | Testes verdes | ✅ Concluído |
+| Fase 3 | T6 | M | ~30 min | Card em Configurações | ✅ Concluído |
+| Fase 4 | T7, T8, T9 | S | ~45 min | Validado, documentado e revisado | ✅ Concluído |
 
 ## Status de Execução
 
 ### Concluído
 
 - Etapa 1 do `IDEAS.md`: webhook com template funciona com ntfy 2.36.0 (down, up, test, token, 403 sem token). Heartbeat mostra `<no value>` no target.
+- T1 a T9, na branch `feat/ntfy-notifications`, um commit por fase.
+
+### Evidências (2026-11-01, ntfy 2.36.0 em Docker, `deny-all` + token)
+
+- `go build ./... && go vet ./... && go test -race ./...`: tudo passa. `npm run build` passa; `eslint` limpo nos arquivos novos/alterados (o único erro do `npm run lint` é de formatação no `EmailCard.jsx`, anterior a esta branch).
+- Sem `PINGOU_NTFY_URL`: `GET /api/settings` → `ntfy_available:false`; `PATCH {"ntfy_topic":"x"}` → 400; teste → 400; card bloqueado com as variáveis.
+- `PINGOU_NTFY_URL=ntfy.sh` → `serve` não sobe: `PINGOU_NTFY_URL must be a valid http(s) URL`.
+- Token certo: teste `ok:true, status 200`. Token errado ou sem token: `ok:false`, `401 (token inválido ou sem permissão no tópico)`.
+- Tópico `a b` → 400. 6ª chamada de teste no mesmo minuto → 429.
+- Monitor HTTP derrubado e levantado: chegaram `Site local está fora do ar` (prioridade 4, `rotating_light`, `Click` com o link) e `Site local voltou (fora por 20 s)` (prioridade 3, `white_check_mark`). Acento no título chega certo (RFC 2047).
+- Heartbeat expirado: `Backup diário está fora do ar`, sem `Alvo`; o `ping_token` não aparece em nenhuma mensagem do tópico.
+- Log do `serve`, resposta da API, export (`/api/export`) e `pingou config` sem token, URL completa nem tópico (`pingou config` mostra só `NtfyHost` e `NtfyTokenSet`).
+- Exemplo do README (servidor próprio com `deny-all`) testado: sem token 403, com token 200.
 
 ### Em andamento
 
@@ -310,7 +323,14 @@ grep -rn "slog\." internal/service/ntfy_notifier.go | grep -i "token\|topic"   #
 
 ### Pendente
 
-- T1 a T9
+-
+
+### Desvios do plano
+
+- 401/403 ganham uma dica no erro (`token inválido ou sem permissão no tópico`).
+- `LoadNtfy` também recusa URL com query, fragmento ou usuário (o token vai só em `PINGOU_NTFY_TOKEN`).
+- Título sem `[Pingou]` e sem emoji (o emoji vai em `Tags`); acentos codificados em RFC 2047, que o ntfy decodifica.
+- "Entrega" virou a seção geral `## Entrega das notificações` no README, valendo para os três canais.
 
 ## Notes
 

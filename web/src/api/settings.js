@@ -15,6 +15,11 @@ export const settingsApi = {
     client
       .post("/settings/email/test", recipients ? { recipients } : {})
       .then((r) => r.data),
+  // sem tópico → a API usa o salvo
+  testNtfy: (topic) =>
+    client
+      .post("/settings/ntfy/test", topic ? { topic } : {})
+      .then((r) => r.data),
   export: () =>
     client.get("/export", { responseType: "blob" }).then((r) => r.data),
 };

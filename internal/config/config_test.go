@@ -72,3 +72,50 @@ func TestLoadFailsOnInvalidSMTP(t *testing.T) {
 		t.Fatalf("Load: %v", err)
 	}
 }
+
+func TestLoadNtfy(t *testing.T) {
+	cases := []struct {
+		name, url, token string
+		want             NtfyConfig
+		wantErr          string
+	}{
+		{name: "vazio desliga"},
+		{name: "token sem url é ignorado", token: "tk_x"},
+		{name: "url válida", url: "https://ntfy.sh", want: NtfyConfig{URL: "https://ntfy.sh"}},
+		{name: "barra final", url: " http://ntfy.local:8080/ ", token: " tk_x ", want: NtfyConfig{URL: "http://ntfy.local:8080", Token: "tk_x"}},
+		{name: "com caminho", url: "https://x.com/ntfy/", want: NtfyConfig{URL: "https://x.com/ntfy"}},
+		{name: "sem esquema", url: "ntfy.sh", wantErr: "PINGOU_NTFY_URL must be a valid"},
+		{name: "ftp", url: "ftp://ntfy.sh", wantErr: "PINGOU_NTFY_URL must be a valid"},
+		{name: "sem host", url: "https://", wantErr: "PINGOU_NTFY_URL must be a valid"},
+		{name: "com query", url: "https://ntfy.sh?auth=x", wantErr: "query"},
+		{name: "com usuário", url: "https://u:p@ntfy.sh", wantErr: "user info"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Setenv("PINGOU_NTFY_URL", c.url)
+			t.Setenv("PINGOU_NTFY_TOKEN", c.token)
+			got, err := LoadNtfy()
+			if c.wantErr != "" {
+				if err == nil || !strings.Contains(err.Error(), c.wantErr) {
+					t.Fatalf("err = %v, want %q", err, c.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got != c.want {
+				t.Fatalf("got %+v, want %+v", got, c.want)
+			}
+			if got.Enabled() != (c.want.URL != "") {
+				t.Fatalf("Enabled = %v", got.Enabled())
+			}
+		})
+	}
+}
+
+func TestNtfyHost(t *testing.T) {
+	if h := (NtfyConfig{URL: "https://ntfy.sh/base"}).Host(); h != "ntfy.sh" {
+		t.Fatalf("Host = %q", h)
+	}
+}

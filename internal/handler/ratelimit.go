@@ -20,6 +20,9 @@ const webhookTestRateLimit = 5
 // emailTestRateLimit: testes de e-mail por IP por minuto, pelo mesmo motivo.
 const emailTestRateLimit = 5
 
+// ntfyTestRateLimit: testes de ntfy por IP por minuto, pelo mesmo motivo.
+const ntfyTestRateLimit = 5
+
 // rateLimiter é uma janela fixa por IP, em memória (um binário só, sem Redis).
 // O map é zerado a cada janela, então a memória fica limitada aos IPs de um minuto.
 // ponytail: usa RemoteAddr; atrás de proxy reverso todos os clientes contam
