@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Check, Send, X } from "lucide-react";
 import { settingsApi } from "../../api/settings";
 import { Card } from "./Card";
+import { TestButton, TestResult } from "./TestControls";
+import { testErrorText } from "../../lib/testError";
 
 const JSON_DOCS = "https://github.com/Bradrickcruz/pingou#webhook";
 
@@ -32,11 +33,7 @@ export function WebhookCard({ value, onChange }) {
       const r = await settingsApi.testWebhook(value);
       setResult({ ok: r.ok, text: resultText(r) });
     } catch (e) {
-      const text =
-        e.status === 429
-          ? "Muitos testes seguidos. Tente de novo em 1 minuto."
-          : e.message;
-      setResult({ ok: false, text });
+      setResult({ ok: false, text: testErrorText(e) });
     } finally {
       setTesting(false);
     }
@@ -44,7 +41,7 @@ export function WebhookCard({ value, onChange }) {
 
   return (
     <Card
-      title="Notificações"
+      title="Webhook"
       description={
         <>
           O Pingou envia um POST com JSON para esta URL quando um monitor cai e
@@ -74,25 +71,10 @@ export function WebhookCard({ value, onChange }) {
           value={value}
           onChange={(e) => change(e.target.value)}
           placeholder="https://hooks.exemplo.com/..."
-          aria-describedby="webhook-help"
+          aria-describedby="webhook-help webhook-result"
           className="flex-1 min-w-0 px-3 py-2.5 rounded-pg-control font-pg-mono text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda"
         />
-        <button
-          type="button"
-          onClick={test}
-          disabled={!value || testing}
-          className="inline-flex items-center justify-center gap-2 min-h-[44px] md:min-h-0 px-4 py-2 rounded-pg-control border border-pg-borda bg-pg-branco text-pg-ui font-medium text-pg-ardosia hover:bg-pg-nuvem disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano"
-        >
-          {testing ? (
-            <span
-              className="w-4 h-4 border-2 border-pg-borda border-t-pg-ciano-fundo rounded-full animate-spin"
-              aria-hidden="true"
-            />
-          ) : (
-            <Send size={16} aria-hidden="true" />
-          )}
-          {testing ? "Enviando…" : "Enviar teste"}
-        </button>
+        <TestButton onClick={test} disabled={!value} testing={testing} />
       </div>
       <p
         id="webhook-help"
@@ -100,38 +82,7 @@ export function WebhookCard({ value, onChange }) {
       >
         Deixe vazio para não enviar notificações.
       </p>
-      <p
-        role="status"
-        aria-live="polite"
-        className="mt-2 mb-0 text-pg-caption md:text-pg-ui empty:hidden"
-      >
-        {result && (
-          <span
-            className={`flex md:inline-flex items-start md:items-center gap-2 md:gap-1 p-3 md:p-0 rounded-pg-control md:bg-transparent ${
-              result.ok
-                ? "text-pg-up bg-pg-up-bg"
-                : "text-pg-down bg-pg-down-bg"
-            }`}
-          >
-            {result.ok ? (
-              <Check
-                size={14}
-                aria-hidden="true"
-                className="shrink-0 mt-1 md:mt-0"
-              />
-            ) : (
-              <X
-                size={14}
-                aria-hidden="true"
-                className="shrink-0 mt-1 md:mt-0"
-              />
-            )}
-            <span className="md:text-inherit text-pg-ardosia">
-              {result.text}
-            </span>
-          </span>
-        )}
-      </p>
+      <TestResult id="webhook-result" result={result} />
     </Card>
   );
 }

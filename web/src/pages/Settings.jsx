@@ -4,6 +4,7 @@ import { useSettings } from "../hooks/useSettings";
 import { Button } from "../components/ui/Button";
 import { Spinner } from "../components/ui/Spinner";
 import { WebhookCard } from "../components/settings/WebhookCard";
+import { EmailCard } from "../components/settings/EmailCard";
 import { RetentionCard } from "../components/settings/RetentionCard";
 import { BackupCard } from "../components/settings/BackupCard";
 import { UnsavedBar } from "../components/settings/UnsavedBar";
@@ -52,8 +53,10 @@ export function Settings({ onLogout }) {
 
   const current = form ?? settings;
   const webhookURL = current.webhook_url ?? "";
+  const emailRecipients = current.email_recipients ?? "";
   const dirty =
     webhookURL !== (settings.webhook_url ?? "") ||
+    emailRecipients !== (settings.email_recipients ?? "") ||
     current.retention_days !== settings.retention_days;
   const size = info?.database_size_bytes;
 
@@ -68,9 +71,12 @@ export function Settings({ onLogout }) {
     setSaving(true);
     setError(null);
     try {
+      // o valor exibido depois vem da resposta, já normalizado pelo backend
       await update({
         webhook_url: webhookURL,
         retention_days: current.retention_days,
+        // com o e-mail bloqueado, mandar o campo daria 400
+        ...(settings.email_available && { email_recipients: emailRecipients }),
       });
       setForm(null);
       setSaved(true);
@@ -100,10 +106,23 @@ export function Settings({ onLogout }) {
         onSubmit={handleSubmit}
         className="flex flex-col gap-4 md:gap-6"
       >
-        <WebhookCard
-          value={webhookURL}
-          onChange={(v) => set("webhook_url", v)}
-        />
+        <div className="flex flex-col gap-3 md:gap-4">
+          <p className="m-0 text-pg-ui text-pg-neblina">
+            <strong className="font-medium text-pg-ardosia">
+              Notificações:
+            </strong>{" "}
+            os canais ligados recebem os mesmos eventos.
+          </p>
+          <WebhookCard
+            value={webhookURL}
+            onChange={(v) => set("webhook_url", v)}
+          />
+          <EmailCard
+            value={emailRecipients}
+            onChange={(v) => set("email_recipients", v)}
+            available={settings.email_available}
+          />
+        </div>
         <RetentionCard
           value={current.retention_days}
           savedValue={settings.retention_days}
