@@ -220,6 +220,16 @@ func (s *MonitorService) Update(ctx context.Context, id string, in UpdateMonitor
 	if err := s.monitors.Update(ctx, m); err != nil {
 		return nil, err
 	}
+	// Pausar fecha o incidente aberto sem notificar. Roda a cada Update pausado
+	// (idempotente), então uma falha aqui se cura na próxima edição. O repositório
+	// também zera o estado para UNKNOWN: sem isso, retomar um monitor ainda DOWN
+	// não abriria incidente novo (handleFailure só abre se prevState != DOWN).
+	if !m.Enabled {
+		m.CurrentState = domain.StateUnknown
+		if err := s.incidents.CloseManually(ctx, m.ID, now); err != nil {
+			return nil, fmt.Errorf("closing incident: %w", err)
+		}
+	}
 
 	s.reload(ctx, m.ID)
 	return m, nil

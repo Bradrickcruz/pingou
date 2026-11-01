@@ -19,6 +19,7 @@ type incidentResponse struct {
 	NotificationSent bool                     `json:"notification_sent"`
 	DurationSeconds  int64                    `json:"duration_seconds"`
 	Open             bool                     `json:"open"`
+	ClosedManually   bool                     `json:"closed_manually"`
 }
 
 type incidentMonitorResponse struct {
@@ -103,6 +104,7 @@ func toIncidentResponse(i *domain.Incident) incidentResponse {
 		NotificationSent: i.NotificationSent,
 		DurationSeconds:  durationSeconds,
 		Open:             i.EndedAt == nil,
+		ClosedManually:   i.ClosedManually,
 	}
 	if i.MonitorName != "" {
 		res.Monitor = &incidentMonitorResponse{

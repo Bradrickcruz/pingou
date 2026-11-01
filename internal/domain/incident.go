@@ -11,6 +11,7 @@ type Incident struct {
 	NotificationSent bool
 	DurationSeconds  *int64
 	FailureCount     int64 // checks com falha enquanto o incidente esteve aberto
+	ClosedManually   bool  // fechado ao pausar o monitor, não por recuperação
 
 	// Dados do monitor (JOIN), preenchidos só pelas listagens.
 	MonitorName   string

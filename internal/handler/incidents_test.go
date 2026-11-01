@@ -142,3 +142,16 @@ func TestListMonitorsDownFields(t *testing.T) {
 		t.Fatalf("não DOWN: last_error=%v down_since=%v", b.LastError, b.DownSince)
 	}
 }
+
+func TestClosedManuallyInResolved(t *testing.T) {
+	s, h, _ := newTestServer(t)
+	seedIncidents(t, s)
+	if _, err := s.db.Exec(`UPDATE incidents SET closed_manually = 1 WHERE id = 'a-r1'`); err != nil {
+		t.Fatal(err)
+	}
+	for _, d := range listIncidents(t, h, "/api/incidents?status=resolved").Data {
+		if want := d.ID == "a-r1"; d.ClosedManually != want {
+			t.Errorf("%s: closed_manually=%v, want %v", d.ID, d.ClosedManually, want)
+		}
+	}
+}
