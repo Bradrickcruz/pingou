@@ -23,9 +23,6 @@ import {
 } from "../lib/monitors";
 import logo from "../assets/brand/pingou-simbolo.svg";
 
-// a busca só aparece quando a lista fica longa (decisão do plano)
-const SEARCH_FROM = 10;
-
 const FILTERS = [
   { key: "all", label: "Todos", match: () => true },
   { key: "down", label: "Fora do ar", match: (s) => s === "DOWN" },
@@ -259,23 +256,21 @@ export function Dashboard() {
                 );
               })}
             </div>
-            {(monitors.length >= SEARCH_FROM || searching) && (
-              <div className="relative sm:w-[280px]">
-                <Search
-                  size={16}
-                  aria-hidden="true"
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-pg-neblina"
-                />
-                <input
-                  type="search"
-                  aria-label="Buscar por nome ou endereço"
-                  placeholder="Buscar por nome ou endereço"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 rounded-pg-control text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda placeholder:text-pg-neblina"
-                />
-              </div>
-            )}
+            <div className="relative sm:w-[280px]">
+              <Search
+                size={16}
+                aria-hidden="true"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-pg-neblina"
+              />
+              <input
+                type="search"
+                aria-label="Buscar por nome ou endereço"
+                placeholder="Buscar por nome ou endereço"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="w-full pl-9 pr-3 py-2.5 rounded-pg-control text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda placeholder:text-pg-neblina"
+              />
+            </div>
           </div>
 
           <ul className="md:hidden flex flex-col gap-3">
