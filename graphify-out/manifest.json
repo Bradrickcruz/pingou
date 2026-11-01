@@ -1246,5 +1246,23 @@
     "seen": 1793554617.8841996,
     "ast_hash": "b292786c02220b5eea24640c0446dd60",
     "semantic_hash": ""
+  },
+  "scripts/memtest.sh": {
+    "mtime": 1793555715.4829247,
+    "seen": 1793555932.17124,
+    "ast_hash": "d7614c93f083cb13a336f2014bfc715b",
+    "semantic_hash": ""
+  },
+  "scripts/memtest/target.go": {
+    "mtime": 1793554959.8471444,
+    "seen": 1793555932.1712415,
+    "ast_hash": "208f5bbdf0f4599b0ccf536ddf5451d9",
+    "semantic_hash": ""
+  },
+  "scripts/README.md": {
+    "mtime": 1793555837.4514878,
+    "seen": 1793555932.1713321,
+    "ast_hash": "d71c71b906177d4022e3b2840e41aa3d",
+    "semantic_hash": ""
   }
 }
