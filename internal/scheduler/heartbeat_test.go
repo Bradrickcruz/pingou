@@ -155,9 +155,9 @@ func TestHeartbeatPausedAcceptsPingWithoutRecording(t *testing.T) {
 		t.Fatalf("ping pausado registrou check: checks=%d, want 1", n)
 	}
 
-	// pausado não vence prazo
+	// pausado não vence prazo (pausar zera o estado para UNKNOWN; não vira DOWN)
 	e.sched.checkHeartbeats(ctx, time.Now().Add(365*24*time.Hour))
-	if got := e.load(t, m.ID); got.CurrentState != domain.StateUp {
+	if got := e.load(t, m.ID); got.CurrentState != domain.StateUnknown {
 		t.Fatalf("pausado mudou de estado: %s", got.CurrentState)
 	}
 

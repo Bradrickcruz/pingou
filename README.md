@@ -10,8 +10,27 @@ O projeto tem quatro objetivos:
 
 - **simples de rodar**: um binário ou um container, sem banco separado
 - **simples de manter**: SQLite em arquivo, sem serviços extras
-- **leve**: roda numa VPS mínima ou num Raspberry Pi
+- **leve**: baixo uso de memória RAM, roda numa VPS mínima ou num Raspberry Pi (veja [abaixo](#baixo-uso-de-memória))
 - **focado**: faz uma coisa só (dizer se algo está no ar) e faz bem
+
+## Baixo uso de memória
+
+Uma das características mais importantes do Pingou é consumir pouca RAM. Medido com **100 monitores** (o limite do projeto) checando a cada 10 s, sendo 50 deles `https://google.com`, mais o dashboard e as estatísticas sendo consultados a cada ciclo, durante **1 hora**:
+
+| Métrica                  | Resultado                 |
+| ------------------------ | ------------------------- |
+| Pico de RAM (RSS)        | **29 MB** (meta: < 50 MB) |
+| RAM em regime            | 27 a 30 MB, estável       |
+| Threads                  | 17 a 18                   |
+| Tendência de crescimento | nenhuma (sem vazamento)   |
+
+Para reproduzir (Linux, `make build` antes):
+
+```bash
+HTTPS_N=50 scripts/memtest.sh 3600
+```
+
+Detalhes do teste em [`scripts/README.md`](scripts/README.md). O resultado vale para o hardware e a rede em que foi medido; seu consumo pode variar um pouco.
 
 ---
 
@@ -99,7 +118,7 @@ Um novo tipo de check só entra no Pingou se passar nas quatro perguntas:
 - Dashboard web embutido no binário
 - Página de detalhe por monitor (`/monitors/:id`): uptime, resposta média, incidentes e tempo fora do ar em 24h / 7 / 14 / 30 dias, gráfico de tempo de resposta, últimos checks e configuração
 - Login com API Key
-- Webhook global para quedas e recuperações
+- Notificações de queda e recuperação por webhook, por e-mail (SMTP) e pelo [ntfy](https://ntfy.sh), ligados ao mesmo tempo se quiser
 - Retenção configurável: checks expiram após `retention_days`; incidentes são mantidos. A limpeza roda na subida e a cada 1 h
 - Export do banco SQLite
 - Atomicidade na state machine (transações SQL)
@@ -310,6 +329,28 @@ Ele complementa o `gofumpt` no backend e o ESLint/Vite no frontend.
 
 ## Como rodar com Docker
 
+A imagem está publicada no Docker Hub como [`bryanhcruz/pingou`](https://hub.docker.com/r/bryanhcruz/pingou):
+
+```bash
+docker run -d -p 8956:8956 -v pingou_data:/data \
+  -e PINGOU_DATABASE_URL=/data/pingou.db \
+  -e PINGOU_API_KEY=troque-esta-chave \
+  bryanhcruz/pingou
+```
+
+Tags disponíveis: `latest`, `1.3.1` e `1.3.0`. Para fixar uma versão, use `bryanhcruz/pingou:1.3.1`.
+
+A imagem publicada é multi-arquitetura (`linux/amd64` e `linux/arm64`) e é gerada e enviada ao Docker Hub com:
+
+```bash
+docker buildx build --platform linux/amd64,linux/arm64 \
+  --build-arg VERSION=1.3.1 --build-arg COMMIT=$(git rev-parse --short HEAD) \
+  --build-arg BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ) \
+  -t bryanhcruz/pingou:1.3.1 -t bryanhcruz/pingou:latest --push .
+```
+
+Para buildar localmente:
+
 O Dockerfile inclui um `HEALTHCHECK` que consulta o endpoint público `/healthz` a cada 30 segundos.
 
 ```bash
@@ -333,15 +374,25 @@ PINGOU_API_KEY=...
 
 A porta HTTP é fixa em `8956` e não é configurável. Para expor em outra porta, mapeie no host (ex.: `-p 9000:8956`).
 
-| Variável                      | Obrigatória | Padrão      | Descrição                                                                                             |
-| ----------------------------- | :---------: | ----------- | ----------------------------------------------------------------------------------------------------- |
-| `PINGOU_DATABASE_URL`         |     não     | `pingou.db` | Caminho do arquivo SQLite                                                                             |
-| `PINGOU_API_KEY`              |     sim     | -           | Chave que protege o dashboard e as rotas `/api/*`                                                     |
-| `PINGOU_LOG_LEVEL`            |     não     | `info`      | Nível de log (`DEBUG` habilita logs de debug)                                                         |
-| `PINGOU_CORS_ALLOWED_ORIGINS` |     não     | (vazio)     | Origins permitidas, separadas por vírgula. Vazio desabilita CORS. Ex.: `http://localhost:5173`        |
-| `PINGOU_MAX_REDIRECTS`        |     não     | `5`         | Máximo de redirects seguidos pelo checker HTTP                                                        |
-| `PINGOU_GLOBAL_TIMEOUT`       |     não     | `60`        | Timeout global, em segundos, das requisições HTTP                                                     |
-| `PINGOU_PUBLIC_URL`           |     não     | (vazio)     | Endereço público do dashboard. Preenche `dashboard_url` no webhook. Ex.: `https://pingou.exemplo.com` |
+| Variável                      | Obrigatória | Padrão      | Descrição                                                                                                                |
+| ----------------------------- | :---------: | ----------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `PINGOU_DATABASE_URL`         |     não     | `pingou.db` | Caminho do arquivo SQLite                                                                                                |
+| `PINGOU_API_KEY`              |     sim     | -           | Chave que protege o dashboard e as rotas `/api/*`                                                                        |
+| `PINGOU_LOG_LEVEL`            |     não     | `info`      | Nível de log (`DEBUG` habilita logs de debug)                                                                            |
+| `PINGOU_CORS_ALLOWED_ORIGINS` |     não     | (vazio)     | Origins permitidas, separadas por vírgula. Vazio desabilita CORS. Ex.: `http://localhost:5173`                           |
+| `PINGOU_MAX_REDIRECTS`        |     não     | `5`         | Máximo de redirects seguidos pelo checker HTTP                                                                           |
+| `PINGOU_GLOBAL_TIMEOUT`       |     não     | `60`        | Timeout global, em segundos, das requisições HTTP                                                                        |
+| `PINGOU_PUBLIC_URL`           |     não     | (vazio)     | Endereço público do dashboard. Preenche `dashboard_url` no webhook e o link no e-mail. Ex.: `https://pingou.exemplo.com` |
+| `PINGOU_SMTP_HOST`            |     não     | (vazio)     | Servidor SMTP. Liga o e-mail. Vazio = e-mail indisponível (as outras `PINGOU_SMTP_*` são ignoradas)                      |
+| `PINGOU_SMTP_PORT`            |     não     | `587`       | Porta do SMTP (1–65535)                                                                                                  |
+| `PINGOU_SMTP_USERNAME`        |     não     | (vazio)     | Usuário do SMTP. Vazio = sem autenticação (relay)                                                                        |
+| `PINGOU_SMTP_PASSWORD`        | com usuário | (vazio)     | Senha do SMTP. Nunca aparece em log, na API nem no `pingou config`                                                       |
+| `PINGOU_SMTP_FROM`            | com `HOST`  | -           | Remetente. Ex.: `Pingou <alerta@exemplo.com>`                                                                            |
+| `PINGOU_SMTP_TLS`             |     não     | `starttls`  | `starttls`, `tls` ou `none`. Padrão: `tls` na porta 465, `starttls` nas outras. `none` só sem usuário                    |
+| `PINGOU_NTFY_URL`             |     não     | (vazio)     | Servidor ntfy (http/https, sem query). Liga o ntfy. Ex.: `https://ntfy.sh`. Vazio = ntfy indisponível                    |
+| `PINGOU_NTFY_TOKEN`           |     não     | (vazio)     | Token de acesso do ntfy (`tk_...`), enviado como `Authorization: Bearer`. Nunca aparece em log, na API nem no `pingou config` |
+
+Com `PINGOU_SMTP_HOST` setado e alguma regra violada (ex.: falta `PINGOU_SMTP_FROM`), o `serve` não sobe e mostra o motivo, como acontece quando falta `PINGOU_API_KEY`. O mesmo vale para `PINGOU_NTFY_URL` inválida.
 
 ## SQLite
 
@@ -434,6 +485,8 @@ Sobre `/ping/{token}`:
 | `GET`    | `/api/settings`               | Busca as configurações globais                                  |
 | `PATCH`  | `/api/settings`               | Atualiza as configurações globais (`webhook_url` só http/https) |
 | `POST`   | `/api/settings/webhook/test`  | Envia um evento `test` ao webhook (5 por minuto por IP)         |
+| `POST`   | `/api/settings/email/test`    | Envia um e-mail de teste (5 por minuto por IP)                  |
+| `POST`   | `/api/settings/ntfy/test`     | Publica uma notificação de teste no ntfy (5 por minuto por IP)  |
 | `GET`    | `/api/info`                   | Versão, commit, data do build e tamanho do banco                |
 | `GET`    | `/api/export`                 | Baixa um dump do SQLite (`pingou-AAAA-MM-DD.db`, `VACUUM INTO`) |
 
@@ -670,6 +723,182 @@ O payload tem o mesmo formato dos eventos reais:
 
 > Integrações que tratam `event` devem **ignorar valores desconhecidos**. Novos eventos podem surgir sem aviso.
 
+## E-mail
+
+O Pingou também avisa por e-mail. Webhook e e-mail podem ficar ligados ao mesmo tempo: cada queda e cada volta vai para os dois.
+
+### Como ligar
+
+1. Configure o servidor SMTP no ambiente (`PINGOU_SMTP_*`, veja [Variáveis de ambiente](#variáveis-de-ambiente)). Tudo do servidor, inclusive a senha, fica **só no ambiente**: nada vai para o banco nem para o export.
+2. Reinicie o Pingou. O log mostra `email notifications available`.
+3. Em **Configurações → E-mail**, informe os destinatários separados por vírgula (até 10) e use **Enviar teste**.
+
+Sem `PINGOU_SMTP_HOST`, o card de e-mail aparece bloqueado. Se você remover a variável depois, os destinatários continuam salvos, mas nada é enviado.
+
+### Exemplos
+
+Gmail (porta 587, com [senha de app](https://support.google.com/accounts/answer/185833)):
+
+```bash
+PINGOU_SMTP_HOST=smtp.gmail.com
+PINGOU_SMTP_PORT=587
+PINGOU_SMTP_USERNAME=voce@gmail.com
+PINGOU_SMTP_PASSWORD=<senha-de-app>
+PINGOU_SMTP_FROM="Pingou <voce@gmail.com>"
+```
+
+Relay local, sem TLS e sem autenticação:
+
+```bash
+PINGOU_SMTP_HOST=localhost
+PINGOU_SMTP_PORT=25
+PINGOU_SMTP_TLS=none
+PINGOU_SMTP_FROM="Pingou <pingou@exemplo.com>"
+```
+
+Para testar sem enviar e-mail de verdade, use o [Mailpit](https://mailpit.axllent.org/) e abra `http://localhost:8025`:
+
+```bash
+docker run -d --name mailpit -p 1025:1025 -p 8025:8025 axllent/mailpit
+PINGOU_SMTP_HOST=localhost PINGOU_SMTP_PORT=1025 PINGOU_SMTP_TLS=none \
+PINGOU_SMTP_FROM="Pingou <pingou@localhost>" ./bin/pingou
+```
+
+Modos de TLS:
+
+| `PINGOU_SMTP_TLS` | Como funciona                                                                               |
+| ----------------- | ------------------------------------------------------------------------------------------- |
+| `starttls`        | Conecta sem TLS e exige `STARTTLS`. Se o servidor não oferecer, o envio falha (não rebaixa) |
+| `tls`             | TLS desde a conexão (porta 465)                                                             |
+| `none`            | Sem TLS. Só para relay local e **sem** usuário, para a senha nunca trafegar em texto aberto |
+
+> Provedores que exigem OAuth2 (como o Microsoft 365) não são suportados. Use senha de app, um relay ou um serviço transacional (SES, Brevo, Mailgun). Para o e-mail não cair no spam, use um `FROM` do domínio autenticado no provedor (SPF/DKIM).
+
+### Formato da mensagem
+
+Texto simples (UTF-8). Exemplo de queda:
+
+```
+Subject: [Pingou] 🔴 API de pagamentos está fora do ar
+
+Monitor: API de pagamentos
+Tipo: http
+Alvo: https://api.exemplo.com/health
+Caiu em: 2026-11-01 14:03:12 UTC
+Erro: connection refused
+Detalhes: https://pingou.exemplo.com/monitors/<id>
+```
+
+Na volta, o assunto é `[Pingou] 🟢 API de pagamentos voltou (fora por 5 min)` e o corpo troca `Erro` por `Voltou em` e `Fora do ar por: 5 min 12 s`.
+
+- `Alvo` não aparece no Heartbeat, e o token de ping **nunca** vai no e-mail.
+- `Detalhes` só aparece com `PINGOU_PUBLIC_URL`.
+- O log registra só `recipients_count`, nunca os endereços.
+
+### Testando o e-mail
+
+`POST /api/settings/email/test` envia um e-mail de teste sem gravar nada. Com `{"recipients": "..."}` no corpo, usa esses destinatários (sem salvar). Sem corpo, usa os salvos.
+
+```bash
+curl -X POST http://localhost:8956/api/settings/email/test \
+  -H "X-API-Key: dev-api-key" \
+  -d '{"recipients":"ops@exemplo.com"}'
+```
+
+```json
+{ "ok": true, "duration_ms": 812, "error": null }
+```
+
+- A resposta é `200` quando o teste roda. `ok` diz se o servidor aceitou a mensagem; senão, `error` explica (ex.: `"timeout após 30s"`).
+- `400` sem SMTP no ambiente, sem destinatários ou com endereço inválido. `429` com `Retry-After` depois de 5 testes por minuto.
+
+## ntfy
+
+O [ntfy](https://ntfy.sh) manda notificações push para o celular (Android, iOS) e para o navegador. O Pingou publica num **tópico** do ntfy a cada queda e a cada volta, junto com webhook e e-mail se eles estiverem ligados.
+
+### Como ligar
+
+1. Configure o servidor no ambiente: `PINGOU_NTFY_URL` e, se o servidor exigir login, `PINGOU_NTFY_TOKEN` (veja [Variáveis de ambiente](#variáveis-de-ambiente)). Servidor e token ficam **só no ambiente**: nada vai para o banco nem para o export.
+2. Reinicie o Pingou. O log mostra `ntfy notifications available` com o host.
+3. Em **Configurações → ntfy**, informe o tópico (1 a 64 caracteres: letras sem acento, números, `_` ou `-`) e use **Enviar teste**.
+4. No app do ntfy, assine o mesmo tópico no mesmo servidor.
+
+Sem `PINGOU_NTFY_URL`, o card do ntfy aparece bloqueado. Se você remover a variável depois, o tópico continua salvo, mas nada é enviado. Tópico vazio desliga o ntfy.
+
+> **Atenção:** num servidor aberto (como o `ntfy.sh` público), qualquer pessoa que souber o nome do tópico lê os alertas. Use um nome difícil de adivinhar (ex.: `pingou-7f3k9q2x`) ou um servidor próprio com token.
+
+### Exemplos
+
+Servidor público `ntfy.sh`, sem conta:
+
+```bash
+PINGOU_NTFY_URL=https://ntfy.sh
+```
+
+Servidor próprio protegido (`auth-default-access: deny-all`), com um token:
+
+```bash
+docker run -d --name ntfy -p 8080:80 -v ntfy-data:/var/lib/ntfy \
+  -e NTFY_BASE_URL=http://localhost:8080 \
+  -e NTFY_AUTH_FILE=/var/lib/ntfy/auth.db \
+  -e NTFY_AUTH_DEFAULT_ACCESS=deny-all \
+  binwiederhier/ntfy serve
+docker exec -it ntfy ntfy user add --role=admin pingou
+docker exec ntfy ntfy token add pingou   # mostra tk_...
+```
+
+```bash
+PINGOU_NTFY_URL=http://localhost:8080
+PINGOU_NTFY_TOKEN=tk_...
+```
+
+Com um usuário comum (`--role=user`), dê permissão de escrita no tópico: `docker exec ntfy ntfy access pingou pingou-alertas write-only`.
+
+### Formato da notificação
+
+O texto é o mesmo do e-mail. Exemplo de queda:
+
+```
+Título: API de pagamentos está fora do ar
+Prioridade: alta · Tag: 🚨
+
+Monitor: API de pagamentos
+Tipo: http
+Alvo: https://api.exemplo.com/health
+Caiu em: 2026-11-01 14:03:12 UTC
+Erro: connection refused
+Detalhes: https://pingou.exemplo.com/monitors/<id>
+```
+
+Na volta, o título é `API de pagamentos voltou (fora por 5 min)`, com prioridade normal e a tag ✅.
+
+- Com `PINGOU_PUBLIC_URL`, tocar na notificação abre a página do monitor (header `Click`).
+- `Alvo` não aparece no Heartbeat, e o token de ping **nunca** vai na notificação.
+- O log registra só o host do servidor e o status, nunca o token, a URL completa nem o tópico.
+
+### Testando o ntfy
+
+`POST /api/settings/ntfy/test` publica uma notificação de teste sem gravar nada. Com `{"topic": "..."}` no corpo, usa esse tópico (sem salvar). Sem corpo, usa o salvo.
+
+```bash
+curl -X POST http://localhost:8956/api/settings/ntfy/test \
+  -H "X-API-Key: dev-api-key" \
+  -d '{"topic":"pingou-alertas"}'
+```
+
+```json
+{ "ok": true, "status_code": 200, "duration_ms": 6, "error": null }
+```
+
+- A resposta é `200` quando o teste roda. `ok` diz se o ntfy aceitou; senão, `error` explica (ex.: `"unexpected status code: 401 (token inválido ou sem permissão no tópico)"`).
+- `400` sem `PINGOU_NTFY_URL`, sem tópico ou com tópico inválido. `429` com `Retry-After` depois de 5 testes por minuto.
+
+> Já usa o webhook? Ele também funciona com o ntfy via template na URL, mas aí o token fica salvo no banco e vai junto no export. O canal próprio evita isso.
+
+## Entrega das notificações
+
+Webhook, e-mail e ntfy são enviados **fora** do processamento dos checks: um destino lento não atrasa os outros monitores. O Pingou avisa **uma vez por transição**, sem retry. No desligamento (SIGTERM), envios em andamento têm até 10 s para terminar; um crash ou `kill -9` pode perder o aviso.
+
 ---
 
 ## Comandos do Makefile
@@ -807,8 +1036,16 @@ O monitor é sempre criado com `enabled: true`. Para `heartbeat`, o comando impr
 #   "CORSAllowedOrigins": null,
 #   "MaxRedirects": 5,
 #   "GlobalTimeout": 60,
-#   "PublicURL": ""
+#   "PublicURL": "",
+#   "SMTPFrom": "Pingou <alerta@exemplo.com>",
+#   "SMTPHost": "smtp.exemplo.com",
+#   "SMTPPasswordSet": true,
+#   "SMTPPort": 587,
+#   "SMTPTLS": "starttls"
 # }
+#
+# Os campos SMTP* só aparecem com PINGOU_SMTP_HOST. A senha nunca é mostrada.
+# Com a config SMTP inválida, aparece "SMTPError" com o motivo.
 ```
 
 ### Flags globais
@@ -868,6 +1105,7 @@ A ideia não é competir com ferramentas enterprise nem com plataformas completa
 - Integração com Prometheus
 - Webhook por monitor
 - Templates para Discord e Slack
+- Mais canais de notificação (Telegram)
 - Multi-tenancy
 - Limite de ping por cliente atrás de proxy: ler `X-Forwarded-For` só quando a conexão vier de um proxy confiável (`PINGOU_TRUSTED_PROXIES`)
 

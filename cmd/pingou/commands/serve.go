@@ -91,6 +91,24 @@ func runServe(cmd *cobra.Command, args []string) error {
 		return url
 	}, loadedConfig.PublicURL)
 
+	// notifier: repassa cada evento para todos os canais, fora do lock do scheduler
+	notifier := service.NewMultiNotifier(webhookNotifier)
+	if loadedConfig.SMTP.Enabled() {
+		notifier.Add(service.NewEmailNotifier(loadedConfig.SMTP, func() string {
+			recipients, _ := settingsRepository.Get(context.Background(), "email_recipients")
+			return recipients
+		}, loadedConfig.PublicURL))
+		slog.Info("email notifications available", "host", loadedConfig.SMTP.Host, "port", loadedConfig.SMTP.Port, "tls", loadedConfig.SMTP.TLS)
+	}
+	if loadedConfig.Ntfy.Enabled() {
+		notifier.Add(service.NewNtfyNotifier(loadedConfig.Ntfy, func() string {
+			topic, _ := settingsRepository.Get(context.Background(), "ntfy_topic")
+			return topic
+		}, loadedConfig.PublicURL))
+		// só o host: a URL pode ter caminho e o token nunca vai para o log
+		slog.Info("ntfy notifications available", "host", loadedConfig.Ntfy.Host(), "auth", loadedConfig.Ntfy.Token != "")
+	}
+
 	// checkers: o registry escolhe pelo tipo (heartbeat não tem check ativo)
 	monitorChecker := checker.NewRegistry(map[domain.MonitorType]domain.Checker{
 		domain.TypeHTTP: checker.NewHTTPChecker(loadedConfig.MaxRedirects, loadedConfig.GlobalTimeout),
@@ -100,10 +118,10 @@ func runServe(cmd *cobra.Command, args []string) error {
 	// services
 	monitorService := service.NewMonitorService(monitorRepository, checkRepository, incidentRepository)
 	incidentService := service.NewIncidentService(incidentRepository)
-	settingsService := service.NewSettingsService(settingsRepository)
+	settingsService := service.NewSettingsService(settingsRepository, loadedConfig.SMTP, loadedConfig.Ntfy)
 
 	// scheduler
-	monitorScheduler := scheduler.NewScheduler(monitorRepository, monitorChecker, db, checkRepoTx, monitorRepoTx, incidentRepoTx, webhookNotifier)
+	monitorScheduler := scheduler.NewScheduler(monitorRepository, monitorChecker, db, checkRepoTx, monitorRepoTx, incidentRepoTx, notifier)
 	monitorService.SetReloader(monitorScheduler)
 	monitorService.SetRecorder(monitorScheduler)
 
@@ -139,6 +157,11 @@ func runServe(cmd *cobra.Command, args []string) error {
 	}
 
 	monitorScheduler.Stop()
+
+	// avisos já decididos têm até 10 s para sair antes do processo terminar
+	if !notifier.Wait(10 * time.Second) {
+		slog.Warn("notifications still pending at shutdown")
+	}
 
 	return nil
 }

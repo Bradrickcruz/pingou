@@ -1,7 +1,7 @@
 // node --test src/lib
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cardFooter, heartbeatExpectation } from "./monitors.js";
+import { cardFooter, heartbeatExpectation, matchesQuery } from "./monitors.js";
 
 const now = Date.parse("2026-10-30T12:00:00Z");
 const base = {
@@ -70,4 +70,46 @@ test("cardFooter PAUSED", () => {
     cardFooter({ ...base, enabled: false, current_state: "DOWN" }, now),
     "Pausado",
   );
+});
+
+const http = {
+  type: "http",
+  name: "Serviço de Pagamentos",
+  url: "https://api.exemplo.com/v1",
+};
+const tcp = {
+  type: "tcp",
+  name: "Banco",
+  config: { host: "db.interno", port: 5432 },
+};
+const beat = {
+  type: "heartbeat",
+  name: "Backup noturno",
+  interval_seconds: 86400,
+};
+
+test("matchesQuery ignora acento e caixa", () => {
+  assert.equal(matchesQuery(http, "servico"), true);
+  assert.equal(matchesQuery(http, "PAGAMENTOS"), true);
+});
+
+test("matchesQuery acha por parte do nome", () => {
+  assert.equal(matchesQuery(http, "gam"), true);
+  assert.equal(matchesQuery(http, "xyz"), false);
+});
+
+test("matchesQuery acha por URL e host:porta", () => {
+  assert.equal(matchesQuery(http, "exemplo.com/v1"), true);
+  assert.equal(matchesQuery(tcp, "db.interno:5432"), true);
+  assert.equal(matchesQuery(tcp, "5432"), true);
+});
+
+test("matchesQuery em heartbeat usa só o nome", () => {
+  assert.equal(matchesQuery(beat, "backup"), true);
+  assert.equal(matchesQuery(beat, "espera"), false);
+});
+
+test("matchesQuery com busca vazia casa tudo", () => {
+  assert.equal(matchesQuery(http, ""), true);
+  assert.equal(matchesQuery(http, "   "), true);
 });

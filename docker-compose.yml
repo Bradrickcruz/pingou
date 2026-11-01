@@ -12,6 +12,8 @@ services:
       - PINGOU_DATABASE_URL=/data/pingou.db
       - PINGOU_API_KEY=dev-api-key
       - PINGOU_LOG_LEVEL=info
+      # e-mail: veja a seção "E-mail" do README (PINGOU_SMTP_HOST, _PORT, _USERNAME, _PASSWORD, _FROM, _TLS)
+      # - PINGOU_SMTP_HOST=smtp.exemplo.com
     volumes:
       - pingou_data:/data
     restart: unless-stopped

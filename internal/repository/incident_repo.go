@@ -14,7 +14,7 @@ type IncidentRepo struct{ db *sql.DB }
 
 func NewIncidentRepo(db *sql.DB) *IncidentRepo { return &IncidentRepo{db: db} }
 
-const incidentColumns = `id, monitor_id, started_at, ended_at, last_error, notification_sent, duration_seconds, failure_count`
+const incidentColumns = `id, monitor_id, started_at, ended_at, last_error, notification_sent, duration_seconds, failure_count, closed_manually`
 
 func (r *IncidentRepo) Create(ctx context.Context, i *domain.Incident) error {
 	_, err := r.db.ExecContext(ctx, `
@@ -73,6 +73,16 @@ func (r *IncidentRepo) Close(ctx context.Context, id string, endedAt string, dur
 	return err
 }
 
+// CloseManually fecha o incidente aberto do monitor; no-op se não há nenhum.
+func (r *IncidentRepo) CloseManually(ctx context.Context, monitorID string, endedAt time.Time) error {
+	end := endedAt.UTC().Format(time.RFC3339)
+	_, err := r.db.ExecContext(ctx, `
+		UPDATE incidents SET ended_at = ?, closed_manually = 1,
+			duration_seconds = MAX(0, CAST(strftime('%s', ?) - strftime('%s', started_at) AS INTEGER))
+		WHERE monitor_id = ? AND ended_at IS NULL`, end, end, monitorID)
+	return err
+}
+
 // FindAll lista incidentes com os dados do monitor. O total vem de um COUNT(*)
 // com o mesmo WHERE, independente de limit/offset.
 func (r *IncidentRepo) FindAll(ctx context.Context, f domain.IncidentFilter) ([]*domain.Incident, int, error) {
@@ -105,7 +115,7 @@ func (r *IncidentRepo) FindAll(ctx context.Context, f domain.IncidentFilter) ([]
 
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT i.id, i.monitor_id, i.started_at, i.ended_at, i.last_error, i.notification_sent,
-			i.duration_seconds, i.failure_count, m.name, m.type, m.url, m.config
+			i.duration_seconds, i.failure_count, i.closed_manually, m.name, m.type, m.url, m.config
 		FROM incidents i LEFT JOIN monitors m ON m.id = i.monitor_id`+where+order+` LIMIT ? OFFSET ?`,
 		append(args, limit, offset)...)
 	if err != nil {
@@ -126,6 +136,7 @@ func (r *IncidentRepo) FindAll(ctx context.Context, f domain.IncidentFilter) ([]
 
 type incidentFields struct {
 	notifSent       int
+	closedManually  int
 	startedAt       string
 	endedAt         sql.NullString
 	lastError       sql.NullString
@@ -133,12 +144,13 @@ type incidentFields struct {
 }
 
 func (f *incidentFields) dest(i *domain.Incident) []any {
-	return []any{&i.ID, &i.MonitorID, &f.startedAt, &f.endedAt, &f.lastError, &f.notifSent, &f.durationSeconds, &i.FailureCount}
+	return []any{&i.ID, &i.MonitorID, &f.startedAt, &f.endedAt, &f.lastError, &f.notifSent, &f.durationSeconds, &i.FailureCount, &f.closedManually}
 }
 
 func (f *incidentFields) apply(i *domain.Incident) {
 	i.StartedAt, _ = time.Parse(time.RFC3339, f.startedAt)
 	i.NotificationSent = f.notifSent == 1
+	i.ClosedManually = f.closedManually == 1
 	i.EndedAt = parseNullTime(f.endedAt)
 	if f.lastError.Valid {
 		i.LastError = &f.lastError.String

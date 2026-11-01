@@ -51,6 +51,17 @@ function MonitorCell({ incident }) {
 
 const cell = "px-5 py-3 align-middle";
 
+// Neutro de propósito: não foi recuperação (verde), o monitor foi pausado.
+function ManualBadge({ className = "" }) {
+  return (
+    <span
+      className={`block w-fit mt-0.5 rounded-full border border-pg-borda px-2 py-0.5 text-pg-caption font-normal text-pg-neblina whitespace-nowrap ${className}`}
+    >
+      Fechado manualmente
+    </span>
+  );
+}
+
 export function ResolvedTable({ incidents, total, onLoadMore, loadingMore }) {
   const groups = groupByDay(incidents);
 
@@ -108,6 +119,7 @@ export function ResolvedTable({ incidents, total, onLoadMore, loadingMore }) {
                   className={`${cell} text-right text-pg-ui font-medium text-pg-ardosia whitespace-nowrap`}
                 >
                   {formatDuration(i.duration_seconds)}
+                  {i.closed_manually && <ManualBadge className="ml-auto" />}
                 </td>
                 <td
                   className={`${cell} font-pg-mono text-pg-caption text-pg-neblina`}
@@ -159,6 +171,7 @@ export function ResolvedTable({ incidents, total, onLoadMore, loadingMore }) {
                     <div className="text-pg-caption text-pg-neblina tabular-nums">
                       {timeRange(i.started_at, i.ended_at)}
                     </div>
+                    {i.closed_manually && <ManualBadge />}
                     {i.last_error && (
                       <p className="mt-0.5 mb-0 font-pg-mono text-pg-caption text-pg-neblina break-words line-clamp-2">
                         {i.last_error}

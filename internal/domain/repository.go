@@ -29,6 +29,8 @@ type IncidentRepository interface {
 	FindOpenByMonitors(ctx context.Context, monitorIDs []string) (map[string]*Incident, error)
 	FindAll(ctx context.Context, filter IncidentFilter) ([]*Incident, int, error)
 	Close(ctx context.Context, id string, endedAt string, durationSeconds int) error
+	// CloseManually fecha o incidente aberto do monitor, se houver (sem notificar).
+	CloseManually(ctx context.Context, monitorID string, endedAt time.Time) error
 	FindInWindow(ctx context.Context, monitorID string, since time.Time) ([]*Incident, error)
 }
 

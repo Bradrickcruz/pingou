@@ -175,6 +175,7 @@ Tailwind v4: declare os mesmos valores em `@theme` (`--color-pg-ciano: #1E9BB3;`
 - Sombras: evite. No máximo uma sombra muito sutil em elementos flutuantes (menus, modais).
 - Espaçamento em escala de 4 px (4, 8, 12, 16, 24, 32, 48).
 - Prefira espaço em branco a divisórias e caixas extras.
+- Largura: Painel, Incidentes e Detalhe do monitor usam `max-w-[1680px]` (aproveita telas largas sem esticar as linhas em ultrawide). Configurações segue estreita (`760px`) por ser formulário.
 
 ## 7. Componentes base
 

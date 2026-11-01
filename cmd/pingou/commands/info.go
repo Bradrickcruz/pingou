@@ -44,6 +44,27 @@ func runConfig(cmd *cobra.Command, args []string) error {
 		"GlobalTimeout":      getEnvInt("PINGOU_GLOBAL_TIMEOUT", 60),
 	}
 
+	// SMTP: a senha nunca é mostrada, só se está definida
+	smtp, err := config.LoadSMTP()
+	if err != nil {
+		cfg["SMTPError"] = err.Error()
+	} else if smtp.Enabled() {
+		cfg["SMTPHost"] = smtp.Host
+		cfg["SMTPPort"] = smtp.Port
+		cfg["SMTPFrom"] = smtp.From
+		cfg["SMTPTLS"] = smtp.TLS
+		cfg["SMTPPasswordSet"] = smtp.Password != ""
+	}
+
+	// ntfy: só o host e se há token; nunca a URL completa nem o token
+	ntfy, err := config.LoadNtfy()
+	if err != nil {
+		cfg["NtfyError"] = err.Error()
+	} else if ntfy.Enabled() {
+		cfg["NtfyHost"] = ntfy.Host()
+		cfg["NtfyTokenSet"] = ntfy.Token != ""
+	}
+
 	out, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		return fmt.Errorf("json error: %w", err)

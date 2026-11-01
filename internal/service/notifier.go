@@ -37,11 +37,33 @@ func NewWebhookNotifier(getWebhookURL func() string, publicURL string) *WebhookN
 
 // dashboardURL é o link para a página de detalhe do monitor, ou nil sem PINGOU_PUBLIC_URL.
 func (n *WebhookNotifier) dashboardURL(m *domain.Monitor) *string {
-	if n.publicURL == "" {
+	return dashboardLink(n.publicURL, m)
+}
+
+// dashboardLink monta o link do monitor no dashboard. Vale para todos os canais.
+func dashboardLink(publicURL string, m *domain.Monitor) *string {
+	if publicURL == "" {
 		return nil
 	}
-	u := n.publicURL + "/monitors/" + m.ID
+	u := publicURL + "/monitors/" + m.ID
 	return &u
+}
+
+// recoveredAt é o momento da volta: o fim do incidente ou, sem ele, agora.
+func recoveredAt(i *domain.Incident) time.Time {
+	if i.EndedAt != nil {
+		return i.EndedAt.UTC()
+	}
+	return time.Now().UTC()
+}
+
+// downtimeSeconds é quanto o monitor ficou fora: a duração gravada no incidente
+// ou, sem ela, de StartedAt até end. Nunca negativo.
+func downtimeSeconds(i *domain.Incident, end time.Time) int64 {
+	if i.DurationSeconds != nil {
+		return *i.DurationSeconds
+	}
+	return max(int64(end.Sub(i.StartedAt).Seconds()), 0)
 }
 
 type webhookPayload struct {
@@ -95,28 +117,15 @@ func (n *WebhookNotifier) NotifyRecovery(ctx context.Context, m *domain.Monitor,
 		return
 	}
 
-	timestamp := time.Now().UTC()
-	if i.EndedAt != nil {
-		timestamp = i.EndedAt.UTC()
-	}
-
-	var downtimeDurationSeconds *int64
-	if i.DurationSeconds != nil {
-		downtimeDurationSeconds = i.DurationSeconds
-	} else {
-		d := int64(timestamp.Sub(i.StartedAt).Seconds())
-		if d < 0 {
-			d = 0
-		}
-		downtimeDurationSeconds = &d
-	}
+	timestamp := recoveredAt(i)
+	downtimeDurationSeconds := downtimeSeconds(i, timestamp)
 
 	payload := webhookPayload{
 		Event:                   "up",
 		Monitor:                 toWebhookMonitor(m),
 		Timestamp:               timestamp.Format(time.RFC3339),
 		LastError:               nil,
-		DowntimeDurationSeconds: downtimeDurationSeconds,
+		DowntimeDurationSeconds: &downtimeDurationSeconds,
 		DashboardURL:            n.dashboardURL(m),
 	}
 

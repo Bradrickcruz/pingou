@@ -3,6 +3,8 @@ package config
 import (
 	"fmt"
 	"log/slog"
+	"net/mail"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -20,6 +22,8 @@ type Config struct {
 	MaxRedirects       int
 	GlobalTimeout      int
 	PublicURL          string // endereço público do dashboard, para links no webhook
+	SMTP               SMTPConfig
+	Ntfy               NtfyConfig
 
 	// Dados do build (-ldflags), preenchidos pelo comando serve. Expostos em /api/info.
 	Version   string
@@ -34,7 +38,20 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("PINGOU_API_KEY is required")
 	}
 
-	return loadConfigWithAPIKey(apiKey)
+	cfg, err := loadConfigWithAPIKey(apiKey)
+	if err != nil {
+		return nil, err
+	}
+
+	// SMTP só no serve: um erro aqui não deve travar comandos como o migrate.
+	if cfg.SMTP, err = LoadSMTP(); err != nil {
+		return nil, err
+	}
+	// ntfy também só no serve, pelo mesmo motivo.
+	if cfg.Ntfy, err = LoadNtfy(); err != nil {
+		return nil, err
+	}
+	return cfg, nil
 }
 
 // LoadConfig carrega configuracao minima para CLI (sem API key)
@@ -95,4 +112,115 @@ func loadConfigWithAPIKey(apiKey string) (*Config, error) {
 func parseInt(s string) int {
 	n, _ := strconv.Atoi(s)
 	return n
+}
+
+// Modos de TLS do SMTP.
+const (
+	SMTPTLSStartTLS = "starttls" // conexão aberta e STARTTLS obrigatório (587)
+	SMTPTLSImplicit = "tls"      // TLS desde o início (465)
+	SMTPTLSNone     = "none"     // sem TLS: só relay local, sem autenticação
+)
+
+// SMTPConfig vem toda do ambiente (PINGOU_SMTP_*). Nada disso vai para o banco
+// nem para o export. Password nunca aparece em log, API ou `pingou config`.
+type SMTPConfig struct {
+	Host     string
+	Port     int
+	Username string
+	Password string
+	From     string
+	TLS      string
+}
+
+// Enabled diz se o e-mail está disponível (PINGOU_SMTP_HOST setado).
+func (c SMTPConfig) Enabled() bool { return c.Host != "" }
+
+// LoadSMTP lê PINGOU_SMTP_*. Sem HOST, devolve config vazia e ignora o resto.
+// Com HOST e alguma regra violada, devolve erro: o serve não sobe, como quando
+// falta PINGOU_API_KEY, para o usuário não achar que configurou e não receber nada.
+func LoadSMTP() (SMTPConfig, error) {
+	host := strings.TrimSpace(os.Getenv("PINGOU_SMTP_HOST"))
+	if host == "" {
+		return SMTPConfig{}, nil
+	}
+
+	c := SMTPConfig{
+		Host:     host,
+		Port:     587,
+		Username: os.Getenv("PINGOU_SMTP_USERNAME"),
+		Password: os.Getenv("PINGOU_SMTP_PASSWORD"),
+		From:     strings.TrimSpace(os.Getenv("PINGOU_SMTP_FROM")),
+		TLS:      strings.ToLower(strings.TrimSpace(os.Getenv("PINGOU_SMTP_TLS"))),
+	}
+
+	if v := strings.TrimSpace(os.Getenv("PINGOU_SMTP_PORT")); v != "" {
+		port, err := strconv.Atoi(v)
+		if err != nil || port < 1 || port > 65535 {
+			return SMTPConfig{}, fmt.Errorf("PINGOU_SMTP_PORT must be a number between 1 and 65535")
+		}
+		c.Port = port
+	}
+
+	if c.From == "" {
+		return SMTPConfig{}, fmt.Errorf("PINGOU_SMTP_FROM is required when PINGOU_SMTP_HOST is set")
+	}
+	if _, err := mail.ParseAddress(c.From); err != nil {
+		return SMTPConfig{}, fmt.Errorf("PINGOU_SMTP_FROM must be a valid address (ex.: Pingou <alerta@exemplo.com>)")
+	}
+
+	switch c.TLS {
+	case "":
+		c.TLS = SMTPTLSStartTLS
+		if c.Port == 465 {
+			c.TLS = SMTPTLSImplicit
+		}
+	case SMTPTLSStartTLS, SMTPTLSImplicit, SMTPTLSNone:
+	default:
+		return SMTPConfig{}, fmt.Errorf("PINGOU_SMTP_TLS must be starttls, tls or none")
+	}
+
+	if c.Username != "" && c.Password == "" {
+		return SMTPConfig{}, fmt.Errorf("PINGOU_SMTP_PASSWORD is required when PINGOU_SMTP_USERNAME is set")
+	}
+	if c.TLS == SMTPTLSNone && c.Username != "" {
+		return SMTPConfig{}, fmt.Errorf("PINGOU_SMTP_TLS=none cannot be used with PINGOU_SMTP_USERNAME (the password would travel in plain text)")
+	}
+
+	return c, nil
+}
+
+// NtfyConfig vem toda do ambiente (PINGOU_NTFY_*). Nada disso vai para o banco
+// nem para o export. Token e URL nunca aparecem em log (só o host), API ou
+// `pingou config`.
+type NtfyConfig struct {
+	URL   string // sem "/" final
+	Token string // opcional; vazio = servidor aberto
+}
+
+// Enabled diz se o ntfy está disponível (PINGOU_NTFY_URL setado).
+func (c NtfyConfig) Enabled() bool { return c.URL != "" }
+
+// Host é o host do servidor, a única parte da URL que pode ir para o log.
+func (c NtfyConfig) Host() string {
+	if u, err := url.Parse(c.URL); err == nil {
+		return u.Host
+	}
+	return ""
+}
+
+// LoadNtfy lê PINGOU_NTFY_*. Sem URL, devolve config vazia e ignora o token.
+// URL inválida devolve erro: o serve não sobe, como no SMTP.
+func LoadNtfy() (NtfyConfig, error) {
+	raw := strings.TrimRight(strings.TrimSpace(os.Getenv("PINGOU_NTFY_URL")), "/")
+	if raw == "" {
+		return NtfyConfig{}, nil
+	}
+	u, err := url.Parse(raw)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return NtfyConfig{}, fmt.Errorf("PINGOU_NTFY_URL must be a valid http(s) URL (ex.: https://ntfy.sh)")
+	}
+	if u.RawQuery != "" || u.Fragment != "" || u.User != nil {
+		return NtfyConfig{}, fmt.Errorf("PINGOU_NTFY_URL must not have query, fragment or user info (use PINGOU_NTFY_TOKEN for auth)")
+	}
+	return NtfyConfig{URL: raw, Token: strings.TrimSpace(os.Getenv("PINGOU_NTFY_TOKEN"))}, nil
 }

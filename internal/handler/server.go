@@ -22,6 +22,10 @@ type Server struct {
 	pingLimiter     *rateLimiter
 	// webhookTestLimiter: o teste faz uma requisição de saída por chamada
 	webhookTestLimiter *rateLimiter
+	// emailTestLimiter: cada teste abre uma conversa SMTP de saída
+	emailTestLimiter *rateLimiter
+	// ntfyTestLimiter: cada teste faz uma publicação de saída
+	ntfyTestLimiter *rateLimiter
 }
 
 func NewServer(
@@ -40,6 +44,8 @@ func NewServer(
 		settingsService:    settingsService,
 		pingLimiter:        newRateLimiter(pingRateLimit, time.Minute),
 		webhookTestLimiter: newRateLimiter(webhookTestRateLimit, time.Minute),
+		emailTestLimiter:   newRateLimiter(emailTestRateLimit, time.Minute),
+		ntfyTestLimiter:    newRateLimiter(ntfyTestRateLimit, time.Minute),
 	}
 	s.registerRoutes()
 	return s
@@ -94,6 +100,8 @@ func (s *Server) registerRoutes() {
 	api.HandleFunc("GET /settings", s.handleGetSettings)
 	api.HandleFunc("PATCH /settings", s.handleUpdateSettings)
 	api.Handle("POST /settings/webhook/test", s.webhookTestLimiter.middleware(http.HandlerFunc(s.handleTestWebhook)))
+	api.Handle("POST /settings/email/test", s.emailTestLimiter.middleware(http.HandlerFunc(s.handleTestEmail)))
+	api.Handle("POST /settings/ntfy/test", s.ntfyTestLimiter.middleware(http.HandlerFunc(s.handleTestNtfy)))
 
 	// info
 	api.HandleFunc("GET /info", s.handleInfo)

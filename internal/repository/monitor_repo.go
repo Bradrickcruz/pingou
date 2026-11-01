@@ -98,11 +98,12 @@ func (r *MonitorRepo) Update(ctx context.Context, m *domain.Monitor) error {
 	_, err := r.db.ExecContext(ctx, `
 		UPDATE monitors SET
 			name=?, url=?, config=?, ping_token=?, interval_seconds=?, timeout_seconds=?,
-			failure_threshold=?, enabled=?, last_ping_at=?, updated_at=?
+			failure_threshold=?, enabled=?, last_ping_at=?, updated_at=?,
+			current_state = CASE WHEN ? = 0 THEN 'UNKNOWN' ELSE current_state END
 		WHERE id=?`,
 		m.Name, nullableString(m.URL), encodeConfig(m), m.PingToken, m.IntervalSeconds, m.TimeoutSeconds,
 		m.FailureThreshold, boolToInt(m.Enabled), nullableTime(m.LastPingAt),
-		m.UpdatedAt.UTC().Format(time.RFC3339),
+		m.UpdatedAt.UTC().Format(time.RFC3339), boolToInt(m.Enabled),
 		m.ID,
 	)
 	return err

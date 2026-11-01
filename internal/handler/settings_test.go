@@ -1,15 +1,21 @@
 package handler
 
 import (
+	"bufio"
 	"bytes"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/Bradrickcruz/pingou/internal/config"
 )
 
 func TestInfo(t *testing.T) {
@@ -170,5 +176,239 @@ func TestWebhookTestURLNotLogged(t *testing.T) {
 	}
 	if !strings.Contains(buf.String(), "webhook test") {
 		t.Fatalf("log sem o teste: %s", buf.String())
+	}
+}
+
+// fakeSMTPServer responde 250 a tudo (354 no DATA) e conta as mensagens.
+func fakeSMTPServer(t *testing.T) (config.SMTPConfig, *atomic.Int64) {
+	t.Helper()
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { ln.Close() })
+	var sent atomic.Int64
+	go func() {
+		for {
+			conn, err := ln.Accept()
+			if err != nil {
+				return
+			}
+			go func() {
+				defer conn.Close()
+				r := bufio.NewReader(conn)
+				conn.Write([]byte("220 fake\r\n"))
+				for {
+					line, err := r.ReadString('\n')
+					if err != nil {
+						return
+					}
+					switch strings.ToUpper(strings.TrimSpace(line)) {
+					case "DATA":
+						conn.Write([]byte("354 go\r\n"))
+						for l, err := r.ReadString('\n'); l != ".\r\n"; l, err = r.ReadString('\n') {
+							if err != nil {
+								return
+							}
+						}
+						sent.Add(1)
+						conn.Write([]byte("250 queued\r\n"))
+					case "QUIT":
+						conn.Write([]byte("221 bye\r\n"))
+						return
+					default:
+						conn.Write([]byte("250 ok\r\n"))
+					}
+				}
+			}()
+		}
+	}()
+	_, port, _ := net.SplitHostPort(ln.Addr().String())
+	p, _ := strconv.Atoi(port)
+	return config.SMTPConfig{Host: "127.0.0.1", Port: p, From: "Pingou <pingou@localhost>", TLS: config.SMTPTLSNone}, &sent
+}
+
+type settingsBody struct {
+	WebhookURL      string `json:"webhook_url"`
+	RetentionDays   int    `json:"retention_days"`
+	EmailRecipients string `json:"email_recipients"`
+	EmailAvailable  bool   `json:"email_available"`
+	NtfyTopic       string `json:"ntfy_topic"`
+	NtfyAvailable   bool   `json:"ntfy_available"`
+}
+
+func TestSettingsEmailWithoutSMTP(t *testing.T) {
+	_, h, _ := newTestServer(t)
+
+	got := decode[settingsBody](t, do(t, h, "GET", "/api/settings", ""))
+	if got.EmailAvailable || got.EmailRecipients != "" {
+		t.Fatalf("GET: %+v", got)
+	}
+	if rec := do(t, h, "PATCH", "/api/settings", `{"email_recipients":"ops@exemplo.com"}`); rec.Code != http.StatusBadRequest {
+		t.Fatalf("PATCH sem SMTP: %d, want 400", rec.Code)
+	}
+	if rec := do(t, h, "PATCH", "/api/settings", `{"email_recipients":""}`); rec.Code != http.StatusOK {
+		t.Fatalf("PATCH vazio: %d %s", rec.Code, rec.Body)
+	}
+	// salvar outra coisa não depende do e-mail
+	if rec := do(t, h, "PATCH", "/api/settings", `{"retention_days":14}`); rec.Code != http.StatusOK {
+		t.Fatalf("PATCH retenção: %d %s", rec.Code, rec.Body)
+	}
+	if rec := do(t, h, "POST", "/api/settings/email/test", `{"recipients":"ops@exemplo.com"}`); rec.Code != http.StatusBadRequest {
+		t.Fatalf("teste sem SMTP: %d, want 400", rec.Code)
+	}
+}
+
+func TestSettingsEmailWithSMTP(t *testing.T) {
+	smtp, sent := fakeSMTPServer(t)
+	smtp.Password = "senha-do-smtp"
+	_, h, _ := newTestServerSMTP(t, smtp)
+
+	if got := decode[settingsBody](t, do(t, h, "GET", "/api/settings", "")); !got.EmailAvailable {
+		t.Fatalf("GET: %+v", got)
+	}
+
+	rec := do(t, h, "PATCH", "/api/settings", `{"email_recipients":" ops@exemplo.com, Bryan <bryan@exemplo.com> "}`)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("PATCH: %d %s", rec.Code, rec.Body)
+	}
+	if got := decode[settingsBody](t, rec); got.EmailRecipients != "ops@exemplo.com,bryan@exemplo.com" {
+		t.Fatalf("normalizado: %q", got.EmailRecipients)
+	}
+	for _, body := range []string{`{"email_recipients":"não é email"}`, `{"email_recipients":"a@x.com,b@x.com,c@x.com,d@x.com,e@x.com,f@x.com,g@x.com,h@x.com,i@x.com,j@x.com,k@x.com"}`} {
+		if rec := do(t, h, "PATCH", "/api/settings", body); rec.Code != http.StatusBadRequest {
+			t.Fatalf("%s: %d, want 400", body, rec.Code)
+		}
+	}
+	if strings.Contains(do(t, h, "GET", "/api/settings", "").Body.String(), "senha-do-smtp") {
+		t.Fatal("GET vazou a senha")
+	}
+
+	// sem corpo: usa os destinatários salvos
+	rec = do(t, h, "POST", "/api/settings/email/test", "")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("teste: %d %s", rec.Code, rec.Body)
+	}
+	res := decode[struct {
+		OK    bool    `json:"ok"`
+		Error *string `json:"error"`
+	}](t, rec)
+	if !res.OK || res.Error != nil || sent.Load() != 1 {
+		t.Fatalf("teste: %s (enviados %d)", rec.Body, sent.Load())
+	}
+
+	if rec := do(t, h, "POST", "/api/settings/email/test", `{"recipients":"x"}`); rec.Code != http.StatusBadRequest {
+		t.Fatalf("destinatário inválido: %d, want 400", rec.Code)
+	}
+}
+
+func TestEmailTestWithoutRecipients(t *testing.T) {
+	smtp, _ := fakeSMTPServer(t)
+	_, h, _ := newTestServerSMTP(t, smtp)
+	if rec := do(t, h, "POST", "/api/settings/email/test", ""); rec.Code != http.StatusBadRequest {
+		t.Fatalf("sem destinatários: %d, want 400", rec.Code)
+	}
+}
+
+func TestEmailTestRateLimit(t *testing.T) {
+	_, h, _ := newTestServer(t)
+	for i := range emailTestRateLimit {
+		if rec := do(t, h, "POST", "/api/settings/email/test", ""); rec.Code != http.StatusBadRequest {
+			t.Fatalf("req %d: %d, want 400", i, rec.Code)
+		}
+	}
+	rec := do(t, h, "POST", "/api/settings/email/test", "")
+	if rec.Code != http.StatusTooManyRequests || rec.Header().Get("Retry-After") == "" {
+		t.Fatalf("excesso: %d, want 429", rec.Code)
+	}
+}
+
+func TestSettingsNtfyWithoutURL(t *testing.T) {
+	_, h, _ := newTestServer(t)
+
+	got := decode[settingsBody](t, do(t, h, "GET", "/api/settings", ""))
+	if got.NtfyAvailable || got.NtfyTopic != "" {
+		t.Fatalf("GET: %+v", got)
+	}
+	if rec := do(t, h, "PATCH", "/api/settings", `{"ntfy_topic":"alertas"}`); rec.Code != http.StatusBadRequest {
+		t.Fatalf("PATCH sem ntfy: %d, want 400", rec.Code)
+	}
+	if rec := do(t, h, "PATCH", "/api/settings", `{"ntfy_topic":""}`); rec.Code != http.StatusOK {
+		t.Fatalf("PATCH vazio: %d %s", rec.Code, rec.Body)
+	}
+	if rec := do(t, h, "POST", "/api/settings/ntfy/test", `{"topic":"alertas"}`); rec.Code != http.StatusBadRequest {
+		t.Fatalf("teste sem ntfy: %d, want 400", rec.Code)
+	}
+}
+
+func TestSettingsNtfyWithURL(t *testing.T) {
+	var published atomic.Int64
+	var lastPath, lastAuth atomic.Value
+	ntfy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		published.Add(1)
+		lastPath.Store(r.URL.Path)
+		lastAuth.Store(r.Header.Get("Authorization"))
+	}))
+	defer ntfy.Close()
+	_, h, _ := newTestServerEnv(t, config.SMTPConfig{}, config.NtfyConfig{URL: ntfy.URL, Token: "tk_segredo"})
+
+	if got := decode[settingsBody](t, do(t, h, "GET", "/api/settings", "")); !got.NtfyAvailable {
+		t.Fatalf("GET: %+v", got)
+	}
+
+	// sem tópico salvo
+	if rec := do(t, h, "POST", "/api/settings/ntfy/test", ""); rec.Code != http.StatusBadRequest {
+		t.Fatalf("teste sem tópico: %d, want 400", rec.Code)
+	}
+
+	rec := do(t, h, "PATCH", "/api/settings", `{"ntfy_topic":" alertas_prod "}`)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("PATCH: %d %s", rec.Code, rec.Body)
+	}
+	if got := decode[settingsBody](t, rec); got.NtfyTopic != "alertas_prod" {
+		t.Fatalf("tópico: %q", got.NtfyTopic)
+	}
+	for _, topic := range []string{"com espaço", "a/b", strings.Repeat("x", 65)} {
+		if rec := do(t, h, "PATCH", "/api/settings", `{"ntfy_topic":"`+topic+`"}`); rec.Code != http.StatusBadRequest {
+			t.Fatalf("%q: %d, want 400", topic, rec.Code)
+		}
+	}
+	body := do(t, h, "GET", "/api/settings", "").Body.String()
+	if strings.Contains(body, "tk_segredo") || strings.Contains(body, ntfy.URL) {
+		t.Fatalf("GET vazou token ou URL: %s", body)
+	}
+
+	// sem corpo: usa o tópico salvo
+	rec = do(t, h, "POST", "/api/settings/ntfy/test", "")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("teste: %d %s", rec.Code, rec.Body)
+	}
+	res := decode[struct {
+		OK    bool    `json:"ok"`
+		Error *string `json:"error"`
+	}](t, rec)
+	if !res.OK || res.Error != nil || published.Load() != 1 || lastPath.Load() != "/alertas_prod" || lastAuth.Load() != "Bearer tk_segredo" {
+		t.Fatalf("teste: %s (publicações %d, path %v)", rec.Body, published.Load(), lastPath.Load())
+	}
+
+	// tópico do corpo tem prioridade
+	if rec := do(t, h, "POST", "/api/settings/ntfy/test", `{"topic":"outro"}`); rec.Code != http.StatusOK || lastPath.Load() != "/outro" {
+		t.Fatalf("tópico do corpo: %d %v", rec.Code, lastPath.Load())
+	}
+	if rec := do(t, h, "POST", "/api/settings/ntfy/test", `{"topic":"a b"}`); rec.Code != http.StatusBadRequest {
+		t.Fatalf("tópico inválido: %d, want 400", rec.Code)
+	}
+}
+
+func TestNtfyTestRateLimit(t *testing.T) {
+	_, h, _ := newTestServer(t)
+	for i := range ntfyTestRateLimit {
+		if rec := do(t, h, "POST", "/api/settings/ntfy/test", ""); rec.Code != http.StatusBadRequest {
+			t.Fatalf("req %d: %d, want 400", i, rec.Code)
+		}
+	}
+	rec := do(t, h, "POST", "/api/settings/ntfy/test", "")
+	if rec.Code != http.StatusTooManyRequests || rec.Header().Get("Retry-After") == "" {
+		t.Fatalf("excesso: %d, want 429", rec.Code)
 	}
 }
