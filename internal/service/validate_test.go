@@ -1,6 +1,9 @@
 package service
 
 import (
+	"errors"
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/Bradrickcruz/pingou/internal/domain"
@@ -70,6 +73,34 @@ func TestValidateMonitorByType(t *testing.T) {
 		}
 		if !c.valid && err == nil {
 			t.Errorf("%s: válido, want erro", c.name)
+		}
+	}
+}
+
+func TestParseRecipients(t *testing.T) {
+	ok := map[string]string{
+		"":                                       "",
+		" , ":                                    "",
+		"ops@exemplo.com":                        "ops@exemplo.com",
+		" ops@exemplo.com ,bryan@exemplo.com ":   "ops@exemplo.com,bryan@exemplo.com",
+		"Ops <ops@exemplo.com>, ops@EXEMPLO.com": "ops@exemplo.com",
+		"a@x.com,,b@x.com":                       "a@x.com,b@x.com",
+	}
+	for in, want := range ok {
+		got, err := parseRecipients(in)
+		if err != nil || strings.Join(got, ",") != want {
+			t.Fatalf("%q: %v %v, want %q", in, got, err, want)
+		}
+	}
+
+	var many []string
+	for i := range maxEmailRecipients + 1 {
+		many = append(many, fmt.Sprintf("u%d@x.com", i))
+	}
+	eleven := strings.Join(many, ",")
+	for _, in := range []string{"não é email", "a@x.com, b", "a@x.com\r\nBcc: c@x.com", eleven} {
+		if _, err := parseRecipients(in); !errors.Is(err, ErrValidation) {
+			t.Fatalf("%q: err = %v, want ErrValidation", in, err)
 		}
 	}
 }
