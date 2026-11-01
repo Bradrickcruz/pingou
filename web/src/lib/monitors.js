@@ -32,6 +32,23 @@ export function targetOf(m) {
   return m.url;
 }
 
+// Minúsculas e sem acentos: "Serviço" vira "servico".
+function fold(text) {
+  return String(text ?? "")
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLocaleLowerCase("pt-BR");
+}
+
+// Busca parcial no nome e no alvo (URL ou host:porta). Heartbeat: só o nome.
+export function matchesQuery(m, q) {
+  const needle = fold(q).trim();
+  if (!needle) return true;
+  if (fold(m.name).includes(needle)) return true;
+  if (m.type === "heartbeat") return false;
+  return fold(targetOf(m)).includes(needle);
+}
+
 export function pingUrl(token) {
   return `${window.location.origin}/ping/${token}`;
 }

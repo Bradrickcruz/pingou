@@ -74,7 +74,8 @@ export function EmailCard({ value, onChange, available }) {
           id="email-help"
           className="mt-1.5 mb-0 text-pg-caption text-pg-neblina"
         >
-          Separe por vírgula (máximo de 10 destinatários, limite do SMTP). Vazio desliga o e-mail.
+          Separe por vírgula (máximo de 10 destinatários, limite do SMTP). Vazio
+          desliga o e-mail.
         </p>
       ) : (
         <p
