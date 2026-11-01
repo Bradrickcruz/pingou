@@ -80,13 +80,21 @@
   "internal/database/migrations/0001_init.sql": {
     "mtime": 1777012405.3893824,
     "seen": 1793554299.1315467,
+<<<<<<< HEAD
     "ast_hash": "",
+=======
+    "ast_hash": "cdf3d4043c780543a27d4cc148cf5555",
+>>>>>>> develop
     "semantic_hash": ""
   },
   "internal/database/migrations/0002_add_duration_seconds_to_incidents.sql": {
     "mtime": 1777061129.9355462,
     "seen": 1793554299.1315482,
+<<<<<<< HEAD
     "ast_hash": "",
+=======
+    "ast_hash": "ab52761c5aed638df004b2cddba66e83",
+>>>>>>> develop
     "semantic_hash": ""
   },
   "internal/domain/check.go": {
@@ -863,12 +871,15 @@
     "ast_hash": "7413fafe978a80b551ec528a51e14554",
     "semantic_hash": ""
   },
+<<<<<<< HEAD
   "plan-check-types.md": {
     "mtime": 1793555962.9209573,
     "seen": 1793555964.9887443,
     "ast_hash": "e50ee8531f4777fa6ef15fe0d32eca7d",
     "semantic_hash": ""
   },
+=======
+>>>>>>> develop
   "concept-design/Editar-monitor.png": {
     "mtime": 1793391650.1351123,
     "seen": 1793393132.983386,
@@ -920,7 +931,11 @@
   "internal/database/migrations/0003_monitor_types.sql": {
     "mtime": 1793391650.2071128,
     "seen": 1793554299.131549,
+<<<<<<< HEAD
     "ast_hash": "",
+=======
+    "ast_hash": "acc29bbbdeb940baaf9ab1e94647b53e",
+>>>>>>> develop
     "semantic_hash": ""
   },
   "internal/database/migrations_test.go": {
@@ -1019,12 +1034,15 @@
     "ast_hash": "456bd4b95dba4b483055158c770f741a",
     "semantic_hash": ""
   },
+<<<<<<< HEAD
   "plan-incidents-page.md": {
     "mtime": 1793555962.9209573,
     "seen": 1793555964.988746,
     "ast_hash": "ce37976886e5b6da1b710364d68415e1",
     "semantic_hash": ""
   },
+=======
+>>>>>>> develop
   "concept-design/Incidentes.png": {
     "mtime": 1793391650.1361125,
     "seen": 1793393132.983387,
@@ -1052,6 +1070,7 @@
   "internal/database/migrations/0004_incidents_page.sql": {
     "mtime": 1793391650.2071128,
     "seen": 1793554299.1315503,
+<<<<<<< HEAD
     "ast_hash": "",
     "semantic_hash": ""
   },
@@ -1059,6 +1078,9 @@
     "mtime": 1793555962.9219575,
     "seen": 1793555964.9887524,
     "ast_hash": "4c0b4db596ed3d76f4baa84982c11929",
+=======
+    "ast_hash": "b6bac1548426042243e703bf72f471e7",
+>>>>>>> develop
     "semantic_hash": ""
   },
   "concept-design/Configuracoes.png": {
@@ -1103,12 +1125,15 @@
     "ast_hash": "5f3a0ef7618e4e95ed1a98f8528e30ad",
     "semantic_hash": ""
   },
+<<<<<<< HEAD
   "plan-monitor-details.md": {
     "mtime": 1793555962.9219575,
     "seen": 1793555964.9887516,
     "ast_hash": "b6d5755aafb990c36bb0998b679bd6d7",
     "semantic_hash": ""
   },
+=======
+>>>>>>> develop
   "concept-design/Detalhes.png": {
     "mtime": 1793391650.1341124,
     "seen": 1793393132.9833853,
@@ -1187,12 +1212,15 @@
     "ast_hash": "464edd412312749414c891b1a71a16a0",
     "semantic_hash": ""
   },
+<<<<<<< HEAD
   "plan-mobile-redesign.md": {
     "mtime": 1793555962.9209573,
     "seen": 1793555964.9887466,
     "ast_hash": "4ac9ba64caf2db7d30a83b5d0cbf0686",
     "semantic_hash": ""
   },
+=======
+>>>>>>> develop
   "concept-design/mobile-Configura\u00e7\u00f5es \u00b7 reten\u00e7\u00e3o alterada@1x.png": {
     "mtime": 1793391650.1401124,
     "seen": 1793393132.9833922,
@@ -1266,6 +1294,7 @@
     "semantic_hash": ""
   },
   "plan-email-notifications.md": {
+<<<<<<< HEAD
     "mtime": 1793555962.9209573,
     "seen": 1793555964.988745,
     "ast_hash": "605bf44c05b7c58828ded6249ff9362b",
@@ -1317,6 +1346,17 @@
     "mtime": 1793555962.9219575,
     "seen": 1793555964.9878542,
     "ast_hash": "3d1f94d3df6ff908d3abcd8683d40504",
+=======
+    "mtime": 1793554260.4129658,
+    "seen": 1793554299.1316435,
+    "ast_hash": "b58365858f9b464d34929d6cad7c7d0e",
+    "semantic_hash": ""
+  },
+  "docs/implementacoes.md": {
+    "mtime": 1793554547.1589377,
+    "seen": 1793554617.8841996,
+    "ast_hash": "b292786c02220b5eea24640c0446dd60",
+>>>>>>> develop
     "semantic_hash": ""
   }
 }

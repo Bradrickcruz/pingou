@@ -863,12 +863,15 @@
     "ast_hash": "7413fafe978a80b551ec528a51e14554",
     "semantic_hash": ""
   },
+<<<<<<< HEAD
   "plan-check-types.md": {
     "mtime": 1793555962.9209573,
     "seen": 1793555964.9887443,
     "ast_hash": "e50ee8531f4777fa6ef15fe0d32eca7d",
     "semantic_hash": ""
   },
+=======
+>>>>>>> develop
   "concept-design/Editar-monitor.png": {
     "mtime": 1793391650.1351123,
     "seen": 1793393132.983386,
@@ -1019,12 +1022,15 @@
     "ast_hash": "456bd4b95dba4b483055158c770f741a",
     "semantic_hash": ""
   },
+<<<<<<< HEAD
   "plan-incidents-page.md": {
     "mtime": 1793555962.9209573,
     "seen": 1793555964.988746,
     "ast_hash": "ce37976886e5b6da1b710364d68415e1",
     "semantic_hash": ""
   },
+=======
+>>>>>>> develop
   "concept-design/Incidentes.png": {
     "mtime": 1793391650.1361125,
     "seen": 1793393132.983387,
@@ -1055,12 +1061,15 @@
     "ast_hash": "b6bac1548426042243e703bf72f471e7",
     "semantic_hash": ""
   },
+<<<<<<< HEAD
   "plan-settings-page.md": {
     "mtime": 1793555962.9219575,
     "seen": 1793555964.9887524,
     "ast_hash": "4c0b4db596ed3d76f4baa84982c11929",
     "semantic_hash": ""
   },
+=======
+>>>>>>> develop
   "concept-design/Configuracoes.png": {
     "mtime": 1793391650.1321123,
     "seen": 1793393132.9833846,
@@ -1103,12 +1112,15 @@
     "ast_hash": "5f3a0ef7618e4e95ed1a98f8528e30ad",
     "semantic_hash": ""
   },
+<<<<<<< HEAD
   "plan-monitor-details.md": {
     "mtime": 1793555962.9219575,
     "seen": 1793555964.9887516,
     "ast_hash": "b6d5755aafb990c36bb0998b679bd6d7",
     "semantic_hash": ""
   },
+=======
+>>>>>>> develop
   "concept-design/Detalhes.png": {
     "mtime": 1793391650.1341124,
     "seen": 1793393132.9833853,
@@ -1187,12 +1199,15 @@
     "ast_hash": "464edd412312749414c891b1a71a16a0",
     "semantic_hash": ""
   },
+<<<<<<< HEAD
   "plan-mobile-redesign.md": {
     "mtime": 1793555962.9209573,
     "seen": 1793555964.9887466,
     "ast_hash": "4ac9ba64caf2db7d30a83b5d0cbf0686",
     "semantic_hash": ""
   },
+=======
+>>>>>>> develop
   "concept-design/mobile-Configura\u00e7\u00f5es \u00b7 reten\u00e7\u00e3o alterada@1x.png": {
     "mtime": 1793391650.1401124,
     "seen": 1793393132.9833922,
@@ -1317,6 +1332,30 @@
     "mtime": 1793555962.9219575,
     "seen": 1793555964.9878542,
     "ast_hash": "3d1f94d3df6ff908d3abcd8683d40504",
+    "semantic_hash": ""
+  },
+  "docs/implementacoes.md": {
+    "mtime": 1793554547.1589377,
+    "seen": 1793554617.8841996,
+    "ast_hash": "b292786c02220b5eea24640c0446dd60",
+    "semantic_hash": ""
+  },
+  "scripts/memtest.sh": {
+    "mtime": 1793555715.4829247,
+    "seen": 1793555932.17124,
+    "ast_hash": "d7614c93f083cb13a336f2014bfc715b",
+    "semantic_hash": ""
+  },
+  "scripts/memtest/target.go": {
+    "mtime": 1793554959.8471444,
+    "seen": 1793555932.1712415,
+    "ast_hash": "208f5bbdf0f4599b0ccf536ddf5451d9",
+    "semantic_hash": ""
+  },
+  "scripts/README.md": {
+    "mtime": 1793555837.4514878,
+    "seen": 1793555932.1713321,
+    "ast_hash": "d71c71b906177d4022e3b2840e41aa3d",
     "semantic_hash": ""
   }
 }

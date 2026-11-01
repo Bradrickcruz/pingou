@@ -3,7 +3,7 @@
   "1": "Task Breakdown",
   "2": "Incident",
   "3": "package.json",
-  "4": "scanMonitor",
+  "4": "IncidentRepoTx",
   "5": "MonitorForm.jsx",
   "6": "net/http.ResponseWriter",
   "7": "Testing Strategy & Framework",
@@ -17,7 +17,7 @@
   "15": "inspiration_checkmate_client_src_components_design_elements_index_baseauthpage",
   "16": "Monitor",
   "17": "MVP Plan: Pingou",
-  "18": "tailwindcss",
+  "18": "tailwind.config.js",
   "19": "Vite Logo",
   "20": "Docker Compose Configuration",
   "21": "github.com/Bradrickcruz/pingou",
@@ -34,6 +34,7 @@
   "32": "Hero Image",
   "33": "React Logo",
   "34": "MonitorService",
+<<<<<<< HEAD
   "35": "Server",
   "36": "context.Context",
   "37": "lucide-react",
@@ -42,24 +43,48 @@
   "40": "Scheduler",
   "41": "newEnv",
   "42": "SMTPConfig",
+=======
+  "35": "SettingsRepo",
+  "36": "context.Context",
+  "37": "Histórico de implementações (planos aplicados)",
+  "38": "lucide-react",
+  "39": "Incidents.jsx",
+  "40": "Scheduler",
+  "41": "newEnv",
+  "42": "format.js",
+>>>>>>> develop
   "43": "graphify reference: extra exports and benchmark",
-  "44": "Task Breakdown",
+  "44": "MonitorModals.jsx",
   "45": "inspiration_checkmate_client_src_components_common_index_headercreate",
   "46": "graphify reference: query, path, explain",
   "47": "Pingou - Divergencias entre PRD e implementacao",
   "48": "Pingou Health Checker - Project Roadmap",
+<<<<<<< HEAD
   "49": "bodyFor",
   "50": "EmailCard.jsx",
   "51": "🧩 Tarefa: Melhorias na página de Incidentes",
   "52": "Plano de Desenvolvimento: Notificação por e-mail (SMTP) e envio fora do lock",
   "53": "Task Breakdown",
   "54": "🧩 Tarefa: Sistema WebSocket para atualização em tempo real dos monitores",
+=======
+  "49": "Status: **In Progress**",
+  "50": "Status: **Planned**",
+  "51": "🧩 Tarefa: Melhorias na página de Incidentes",
+  "52": "incidents_test.go",
+  "53": "Status: **Future**",
+  "54": "Status: **Continuous**",
+>>>>>>> develop
   "55": "Pingou Project State & Memory",
   "56": "graphify reference: add a URL and watch a folder",
   "57": "graphify reference: commit hook and native CLAUDE.md integration",
   "58": "graphify reference: incremental update and cluster-only",
+<<<<<<< HEAD
   "59": "incidents_test.go",
   "60": "Plano de Desenvolvimento: Tipos de check (HTTP, TCP, Heartbeat) + redesign do painel",
+=======
+  "59": "Success Metrics",
+  "60": "env",
+>>>>>>> develop
   "61": "Key Decisions Made",
   "62": "Lessons Learned",
   "63": "Preferences & Guidelines",
@@ -72,8 +97,13 @@
   "70": "React + Vite",
   "71": "graphify reference: GitHub clone and cross-repo merge",
   "72": "graphify reference: transcribe video and audio",
+<<<<<<< HEAD
   "73": ".NotifyRecovery",
   "74": "Status de Execução",
+=======
+  "73": "WebhookNotifier",
+  "74": "Status: **Planned**",
+>>>>>>> develop
   "75": "Project Status",
   "76": "Risk Management",
   "77": "Team & Resources",
@@ -82,23 +112,37 @@
   "80": "extraction-spec.md",
   "81": "inspiration_checkmate_client_src_components_design_elements_index_coloredlabel",
   "82": "inspiration_checkmate_server_src_utils_demomonitors",
+<<<<<<< HEAD
   "83": "Notes",
   "84": "Notifier",
+=======
+  "83": "3. Página de Configurações",
+  "84": "database/sql.DB",
+>>>>>>> develop
   "85": "ref_node_https",
-  "86": "format.js",
-  "87": "Task Breakdown",
+  "86": "ResponseChart.jsx",
+  "87": "🧩 Tarefa: Sistema WebSocket para atualização em tempo real dos monitores",
   "88": "ref_zod",
+<<<<<<< HEAD
   "89": "Plano de Desenvolvimento: Remodelagem mobile (Painel, Incidentes, Configurações e Detalhe do monitor)",
   "90": "Incidents.jsx",
+=======
+  "89": "Release Schedule",
+  "90": "Shell.jsx",
+>>>>>>> develop
   "91": "ref_jest_globals",
   "92": "DESIGN.md — Design system do Pingou",
   "93": "inspiration_checkmate_client_src_components_design_elements_index_detailgauge",
   "94": "ref_node_fs",
   "95": "ref_node_http",
   "96": "time.Time",
+<<<<<<< HEAD
   "97": "Plano de Desenvolvimento: Página de detalhes do monitor",
   "98": "Plano de Desenvolvimento: Reconstrução da página de Configurações",
   "99": "NewMultiNotifier",
+=======
+  "99": "commands/info.go",
+>>>>>>> develop
   "100": "ref_mongoose",
   "101": "inspiration_checkmate_client_src_components_common_index_heatmapresponsetime",
   "102": "inspiration_checkmate_client_src_components_common_index_headertimerange",
@@ -236,20 +280,28 @@
   "234": "ref_v8",
   "235": "UnitOfWork",
   "236": "🧩 Tarefa: Tela de detalhe do monitor com checks e incidentes",
-  "237": "Status de Execução",
   "238": "devDependencies",
   "239": "newTestRegistry",
+<<<<<<< HEAD
   "240": "database/sql.DB",
   "241": "RetentionCard.jsx",
   "242": "Status de Execução",
   "243": "Pingou README",
+=======
+  "240": "runServe",
+  "243": "plan-email-notifications.md",
+>>>>>>> develop
   "244": "3. Cores",
   "245": "Dashboard.jsx",
   "246": "Overview",
   "247": "scripts",
+<<<<<<< HEAD
   "248": "Contrato",
   "249": "dependencies",
   "250": "Status de Execução",
   "251": "at",
   "254": "vite"
+=======
+  "249": "dependencies"
+>>>>>>> develop
 }
