@@ -118,16 +118,27 @@ func TestPrintQueryPlans(t *testing.T) {
 	db.QueryRowContext(ctx, `SELECT MAX(checked_at) FROM checks`).Scan(&last)
 	now, _ := time.Parse(time.RFC3339, last)
 
+	fmt.Print(QueryPlans(t, db, all, now))
+}
+
+// QueryPlans devolve a tabela de planos das consultas quentes no banco db
+// (usado também pelo TestDBBench, na cópia já migrada). O histórico da lista
+// usa só 2 monitores: o plano se repete igual para cada um.
+func QueryPlans(t testing.TB, db *sql.DB, monitorIDs []string, now time.Time) string {
+	ctx := context.Background()
 	var b strings.Builder
 	b.WriteString("\n| Consulta | Plano |\n|---|---|\n")
-	for _, q := range hotQueries(all[0], all, now) {
+	for _, q := range hotQueries(monitorIDs[0], monitorIDs, now) {
+		if q.name == "lista: history" {
+			q.sql, q.args = sqlSummariesHistory(2), q.args[:4]
+		}
 		plan, err := explain(ctx, db, q.sql, q.args...)
 		if err != nil {
 			t.Fatalf("%s: %v", q.name, err)
 		}
 		fmt.Fprintf(&b, "| %s | %s |\n", q.name, strings.Join(plan, " · "))
 	}
-	fmt.Print(b.String())
+	return b.String()
 }
 
 // TestHotQueriesUseIndexes: regressão do plano de consulta num banco pequeno.

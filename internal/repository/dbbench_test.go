@@ -236,6 +236,20 @@ func TestDBBench(t *testing.T) {
 
 	report.WriteString(sizes(t, e.db))
 
+	var all []string
+	rows, err := e.db.Query(`SELECT id FROM monitors ORDER BY created_at DESC LIMIT 100`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for rows.Next() {
+		var id string
+		rows.Scan(&id)
+		all = append(all, id)
+	}
+	rows.Close()
+	report.WriteString("\n### Planos de consulta (na cópia, depois das migrations)\n")
+	report.WriteString(repository.QueryPlans(t, e.db, all, e.now))
+
 	// 1. /stats nos 4 períodos, em um monitor de cada tipo
 	var stats []timing
 	for _, rng := range []string{"24h", "7d", "14d", "30d"} {
@@ -302,7 +316,7 @@ func TestDBBench(t *testing.T) {
 	// 3. custo de gravação pelo caminho real (state machine, um check por transação)
 	writes := envInt("PINGOU_BENCH_WRITES", 5000)
 	ids := []string{}
-	rows, _ := e.db.Query(`SELECT id FROM monitors WHERE type <> 'heartbeat' ORDER BY id`)
+	rows, _ = e.db.Query(`SELECT id FROM monitors WHERE type <> 'heartbeat' ORDER BY id`)
 	for rows.Next() {
 		var id string
 		rows.Scan(&id)

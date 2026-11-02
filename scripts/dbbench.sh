@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Mede o banco com volume real: gera os dados (se faltarem), imprime os planos
-# de consulta e roda os benchmarks. Resultado em .bench/results-<perfil>-<data>.md
+# Mede o banco com volume real: gera os dados (se faltarem) e roda os
+# benchmarks (inclui os planos de consulta). Resultado em .bench/results-<perfil>-<data>.md
 #
 #   scripts/dbbench.sh            # perfil típico (10 monitores, 60 s)
 #   scripts/dbbench.sh limite     # perfil limite (100 monitores, 10 s; ~5 GB, vários minutos)
@@ -33,10 +33,6 @@ mkdir -p "$TMPDIR"
   echo "- RAM: $(free -m 2>/dev/null | awk '/Mem:/ {print $2 " MB"}')"
   echo "- disco: $(df -h .bench | awk 'NR==2 {print $1 " (" $2 ")"}')"
   echo "- banco: $DB ($(du -h "$DB" | cut -f1))"
-  echo
-  echo "## Planos de consulta"
-  PINGOU_BENCH_DB="$DB" go test ./internal/repository -run '^TestPrintQueryPlans$' -count=1 -v \
-    | grep '^|'
   echo
   echo "## Tempos"
   PINGOU_BENCH_DB="$DB" go test ./internal/repository -run '^TestDBBench$' -count=1 -v -timeout 3h \
