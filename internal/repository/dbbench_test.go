@@ -309,14 +309,20 @@ func TestDBBench(t *testing.T) {
 		ids = append(ids, id)
 	}
 	rows.Close()
-	write := func(i int) error {
+	writeResult := func(i int, ok bool) error {
 		m, err := e.monitors.FindByID(ctx, ids[i%len(ids)])
 		if err != nil {
 			return err
 		}
+		res := domain.CheckResult{Success: ok, LatencyMs: 100}
+		if !ok {
+			msg := "bench failure"
+			res.ErrorMessage = &msg
+		}
 		uow := service.NewUnitOfWork(e.db, repository.NewCheckRepoTx(e.db), repository.NewMonitorRepoTx(e.db), repository.NewIncidentRepoTx(e.db))
-		return service.NewStateMachine(uow, noopNotifier{}).Process(ctx, m, domain.CheckResult{Success: true, LatencyMs: 100})
+		return service.NewStateMachine(uow, noopNotifier{}).Process(ctx, m, res)
 	}
+	write := func(i int) error { return writeResult(i, true) }
 	w := timing{name: fmt.Sprintf("gravação de check (%d)", writes)}
 	t0 := time.Now()
 	for i := 0; i < writes; i++ {
@@ -331,8 +337,28 @@ func TestDBBench(t *testing.T) {
 		}
 	}
 	total := time.Since(t0)
-	report.WriteString(printTable("Gravação", []timing{w}))
-	fmt.Fprintf(&report, "\nmédia por check: %s ms (%d gravações em %s)\n", ms(total/time.Duration(writes)), writes, total.Round(time.Millisecond))
+	// falha: a state machine lê os últimos checks para contar falhas seguidas;
+	// abre incidente e marca DOWN nos monitores (é uma cópia do banco)
+	failures := min(writes, 2000)
+	f := timing{name: fmt.Sprintf("gravação de falha (%d)", failures)}
+	for i := 0; i < failures; i++ {
+		s := time.Now()
+		if err := writeResult(i, false); err != nil {
+			t.Fatal(err)
+		}
+		if i == 0 {
+			f.first = time.Since(s)
+		} else {
+			f.reps = append(f.reps, time.Since(s))
+		}
+	}
+	for i := range ids { // volta todos a UP antes dos próximos cenários
+		if err := write(i); err != nil {
+			t.Fatal(err)
+		}
+	}
+	report.WriteString(printTable("Gravação", []timing{w, f}))
+	fmt.Fprintf(&report, "\nmédia por check com sucesso: %s ms (%d gravações em %s)\n", ms(total/time.Duration(writes)), writes, total.Round(time.Millisecond))
 
 	// 4. concorrência: /stats 30d sem parar + gravação a 10 por segundo
 	secs := envInt("PINGOU_BENCH_CONCURRENCY", 30)
@@ -373,14 +399,45 @@ func TestDBBench(t *testing.T) {
 	report.WriteString(printTable(fmt.Sprintf("Concorrência (%d s)", secs), []timing{readers, writer}))
 
 	// 5. retenção: apaga o dia mais antigo (o mesmo que a limpeza horária faz
-	// depois de um dia sem rodar). Uma instrução só: segura a conexão o tempo todo.
+	// depois de um dia parado) com gravações a 10 por segundo ao lado. A espera
+	// máxima de uma gravação mostra por quanto tempo a limpeza segura a conexão.
 	before := e.first.Add(24 * time.Hour).UTC().Format(time.RFC3339)
-	s := time.Now()
-	n, err := e.checks.DeleteOlderThan(ctx, before)
-	if err != nil {
-		t.Fatal(err)
+	type result struct {
+		n   int64
+		d   time.Duration
+		err error
 	}
-	fmt.Fprintf(&report, "\n### Retenção\n\nDELETE de 1 dia: %d linhas em %s ms (conexão presa o tempo todo)\n", n, ms(time.Since(s)))
+	done := make(chan result, 1)
+	s := time.Now()
+	go func() {
+		n, err := e.checks.DeleteOlderThan(ctx, before)
+		done <- result{n, time.Since(s), err}
+	}()
+	during := timing{name: "gravação durante a limpeza"}
+	var res result
+	tick = time.NewTicker(100 * time.Millisecond)
+loop:
+	for i := 0; ; i++ {
+		select {
+		case res = <-done:
+			break loop
+		case <-tick.C:
+		}
+		s := time.Now()
+		if err := write(i); err != nil {
+			t.Fatal(err)
+		}
+		during.reps = append(during.reps, time.Since(s))
+	}
+	tick.Stop()
+	if res.err != nil {
+		t.Fatal(res.err)
+	}
+	if len(during.reps) > 0 {
+		during.first = during.reps[0]
+	}
+	fmt.Fprintf(&report, "\n### Retenção\n\nDELETE de 1 dia: %d linhas em %s ms\n", res.n, ms(res.d))
+	report.WriteString(printTable("Gravação durante a retenção", []timing{during}))
 }
 
 // TestResultsSameWithOldIndex: as respostas das consultas quentes são as mesmas

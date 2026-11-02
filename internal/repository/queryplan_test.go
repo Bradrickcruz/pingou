@@ -43,7 +43,7 @@ func hotQueries(monitorID string, all []string, now time.Time) []hotQuery {
 		{"lista: down_since", sqlIncidentsOpenByMonitors(len(ids)), ids},
 		{"checks: página", sqlChecksPage, []any{monitorID, 50, 0}},
 		{"checks: total", sqlChecksCount, []any{monitorID}},
-		{"retenção: delete", sqlChecksDeleteOlder, []any{ts(now.Add(-29 * 24 * time.Hour))}},
+		{"retenção: delete", sqlChecksDeleteOlderBatch, []any{ts(now.Add(-29 * 24 * time.Hour)), 5000}},
 		{"state machine: aberto", sqlIncidentOpenByMonitor, []any{monitorID}},
 		{"state machine: +falha", sqlIncidentIncrementFailures, []any{monitorID}},
 		{"incidentes: total", countAll, argsAll},
@@ -305,4 +305,37 @@ func dumpRows(t *testing.T, db *sql.DB, q string, args ...any) string {
 		b.WriteString("\n")
 	}
 	return b.String()
+}
+
+// TestDeleteOlderThanBatches: em lotes, apaga exatamente o mesmo conjunto
+// que o DELETE único de antes, e para com o ctx cancelado.
+func TestDeleteOlderThanBatches(t *testing.T) {
+	db := smallBenchDB(t)
+	ctx := context.Background()
+	before := "2026-01-07T00:00:00Z" // mais de um lote (retentionBatch)
+
+	want := dumpRows(t, db, `SELECT id FROM checks WHERE checked_at >= ? ORDER BY id`, before)
+	var old int64
+	db.QueryRow(`SELECT COUNT(*) FROM checks WHERE checked_at < ?`, before).Scan(&old)
+	if old <= retentionBatch {
+		t.Fatalf("banco de teste pequeno demais: %d linhas para apagar", old)
+	}
+
+	cctx, cancel := context.WithCancel(ctx)
+	cancel()
+	r := NewCheckRepo(db)
+	if n, err := r.DeleteOlderThan(cctx, before); err == nil || n != 0 {
+		t.Fatalf("ctx cancelado: n=%d err=%v, want 0 e erro", n, err)
+	}
+
+	n, err := r.DeleteOlderThan(ctx, before)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n != old {
+		t.Fatalf("apagou %d, want %d", n, old)
+	}
+	if got := dumpRows(t, db, `SELECT id FROM checks ORDER BY id`); got != want {
+		t.Fatal("sobrou um conjunto diferente do esperado")
+	}
 }

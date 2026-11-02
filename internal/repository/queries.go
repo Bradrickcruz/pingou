@@ -22,8 +22,10 @@ const (
 
 	sqlChecksCount = `SELECT COUNT(*) FROM checks WHERE monitor_id = ?`
 
-	// sqlChecksDeleteOlder: retenção, a cada hora.
-	sqlChecksDeleteOlder = `DELETE FROM checks WHERE checked_at < ?`
+	// sqlChecksDeleteOlderBatch: retenção (a cada hora), um lote por vez.
+	sqlChecksDeleteOlderBatch = `
+		DELETE FROM checks WHERE id IN (
+			SELECT id FROM checks WHERE checked_at < ? ORDER BY checked_at LIMIT ?)`
 
 	// sqlChecksBuckets: série e totais do /stats.
 	sqlChecksBuckets = `

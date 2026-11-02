@@ -53,13 +53,35 @@ func (r *CheckRepo) FindByMonitor(ctx context.Context, monitorID string, limit, 
 	return checks, total, nil
 }
 
+// DeleteOlderThan apaga os checks anteriores a before em lotes de
+// retentionBatch linhas, cada um na sua própria transação. Com uma conexão só,
+// um DELETE único de um dia inteiro (~800 mil linhas no perfil de 100
+// monitores a 10 s) segurava a conexão por segundos e atrasava a gravação dos
+// checks. Entre lotes a conexão fica livre e o ctx é conferido: no
+// desligamento para logo, e o que sobrou sai na próxima rodada.
 func (r *CheckRepo) DeleteOlderThan(ctx context.Context, before string) (int64, error) {
-	res, err := r.db.ExecContext(ctx, sqlChecksDeleteOlder, before)
-	if err != nil {
-		return 0, err
+	var total int64
+	for {
+		if err := ctx.Err(); err != nil {
+			return total, err
+		}
+		res, err := r.db.ExecContext(ctx, sqlChecksDeleteOlderBatch, before, retentionBatch)
+		if err != nil {
+			return total, err
+		}
+		n, err := res.RowsAffected()
+		if err != nil {
+			return total, err
+		}
+		total += n
+		if n < retentionBatch {
+			return total, nil
+		}
 	}
-	return res.RowsAffected()
 }
+
+// retentionBatch: ~5 mil linhas apagam em dezenas de ms (medido no perfil limite).
+const retentionBatch = 5000
 
 // Summaries monta o resumo do painel para vários monitores em duas queries
 // (histórico e uptime), sem uma ida ao banco por monitor.
