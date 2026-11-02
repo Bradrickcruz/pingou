@@ -978,9 +978,9 @@
     "semantic_hash": ""
   },
   "docs/implementacoes.md": {
-    "mtime": 1793628132.3051066,
-    "seen": 1793628184.2769756,
-    "ast_hash": "61e4552f3b76e9f26c9b8eb30d0defeb",
+    "mtime": 1793630500.4689138,
+    "seen": 1793630507.8879883,
+    "ast_hash": "334a45974b8dc80fc82e58caf686ff78",
     "semantic_hash": ""
   },
   "scripts/README.md": {
@@ -1413,12 +1413,6 @@
     "mtime": 1793627082.489682,
     "seen": 1793627992.4932666,
     "ast_hash": "e42552d1707d416d7cbe22ea5e5ad7c6",
-    "semantic_hash": ""
-  },
-  "plan-fuso-shutdown.md": {
-    "mtime": 1793630325.0218976,
-    "seen": 1793630380.7908146,
-    "ast_hash": "2c418b9447e52f485dd5751989039112",
     "semantic_hash": ""
   },
   "plan-ssl-expiry.md": {
