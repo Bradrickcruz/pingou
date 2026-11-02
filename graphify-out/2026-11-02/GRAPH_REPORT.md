@@ -1,38 +1,38 @@
 # Graph Report - pingou-health-checker  (2026-11-02)
 
 ## Corpus Check
-- 190 files · ~216,284 words
+- 189 files · ~214,921 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 17 file(s) not represented in the graph (top: (none) 11, .woff2 4, .example 1)
 
 ## Summary
-- 1749 nodes · 4218 edges · 256 communities (90 shown, 166 thin omitted)
-- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 192 edges (avg confidence: 0.85)
+- 1732 nodes · 4199 edges · 254 communities (88 shown, 166 thin omitted)
+- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 194 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `bdcde926`
+- Built from commit: `bad68901`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - serve.go
-- MonitorForm.jsx
+- Dashboard.jsx
 - Server
 - package.json
-- Plano de Desenvolvimento: Pausar monitor fecha o incidente aberto (silenciosamente)
-- NewNtfyNotifier
+- IncidentRepoTx
+- incidents_test.go
 - net/http.ResponseWriter
 - Testing Strategy & Framework
 - ref_dns
 - inspiration_checkmate_client_src_components_monitors_index_headerdeletecontrols
 - 🧩 Task: Aproveitar melhor a largura no desktop
-- testing.T
+- settings_test.go
 - inspiration_checkmate_client_src_components_inputs_index_datepicker
 - inspiration_checkmate_client_src_components_design_elements_index_basebox
 - Pingou Health Checker - Project Vision & Goals
 - inspiration_checkmate_client_src_components_design_elements_index_baseauthpage
-- newTestRegistry
+- NtfyConfig
 - memtest: prova da promessa de memória
 - Vite Logo
 - Docker Compose Configuration
@@ -50,21 +50,21 @@
 - React Logo
 - context.Context
 - bodyFor
-- incidents_test.go
-- 2. Página de Incidentes
+- database/sql.DB
+- 10. Pausar monitor fecha o incidente
 - Incident
 - NewMultiNotifier
 - UnitOfWork
 - runServe
 - format.js
 - graphify reference: extra exports and benchmark
-- scanMonitor
+- Monitor
 - inspiration_checkmate_client_src_components_common_index_headercreate
 - graphify reference: query, path, explain
 - Pingou - Divergencias entre PRD e implementacao
 - Pingou Health Checker - Project Roadmap
-- database/sql.DB
-- SendTestNtfy
+- Scheduler
+- NewTCPChecker
 - 🧩 Tarefa: Melhorias na página de Incidentes
 - DESIGN.md — Design system do Pingou
 - MonitorService
@@ -88,7 +88,7 @@
 - graphify reference: GitHub clone and cross-repo merge
 - graphify reference: transcribe video and audio
 - 3. Cores
-- TestWebhookDashboardURL
+- handler/stats.go
 - Project Status
 - Risk Management
 - Team & Resources
@@ -98,21 +98,22 @@
 - inspiration_checkmate_client_src_components_design_elements_index_coloredlabel
 - inspiration_checkmate_server_src_utils_demomonitors
 - memtest.sh
-- Monitor
+- dbNotifier
 - ref_node_https
 - react
 - 🧩 Tarefa: Sistema WebSocket para atualização em tempo real dos monitores
 - ref_zod
+- commands/info.go
 - SMTPConfig
-- newFakeSMTP
 - ref_jest_globals
-- ResponseChart.jsx
+- 8. Notificação via ntfy
 - inspiration_checkmate_client_src_components_design_elements_index_detailgauge
 - ref_node_fs
 - ref_node_http
 - time.Time
+- 3. Página de Configurações
 - Status: **Planned**
-- newEnv
+- testing.T
 - ref_mongoose
 - inspiration_checkmate_client_src_components_common_index_heatmapresponsetime
 - inspiration_checkmate_client_src_components_common_index_headertimerange
@@ -248,34 +249,31 @@
 - ref_url
 - ref_https
 - ref_v8
+- at
 - 🧩 Tarefa: Tela de detalhe do monitor com checks e incidentes
 - Status: **Planned**
 - devDependencies
 - 1. Tipos de check (HTTP, TCP, Heartbeat) + redesign do painel
-- commands/info.go
-- migrations_test.go
+- acquireLock
 - Status: **Planned**
 - Status: **Future**
 - Status: **Continuous**
-- Dashboard.jsx
+- lib/monitors.js
 - Histórico de implementações (planos aplicados)
 - scripts
 - 9. Eixo Y dinâmico + gráfico de pings
 - dependencies
 - 7. Largura no desktop + busca parcial
-- 5. Remodelagem mobile
 - Success Metrics
 - Release Schedule
-- at
 - Dependencies & Blockers
 - Risk Management
-- vite
 
 ## God Nodes (most connected - your core abstractions)
 1. `Monitor` - 84 edges
 2. `Incident` - 56 edges
-3. `do()` - 26 edges
-4. `newTestServer()` - 26 edges
+3. `do()` - 27 edges
+4. `newTestServer()` - 27 edges
 5. `runServe()` - 26 edges
 6. `Scheduler` - 25 edges
 7. `react` - 25 edges
@@ -286,47 +284,47 @@
 ## Surprising Connections (you probably didn't know these)
 - `Entregue` --references--> `matchesQuery()`  [INFERRED]
   docs/implementacoes.md → web/src/lib/monitors.js
-- `Entregue` --references--> `MobileHeader()`  [INFERRED]
-  docs/implementacoes.md → web/src/components/layout/MobileHeader.jsx
 - `Decisões` --references--> `ResponseChart()`  [INFERRED]
   docs/implementacoes.md → web/src/components/monitor-detail/ResponseChart.jsx
-- `🔍 Contexto` --references--> `useMonitors()`  [INFERRED]
-  tasks/tarefa-sistema-websocket-tempo-real.md → web/src/hooks/useMonitors.js
 - `Entregue` --references--> `EmailCard()`  [INFERRED]
   docs/implementacoes.md → web/src/components/settings/EmailCard.jsx
+- `🔍 Contexto` --references--> `useMonitors()`  [INFERRED]
+  tasks/tarefa-sistema-websocket-tempo-real.md → web/src/hooks/useMonitors.js
+- `Entregue` --references--> `MonitorModals()`  [INFERRED]
+  docs/implementacoes.md → web/src/components/monitors/MonitorModals.jsx
 
 ## Import Cycles
 - None detected.
 
-## Communities (256 total, 166 thin omitted)
+## Communities (254 total, 166 thin omitted)
 
 ### Community 0 - "serve.go"
-Cohesion: 0.09
-Nodes (71): copyFile(), runExportDB(), Execute(), requireKey(), acquireLock(), checkExistingLock(), main(), MonitorEnabled (+63 more)
+Cohesion: 0.10
+Nodes (66): Execute(), requireKey(), main(), MonitorEnabled, go_pkg_bytes, go_pkg_context, go_pkg_crypto_tls, go_pkg_database_sql (+58 more)
 
-### Community 1 - "MonitorForm.jsx"
-Cohesion: 0.11
-Nodes (21): lucide-react, blank, CHECK_EVERY, fromMonitor(), GRACE, MonitorForm(), PING_EVERY, PingBlock() (+13 more)
+### Community 1 - "Dashboard.jsx"
+Cohesion: 0.10
+Nodes (23): Entregue, monitorsApi, web_src_assets_brand_pingou_simbolo, MobileHeader(), blank, CHECK_EVERY, fromMonitor(), GRACE (+15 more)
 
 ### Community 2 - "Server"
-Cohesion: 0.32
-Nodes (6): net/http.ServeMux, net/http.Server, Server, NewServer(), spaHandler(), IncidentService
+Cohesion: 0.28
+Nodes (7): net/http.ServeMux, net/http.Server, Server, NewServer(), spaHandler(), IncidentService, NewIncidentService()
 
 ### Community 3 - "package.json"
-Cohesion: 0.13
-Nodes (18): autoprefixer, axios, eslint, eslint-config-prettier, @eslint/js, eslint-plugin-prettier, eslint-plugin-react-hooks, eslint-plugin-react-refresh (+10 more)
+Cohesion: 0.12
+Nodes (18): autoprefixer, eslint, eslint-config-prettier, @eslint/js, eslint-plugin-prettier, eslint-plugin-react-hooks, eslint-plugin-react-refresh, globals (+10 more)
 
-### Community 4 - "Plano de Desenvolvimento: Pausar monitor fecha o incidente aberto (silenciosamente)"
-Cohesion: 0.08
-Nodes (25): Alternativas consideradas e descartadas, Concluído, Cronograma Sugerido, Definition of Done (DoD), Em andamento, File Structure, Notes, Overview (+17 more)
+### Community 4 - "IncidentRepoTx"
+Cohesion: 0.29
+Nodes (6): CheckRepoTx, IncidentRepoTx, MonitorRepoTx, NewScheduler(), NewUnitOfWork(), sqliteUnitOfWork
 
-### Community 5 - "NewNtfyNotifier"
-Cohesion: 0.27
-Nodes (12): net/http.Header, net/http/httptest.Server, NewNtfyNotifier(), decodedTitle(), newFakeNtfy(), TestNtfyNotifierDown(), TestNtfyNotifierHeartbeatNeverSendsPingToken(), TestNtfyNotifierRecoveryWithoutTokenOrLink() (+4 more)
+### Community 5 - "incidents_test.go"
+Cohesion: 0.36
+Nodes (10): go_pkg_slices, incidentsPage, Server, ids(), listIncidents(), seedIncidents(), TestClosedManuallyInResolved(), TestListIncidentsResolvedOrderAndFilters() (+2 more)
 
 ### Community 6 - "net/http.ResponseWriter"
 Cohesion: 0.06
-Nodes (43): go_pkg_crypto_rand, go_pkg_crypto_subtle, go_pkg_encoding_hex, go_pkg_runtime_debug, net/http.Request, net/http.ResponseWriter, net/url.Values, time.Duration (+35 more)
+Nodes (45): go_pkg_crypto_rand, go_pkg_crypto_subtle, go_pkg_encoding_hex, go_pkg_runtime_debug, net/http.Request, net/http.ResponseWriter, net/url.Values, time.Duration (+37 more)
 
 ### Community 7 - "Testing Strategy & Framework"
 Cohesion: 0.05
@@ -336,17 +334,17 @@ Nodes (42): 1. Unit Testing, 2. Integration Testing, 3. End-to-End Testing, Back
 Cohesion: 0.05
 Nodes (37): 🔍 Context, 🔍 Context, 🔍 Context, 🔍 Context, 🎯 Goal, 🎯 Goal, 🎯 Goal, 🎯 Goal (+29 more)
 
-### Community 11 - "testing.T"
-Cohesion: 0.15
-Nodes (38): go_pkg_bufio, net/http.Handler, net/http/httptest.ResponseRecorder, testing.T, settingsBody, TestNtfyHost(), createHeartbeat(), decode() (+30 more)
+### Community 11 - "settings_test.go"
+Cohesion: 0.13
+Nodes (36): go_pkg_bufio, net/http.Handler, net/http/httptest.ResponseRecorder, settingsBody, createHeartbeat(), decode(), do(), Server (+28 more)
 
 ### Community 14 - "Pingou Health Checker - Project Vision & Goals"
 Cohesion: 0.05
 Nodes (42): 1. Convention Over Configuration, 1. Simplicity First, 2. Batteries Included, 2. Reliability & Performance, 3. Extensibility by Design, 3. Self-Hosted Independence, 4. Developer Experience, 5. Extensibility (+34 more)
 
-### Community 16 - "newTestRegistry"
-Cohesion: 0.19
-Nodes (13): TCPChecker, net.Dialer, newTestRegistry(), tcpMonitor(), TestHTTPCheckerErrorMessage(), TestRegistryHTTP(), TestRegistryUnknownType(), TestTCPCheckerNoSuchHost() (+5 more)
+### Community 16 - "NtfyConfig"
+Cohesion: 0.05
+Nodes (48): HTTPChecker, EmailTestResult, net/http.Client, net/http.Header, net/http/httptest.Server, sync.Mutex, TestHTTPCheckerErrorMessage(), NewHTTPChecker() (+40 more)
 
 ### Community 17 - "memtest: prova da promessa de memória"
 Cohesion: 0.18
@@ -378,47 +376,47 @@ Nodes (22): Alternativas consideradas e descartadas, Build Verification, Conclu�
 
 ### Community 31 - "MonitorDetail.jsx"
 Cohesion: 0.11
-Nodes (24): 4. Detalhe do monitor, Descartado, Desvios na implementação, Entregue, OpenIncidentCard(), ConfigCard(), DetailTopBar(), DownAlert() (+16 more)
+Nodes (26): 4. Detalhe do monitor, Descartado, Desvios na implementação, Entregue, lucide-react, OpenIncidentCard(), ChecksTable(), detailOf() (+18 more)
 
 ### Community 34 - "context.Context"
 Cohesion: 0.07
-Nodes (14): context.Context, database/sql.Tx, Check, CheckRepository, MonitorRepository, boolToInt(), SettingsRepo, NewRetentionWorker() (+6 more)
+Nodes (13): context.Context, database/sql.Tx, Check, CheckRepository, MonitorRepository, boolToInt(), SettingsRepo, NewRetentionWorker() (+5 more)
 
 ### Community 35 - "bodyFor"
-Cohesion: 0.10
-Nodes (26): net/http.Client, bodyFor(), formatDuration(), joinUnits(), oneLine(), shortDuration(), splitRecipients(), subjectDown() (+18 more)
+Cohesion: 0.16
+Nodes (15): bodyFor(), oneLine(), splitRecipients(), subjectDown(), subjectUp(), TestBodyFor(), dashboardLink(), downtimeSeconds() (+7 more)
 
-### Community 36 - "incidents_test.go"
-Cohesion: 0.36
-Nodes (10): go_pkg_slices, incidentsPage, Server, ids(), listIncidents(), seedIncidents(), TestClosedManuallyInResolved(), TestListIncidentsResolvedOrderAndFilters() (+2 more)
+### Community 36 - "database/sql.DB"
+Cohesion: 0.18
+Nodes (19): runMigrateUp(), go_pkg_github_com_pressly_goose_v3, database/sql.DB, ExportHandler, OpenDB(), RunMigrations(), sqliteDSN(), Status() (+11 more)
 
-### Community 37 - "2. Página de Incidentes"
-Cohesion: 0.50
-Nodes (4): 2. Página de Incidentes, Decisões, Descartado, Entregue
+### Community 37 - "10. Pausar monitor fecha o incidente"
+Cohesion: 0.40
+Nodes (5): 10. Pausar monitor fecha o incidente, Decisões, Descartado, Entregue, Limitações conhecidas
 
 ### Community 38 - "Incident"
 Cohesion: 0.08
 Nodes (16): database/sql.NullInt64, database/sql.NullString, noopNotifier, Incident, IncidentFilter, IncidentRepository, scanIncident(), scanIncidentWithMonitor() (+8 more)
 
 ### Community 39 - "NewMultiNotifier"
-Cohesion: 0.31
-Nodes (7): NewMultiNotifier(), TestMultiNotifierDoesNotBlock(), TestMultiNotifierIgnoresCanceledContext(), TestMultiNotifierIsolatesFailures(), TestMultiNotifierWait(), TestMultiNotifierNtfyFailureDoesNotBlockOthers(), ctxNotifier
+Cohesion: 0.27
+Nodes (8): TestSlowNotifierDoesNotBlockOtherMonitors(), NewMultiNotifier(), TestMultiNotifierDoesNotBlock(), TestMultiNotifierIgnoresCanceledContext(), TestMultiNotifierIsolatesFailures(), TestMultiNotifierWait(), TestMultiNotifierNtfyFailureDoesNotBlockOthers(), ctxNotifier
 
 ### Community 41 - "runServe"
-Cohesion: 0.24
-Nodes (26): runAdd(), runRM(), releaseLock(), runServe(), github.com/spf13/cobra.Command, Open(), newTestServerEnv(), NewCheckRepo() (+18 more)
+Cohesion: 0.25
+Nodes (25): runAdd(), runRM(), releaseLock(), runServe(), Open(), newTestServerEnv(), NewCheckRepo(), NewCheckRepoTx() (+17 more)
 
 ### Community 42 - "format.js"
-Cohesion: 0.16
-Nodes (19): groupByDay(), ResolvedTable(), ChecksTable(), detailOf(), bucketLabel(), BYTE_UNITS, bytesFormat, checkTime() (+11 more)
+Cohesion: 0.12
+Nodes (29): groupByDay(), ResolvedTable(), axisTicks(), gapBuckets(), isDown(), linePath(), ResponseChart(), summary() (+21 more)
 
 ### Community 43 - "graphify reference: extra exports and benchmark"
 Cohesion: 0.22
 Nodes (8): graphify reference: extra exports and benchmark, Step 6b - Wiki (only if --wiki flag), Step 7 - Neo4j export (only if --neo4j or --neo4j-push flag), Step 7a - FalkorDB export (only if --falkordb or --falkordb-push flag), Step 7b - SVG export (only if --svg flag), Step 7c - GraphML export (only if --graphml flag), Step 7d - MCP server (only if --mcp flag), Step 8 - Token reduction benchmark (only if total_words > 5000)
 
-### Community 44 - "scanMonitor"
-Cohesion: 0.15
-Nodes (8): MonitorConfig, encodeConfig(), MonitorRepo, nullableString(), nullableTime(), scanMonitor(), scanner, storedConfig
+### Community 44 - "Monitor"
+Cohesion: 0.09
+Nodes (17): sync.WaitGroup, Monitor, MonitorConfig, MonitorState, MonitorFilter, encodeConfig(), MonitorRepo, nullableString() (+9 more)
 
 ### Community 46 - "graphify reference: query, path, explain"
 Cohesion: 0.33
@@ -432,13 +430,13 @@ Nodes (5): Arquivos-chave analisados, Divergencias de criterio de sucesso, Pingo
 Cohesion: 0.33
 Nodes (5): Development Focus, Development Phases Overview, Infrastructure Costs, Pingou Health Checker - Project Roadmap, Resource Allocation
 
-### Community 49 - "database/sql.DB"
-Cohesion: 0.15
-Nodes (12): context.CancelFunc, database/sql.DB, ExportHandler, Status(), CheckRepoTx, IncidentRepoTx, MonitorRepoTx, Scheduler (+4 more)
+### Community 49 - "Scheduler"
+Cohesion: 0.14
+Nodes (10): Registry, context.CancelFunc, NewRegistry(), tcpErrorMessage(), Checker, CheckResult, MonitorType, Scheduler (+2 more)
 
-### Community 50 - "SendTestNtfy"
-Cohesion: 0.12
-Nodes (17): updateSettingsRequest, toUpdateSettingsInput(), SendTestWebhook(), TestSendTestWebhook(), webhookTestErrorMessage(), SendTestNtfy(), TestSendTestNtfyFailures(), TestSendTestNtfyTimeout() (+9 more)
+### Community 50 - "NewTCPChecker"
+Cohesion: 0.38
+Nodes (7): TCPChecker, net.Dialer, tcpMonitor(), TestTCPCheckerNoSuchHost(), TestTCPCheckerRefused(), TestTCPCheckerTimeout(), NewTCPChecker()
 
 ### Community 51 - "🧩 Tarefa: Melhorias na página de Incidentes"
 Cohesion: 0.15
@@ -449,12 +447,12 @@ Cohesion: 0.15
 Nodes (13): 0. Como usar este arquivo, 10. Pendências (não definidas na v1.0), 11. Checklist antes de entregar, 1. Conceito, 2. Marca, 4. Status, 5. Tipografia, 6. Forma e espaço (+5 more)
 
 ### Community 53 - "MonitorService"
-Cohesion: 0.13
-Nodes (13): Registry, NewRegistry(), Checker, MonitorType, MonitorFilter, newPingToken(), newUUIDv7(), validateType() (+5 more)
+Cohesion: 0.18
+Nodes (7): newPingToken(), newUUIDv7(), CreateMonitorInput, MonitorService, Recorder, Reloader, UpdateMonitorInput
 
 ### Community 54 - "6. E-mail (SMTP) e envio fora do lock"
-Cohesion: 0.50
-Nodes (4): 6. E-mail (SMTP) e envio fora do lock, Decisões, Descartado, Limitações conhecidas
+Cohesion: 0.40
+Nodes (5): 6. E-mail (SMTP) e envio fora do lock, Decisões, Descartado, Entregue, Limitações conhecidas
 
 ### Community 55 - "Pingou Project State & Memory"
 Cohesion: 0.40
@@ -478,7 +476,7 @@ Nodes (5): Milestone 1.1: Testing Infrastructure ✅, Milestone 1.2: Code Qualit
 
 ### Community 60 - "Incidents.jsx"
 Cohesion: 0.07
-Nodes (28): react-router-dom, react-toastify, version, client, incidentsApi, monitorsApi, web_src_assets_brand_pingou_marca_horizontal, web_src_assets_brand_pingou_marca_horizontal_negativa (+20 more)
+Nodes (26): axios, react-dom, react-router-dom, version, client, incidentsApi, web_src_assets_brand_pingou_marca_horizontal, web_src_assets_brand_pingou_marca_horizontal_negativa (+18 more)
 
 ### Community 61 - "Key Decisions Made"
 Cohesion: 0.50
@@ -524,9 +522,9 @@ Nodes (3): Expanding the ESLint configuration, React Compiler, React + Vite
 Cohesion: 0.33
 Nodes (6): 3.1 Tokens, 3.2 Tailwind, 3.3 Proporção, 3.4 Regras de cor, 3.5 Contraste sobre branco, 3. Cores
 
-### Community 74 - "TestWebhookDashboardURL"
-Cohesion: 0.67
-Nodes (4): NewWebhookNotifier(), eqPtr(), TestWebhookDashboardURL(), TestWebhookPayloadByType()
+### Community 74 - "handler/stats.go"
+Cohesion: 0.48
+Nodes (6): go_pkg_math, downWindowResponse, statsBucketResponse, statsResponse, roundMs(), toStatsResponse()
 
 ### Community 75 - "Project Status"
 Cohesion: 0.67
@@ -540,41 +538,49 @@ Nodes (3): Current Risks, Mitigation Status, Risk Management
 Cohesion: 0.67
 Nodes (3): Current Team, Resource Needs, Team & Resources
 
-### Community 84 - "Monitor"
-Cohesion: 0.12
-Nodes (14): HTTPChecker, sync/atomic.Int64, sync.WaitGroup, requestErrorMessage(), tcpErrorMessage(), CheckResult, Monitor, MonitorState (+6 more)
+### Community 84 - "dbNotifier"
+Cohesion: 0.33
+Nodes (3): sync/atomic.Int64, dbNotifier, fakeChecker
 
 ### Community 86 - "react"
-Cohesion: 0.16
-Nodes (21): Entregue, react, settingsApi, BackupCard(), Card(), EmailCard(), resultText(), NtfyCard() (+13 more)
+Cohesion: 0.17
+Nodes (20): react, settingsApi, BackupCard(), Card(), EmailCard(), resultText(), NtfyCard(), resultText() (+12 more)
 
 ### Community 87 - "🧩 Tarefa: Sistema WebSocket para atualização em tempo real dos monitores"
 Cohesion: 0.20
 Nodes (9): 🔍 Contexto, 📦 Escopo inicial, 🚧 Fora de escopo, 💡 Ideia, 🎯 Objetivo, ⚠️ Observações, ⏱️ Prioridade, 🧩 Tarefa: Sistema WebSocket para atualização em tempo real dos monitores (+1 more)
 
-### Community 89 - "SMTPConfig"
-Cohesion: 0.17
-Nodes (13): log/slog.Level, Config, NtfyConfig, SMTPConfig, Load(), loadConfigWithAPIKey(), LoadNtfy(), LoadSMTP() (+5 more)
+### Community 89 - "commands/info.go"
+Cohesion: 0.11
+Nodes (25): copyFile(), runExportDB(), getEnvInt(), getEnvList(), getEnvOr(), runConfig(), runVersion(), split() (+17 more)
 
-### Community 90 - "newFakeSMTP"
+### Community 90 - "SMTPConfig"
 Cohesion: 0.16
-Nodes (18): net.Conn, net.Listener, sync.Mutex, buildEmail(), NewEmailNotifier(), sendMail(), SendTestEmail(), smtpErrorMessage() (+10 more)
+Nodes (18): net.Conn, net.Listener, SMTPConfig, buildEmail(), NewEmailNotifier(), sendMail(), SendTestEmail(), smtpErrorMessage() (+10 more)
 
-### Community 92 - "ResponseChart.jsx"
-Cohesion: 0.22
-Nodes (14): ref_node_assert, ref_node_test, axisTicks(), gapBuckets(), isDown(), linePath(), ResponseChart(), summary() (+6 more)
+### Community 92 - "8. Notificação via ntfy"
+Cohesion: 0.50
+Nodes (4): 8. Notificação via ntfy, Decisões, Descartado, Entregue
 
 ### Community 96 - "time.Time"
-Cohesion: 0.16
+Cohesion: 0.15
 Nodes (10): DownWindow, time.Time, MonitorStats, StatsBucket, MonitorSummary, formatTime(), Scheduler, MonitorService (+2 more)
+
+### Community 97 - "3. Página de Configurações"
+Cohesion: 0.50
+Nodes (4): 3. Página de Configurações, Decisões, Descartado, Entregue
 
 ### Community 98 - "Status: **Planned**"
 Cohesion: 0.40
 Nodes (5): Milestone 2.1: Advanced HTTP Monitoring, Milestone 2.2: TCP & Network Monitoring, Milestone 2.3: Notification System Enhancement, Phase 2: Enhanced Monitoring Capabilities (Q2 2024), Status: **Planned**
 
-### Community 99 - "newEnv"
-Cohesion: 0.17
-Nodes (20): env, CheckRepo, env, newHeartbeat(), TestHeartbeatDeadlineMissedWhileOffline(), TestHeartbeatEvaluatorRunsOnTicker(), TestHeartbeatLifecycle(), TestHeartbeatNeverPingedGoesDown() (+12 more)
+### Community 99 - "testing.T"
+Cohesion: 0.19
+Nodes (23): env, testing.T, newTestRegistry(), TestRegistryHTTP(), TestRegistryUnknownType(), TestTCPCheckerUp(), TestNtfyHost(), env (+15 more)
+
+### Community 235 - "at"
+Cohesion: 0.67
+Nodes (3): at(), TestStatsBucketsAndTotals(), TestStatsIncidentsClipped()
 
 ### Community 236 - "🧩 Tarefa: Tela de detalhe do monitor com checks e incidentes"
 Cohesion: 0.20
@@ -592,14 +598,6 @@ Nodes (16): devDependencies, autoprefixer, eslint, eslint-config-prettier, @esli
 Cohesion: 0.40
 Nodes (5): 1. Tipos de check (HTTP, TCP, Heartbeat) + redesign do painel, Decisões, Descartado, Entregue, Limitações conhecidas
 
-### Community 240 - "commands/info.go"
-Cohesion: 0.39
-Nodes (8): getEnvInt(), getEnvList(), getEnvOr(), runConfig(), runVersion(), split(), splitAndTrim(), trim()
-
-### Community 241 - "migrations_test.go"
-Cohesion: 0.14
-Nodes (19): runMigrateDown(), runMigrateStatus(), runMigrateUp(), go_pkg_github_com_pressly_goose_v3, go_pkg_log, LoadConfig(), Down(), ListMigrations() (+11 more)
-
 ### Community 242 - "Status: **Planned**"
 Cohesion: 0.40
 Nodes (5): Milestone 4.1: Multi-tenancy & Access Control, Milestone 4.2: Advanced Authentication, Milestone 4.3: Scalability Improvements, Phase 4: Enterprise Features (Q4 2024), Status: **Planned**
@@ -612,13 +610,13 @@ Nodes (5): Milestone 5.1: Advanced Monitoring, Milestone 5.2: Integration Ecosys
 Cohesion: 0.40
 Nodes (5): Milestone 6.1: Community Building, Milestone 6.2: Developer Experience, Milestone 6.3: Ecosystem Integration, Phase 6: Ecosystem & Community (Ongoing), Status: **Continuous**
 
-### Community 245 - "Dashboard.jsx"
-Cohesion: 0.14
-Nodes (27): HistoryBar(), MonitorCard(), stateLabel, MonitorRow(), typeIcon, Badge(), stateStyles, useMonitors() (+19 more)
+### Community 245 - "lib/monitors.js"
+Cohesion: 0.11
+Nodes (32): ref_node_assert, ref_node_test, react-toastify, HistoryBar(), MonitorCard(), stateLabel, PingBlock(), MonitorRow() (+24 more)
 
 ### Community 246 - "Histórico de implementações (planos aplicados)"
-Cohesion: 0.20
-Nodes (10): 3. Página de Configurações, 8. Notificação via ntfy, Decisões, Decisões, Descartado, Descartado, Entregue, Entregue (+2 more)
+Cohesion: 0.22
+Nodes (9): 2. Página de Incidentes, 5. Remodelagem mobile, Decisões, Decisões, Descartado, Descartado, Entregue, Histórico de implementações (planos aplicados) (+1 more)
 
 ### Community 247 - "scripts"
 Cohesion: 0.25
@@ -636,10 +634,6 @@ Nodes (7): dependencies, axios, lucide-react, react, react-dom, react-router-dom
 Cohesion: 0.50
 Nodes (4): 7. Largura no desktop + busca parcial, Decisões, Descartado, Entregue
 
-### Community 252 - "5. Remodelagem mobile"
-Cohesion: 0.50
-Nodes (4): 5. Remodelagem mobile, Decisões, Descartado, Entregue
-
 ### Community 253 - "Success Metrics"
 Cohesion: 0.50
 Nodes (4): Community Metrics, Success Metrics, Technical Metrics, User Metrics
@@ -647,10 +641,6 @@ Nodes (4): Community Metrics, Success Metrics, Technical Metrics, User Metrics
 ### Community 254 - "Release Schedule"
 Cohesion: 0.50
 Nodes (4): Current Version Tracking, Release Frequency, Release Schedule, Versioning Strategy
-
-### Community 255 - "at"
-Cohesion: 0.67
-Nodes (3): at(), TestStatsBucketsAndTotals(), TestStatsIncidentsClipped()
 
 ### Community 256 - "Dependencies & Blockers"
 Cohesion: 0.67
@@ -661,24 +651,24 @@ Cohesion: 0.67
 Nodes (3): Project Risks, Risk Management, Technical Risks
 
 ## Knowledge Gaps
-- **495 isolated node(s):** `MonitorEnabled`, `infoResponse`, `paginatedResponse`, `testEmailRequest`, `testNtfyRequest` (+490 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 736 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **478 isolated node(s):** `settingsBody`, `MonitorEnabled`, `infoResponse`, `paginatedResponse`, `testEmailRequest` (+473 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 721 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **166 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Monitor` connect `Monitor` to `serve.go`, `time.Time`, `context.Context`, `newEnv`, `bodyFor`, `Incident`, `net/http.ResponseWriter`, `NewMultiNotifier`, `UnitOfWork`, `scanMonitor`, `newTestRegistry`, `database/sql.DB`, `MonitorService`?**
+- **Why does `Monitor` connect `Monitor` to `serve.go`, `time.Time`, `context.Context`, `testing.T`, `bodyFor`, `Incident`, `net/http.ResponseWriter`, `NewMultiNotifier`, `UnitOfWork`, `NtfyConfig`, `Scheduler`, `NewTCPChecker`, `dbNotifier`, `MonitorService`?**
   _High betweenness centrality (0.017) - this node is a cross-community bridge._
-- **Why does `Incident` connect `Incident` to `serve.go`, `time.Time`, `context.Context`, `bodyFor`, `net/http.ResponseWriter`, `NewMultiNotifier`, `Monitor`, `MonitorService`?**
-  _High betweenness centrality (0.009) - this node is a cross-community bridge._
-- **Why does `Histórico de implementações (planos aplicados)` connect `Histórico de implementações (planos aplicados)` to `2. Página de Incidentes`, `1. Tipos de check (HTTP, TCP, Heartbeat) + redesign do painel`, `memtest: prova da promessa de memória`, `6. E-mail (SMTP) e envio fora do lock`, `9. Eixo Y dinâmico + gráfico de pings`, `7. Largura no desktop + busca parcial`, `5. Remodelagem mobile`, `MonitorDetail.jsx`?**
-  _High betweenness centrality (0.008) - this node is a cross-community bridge._
-- **What connects `MonitorEnabled`, `infoResponse`, `paginatedResponse` to the rest of the system?**
-  _495 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `Histórico de implementações (planos aplicados)` connect `Histórico de implementações (planos aplicados)` to `3. Página de Configurações`, `10. Pausar monitor fecha o incidente`, `1. Tipos de check (HTTP, TCP, Heartbeat) + redesign do painel`, `memtest: prova da promessa de memória`, `6. E-mail (SMTP) e envio fora do lock`, `9. Eixo Y dinâmico + gráfico de pings`, `7. Largura no desktop + busca parcial`, `8. Notificação via ntfy`, `MonitorDetail.jsx`?**
+  _High betweenness centrality (0.010) - this node is a cross-community bridge._
+- **Why does `react` connect `react` to `Dashboard.jsx`, `package.json`, `format.js`, `lib/monitors.js`, `Incidents.jsx`, `MonitorDetail.jsx`?**
+  _High betweenness centrality (0.007) - this node is a cross-community bridge._
+- **What connects `settingsBody`, `MonitorEnabled`, `infoResponse` to the rest of the system?**
+  _478 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `serve.go` be split into smaller, more focused modules?**
-  _Cohesion score 0.09404302261445119 - nodes in this community are weakly interconnected._
-- **Should `MonitorForm.jsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.10574712643678161 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09636277751535191 - nodes in this community are weakly interconnected._
+- **Should `Dashboard.jsx` be split into smaller, more focused modules?**
+  _Cohesion score 0.09747899159663866 - nodes in this community are weakly interconnected._
 - **Should `package.json` be split into smaller, more focused modules?**
-  _Cohesion score 0.12631578947368421 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.12380952380952381 - nodes in this community are weakly interconnected._

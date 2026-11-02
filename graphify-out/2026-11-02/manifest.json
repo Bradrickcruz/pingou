@@ -246,9 +246,9 @@
     "semantic_hash": ""
   },
   "internal/handler/settings_test.go": {
-    "mtime": 1793627082.4876819,
-    "seen": 1793627992.4931746,
-    "ast_hash": "f7b65c254dadc363940e1009e3285b56",
+    "mtime": 1793629687.7329764,
+    "seen": 1793629720.0388536,
+    "ast_hash": "1cef6067585569e9d4d27adbf4cec53e",
     "semantic_hash": ""
   },
   "internal/handler/spa.go": {
@@ -390,9 +390,9 @@
     "semantic_hash": ""
   },
   "internal/service/settings_service.go": {
-    "mtime": 1793627082.488682,
-    "seen": 1793627992.4931936,
-    "ast_hash": "f93e73cc34e880fde688223469e65877",
+    "mtime": 1793629682.9168744,
+    "seen": 1793629720.0388885,
+    "ast_hash": "364e114b803258f2f16f776d28ba27de",
     "semantic_hash": ""
   },
   "internal/service/state_machine.go": {
@@ -972,15 +972,15 @@
     "semantic_hash": ""
   },
   "docker-compose.yml": {
-    "mtime": 1793627082.4876819,
-    "seen": 1793627992.4932654,
-    "ast_hash": "55d0d8c3fa1cf3d537616023b7938fd3",
+    "mtime": 1793629125.443779,
+    "seen": 1793629720.039023,
+    "ast_hash": "bd32dd06c2e1e56280e846a511d47962",
     "semantic_hash": ""
   },
   "docs/implementacoes.md": {
-    "mtime": 1793565085.2081249,
-    "seen": 1793565095.1105301,
-    "ast_hash": "fb8378f6dcd541f770b0dfdc0c553680",
+    "mtime": 1793628132.3051066,
+    "seen": 1793628184.2769756,
+    "ast_hash": "61e4552f3b76e9f26c9b8eb30d0defeb",
     "semantic_hash": ""
   },
   "scripts/README.md": {
@@ -1313,12 +1313,6 @@
     "ast_hash": "5da061572a0f1046a0f15a519a87d561",
     "semantic_hash": ""
   },
-  "plan-pause-closes-incident.md": {
-    "mtime": 1793628008.7619448,
-    "seen": 1793628070.2283292,
-    "ast_hash": "b1fd5f4b66fedf669d5057e7fb6f1c38",
-    "semantic_hash": ""
-  },
   "internal/service/ntfy_notifier.go": {
     "mtime": 1793627082.488682,
     "seen": 1793627992.4931922,
@@ -1386,9 +1380,9 @@
     "semantic_hash": ""
   },
   "web/src/components/settings/TimezoneCard.jsx": {
-    "mtime": 1793627082.489682,
-    "seen": 1793627992.493225,
-    "ast_hash": "0d950517455f2ce8930ceb9daa1b0926",
+    "mtime": 1793628548.5975046,
+    "seen": 1793629720.0389478,
+    "ast_hash": "22b4d39973b197f422efca28a8fd2f32",
     "semantic_hash": ""
   },
   "web/src/hooks/timeZoneContext.js": {
@@ -1398,9 +1392,9 @@
     "semantic_hash": ""
   },
   "web/src/hooks/useTimeZone.jsx": {
-    "mtime": 1793627082.490682,
-    "seen": 1793627992.493236,
-    "ast_hash": "f9c98de2efc10bdd3f439f50b3fbe488",
+    "mtime": 1793629695.345136,
+    "seen": 1793629720.0389676,
+    "ast_hash": "0f74b5e63bddecd549de0e69fe75b4a9",
     "semantic_hash": ""
   },
   "web/src/lib/timezone.js": {
