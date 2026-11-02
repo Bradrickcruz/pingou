@@ -221,10 +221,13 @@ func (s *MonitorService) Update(ctx context.Context, id string, in UpdateMonitor
 		return nil, err
 	}
 	// Pausar fecha o incidente aberto sem notificar. Roda a cada Update pausado
-	// (idempotente), então uma falha aqui se cura na próxima edição. O repositório
-	// também zera o estado para UNKNOWN: sem isso, retomar um monitor ainda DOWN
-	// não abriria incidente novo (handleFailure só abre se prevState != DOWN).
+	// (idempotente), então uma falha aqui se cura na próxima edição.
+	// ponytail: duas escritas sem transação; se a segunda falhar, o erro volta ao
+	// usuário e repetir a pausa conclui. Atomicidade pede tx no service.
 	if !m.Enabled {
+		// monitors.Update já gravou UNKNOWN (sem isso, retomar um monitor DOWN não
+		// abriria incidente novo: handleFailure só abre se prevState != DOWN);
+		// aqui só alinhamos o objeto devolvido ao banco.
 		m.CurrentState = domain.StateUnknown
 		if err := s.incidents.CloseManually(ctx, m.ID, now); err != nil {
 			return nil, fmt.Errorf("closing incident: %w", err)
