@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"embed"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/url"
@@ -64,11 +65,11 @@ func RunMigrations(db *sql.DB) error {
 		return err
 	}
 	pending, err := goose.CollectMigrations("migrations", current, goose.MaxVersion)
+	if errors.Is(err, goose.ErrNoMigrationFiles) || (err == nil && len(pending) == 0) {
+		return nil // banco em dia: o goose trata "nada depois da versão atual" como erro
+	}
 	if err != nil {
 		return err
-	}
-	if len(pending) == 0 {
-		return nil
 	}
 	versions := make([]int64, len(pending))
 	for i, m := range pending {

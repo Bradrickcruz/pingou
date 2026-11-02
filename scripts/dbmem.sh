@@ -16,8 +16,11 @@ KEY=dbmem-key
 API=http://localhost:8956/api
 OUT=.bench/tmp/dbmem
 mkdir -p "$OUT"
-rm -f "$OUT"/pingou.db*
-cp "$SRC" "$OUT/pingou.db"
+# REUSE=1 reaproveita a cópia da rodada anterior (já migrada)
+if [ "${REUSE:-}" != 1 ]; then
+  rm -f "$OUT"/pingou.db*
+  cp "$SRC" "$OUT/pingou.db"
+fi
 
 cleanup() { kill "${PID:-}" 2>/dev/null || true; }
 trap cleanup EXIT
@@ -29,7 +32,7 @@ until curl -sf http://localhost:8956/healthz >/dev/null; do
   kill -0 $PID 2>/dev/null || { cat "$OUT/pingou.log"; exit 1; }
   sleep 0.5
 done
-echo "subiu em $(($(date +%s) - start)) s"
+echo "subiu em $(($(date +%s) - start)) s · pico até aqui: $(($(awk '/VmHWM/{print $2}' /proc/$PID/status) / 1024)) MB"
 grep -i "migration" "$OUT/pingou.log" || true
 
 ids=$(curl -sf -H "X-API-Key: $KEY" "$API/monitors?limit=3" | grep -o '"id":"[^"]*"' | cut -d'"' -f4)
