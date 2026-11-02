@@ -392,7 +392,10 @@ Testes Go (incluindo `-race` em scheduler e comandos) e `npm test` (22) verdes; 
 
 ### Limitações conhecidas
 
-- **RAM:** em regime (banco já migrado, `/stats` 30d de 3 monitores + lista sem parar) o pico é de 39 a 40 MB. Na **primeira subida logo depois da migration** chegou a 47 a 51 MB (RssAnon 31 MB e RssFile 15 MB, contra 27 e 11 em regime) e some ao reiniciar. É um cenário bem mais pesado que o do README, mas passa da meta de 50 MB; reduzir esse valor segue em aberto.
+- **RAM acima da meta (pendente):** nos testes do perfil limite a RAM ficou **entre 50 e 60 MB**, o que **quebra a meta de < 50 MB** do README. Esse valor será corrigido futuramente; até lá, a meta não vale para esse cenário (25 milhões de checks, painel consultado sem parar). Medições do `scripts/dbmem.sh` que sustentam isso:
+  - em regime (banco já migrado, `/stats` 30d de 3 monitores + lista sem parar): pico de 39 a 40 MB;
+  - na **primeira subida logo depois da migration**: 47 a 51 MB (RssAnon 31 MB e RssFile 15 MB, contra 27 e 11 em regime), que some ao reiniciar.
+  - O teste do README (100 monitores por 1 hora, sem banco grande) segue em 29 MB.
 - A lista do painel deu 203 ms de p95 em 1 de 3 rodadas (alvo de 200 ms); p50 de 82 a 135 ms.
 - A retenção em lotes leva mais tempo total (6,0 s contra 2,5 a 2,7 s para apagar 1 dia), em troca de não segurar a única conexão.
 - `HTTPS_N=50 scripts/memtest.sh 3600` foi interrompido em ~6 min (pico de 27 MB, RSS estável em 23 a 24 MB); a hora completa não foi rodada.
