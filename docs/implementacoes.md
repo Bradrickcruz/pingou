@@ -15,6 +15,7 @@ Consolida o que os planos `plan-*.md` (já removidos; ficam no `git log`) entreg
 | 2026-11-01         | [Eixo Y dinâmico + gráfico de pings](#9-eixo-y-dinâmico--gráfico-de-pings)                      | `develop` (sem PR)              |
 | 2026-11-01 → 11-02 | [Pausar monitor fecha o incidente](#10-pausar-monitor-fecha-o-incidente)                        | `develop` (sem PR)              |
 | 2026-11-02         | [Fuso horário + desligamento ordenado](#11-fuso-horário--desligamento-ordenado)                 | `develop` (sem PR)              |
+| 2026-11-02         | [Índices e desempenho do banco](#12-índices-e-desempenho-do-banco)                              | `ccr-dd100985-raj41c` (sem PR)  |
 
 Pendências de validação manual ainda abertas estão no [fim do documento](#pendências-abertas).
 
@@ -347,6 +348,59 @@ Migration de coluna `timezone` (T2: as settings são chave-valor); `PINGOU_TIMEZ
 ### Validação
 
 Testes Go (incluindo `-race` em scheduler e comandos) e `npm test` (22) verdes; `npm run lint` e `build` limpos. Binário real com check de 5 s e `kill -TERM` no meio: etapas na ordem esperada, `exit=0`, lock removido, 0 checks e 0 incidentes gravados. Docker testado pelo dono do projeto: `docker compose stop` sem `Killed`, fuso na imagem, **Enviar teste** e queda real no e-mail e no ntfy.
+
+---
+
+## 12. Índices e desempenho do banco
+
+**2026-11-02** (ferramentas `f8d3597`, índice e lista `bdd5b0f`, retenção `59d1c51`, Docker e RAM `d060795`, correção `d3a00b8`, docs `55bbf75`), branch `ccr-dd100985-raj41c`.
+
+### Entregue
+
+- **Medição antes de mudar.** `scripts/seed` gera, de forma determinística, os perfis típico (10 monitores × 60 s, 397 mil checks, 95 MB) e limite (100 × 10 s, 24,7 milhões de checks, 6 GB), pelas migrations reais e com os monitores intercalados em ordem cronológica. `scripts/dbbench.sh` roda `TestDBBench` (p50/p95 por consulta, gravação, concorrência leitura + gravação, retenção) e `TestPrintQueryPlans` numa **cópia** do banco; `scripts/dbmem.sh` mede o pico de RAM do app real. Sem `PINGOU_BENCH_DB` os testes pulam e o `make test` segue rápido. O SQL das consultas quentes foi para `internal/repository/queries.go` (mesmo texto), para o teste de plano usar as mesmas strings.
+- **Migration 0006**: cria `idx_checks_monitor_time (monitor_id, checked_at, id, success, latency_ms)` e apaga `idx_checks_monitor_checked`; o down faz o contrário. O índice novo lê de trás para frente na ordem de `ORDER BY checked_at DESC, id DESC` (antes o SQLite ordenava à parte) e cobre `success` e `latency_ms`, então `/stats` e uptime 24 h leem só o índice. Substitui o antigo em vez de somar um segundo. `idx_checks_checked_at` (retenção) ficou como estava.
+- **Lista do painel (`Summaries`)**: o histórico de 30 checks deixou de usar `ROW_NUMBER()` sobre todos os checks (lia ~25 milhões de linhas) e passou a `LIMIT` por monitor com `UNION ALL`.
+- **State machine**: `CheckRepositoryTx.Latest` busca os últimos checks sem o `COUNT(*)` que era descartado a cada falha.
+- **Retenção em lotes** de 5 mil linhas por transação, com `ctx` conferido entre eles (para rápido num desligamento). Apaga o mesmo conjunto de antes.
+- **Log de migrations pendentes** (versões e tempo), para quem atualiza um banco grande não achar que o app travou.
+- **Dockerfile**: `HEALTHCHECK --start-period=5m`, porque a migration no perfil limite passou de 30 s.
+- **Correção**: com o banco já em dia, `goose.CollectMigrations` devolvia `ErrNoMigrationFiles` e o app não subia na segunda vez (`TestOpenTwice`).
+- Testes: `TestHotQueriesUseIndexes` (confere o **nome** do índice no `EXPLAIN QUERY PLAN`; falha sem a 0006), `TestSummariesHistoryMatchesLegacy`, `TestResultsSameWithOldIndex` (respostas de `/stats`, lista, checks e incidentes iguais antes e depois do `goose down`), `TestDeleteOlderThanBatches`, `TestOpenTwice`.
+- README: "Desempenho e tamanho do banco" e "Atualizando um banco grande". `scripts/README.md`: seção do dbbench.
+
+### Resultados (perfil limite, mesma máquina: Xeon 2,8 GHz, 4 núcleos, 16 GB, SQLite 3.51.3)
+
+| Consulta (p95)                     |                          Antes |                         Depois |
+| ---------------------------------- | -----------------------------: | -----------------------------: |
+| `/stats` 30d http                  |                   815 a 855 ms |                   208 a 291 ms |
+| `GET /api/monitors`                |   91 a 107 s (falhava, > 30 s) |                   114 a 203 ms |
+| checks, offset 0 / 1.000 / 10.000  | 36 a 41 / 28 a 34 / 72 a 77 ms | 13 a 22 / 13 a 21 / 13 a 19 ms |
+| gravação com falha                 |                          40 ms |                   0,4 a 0,5 ms |
+| gravação com `/stats` 30d ao lado  |                   740 a 759 ms |                   247 a 258 ms |
+| retenção: maior espera de gravação |                       2.358 ms |                    81 a 104 ms |
+
+- Índices de `checks`: 4.091 MB → 2.719 MB (o novo tem 1.878 MB contra 3.251 MB do antigo; parte do ganho é de índice recém-criado, que tende a crescer com inserções intercaladas). O arquivo foi de 5.972 MB para 7.850 MB, porque o novo é escrito antes de o antigo ser apagado; as páginas livres voltam com `VACUUM`.
+- Migration 0006: 1 min 18 s a 1 min 27 s no perfil limite; 0,7 s no típico.
+- Custo de gravação com sucesso: +9 % na média (alvo: no máximo +20 %).
+- Nenhuma consulta quente faz `SCAN checks`.
+
+### Decisões
+
+- Não criar índices "por precaução": cada candidato precisou de número antes e depois. `checks(checked_at)`, incidentes e `ping_token` já atendiam e não foram tocados.
+- Sem `ANALYZE`/`PRAGMA optimize` na migration: o planejador já escolhe os índices certos e o `ANALYZE` varreria 25 milhões de linhas a mais na atualização. O teste de plano roda `ANALYZE` no banco pequeno, para ficar estável.
+- Índice cobrindo **substitui** o antigo (mesmo prefixo), então o total de índices não aumenta.
+
+### Limitações conhecidas
+
+- **RAM:** em regime (banco já migrado, `/stats` 30d de 3 monitores + lista sem parar) o pico é de 39 a 40 MB. Na **primeira subida logo depois da migration** chegou a 47 a 51 MB (RssAnon 31 MB e RssFile 15 MB, contra 27 e 11 em regime) e some ao reiniciar. É um cenário bem mais pesado que o do README, mas passa da meta de 50 MB; reduzir esse valor segue em aberto.
+- A lista do painel deu 203 ms de p95 em 1 de 3 rodadas (alvo de 200 ms); p50 de 82 a 135 ms.
+- A retenção em lotes leva mais tempo total (6,0 s contra 2,5 a 2,7 s para apagar 1 dia), em troca de não segurar a única conexão.
+- `HTTPS_N=50 scripts/memtest.sh 3600` foi interrompido em ~6 min (pico de 27 MB, RSS estável em 23 a 24 MB); a hora completa não foi rodada.
+- Paginação com `offset` grande segue sem cursor (fora do escopo).
+
+### Descartado
+
+Tabela de agregados por balde (rollup), revisar só se os alvos falharem; pool de leitura separado; índice cobrindo desde o início com dois índices; `ANALYZE` na migration; gerar os dados com o `sqlite3` CLI; copiar o SQL para o arquivo de benchmark (sai de sincronia com o código).
 
 ---
 
