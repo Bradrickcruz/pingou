@@ -966,9 +966,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1793630675.8626788,
-    "seen": 1793630686.3065143,
-    "ast_hash": "bfbdfc8236c6ca8cb4fc4b971681df09",
+    "mtime": 1793631358.3209977,
+    "seen": 1793631378.7846296,
+    "ast_hash": "487cfad6975e59d2ac6f1b1890741c3d",
     "semantic_hash": ""
   },
   "docker-compose.yml": {
@@ -984,9 +984,9 @@
     "semantic_hash": ""
   },
   "scripts/README.md": {
-    "mtime": 1793630664.0556335,
-    "seen": 1793630686.3065188,
-    "ast_hash": "9f32850e9e61a6da92264346426beb4e",
+    "mtime": 1793631320.0419748,
+    "seen": 1793631378.7846355,
+    "ast_hash": "afb92658f35edff05459ff8aee63c8ec",
     "semantic_hash": ""
   },
   "tasks/modelo-plano-dev-extended.md": {
@@ -1410,9 +1410,9 @@
     "semantic_hash": ""
   },
   "plan-banco-indices.md": {
-    "mtime": 1793630664.0556335,
-    "seen": 1793630686.3065166,
-    "ast_hash": "c054f97323d9c6ba3ff3cf60f58949a1",
+    "mtime": 1793631354.5041893,
+    "seen": 1793631378.7846334,
+    "ast_hash": "ed7d54b83ba8129982092649aa73252b",
     "semantic_hash": ""
   },
   "plan-ssl-expiry.md": {
