@@ -15,7 +15,8 @@ Consolida o que os planos `plan-*.md` (já removidos; ficam no `git log`) entreg
 | 2026-11-01         | [Eixo Y dinâmico + gráfico de pings](#9-eixo-y-dinâmico--gráfico-de-pings)                      | `develop` (sem PR)              |
 | 2026-11-01 → 11-02 | [Pausar monitor fecha o incidente](#10-pausar-monitor-fecha-o-incidente)                        | `develop` (sem PR)              |
 | 2026-11-02         | [Fuso horário + desligamento ordenado](#11-fuso-horário--desligamento-ordenado)                 | `develop` (sem PR)              |
-| 2026-11-02         | [Índices e desempenho do banco](#12-índices-e-desempenho-do-banco)                              | `ccr-dd100985-raj41c` (sem PR)  |
+| 2026-11-02         | [Índices e desempenho do banco](#12-índices-e-desempenho-do-banco)                              | `ccr-dd100985-raj41c` (#15)     |
+| 2026-11-02         | [Aviso de expiração do certificado SSL](#13-aviso-de-expiração-do-certificado-ssl)              | `feature/ssl-expiry` (#16)      |
 
 Pendências de validação manual ainda abertas estão no [fim do documento](#pendências-abertas).
 
@@ -404,6 +405,60 @@ Testes Go (incluindo `-race` em scheduler e comandos) e `npm test` (22) verdes; 
 ### Descartado
 
 Tabela de agregados por balde (rollup), revisar só se os alvos falharem; pool de leitura separado; índice cobrindo desde o início com dois índices; `ANALYZE` na migration; gerar os dados com o `sqlite3` CLI; copiar o SQL para o arquivo de benchmark (sai de sincronia com o código).
+
+---
+
+## 13. Aviso de expiração do certificado SSL
+
+**2026-11-02** (migration `b9087c2`, checker `8777d30`, regra `c60d702`, API `7f14563`, notificações `a276a06`, state machine `b63ae81`, painel `56ab8b5`, `certserver` `1e929e8`, docs `f5ab7dd`), merge do PR #16 em 2026-11-02.
+
+### Entregue
+
+- **Aviso 30 e 7 dias antes** de o certificado expirar, **uma vez por limite**, em todos os canais configurados (webhook, e-mail e ntfy). Opcional por monitor, só HTTP com URL `https://`, desligado por padrão.
+- **Sem conexão nem check a mais:** o checker HTTP lê `resp.TLS.PeerCertificates[0].NotAfter` da resposta que já usa (`CheckResult.CertNotAfter`, em UTC). Preenche também quando o status HTTP é de erro (ex.: 500), para a data continuar atualizada durante um incidente. Falha de conexão ou de TLS não traz resposta e deixa o campo vazio. TCP e Heartbeat não mudam.
+- **Migration 0007**: 4 colunas em `monitors`: `cert_alert_enabled` (padrão 0), `cert_expires_at`, `cert_alerted_30_for` e `cert_alerted_7_for` (aceitam NULL). Monitores antigos ficam com a opção desligada. Down remove as colunas (`DROP COLUMN`).
+- **Regra pura** `EvaluateCertAlert(now, expiresAt, alerted30For, alerted7For)` em `service/cert_alert.go`, sem banco, relógio global nem envio:
+  - `restante <= 7 d` (inclui vencido) e 7 d ainda não avisado → aviso de 7 dias, marcando **os dois** limites;
+  - senão, `restante <= 30 d` e 30 d ainda não avisado → aviso de 30 dias;
+  - senão, nada. O aviso leva dias restantes (arredondados para baixo) e o limite.
+- **Evento `cert_expiring`** nos três canais (`NotifyCertExpiring`). Webhook: mesmo formato dos outros eventos, com `cert_expires_at`, `days_left` e `threshold_days`; `down` e `up` não mudam. E-mail e ntfy seguem o estilo atual; ntfy usa prioridade normal no aviso de 30 dias e alta no de 7. Datas no fuso configurado.
+- **Integração na state machine** (`Process`), dentro da mesma transação do check: atualiza `cert_expires_at` quando muda, avalia a regra, grava as marcas e só **depois do commit** envia o aviso. Rollback não envia nada nem grava marca. Log `info` ao enviar (monitor, limite, data).
+- **Escrita guardada pela URL:** os campos de certificado têm `UpdateCertWithTx` (`UPDATE ... WHERE id = ? AND url = ?`), separado do `UpdateWithTx`, que grava só estado. Se o usuário trocar a URL durante um check, a escrita é ignorada. `StateMachine` ganhou `WithClock` para testes.
+- **API:** `POST`/`PATCH /api/monitors` aceitam `cert_alert_enabled`; `GET /api/monitors` e `GET /api/monitors/:id` devolvem `cert_alert_enabled` e `cert_expires_at` (RFC 3339, `null` se ainda não visto). As marcas de aviso não saem da API. Ligar em monitor não HTTP ou com URL não `https://` dá 400 `VALIDATION_ERROR`. Trocar a URL zera a data e as marcas dentro do próprio `UPDATE`.
+- **Painel:** checkbox "Avisar quando o certificado SSL estiver perto de expirar" no formulário HTTP (desabilitado e desmarcado sozinho se a URL não é https) e bloco **Certificado SSL** no detalhe, com data e dias restantes, "Aguardando o primeiro check" quando vazio, "Aviso ativo (30 e 7 dias antes)" e "último valor conhecido" enquanto o monitor está DOWN. Sem rolagem horizontal a 390 px. `DESIGN.md` §4.1.
+- **`scripts/certserver`**: servidor HTTPS local com CA de teste e validade escolhida (`go run ./scripts/certserver --days 25 --port 9443`), para QA com `SSL_CERT_FILE=<ca.pem>` (Linux).
+- README (recurso, campos da API, evento `cert_expiring` com aviso para quem consome o webhook) e `scripts/README.md`.
+
+### Decisões
+
+- **Guardar a data do certificado avisado, não "sim/não":** `cert_alerted_30_for = <data alertada>` rearma sozinho quando o certificado é renovado (a data nova não bate com a guardada). Não precisa de lógica de reset.
+- **Ativação tardia:** ligar a opção com 20 dias restantes manda o aviso de 30 dias na hora; com 5 dias manda só o de 7 (não dois seguidos). Desligar e ligar de novo não repete o mesmo aviso.
+- **A data aparece em todo monitor HTTP https**, mesmo com a opção desligada (ler é grátis); o checkbox controla só o aviso.
+- **Certificado lido é o da resposta final**, depois dos redirects: é o que o visitante vê.
+- **Sem escrita extra por check:** a data só é gravada quando muda e as marcas só quando um aviso sai. Importa pela conexão única do SQLite. Medido com trigger: 1 escrita de certificado em 23 checks.
+- Sem retry, como os outros canais: a redundância dos dois limites cobre um aviso perdido.
+
+### Desvios do plano
+
+1. `cert_alert_enabled` e `cert_expires_at` também saem na **lista** `GET /api/monitors` (o plano previa só o detalhe). O formulário de edição abre a partir da lista; sem o campo, salvar pelo painel desligaria a opção sem querer. Custo: ~60 bytes por monitor.
+2. Trocar o tipo do monitor não se aplica: o `PATCH` já recusa troca de tipo.
+3. `DESIGN.md` não tem token de "atenção". O nível de 30 dias usa o neutro (`unknown`) com o texto "ATENÇÃO"; vermelho fica para 7 dias ou vencido. Uma cor âmbar precisaria de aprovação (§3.4).
+
+### Limitações conhecidas
+
+- **Renovação automática (Let's Encrypt/Certbot)** renova quando faltam ~30 dias, o limite do primeiro aviso. Quem usa isso pode receber o aviso de 30 dias pouco antes da renovação; o de 7 dias é o que indica falha. Saída, se incomodar: carência de ~24 h antes do aviso de 30 dias (exige guardar quando o limite foi cruzado).
+- Só o certificado do próprio site (não os intermediários), só HTTP com `https://` (não TCP com TLS). Limites fixos em 30 e 7; sem flag no CLI nem badge na lista.
+- Balanceador ou CDN com certificados diferentes por servidor pode fazer a data oscilar e repetir o aviso, só quando volta a um certificado já avisado depois de outro.
+- Certificado já vencido: o Go recusa o handshake, então o monitor cai como DOWN pelo fluxo normal e a data não é relida (fica o último valor conhecido).
+- Monitor pausado não faz check, então não gera aviso.
+
+### Descartado
+
+Conexão TLS separada só para ler o certificado; gravar "enviado sim/não" por limite; `cert_checked_at` gravado a cada check (uma escrita por check); dois avisos juntos na ativação tardia; limites configuráveis; mostrar a data só com a opção ligada; capturar o certificado do primeiro host com `httptrace`; flag `--cert-alert` no CLI; badge na lista.
+
+### Validação
+
+`go vet`, `go test ./...` e `npm run lint`/`test`/`build` verdes. Simulação de 90 dias (1 check por hora): exatamente 1 aviso de 30 dias e 1 de 7, no horário certo. QA manual com `certserver`, Pingou real e receptores falsos de webhook, ntfy e SMTP: `--days 25` (aviso de 30 dias nos três canais, sem repetir), `--days 5` (aviso de 7 dias uma vez, ntfy com prioridade alta), `--days 90` (renovação: data atualizada, nenhum aviso novo), troca de URL (data zerada e relida), opção desligada com `--days 3` (data atualizada, nenhum aviso). Detalhe conferido em desktop e celular nos estados válido, atenção, alerta, vencido, aguardando e fora do ar.
 
 ---
 
