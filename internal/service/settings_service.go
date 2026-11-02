@@ -28,6 +28,7 @@ type Settings struct {
 	NtfyTopic       string `json:"ntfy_topic"`       // "" = ntfy desligado
 	NtfyAvailable   bool   `json:"ntfy_available"`   // false = PINGOU_NTFY_URL não configurado
 	Timezone        string `json:"timezone"`         // nome IANA; painel, e-mail e ntfy. API e banco seguem em UTC
+	TimezoneSet     bool   `json:"timezone_set"`     // false = nunca configurado; o painel sugere o fuso do navegador
 }
 
 type UpdateSettingsInput struct {
@@ -79,7 +80,8 @@ func (s *SettingsService) Get(ctx context.Context) (*Settings, error) {
 	if err != nil {
 		return nil, err
 	}
-	if tz == "" {
+	tzSet := tz != ""
+	if !tzSet {
 		tz = DefaultTimezone // instalação antiga: chave ainda não existe
 	}
 
@@ -91,6 +93,7 @@ func (s *SettingsService) Get(ctx context.Context) (*Settings, error) {
 		NtfyTopic:       topic,
 		NtfyAvailable:   s.ntfy.Enabled(),
 		Timezone:        tz,
+		TimezoneSet:     tzSet,
 	}, nil
 }
 
