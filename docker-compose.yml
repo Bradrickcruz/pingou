@@ -3,20 +3,19 @@ services:
     build:
       context: .
       args:
-        VERSION: "1.3.0"
+        VERSION: "1.4.0"
         COMMIT: "local"
-        BUILD_DATE: "2026-04-24T19:37:34Z"
+        BUILD_DATE: "2026-11-02T14:18:34Z"
     ports:
       - "8956:8956"
-    environment:
-      - PINGOU_DATABASE_URL=/data/pingou.db
-      - PINGOU_API_KEY=dev-api-key
-      - PINGOU_LOG_LEVEL=info
-      # e-mail: veja a seção "E-mail" do README (PINGOU_SMTP_HOST, _PORT, _USERNAME, _PASSWORD, _FROM, _TLS)
-      # - PINGOU_SMTP_HOST=smtp.exemplo.com
+    env_file:
+      - .env
     volumes:
       - pingou_data:/data
     restart: unless-stopped
+    # o Pingou tem até 15 s para desligar com calma; o padrão do Docker (10 s)
+    # mataria o processo antes
+    stop_grace_period: 20s
 
 volumes:
   pingou_data:

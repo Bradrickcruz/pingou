@@ -194,3 +194,62 @@ func assertFKOn(t *testing.T, db *sql.DB) {
 		t.Fatal("foreign_keys ficou desligado após a migration")
 	}
 }
+
+// Regressão: com o banco já em dia, RunMigrations não pode falhar (o goose
+// devolve ErrNoMigrationFiles quando não há nada depois da versão atual), senão
+// o app não sobe na segunda vez.
+func TestOpenTwice(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "t.db")
+	for i := range 2 {
+		db, err := Open(path)
+		if err != nil {
+			t.Fatalf("abertura %d: %v", i+1, err)
+		}
+		db.Close()
+	}
+}
+
+func TestMonitorCertExpiryMigration(t *testing.T) {
+	db, err := OpenDB(filepath.Join(t.TempDir(), "t.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	setupGoose(t)
+
+	if err := goose.UpTo(db, "migrations", 6); err != nil {
+		t.Fatal(err)
+	}
+	now := "2026-01-01T00:00:00Z"
+	mustExec(t, db, `INSERT INTO monitors (id, name, url, interval_seconds, created_at, updated_at)
+		VALUES ('m1','API','https://x.test',60,?,?)`, now, now)
+	mustExec(t, db, `INSERT INTO checks (monitor_id, success, latency_ms, checked_at) VALUES ('m1',1,10,?)`, now)
+
+	if err := goose.UpTo(db, "migrations", 7); err != nil {
+		t.Fatal(err)
+	}
+	var enabled int
+	var expires, a30, a7 sql.NullString
+	if err := db.QueryRow(`SELECT cert_alert_enabled, cert_expires_at, cert_alerted_30_for, cert_alerted_7_for FROM monitors WHERE id='m1'`).
+		Scan(&enabled, &expires, &a30, &a7); err != nil {
+		t.Fatal(err)
+	}
+	if enabled != 0 || expires.Valid || a30.Valid || a7.Valid {
+		t.Fatalf("monitor antigo: enabled=%d expires=%v a30=%v a7=%v, want desligado e tudo NULL", enabled, expires, a30, a7)
+	}
+	if _, err := db.Exec(`UPDATE monitors SET cert_alert_enabled = 2 WHERE id='m1'`); err == nil {
+		t.Fatal("cert_alert_enabled=2 aceito, want erro de CHECK")
+	}
+	mustExec(t, db, `UPDATE monitors SET cert_alert_enabled = 1, cert_expires_at = ? WHERE id='m1'`, now)
+
+	if err := goose.DownTo(db, "migrations", 6); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`SELECT cert_expires_at FROM monitors`); err == nil {
+		t.Fatal("coluna cert_expires_at continua após down")
+	}
+	if m, c := countRows(t, db, "monitors"), countRows(t, db, "checks"); m != 1 || c != 1 {
+		t.Fatalf("após down: monitors=%d checks=%d, want 1 e 1", m, c)
+	}
+	assertFKOn(t, db)
+}

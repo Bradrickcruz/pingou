@@ -25,8 +25,9 @@ const testKey = "test-key"
 
 type noopNotifier struct{}
 
-func (noopNotifier) NotifyDown(context.Context, *domain.Monitor, *domain.Incident)     {}
-func (noopNotifier) NotifyRecovery(context.Context, *domain.Monitor, *domain.Incident) {}
+func (noopNotifier) NotifyDown(context.Context, *domain.Monitor, *domain.Incident)         {}
+func (noopNotifier) NotifyRecovery(context.Context, *domain.Monitor, *domain.Incident)     {}
+func (noopNotifier) NotifyCertExpiring(context.Context, *domain.Monitor, domain.CertAlert) {}
 
 func newTestServer(t *testing.T) (*Server, http.Handler, func(id string) int) {
 	t.Helper()

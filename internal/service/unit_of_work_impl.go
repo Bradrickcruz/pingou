@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/Bradrickcruz/pingou/internal/domain"
 	"github.com/Bradrickcruz/pingou/internal/repository"
@@ -80,8 +81,8 @@ func (r *checkRepoWithTx) CreateWithTx(ctx context.Context, c *domain.Check) err
 	return r.repo.CreateWithTx(ctx, r.tx, c)
 }
 
-func (r *checkRepoWithTx) FindByMonitor(ctx context.Context, monitorID string, limit, offset int) ([]*domain.Check, int, error) {
-	return r.repo.FindByMonitor(ctx, r.tx, monitorID, limit, offset)
+func (r *checkRepoWithTx) Latest(ctx context.Context, monitorID string, n int) ([]*domain.Check, error) {
+	return r.repo.Latest(ctx, r.tx, monitorID, n)
 }
 
 // monitorRepoWithTx envolve MonitorRepoTx com uma transação ativa
@@ -92,6 +93,10 @@ type monitorRepoWithTx struct {
 
 func (r *monitorRepoWithTx) UpdateWithTx(ctx context.Context, m *domain.Monitor) error {
 	return r.repo.UpdateWithTx(ctx, r.tx, m)
+}
+
+func (r *monitorRepoWithTx) UpdateCertWithTx(ctx context.Context, id, url string, expiresAt, alerted30For, alerted7For *time.Time) (bool, error) {
+	return r.repo.UpdateCertWithTx(ctx, r.tx, id, url, expiresAt, alerted30For, alerted7For)
 }
 
 func (r *monitorRepoWithTx) FindByID(ctx context.Context, id string) (*domain.Monitor, error) {

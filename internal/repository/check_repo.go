@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"strings"
 	"time"
 
 	"github.com/Bradrickcruz/pingou/internal/domain"
@@ -27,10 +26,7 @@ func (r *CheckRepo) FindByMonitor(ctx context.Context, monitorID string, limit, 
 	if limit <= 0 || limit > 200 {
 		limit = 50
 	}
-	rows, err := r.db.QueryContext(ctx, `
-		SELECT id, monitor_id, success, status_code, latency_ms, error_message, checked_at
-		FROM checks WHERE monitor_id = ?
-		ORDER BY checked_at DESC, id DESC LIMIT ? OFFSET ?`,
+	rows, err := r.db.QueryContext(ctx, sqlChecksPage,
 		monitorID, limit, offset,
 	)
 	if err != nil {
@@ -52,23 +48,43 @@ func (r *CheckRepo) FindByMonitor(ctx context.Context, monitorID string, limit, 
 	}
 
 	var total int
-	r.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM checks WHERE monitor_id = ?`, monitorID).Scan(&total)
+	r.db.QueryRowContext(ctx, sqlChecksCount, monitorID).Scan(&total)
 
 	return checks, total, nil
 }
 
+// DeleteOlderThan apaga os checks anteriores a before em lotes de
+// retentionBatch linhas, cada um na sua própria transação. Com uma conexão só,
+// um DELETE único de um dia inteiro (~800 mil linhas no perfil de 100
+// monitores a 10 s) segurava a conexão por segundos e atrasava a gravação dos
+// checks. Entre lotes a conexão fica livre e o ctx é conferido: no
+// desligamento para logo, e o que sobrou sai na próxima rodada.
 func (r *CheckRepo) DeleteOlderThan(ctx context.Context, before string) (int64, error) {
-	res, err := r.db.ExecContext(ctx,
-		`DELETE FROM checks WHERE checked_at < ?`, before,
-	)
-	if err != nil {
-		return 0, err
+	var total int64
+	for {
+		if err := ctx.Err(); err != nil {
+			return total, err
+		}
+		res, err := r.db.ExecContext(ctx, sqlChecksDeleteOlderBatch, before, retentionBatch)
+		if err != nil {
+			return total, err
+		}
+		n, err := res.RowsAffected()
+		if err != nil {
+			return total, err
+		}
+		total += n
+		if n < retentionBatch {
+			return total, nil
+		}
 	}
-	return res.RowsAffected()
 }
 
+// retentionBatch: ~5 mil linhas apagam em dezenas de ms (medido no perfil limite).
+const retentionBatch = 5000
+
 // Summaries monta o resumo do painel para vários monitores em duas queries
-// (histórico e uptime), sem uma consulta por monitor.
+// (histórico e uptime), sem uma ida ao banco por monitor.
 func (r *CheckRepo) Summaries(ctx context.Context, monitorIDs []string, historySize int, since time.Time) (map[string]*domain.MonitorSummary, error) {
 	out := make(map[string]*domain.MonitorSummary, len(monitorIDs))
 	if len(monitorIDs) == 0 {
@@ -78,51 +94,32 @@ func (r *CheckRepo) Summaries(ctx context.Context, monitorIDs []string, historyS
 		out[id] = &domain.MonitorSummary{History: []bool{}}
 	}
 
-	in := strings.TrimSuffix(strings.Repeat("?,", len(monitorIDs)), ",")
 	args := make([]any, 0, len(monitorIDs)+1)
 	for _, id := range monitorIDs {
 		args = append(args, id)
 	}
 
-	// mais recente por último: ordena pelo rank decrescente
-	rows, err := r.db.QueryContext(ctx, `
-		SELECT monitor_id, success, latency_ms FROM (
-			SELECT monitor_id, success, latency_ms,
-				ROW_NUMBER() OVER (PARTITION BY monitor_id ORDER BY checked_at DESC, id DESC) AS rn
-			FROM checks WHERE monitor_id IN (`+in+`)
-		) WHERE rn <= ?
-		ORDER BY monitor_id, rn DESC`,
-		append(args, historySize)...,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var id string
-		var success int
-		var latency int64
-		if err := rows.Scan(&id, &success, &latency); err != nil {
+	// o SQLite aceita até 500 partes num UNION ALL; a lista do painel tem no
+	// máximo 100 monitores, mas lotes deixam a função segura para qualquer N
+	for start := 0; start < len(monitorIDs); start += historyBatch {
+		batch := monitorIDs[start:min(start+historyBatch, len(monitorIDs))]
+		histArgs := make([]any, 0, 2*len(batch))
+		for _, id := range batch {
+			histArgs = append(histArgs, id, historySize)
+		}
+		if err := r.scanHistory(ctx, out, sqlSummariesHistory(len(batch)), histArgs); err != nil {
 			return nil, err
 		}
-		s := out[id]
-		s.History = append(s.History, success == 1)
-		s.LastLatencyMs = &latency
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
 	}
 
-	rows, err = r.db.QueryContext(ctx, `
-		SELECT monitor_id, 100.0 * SUM(success) / COUNT(*)
-		FROM checks WHERE monitor_id IN (`+in+`) AND checked_at >= ?
-		GROUP BY monitor_id`,
+	rows, err := r.db.QueryContext(ctx, sqlSummariesUptime(len(monitorIDs)),
 		append(args, since.UTC().Format(time.RFC3339))...,
 	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
+
 	for rows.Next() {
 		var id string
 		var uptime float64
@@ -134,16 +131,32 @@ func (r *CheckRepo) Summaries(ctx context.Context, monitorIDs []string, historyS
 	return out, rows.Err()
 }
 
+const historyBatch = 100
+
+func (r *CheckRepo) scanHistory(ctx context.Context, out map[string]*domain.MonitorSummary, q string, args []any) error {
+	rows, err := r.db.QueryContext(ctx, q, args...)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id string
+		var success int
+		var latency int64
+		if err := rows.Scan(&id, &success, &latency); err != nil {
+			return err
+		}
+		s := out[id]
+		s.History = append(s.History, success == 1)
+		s.LastLatencyMs = &latency
+	}
+	return rows.Err()
+}
+
 // Buckets agrupa os checks de [since, until) em baldes de bucketSeconds.
 // Devolve só os baldes com dados, em ordem; preencher os vazios é do service.
 func (r *CheckRepo) Buckets(ctx context.Context, monitorID string, since, until time.Time, bucketSeconds int) ([]domain.StatsBucket, error) {
-	rows, err := r.db.QueryContext(ctx, `
-		SELECT CAST(strftime('%s', checked_at) AS INTEGER) / ? AS b,
-			COUNT(*), SUM(1 - success),
-			COALESCE(SUM(CASE WHEN success = 1 THEN latency_ms END), 0), SUM(success)
-		FROM checks
-		WHERE monitor_id = ? AND checked_at >= ? AND checked_at < ?
-		GROUP BY b ORDER BY b`,
+	rows, err := r.db.QueryContext(ctx, sqlChecksBuckets,
 		bucketSeconds, monitorID,
 		since.UTC().Format(time.RFC3339), until.UTC().Format(time.RFC3339),
 	)

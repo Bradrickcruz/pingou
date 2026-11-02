@@ -3,10 +3,12 @@ package database
 import (
 	"database/sql"
 	"embed"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/url"
 	"strings"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pressly/goose/v3"
@@ -47,7 +49,9 @@ func Open(dsn string) (*sql.DB, error) {
 	return db, nil
 }
 
-// RunMigrations executa migrations pendentes
+// RunMigrations executa migrations pendentes. Avisa no log antes e depois:
+// num banco grande, criar um índice leva de segundos a minutos, e sem o aviso
+// a subida parece travada.
 func RunMigrations(db *sql.DB) error {
 	goose.SetBaseFS(migrationFiles)
 	goose.SetLogger(goose.NopLogger())
@@ -56,7 +60,32 @@ func RunMigrations(db *sql.DB) error {
 		return err
 	}
 
-	return goose.Up(db, "migrations")
+	current, err := goose.GetDBVersion(db)
+	if err != nil {
+		return err
+	}
+	pending, err := goose.CollectMigrations("migrations", current, goose.MaxVersion)
+	if errors.Is(err, goose.ErrNoMigrationFiles) || (err == nil && len(pending) == 0) {
+		return nil // banco em dia: o goose trata "nada depois da versão atual" como erro
+	}
+	if err != nil {
+		return err
+	}
+	versions := make([]int64, len(pending))
+	for i, m := range pending {
+		versions[i] = m.Version
+	}
+	slog.Info("applying database migrations (may take a while on a large database)",
+		"from", current, "pending", versions)
+
+	start := time.Now()
+	if err := goose.Up(db, "migrations"); err != nil {
+		return err
+	}
+	slog.Info("database migrations applied",
+		"version", versions[len(versions)-1],
+		"took", time.Since(start).Round(time.Millisecond).String())
+	return nil
 }
 
 // Down executa rollback de uma migration

@@ -46,6 +46,7 @@ type NtfyNotifier struct {
 	getTopic  func() string // vazio = desligado
 	publicURL string        // PINGOU_PUBLIC_URL sem "/" final; vazio = sem link
 	client    *http.Client
+	location  func() *time.Location // fuso das mensagens; nil = UTC
 }
 
 func NewNtfyNotifier(cfg config.NtfyConfig, getTopic func() string, publicURL string) *NtfyNotifier {
@@ -62,10 +63,23 @@ func newNtfyClient() *http.Client {
 	}
 }
 
+// WithLocation define de onde vem o fuso das datas da mensagem (lido a cada envio).
+func (n *NtfyNotifier) WithLocation(fn func() *time.Location) *NtfyNotifier {
+	n.location = fn
+	return n
+}
+
+func (n *NtfyNotifier) loc() *time.Location {
+	if n.location == nil {
+		return time.UTC
+	}
+	return n.location()
+}
+
 func (n *NtfyNotifier) NotifyDown(ctx context.Context, m *domain.Monitor, i *domain.Incident) {
 	n.send(ctx, "down", ntfyMessage{
 		title:    ntfyTitle(subjectDown(m)),
-		body:     bodyFor(m, i, false, n.publicURL),
+		body:     bodyFor(m, i, false, n.publicURL, n.loc()),
 		priority: "high",
 		tags:     "rotating_light",
 		click:    dashboardLink(n.publicURL, m),
@@ -75,9 +89,24 @@ func (n *NtfyNotifier) NotifyDown(ctx context.Context, m *domain.Monitor, i *dom
 func (n *NtfyNotifier) NotifyRecovery(ctx context.Context, m *domain.Monitor, i *domain.Incident) {
 	n.send(ctx, "up", ntfyMessage{
 		title:    ntfyTitle(subjectUp(m, i)),
-		body:     bodyFor(m, i, true, n.publicURL),
+		body:     bodyFor(m, i, true, n.publicURL, n.loc()),
 		priority: "default",
 		tags:     "white_check_mark",
+		click:    dashboardLink(n.publicURL, m),
+	})
+}
+
+// NotifyCertExpiring: prioridade normal no aviso de 30 dias e alta no de 7.
+func (n *NtfyNotifier) NotifyCertExpiring(ctx context.Context, m *domain.Monitor, a domain.CertAlert) {
+	priority := "default"
+	if a.ThresholdDays <= domain.CertAlertFinalDays {
+		priority = "high"
+	}
+	n.send(ctx, "cert_expiring", ntfyMessage{
+		title:    ntfyTitle(subjectCert(m, a)),
+		body:     certBody(m, a, n.publicURL, n.loc()),
+		priority: priority,
+		tags:     "lock,warning",
 		click:    dashboardLink(n.publicURL, m),
 	})
 }
@@ -99,7 +128,7 @@ func (n *NtfyNotifier) send(ctx context.Context, event string, msg ntfyMessage) 
 // mostra a origem, e o emoji vai em Tags (header não leva emoji cru).
 func ntfyTitle(subject string) string {
 	s := strings.TrimPrefix(subject, "[Pingou] ")
-	for _, emoji := range []string{"🔴 ", "🟢 "} {
+	for _, emoji := range []string{"🔴 ", "🟢 ", "⚠️ "} {
 		s = strings.TrimPrefix(s, emoji)
 	}
 	return s

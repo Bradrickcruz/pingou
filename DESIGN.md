@@ -146,6 +146,17 @@ Tailwind v4: declare os mesmos valores em `@theme` (`--color-pg-ciano: #1E9BB3;`
 - Badge de status: pílula (`border-radius: 9999px`), fundo `*-bg`, ícone na cor forte e texto em `--pg-ardosia` (o texto na cor forte dá 4,1:1 e 4,2:1 sobre `*-bg`, abaixo de AA), Inter Medium 12–13 px.
 - Bolinha de status (dot) pode acompanhar, mas nunca substitui o badge com texto.
 
+### 4.1 Certificado SSL (página de detalhe)
+
+O bloco "Certificado SSL" (`web/src/components/monitor-detail/CertCard.jsx`) usa a mesma pílula do badge, com os tokens de status. Não há token de "atenção": o nível de 30 dias usa o neutro.
+
+| Nível | Quando | Fundo | Ícone | Texto |
+|---|---|---|---|---|
+| Válido | mais de 30 dias | `--pg-up-bg` | escudo com check, `--pg-up` | `VÁLIDO` |
+| Atenção | 30 dias ou menos | `--pg-unknown-bg` | escudo com alerta, `--pg-ardosia` | `ATENÇÃO` |
+| Alerta | 7 dias ou menos | `--pg-down-bg` | escudo com alerta, `--pg-down` | `RENOVE JÁ` (data em `--pg-down`) |
+| Vencido | já expirou | `--pg-down-bg` | escudo com ×, `--pg-down` | `EXPIRADO` (data em `--pg-down`) |
+
 ## 5. Tipografia
 
 | Papel | Fonte | Tamanho | Linha | Peso |
@@ -184,6 +195,7 @@ Tailwind v4: declare os mesmos valores em `@theme` (`--color-pg-ciano: #1E9BB3;`
 - **Botão destrutivo** (ex.: remover monitor): texto/borda `--pg-down`; fundo sólido só na confirmação.
 - **Link**: `--pg-ciano-fundo`, sublinhado no hover.
 - **Input**: fundo branco, borda `1px solid var(--pg-neblina)` (não `--pg-borda`: 5,5:1 contra o fundo, contra ~1,3:1 e abaixo dos 3:1 exigidos para componentes de interface), raio 8 px; foco com anel `--pg-ciano`.
+- **Combobox** (`ui/Combobox.jsx`, usado no fuso horário): campo de texto com lista que filtra ao digitar. Mesmo estilo do input; lista com fundo branco, borda `--pg-borda`, opção ativa em `--pg-ciano-nevoa`. Teclado: ↑ ↓ Enter Esc. Só aceita valores da lista.
 - **Card**: fundo branco sobre `--pg-nuvem`, borda `--pg-borda`, raio 12 px.
 - **Tabela**: header com fundo `--pg-ciano-nevoa` e texto `--pg-ciano-fundo`; linhas separadas por `--pg-borda`.
 - **Header do dashboard**: símbolo (24–32 px) + logotipo, via SVG oficial.

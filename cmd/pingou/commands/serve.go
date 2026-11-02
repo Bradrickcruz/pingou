@@ -2,8 +2,10 @@ package commands
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -91,20 +93,23 @@ func runServe(cmd *cobra.Command, args []string) error {
 		return url
 	}, loadedConfig.PublicURL)
 
+	// fuso das datas no e-mail e no ntfy (o webhook segue em UTC, RFC3339)
+	messageLocation := service.LocationLoader(settingsRepository.Get)
+
 	// notifier: repassa cada evento para todos os canais, fora do lock do scheduler
 	notifier := service.NewMultiNotifier(webhookNotifier)
 	if loadedConfig.SMTP.Enabled() {
 		notifier.Add(service.NewEmailNotifier(loadedConfig.SMTP, func() string {
 			recipients, _ := settingsRepository.Get(context.Background(), "email_recipients")
 			return recipients
-		}, loadedConfig.PublicURL))
+		}, loadedConfig.PublicURL).WithLocation(messageLocation))
 		slog.Info("email notifications available", "host", loadedConfig.SMTP.Host, "port", loadedConfig.SMTP.Port, "tls", loadedConfig.SMTP.TLS)
 	}
 	if loadedConfig.Ntfy.Enabled() {
 		notifier.Add(service.NewNtfyNotifier(loadedConfig.Ntfy, func() string {
 			topic, _ := settingsRepository.Get(context.Background(), "ntfy_topic")
 			return topic
-		}, loadedConfig.PublicURL))
+		}, loadedConfig.PublicURL).WithLocation(messageLocation))
 		// só o host: a URL pode ter caminho e o token nunca vai para o log
 		slog.Info("ntfy notifications available", "host", loadedConfig.Ntfy.Host(), "auth", loadedConfig.Ntfy.Token != "")
 	}
@@ -141,29 +146,100 @@ func runServe(cmd *cobra.Command, args []string) error {
 	// Inicia server
 	server := handler.NewServer(loadedConfig, db, monitorService, incidentService, settingsService)
 
+	serverErr := make(chan error, 1)
 	go func() {
-		if err := server.Start(); err != nil {
-			slog.Error("server error", "err", err)
-			stop()
+		// ErrServerClosed é o retorno normal depois do Shutdown
+		if err := server.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			serverErr <- err
 		}
 	}()
 
-	// Espera sinal de encerramento
-	<-ctx.Done()
-	slog.Info("shutting down...")
-
-	if err := server.Shutdown(context.Background()); err != nil {
-		slog.Error("server shutdown error", "err", err)
+	// Espera sinal de encerramento (ou falha ao subir o servidor)
+	var startErr error
+	select {
+	case <-ctx.Done():
+	case err := <-serverErr:
+		startErr = fmt.Errorf("server error: %w", err)
 	}
+	stop()
+	forceExitOnSecondSignal()
 
-	monitorScheduler.Stop()
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
 
-	// avisos já decididos têm até 10 s para sair antes do processo terminar
-	if !notifier.Wait(10 * time.Second) {
-		slog.Warn("notifications still pending at shutdown")
+	err = runShutdown(shutdownCtx, []shutdownStep{
+		{"scheduler", func(context.Context) error {
+			monitorScheduler.Stop() // nenhum check novo começa
+			return nil
+		}},
+		{"http server", server.Shutdown}, // inclui pings /ping/{token} em andamento
+		{"checks", func(ctx context.Context) error {
+			if err := monitorScheduler.Wait(ctx); err != nil {
+				return err
+			}
+			return retention.Wait(ctx)
+		}},
+		{"notifications", func(ctx context.Context) error {
+			deadline, _ := ctx.Deadline()
+			if !notifier.Wait(time.Until(deadline)) {
+				return errors.New("notifications still pending")
+			}
+			return nil
+		}},
+		{"database", func(context.Context) error { return db.Close() }},
+		{"lock", func(context.Context) error { releaseLock(); return nil }},
+	})
+	if startErr != nil {
+		return startErr
 	}
+	return err
+}
 
+// shutdownTimeout é o orçamento total do desligamento. Fica abaixo do
+// stop_grace_period do docker-compose.yml (20 s); o padrão do Docker (10 s)
+// mataria o processo antes.
+const shutdownTimeout = 15 * time.Second
+
+type shutdownStep struct {
+	name string
+	run  func(ctx context.Context) error
+}
+
+// runShutdown executa as etapas em ordem, todas no mesmo orçamento (ctx). Uma
+// etapa que falha ou estoura o prazo não pula as seguintes: banco e lock são
+// sempre fechados. Devolve erro se alguma etapa falhou.
+func runShutdown(ctx context.Context, steps []shutdownStep) error {
+	slog.Info("shutdown started", "timeout", shutdownTimeout.String())
+	began := time.Now()
+	var failed []string
+	for _, st := range steps {
+		t := time.Now()
+		if err := st.run(ctx); err != nil {
+			slog.Error("shutdown step failed", "step", st.name, "err", err, "elapsed", time.Since(t).String())
+			failed = append(failed, st.name)
+			continue
+		}
+		slog.Info("shutdown step done", "step", st.name, "elapsed", time.Since(t).String())
+	}
+	if len(failed) > 0 {
+		slog.Error("shutdown incomplete", "failed_steps", failed, "elapsed", time.Since(began).String())
+		return fmt.Errorf("shutdown incomplete: %v", failed)
+	}
+	slog.Info("shutdown complete", "elapsed", time.Since(began).String())
 	return nil
+}
+
+// forceExitOnSecondSignal: um segundo Ctrl+C ou SIGTERM durante o desligamento
+// encerra na hora, com código 1.
+func forceExitOnSecondSignal() {
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		sig := <-ch
+		slog.Error("second signal during shutdown, exiting now", "signal", sig.String())
+		releaseLock()
+		os.Exit(1)
+	}()
 }
 
 // acquireLock adquire o lock file para evitar multiplas instancias
@@ -211,8 +287,10 @@ func checkExistingLock() error {
 		return nil
 	}
 
-	// Verifica se o processo ainda esta rodando
-	if pid > 0 {
+	// Verifica se o processo ainda esta rodando. O proprio PID conta como lock
+	// velho: num container reiniciado o processo volta como PID 1, igual ao
+	// lock deixado por uma execucao que morreu sem liberar (ex.: kill -9).
+	if pid > 0 && pid != os.Getpid() {
 		proc, err := os.FindProcess(pid)
 		if err == nil && proc.Signal(syscall.Signal(0)) == nil {
 			// Processo esta rodando

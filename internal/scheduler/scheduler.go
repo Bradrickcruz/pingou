@@ -33,6 +33,8 @@ type Scheduler struct {
 	rootCtx        context.Context // contexto de vida dos jobs (definido em Start)
 	startedAt      time.Time       // prazos vencidos antes disso venceram com o Pingou fora do ar
 	stopHeartbeats context.CancelFunc
+	stopping       bool           // Stop foi chamado: nenhum job novo começa (protegido por mu)
+	wg             sync.WaitGroup // loops de check e avaliador de heartbeat em andamento
 }
 
 func NewScheduler(
@@ -64,10 +66,15 @@ func (s *Scheduler) Start(ctx context.Context) error {
 	s.mu.Lock()
 	s.rootCtx = ctx
 	s.startedAt = time.Now()
+	s.stopping = false
 	hbCtx, cancel := context.WithCancel(ctx)
 	s.stopHeartbeats = cancel
+	s.wg.Add(1)
 	s.mu.Unlock()
-	go s.runHeartbeats(hbCtx)
+	go func() {
+		defer s.wg.Done()
+		s.runHeartbeats(hbCtx)
+	}()
 
 	enabled := true
 	monitors, _, err := s.monitors.FindAll(ctx, domain.MonitorFilter{
@@ -112,14 +119,24 @@ func (s *Scheduler) startJob(m *domain.Monitor) {
 	}
 
 	s.mu.Lock()
+	if s.stopping {
+		// desligando: um Reload vindo de uma requisição em andamento não
+		// pode começar check novo
+		s.mu.Unlock()
+		return
+	}
 	if old, ok := s.jobs[m.ID]; ok {
 		old.cancelFn()
 	}
 	jobCtx, cancel := context.WithCancel(s.rootCtx)
 	s.jobs[m.ID] = &job{monitor: m, cancelFn: cancel}
+	s.wg.Add(1)
 	s.mu.Unlock()
 
-	go s.runLoop(jobCtx, m)
+	go func() {
+		defer s.wg.Done()
+		s.runLoop(jobCtx, m)
+	}()
 	slog.Info("job started", "monitor_id", m.ID, "name", m.Name, "interval_seconds", m.IntervalSeconds)
 }
 
@@ -134,11 +151,11 @@ func (s *Scheduler) stopJob(id string) {
 	}
 }
 
+// runLoop: ctx é o do job (filho do contexto de Start, nunca o de uma
+// requisição HTTP). É cancelado no desligamento e quando o monitor é editado,
+// pausado ou excluído.
 func (s *Scheduler) runLoop(ctx context.Context, m *domain.Monitor) {
-	// primeiro check usa contexto próprio, independente da request HTTP
-	checkCtx, cancel := context.WithTimeout(context.Background(), time.Duration(m.TimeoutSeconds)*time.Second)
-	s.runCheck(checkCtx, m)
-	cancel()
+	s.runCheck(ctx, m)
 
 	ticker := time.NewTicker(time.Duration(m.IntervalSeconds) * s.intervalUnit)
 	defer ticker.Stop()
@@ -152,17 +169,25 @@ func (s *Scheduler) runLoop(ctx context.Context, m *domain.Monitor) {
 			if err != nil || updated == nil || !updated.Enabled {
 				return
 			}
-			checkCtx, cancel := context.WithTimeout(context.Background(), time.Duration(updated.TimeoutSeconds)*time.Second)
-			s.runCheck(checkCtx, updated)
-			cancel()
+			s.runCheck(ctx, updated)
 		}
 	}
 }
 
-func (s *Scheduler) runCheck(ctx context.Context, m *domain.Monitor) {
+func (s *Scheduler) runCheck(jobCtx context.Context, m *domain.Monitor) {
 	slog.Debug("running check", "monitor_id", m.ID, "name", m.Name, "type", m.Type)
 
-	result := s.checker.Check(ctx, m)
+	checkCtx, cancel := context.WithTimeout(jobCtx, time.Duration(m.TimeoutSeconds)*time.Second)
+	result := s.checker.Check(checkCtx, m)
+	cancel()
+
+	// Job parado durante o check (desligamento, edição, pausa ou exclusão): o
+	// resultado pode ser um "context canceled" que não é queda de verdade.
+	// Descarta, para não abrir incidente falso.
+	if jobCtx.Err() != nil {
+		slog.Debug("check discarded: job stopped", "monitor_id", m.ID)
+		return
+	}
 
 	slog.Debug("check result",
 		"monitor_id", m.ID,
@@ -171,7 +196,9 @@ func (s *Scheduler) runCheck(ctx context.Context, m *domain.Monitor) {
 		"status_code", result.StatusCode,
 	)
 
-	if err := s.Record(ctx, m.ID, result, nil); err != nil {
+	// a gravação não é cortada no meio: termina com commit ou rollback, e o
+	// Wait do desligamento espera por ela
+	if err := s.Record(context.WithoutCancel(jobCtx), m.ID, result, nil); err != nil {
 		slog.Error("state machine error", "monitor_id", m.ID, "err", err)
 	}
 }
@@ -222,11 +249,13 @@ func (s *Scheduler) hasJob(id string) bool {
 	return ok
 }
 
-// Stop encerra todos os jobs
+// Stop cancela todos os jobs e o avaliador de heartbeat, e impede jobs novos
+// até o próximo Start. Não espera: use Wait para isso.
 func (s *Scheduler) Stop() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	s.stopping = true
 	if s.stopHeartbeats != nil {
 		s.stopHeartbeats()
 		s.stopHeartbeats = nil
@@ -236,4 +265,20 @@ func (s *Scheduler) Stop() {
 		delete(s.jobs, id)
 	}
 	slog.Info("scheduler stopped")
+}
+
+// Wait espera os loops em andamento terminarem (check atual descartado e
+// gravação em andamento concluída). Devolve ctx.Err() se o prazo acabar antes.
+func (s *Scheduler) Wait(ctx context.Context) error {
+	done := make(chan struct{})
+	go func() {
+		s.wg.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }

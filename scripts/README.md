@@ -58,3 +58,104 @@ O script sai com código `1` (`FALHOU`) se o pico passar de 50 MB. O log complet
 - **Sem webhook configurado.** Os incidentes abrem, mas nenhuma notificação é enviada, então o custo de memória dos envios não entra na medição.
 - **Sem limite de cgroup.** O teste mede o processo, não impõe 50 MB. Para a prova mais rigorosa, rode o container com `docker run --memory=50m` e veja se ele é morto por OOM.
 - Rodar enquanto outro Pingou usa `~/.pingou/pingou.lock` pode falhar, porque o Pingou impede duas instâncias na mesma máquina.
+
+## dbbench: desempenho do banco com volume real
+
+Mede as consultas do painel, a gravação dos checks e a limpeza de retenção num banco com 30 dias de dados. Serve para comparar **antes e depois** de uma mudança no banco (índice, consulta, migration), sempre na mesma máquina.
+
+### Como usar
+
+```sh
+scripts/dbbench.sh            # perfil típico: 10 monitores a cada 60 s (~400 mil checks, ~100 MB)
+scripts/dbbench.sh limite     # perfil limite: 100 monitores a cada 10 s (~25 milhões de checks, ~6 GB)
+```
+
+O script:
+
+1. Gera o banco em `.bench/<perfil>.db` se ele não existir (`go run ./scripts/seed`). O perfil limite leva uns 5 minutos.
+2. Imprime o plano de cada consulta quente (`EXPLAIN QUERY PLAN`).
+3. Roda os benchmarks numa **cópia** do banco. O `.bench/<perfil>.db` nunca é alterado. A cópia aplica as migrations pendentes, como o app ao subir, e o relatório mostra quanto tempo isso levou.
+4. Salva tudo em `.bench/results-<perfil>-<data>.md`.
+
+Requisitos: `go` e espaço livre de cerca de **2× o tamanho do banco** (o original e a cópia). O perfil limite precisa de ~15 GB livres. A pasta `.bench/` fica fora do git e da imagem Docker.
+
+Variáveis opcionais:
+
+| Variável                   | Padrão | O que faz                              |
+| -------------------------- | -----: | -------------------------------------- |
+| `PINGOU_BENCH_REPS`        |     20 | Repetições de cada consulta            |
+| `PINGOU_BENCH_WRITES`      |   5000 | Gravações no teste de custo de escrita |
+| `PINGOU_BENCH_CONCURRENCY` |     30 | Segundos do cenário leitura + gravação |
+
+Para rodar só uma parte:
+
+```sh
+go run ./scripts/seed --profile tipico --out .bench/tipico.db
+PINGOU_BENCH_DB=.bench/tipico.db go test ./internal/repository -run TestPrintQueryPlans -v
+PINGOU_BENCH_DB=.bench/tipico.db go test ./internal/repository -run TestDBBench -v -timeout 2h
+```
+
+Sem `PINGOU_BENCH_DB` esses testes são pulados, e o `make test` continua rápido.
+
+### O que é medido
+
+- **Tamanho:** arquivo e cada índice.
+- **`/stats`:** os 4 períodos, em um monitor HTTP, um TCP e um Heartbeat.
+- **Lista do painel:** `GET /api/monitors`, com histórico, uptime 24 h e última latência.
+- **Checks paginados**, **incidentes**, **busca do heartbeat** e do **token de ping**.
+- **Gravação** pelo caminho real (state machine): check com sucesso e com falha.
+- **Concorrência:** `/stats` 30d sem parar e uma gravação a cada 100 ms. Como o SQLite usa uma conexão só, uma leitura lenta atrasa a gravação.
+- **Retenção:** apaga o dia mais antigo com gravações ao lado. A espera máxima de uma gravação mostra por quanto tempo a limpeza segura a conexão.
+
+Cada linha mostra a primeira execução (cache frio para aquela consulta), a mediana (p50), o p95 e o máximo.
+
+### Os dados
+
+O gerador cria os dados pelas migrations reais, em **ordem cronológica e com os monitores intercalados**, como o scheduler grava. Dados agrupados por monitor deixariam as consultas artificialmente rápidas.
+
+- Latência de ~20 a ~400 ms; ~0,3 % de falhas isoladas.
+- Uma queda de 5 a 30 min por monitor por semana, com incidente aberto e fechado.
+- Incidentes de até 1 ano atrás (incidentes nunca expiram).
+- Monitores HTTP, TCP e Heartbeat (ping a cada 5 min).
+
+É determinístico: o mesmo `--end` gera o mesmo banco. O `--end` padrão é hoje às 00:00 UTC, para os dados terminarem perto de "agora".
+
+### Como interpretar
+
+Os números dependem do hardware. Compare só rodadas feitas na mesma máquina, sem outra carga pesada ao lado. Rode mais de uma vez: uma diferença menor que ~15 % entre rodadas iguais é ruído.
+
+## certserver: testar o aviso de certificado SSL
+
+Servidor HTTPS local com um certificado de **validade escolhida**, para ver o [aviso de expiração do certificado SSL](../README.md#aviso-de-expiração-do-certificado-ssl) funcionando sem esperar 30 dias.
+
+Ele cria uma CA de teste e grava o certificado dela em `.bench/ca.pem` (fica fora do git). A CA é reaproveitada nas próximas execuções, então dá para reiniciar o servidor com outra validade sem reiniciar o Pingou.
+
+### Como usar (Linux)
+
+1. Suba o servidor com um certificado que vence em 25 dias:
+
+```sh
+go run ./scripts/certserver --days 25 --port 9443
+```
+
+2. Em outro terminal, rode o Pingou confiando na CA de teste:
+
+```sh
+SSL_CERT_FILE=.bench/ca.pem PINGOU_API_KEY=dev-api-key ./bin/pingou serve
+```
+
+3. Crie um monitor `https://localhost:9443` com a opção de aviso ligada. Como 25 dias é menos que 30, o aviso de 30 dias sai no primeiro check.
+
+> No macOS, o Go não lê `SSL_CERT_FILE`. Rode o Pingou em Linux ou no Docker.
+
+Roteiro sugerido:
+
+| Passo                                  | Esperado                                               |
+| -------------------------------------- | ------------------------------------------------------ |
+| `--days 25`, opção ligada              | data na página de detalhe e aviso de 30 dias           |
+| reiniciar com `--days 5`               | aviso de 7 dias, uma vez; checks seguintes não repetem |
+| reiniciar com `--days 90` (renovação)  | data atualizada, nenhum aviso                          |
+| trocar a URL do monitor                | data zerada até o próximo check                        |
+| desligar a opção, reiniciar `--days 3` | nenhum aviso; a data continua visível                  |
+
+Opções: `--days` (aceita fração, ex.: `0.5`), `--port`, `--out` (caminho da CA) e `--status` (status HTTP das respostas, ex.: `500` para testar o aviso com o monitor `DOWN`).

@@ -103,26 +103,26 @@
   },
   "internal/database/migrations/0001_init.sql": {
     "mtime": 1777012405.3893824,
-    "seen": 1793564939.2665944,
-    "ast_hash": "",
+    "seen": 1793565298.3917665,
+    "ast_hash": "cdf3d4043c780543a27d4cc148cf5555",
     "semantic_hash": ""
   },
   "internal/database/migrations/0002_add_duration_seconds_to_incidents.sql": {
     "mtime": 1777061129.9355462,
-    "seen": 1793564939.2665958,
-    "ast_hash": "",
+    "seen": 1793565298.3917687,
+    "ast_hash": "ab52761c5aed638df004b2cddba66e83",
     "semantic_hash": ""
   },
   "internal/database/migrations/0003_monitor_types.sql": {
     "mtime": 1793391650.2071128,
-    "seen": 1793564939.266597,
-    "ast_hash": "",
+    "seen": 1793565298.39177,
+    "ast_hash": "acc29bbbdeb940baaf9ab1e94647b53e",
     "semantic_hash": ""
   },
   "internal/database/migrations/0004_incidents_page.sql": {
     "mtime": 1793391650.2071128,
-    "seen": 1793564939.2665985,
-    "ast_hash": "",
+    "seen": 1793565298.3917716,
+    "ast_hash": "b6bac1548426042243e703bf72f471e7",
     "semantic_hash": ""
   },
   "internal/database/migrations_test.go": {
@@ -474,9 +474,9 @@
     "semantic_hash": ""
   },
   "web/package.json": {
-    "mtime": 1793394606.0752585,
-    "seen": 1793556441.37142,
-    "ast_hash": "a36c84574901666f3ebff4781164df14",
+    "mtime": 1793565588.2992823,
+    "seen": 1793565591.1669157,
+    "ast_hash": "d5ab67108cc464b4c1d2f122494db014",
     "semantic_hash": ""
   },
   "web/postcss.config.js": {
@@ -1353,6 +1353,12 @@
     "mtime": 1793565186.075442,
     "seen": 1793565210.591942,
     "ast_hash": "da795ddc79157546fecab240a2da1f89",
+    "semantic_hash": ""
+  },
+  "internal/database/migrations/0005_incident_closed_manually.sql": {
+    "mtime": 1793565155.0309525,
+    "seen": 1793565373.8999848,
+    "ast_hash": "657004d6f307a019e1515d89e7089ecc",
     "semantic_hash": ""
   }
 }

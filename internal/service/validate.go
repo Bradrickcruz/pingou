@@ -124,12 +124,34 @@ func validateGrace(grace int) error {
 	return nil
 }
 
+// isHTTPS diz se a URL usa https (o esquema não diferencia maiúsculas).
+func isHTTPS(url string) bool {
+	return len(url) >= 8 && strings.EqualFold(url[:8], "https://")
+}
+
+// validateCertAlert: o aviso de certificado só vale para http com URL https.
+func validateCertAlert(m *domain.Monitor) error {
+	if !m.CertAlertEnabled {
+		return nil
+	}
+	if m.Type != domain.TypeHTTP {
+		return fmt.Errorf("%w: cert_alert_enabled is only available for http monitors", ErrValidation)
+	}
+	if !isHTTPS(m.URL) {
+		return fmt.Errorf("%w: cert_alert_enabled requires an https:// url", ErrValidation)
+	}
+	return nil
+}
+
 // validateMonitor valida o monitor completo, com as regras do seu tipo.
 func validateMonitor(m *domain.Monitor) error {
 	if err := validateName(m.Name); err != nil {
 		return err
 	}
 	if err := validateType(m.Type); err != nil {
+		return err
+	}
+	if err := validateCertAlert(m); err != nil {
 		return err
 	}
 

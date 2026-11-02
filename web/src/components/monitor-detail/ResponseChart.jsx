@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { niceScale } from "../../lib/chartScale";
+import { wallTicks } from "../../lib/timezone";
 import {
   bucketLabel,
   clock,
@@ -32,30 +33,21 @@ function linePath(series, xOf, yOf) {
   return d;
 }
 
-// Marcas do eixo X em horários "redondos" no fuso local: a cada 4 h na janela
-// de 24 h; à meia-noite a cada 1, 2 ou 5 dias nas maiores (~6 a 7 rótulos).
+// Marcas do eixo X em horários "redondos" no fuso das Configurações: a cada
+// 4 h na janela de 24 h; à meia-noite a cada 1, 2 ou 5 dias nas maiores (~6 a
+// 7 rótulos).
 function axisTicks(since, until) {
-  const start = new Date(since);
-  const end = new Date(until);
-  const days = (end - start) / 86_400_000;
-  const ticks = [];
-  if (days <= 1) {
-    const t = new Date(start);
-    t.setMinutes(0, 0, 0);
-    t.setHours(
-      Math.ceil((t < start ? t.getHours() + 1 : t.getHours()) / 4) * 4,
-    );
-    for (; t < end; t.setHours(t.getHours() + 4))
-      ticks.push({ t: new Date(t), label: clock(t) });
-    return ticks;
-  }
+  const days = (new Date(until) - new Date(since)) / 86_400_000;
+  if (days <= 1)
+    return wallTicks(since, until, 4 * 3_600_000).map((t) => ({
+      t,
+      label: clock(t),
+    }));
   const step = days <= 7 ? 1 : days <= 14 ? 2 : 5;
-  const t = new Date(start);
-  t.setHours(0, 0, 0, 0);
-  if (t < start) t.setDate(t.getDate() + 1);
-  for (; t < end; t.setDate(t.getDate() + step))
-    ticks.push({ t: new Date(t), label: dayMonth(t) });
-  return ticks;
+  return wallTicks(since, until, step * 86_400_000, 86_400_000).map((t) => ({
+    t,
+    label: dayMonth(t),
+  }));
 }
 
 function isDown(bucket, bucketSeconds, down) {

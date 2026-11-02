@@ -33,10 +33,12 @@ import {
 import { ChecksTable } from "../components/monitor-detail/ChecksTable";
 import { RecentIncidents } from "../components/monitor-detail/RecentIncidents";
 import { ConfigCard } from "../components/monitor-detail/ConfigCard";
+import { CertCard } from "../components/monitor-detail/CertCard";
 import { DetailTopBar } from "../components/monitor-detail/DetailTopBar";
 import { DownAlert } from "../components/monitor-detail/DownAlert";
 import { formatDuration, formatUptime, timeAgo } from "../lib/format";
 import { statusOf, targetOf, typeLabel } from "../lib/monitors";
+import { hasCert } from "../lib/cert";
 
 const typeIcon = { http: Globe, tcp: Server, heartbeat: Activity };
 const FIRST_CHECKS = 8;
@@ -621,6 +623,15 @@ export function MonitorDetail() {
             </SectionTitle>
             <RecentIncidents incidents={incidents} now={now} />
           </section>
+
+          {hasCert(monitor) && (
+            <section aria-labelledby="certificado">
+              <SectionTitle>
+                <span id="certificado">Certificado SSL</span>
+              </SectionTitle>
+              <CertCard monitor={monitor} now={now} />
+            </section>
+          )}
 
           <section aria-labelledby="configuracao">
             <SectionTitle

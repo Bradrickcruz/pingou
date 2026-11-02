@@ -63,6 +63,7 @@ type CreateMonitorInput struct {
 	TimeoutSeconds   int
 	FailureThreshold int
 	Enabled          bool
+	CertAlertEnabled bool // só http com URL https
 }
 
 type UpdateMonitorInput struct {
@@ -76,6 +77,9 @@ type UpdateMonitorInput struct {
 	TimeoutSeconds   *int
 	FailureThreshold *int
 	Enabled          *bool
+	// CertAlertEnabled nil mantém o valor atual; se a URL nova não for https,
+	// a opção é desligada sozinha.
+	CertAlertEnabled *bool
 }
 
 func (s *MonitorService) Create(ctx context.Context, in CreateMonitorInput) (*domain.Monitor, error) {
@@ -87,6 +91,7 @@ func (s *MonitorService) Create(ctx context.Context, in CreateMonitorInput) (*do
 		TimeoutSeconds:   in.TimeoutSeconds,
 		FailureThreshold: in.FailureThreshold,
 		Enabled:          in.Enabled,
+		CertAlertEnabled: in.CertAlertEnabled,
 		CurrentState:     domain.StateUnknown,
 		CreatedAt:        now,
 		UpdatedAt:        now,
@@ -168,6 +173,7 @@ func (s *MonitorService) Update(ctx context.Context, id string, in UpdateMonitor
 	}
 
 	wasEnabled := m.Enabled
+	oldURL := m.URL
 	if in.Name != nil {
 		m.Name = *in.Name
 	}
@@ -196,6 +202,16 @@ func (s *MonitorService) Update(ctx context.Context, id string, in UpdateMonitor
 			m.Config.GraceSeconds = *in.GraceSeconds
 		}
 	}
+	if in.CertAlertEnabled != nil {
+		m.CertAlertEnabled = *in.CertAlertEnabled
+	} else if m.CertAlertEnabled && !isHTTPS(m.URL) {
+		// URL trocada para http:// sem mexer na opção: desliga em vez de recusar
+		m.CertAlertEnabled = false
+	}
+	if m.URL != oldURL {
+		// o repositório zera as mesmas colunas no UPDATE; aqui só alinha o objeto devolvido
+		m.CertExpiresAt, m.CertAlerted30For, m.CertAlerted7For = nil, nil, nil
+	}
 	if m.Type != domain.TypeHeartbeat {
 		if in.TimeoutSeconds != nil {
 			m.TimeoutSeconds = *in.TimeoutSeconds
@@ -221,10 +237,13 @@ func (s *MonitorService) Update(ctx context.Context, id string, in UpdateMonitor
 		return nil, err
 	}
 	// Pausar fecha o incidente aberto sem notificar. Roda a cada Update pausado
-	// (idempotente), então uma falha aqui se cura na próxima edição. O repositório
-	// também zera o estado para UNKNOWN: sem isso, retomar um monitor ainda DOWN
-	// não abriria incidente novo (handleFailure só abre se prevState != DOWN).
+	// (idempotente), então uma falha aqui se cura na próxima edição.
+	// ponytail: duas escritas sem transação; se a segunda falhar, o erro volta ao
+	// usuário e repetir a pausa conclui. Atomicidade pede tx no service.
 	if !m.Enabled {
+		// monitors.Update já gravou UNKNOWN (sem isso, retomar um monitor DOWN não
+		// abriria incidente novo: handleFailure só abre se prevState != DOWN);
+		// aqui só alinhamos o objeto devolvido ao banco.
 		m.CurrentState = domain.StateUnknown
 		if err := s.incidents.CloseManually(ctx, m.ID, now); err != nil {
 			return nil, fmt.Errorf("closing incident: %w", err)

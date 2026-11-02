@@ -23,11 +23,11 @@ func (r *MonitorRepo) Create(ctx context.Context, m *domain.Monitor) error {
 	_, err := r.db.ExecContext(ctx, `
 		INSERT INTO monitors
 			(id, name, type, url, config, ping_token, interval_seconds, timeout_seconds,
-			 failure_threshold, enabled, current_state, last_ping_at, created_at, updated_at)
-		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+			 failure_threshold, enabled, current_state, last_ping_at, cert_alert_enabled, created_at, updated_at)
+		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 		m.ID, m.Name, string(m.Type), nullableString(m.URL), encodeConfig(m), m.PingToken,
 		m.IntervalSeconds, m.TimeoutSeconds, m.FailureThreshold,
-		boolToInt(m.Enabled), string(m.CurrentState), nullableTime(m.LastPingAt),
+		boolToInt(m.Enabled), string(m.CurrentState), nullableTime(m.LastPingAt), boolToInt(m.CertAlertEnabled),
 		m.CreatedAt.UTC().Format(time.RFC3339),
 		m.UpdatedAt.UTC().Format(time.RFC3339),
 	)
@@ -92,18 +92,28 @@ func (r *MonitorRepo) FindAll(ctx context.Context, f domain.MonitorFilter) ([]*d
 	return monitors, total, nil
 }
 
-// Update grava os campos editáveis pelo usuário. Estado e last_checked_at
-// ficam com a state machine (UpdateWithTx), para uma edição não desfazer um check.
+// Update grava os campos editáveis pelo usuário. Estado, last_checked_at e a
+// data do certificado ficam com a state machine, para uma edição não desfazer
+// um check.
+//
+// Se a URL mudar, a data do certificado e as marcas de aviso são zeradas: o
+// certificado antigo não vale para o endereço novo. No UPDATE, o lado direito
+// de cada SET lê a linha antiga, então "url IS ?" compara a URL atual com a nova.
 func (r *MonitorRepo) Update(ctx context.Context, m *domain.Monitor) error {
+	newURL := nullableString(m.URL)
 	_, err := r.db.ExecContext(ctx, `
 		UPDATE monitors SET
 			name=?, url=?, config=?, ping_token=?, interval_seconds=?, timeout_seconds=?,
-			failure_threshold=?, enabled=?, last_ping_at=?, updated_at=?,
-			current_state = CASE WHEN ? = 0 THEN 'UNKNOWN' ELSE current_state END
+			failure_threshold=?, enabled=?, last_ping_at=?, cert_alert_enabled=?, updated_at=?,
+			current_state = CASE WHEN ? = 0 THEN 'UNKNOWN' ELSE current_state END,
+			cert_expires_at = CASE WHEN url IS ? THEN cert_expires_at END,
+			cert_alerted_30_for = CASE WHEN url IS ? THEN cert_alerted_30_for END,
+			cert_alerted_7_for = CASE WHEN url IS ? THEN cert_alerted_7_for END
 		WHERE id=?`,
-		m.Name, nullableString(m.URL), encodeConfig(m), m.PingToken, m.IntervalSeconds, m.TimeoutSeconds,
-		m.FailureThreshold, boolToInt(m.Enabled), nullableTime(m.LastPingAt),
+		m.Name, newURL, encodeConfig(m), m.PingToken, m.IntervalSeconds, m.TimeoutSeconds,
+		m.FailureThreshold, boolToInt(m.Enabled), nullableTime(m.LastPingAt), boolToInt(m.CertAlertEnabled),
 		m.UpdatedAt.UTC().Format(time.RFC3339), boolToInt(m.Enabled),
+		newURL, newURL, newURL,
 		m.ID,
 	)
 	return err
@@ -127,18 +137,21 @@ type scanner interface {
 }
 
 const monitorColumns = `id, name, type, url, config, ping_token, interval_seconds, timeout_seconds,
-	failure_threshold, enabled, current_state, last_checked_at, last_ping_at, created_at, updated_at`
+	failure_threshold, enabled, current_state, last_checked_at, last_ping_at, created_at, updated_at,
+	cert_alert_enabled, cert_expires_at, cert_alerted_30_for, cert_alerted_7_for`
 
 func scanMonitor(s scanner) (*domain.Monitor, error) {
 	var m domain.Monitor
-	var enabled int
+	var enabled, certAlert int
 	var typ, state, config string
 	var url, lastChecked, lastPing sql.NullString
+	var certExpires, certAlerted30, certAlerted7 sql.NullString
 	var createdAt, updatedAt string
 
 	err := s.Scan(
 		&m.ID, &m.Name, &typ, &url, &config, &m.PingToken, &m.IntervalSeconds, &m.TimeoutSeconds,
 		&m.FailureThreshold, &enabled, &state, &lastChecked, &lastPing, &createdAt, &updatedAt,
+		&certAlert, &certExpires, &certAlerted30, &certAlerted7,
 	)
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -160,6 +173,10 @@ func scanMonitor(s scanner) (*domain.Monitor, error) {
 	m.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
 	m.LastCheckedAt = parseNullTime(lastChecked)
 	m.LastPingAt = parseNullTime(lastPing)
+	m.CertAlertEnabled = certAlert == 1
+	m.CertExpiresAt = parseNullTime(certExpires)
+	m.CertAlerted30For = parseNullTime(certAlerted30)
+	m.CertAlerted7For = parseNullTime(certAlerted7)
 
 	return &m, nil
 }

@@ -50,6 +50,7 @@ Faz uma requisição para a URL configurada. Considera `UP` quando a resposta ch
 
 - Segue até `PINGOU_MAX_REDIRECTS` redirects.
 - Vira `DOWN` depois de `threshold` falhas seguidas.
+- Com URL `https://`, guarda a validade do certificado SSL e pode [avisar antes de ele expirar](#aviso-de-expiração-do-certificado-ssl).
 
 ### TCP
 
@@ -119,7 +120,10 @@ Um novo tipo de check só entra no Pingou se passar nas quatro perguntas:
 - Página de detalhe por monitor (`/monitors/:id`): uptime, resposta média, incidentes e tempo fora do ar em 24h / 7 / 14 / 30 dias, gráfico de tempo de resposta, últimos checks e configuração
 - Login com API Key
 - Notificações de queda e recuperação por webhook, por e-mail (SMTP) e pelo [ntfy](https://ntfy.sh), ligados ao mesmo tempo se quiser
+- [Aviso de expiração do certificado SSL](#aviso-de-expiração-do-certificado-ssl) em monitores HTTP com `https://`: um aviso 30 dias e outro 7 dias antes, por todos os canais
 - Retenção configurável: checks expiram após `retention_days`; incidentes são mantidos. A limpeza roda na subida e a cada 1 h
+- Fuso horário configurável (padrão UTC) para o painel, o e-mail e o ntfy
+- Desligamento ordenado (SIGTERM/SIGINT): termina checks, pings e notificações antes de sair
 - Export do banco SQLite
 - Atomicidade na state machine (transações SQL)
 
@@ -209,12 +213,14 @@ Garantias:
 
 Campos do monitor, além dos básicos (nome, intervalo, timeout, threshold):
 
-| Campo          | Descrição                                                                    |
-| -------------- | ---------------------------------------------------------------------------- |
-| `type`         | `http`, `tcp` ou `heartbeat`. Padrão `http`: monitores existentes não mudam. |
-| `config`       | JSON com os campos específicos do tipo.                                      |
-| `ping_token`   | Token secreto da URL de ping (somente `heartbeat`).                          |
-| `last_ping_at` | Quando chegou o último ping (somente `heartbeat`; `null` antes do primeiro). |
+| Campo                | Descrição                                                                                     |
+| -------------------- | --------------------------------------------------------------------------------------------- |
+| `type`               | `http`, `tcp` ou `heartbeat`. Padrão `http`: monitores existentes não mudam.                  |
+| `config`             | JSON com os campos específicos do tipo.                                                       |
+| `ping_token`         | Token secreto da URL de ping (somente `heartbeat`).                                           |
+| `last_ping_at`       | Quando chegou o último ping (somente `heartbeat`; `null` antes do primeiro).                  |
+| `cert_alert_enabled` | Aviso de expiração do certificado SSL ligado (somente `http` com `https://`). Padrão `false`. |
+| `cert_expires_at`    | Validade do último certificado visto (UTC, RFC 3339; `null` antes do primeiro check https).   |
 
 Campos de `config` por tipo:
 
@@ -374,22 +380,22 @@ PINGOU_API_KEY=...
 
 A porta HTTP é fixa em `8956` e não é configurável. Para expor em outra porta, mapeie no host (ex.: `-p 9000:8956`).
 
-| Variável                      | Obrigatória | Padrão      | Descrição                                                                                                                |
-| ----------------------------- | :---------: | ----------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `PINGOU_DATABASE_URL`         |     não     | `pingou.db` | Caminho do arquivo SQLite                                                                                                |
-| `PINGOU_API_KEY`              |     sim     | -           | Chave que protege o dashboard e as rotas `/api/*`                                                                        |
-| `PINGOU_LOG_LEVEL`            |     não     | `info`      | Nível de log (`DEBUG` habilita logs de debug)                                                                            |
-| `PINGOU_CORS_ALLOWED_ORIGINS` |     não     | (vazio)     | Origins permitidas, separadas por vírgula. Vazio desabilita CORS. Ex.: `http://localhost:5173`                           |
-| `PINGOU_MAX_REDIRECTS`        |     não     | `5`         | Máximo de redirects seguidos pelo checker HTTP                                                                           |
-| `PINGOU_GLOBAL_TIMEOUT`       |     não     | `60`        | Timeout global, em segundos, das requisições HTTP                                                                        |
-| `PINGOU_PUBLIC_URL`           |     não     | (vazio)     | Endereço público do dashboard. Preenche `dashboard_url` no webhook e o link no e-mail. Ex.: `https://pingou.exemplo.com` |
-| `PINGOU_SMTP_HOST`            |     não     | (vazio)     | Servidor SMTP. Liga o e-mail. Vazio = e-mail indisponível (as outras `PINGOU_SMTP_*` são ignoradas)                      |
-| `PINGOU_SMTP_PORT`            |     não     | `587`       | Porta do SMTP (1–65535)                                                                                                  |
-| `PINGOU_SMTP_USERNAME`        |     não     | (vazio)     | Usuário do SMTP. Vazio = sem autenticação (relay)                                                                        |
-| `PINGOU_SMTP_PASSWORD`        | com usuário | (vazio)     | Senha do SMTP. Nunca aparece em log, na API nem no `pingou config`                                                       |
-| `PINGOU_SMTP_FROM`            | com `HOST`  | -           | Remetente. Ex.: `Pingou <alerta@exemplo.com>`                                                                            |
-| `PINGOU_SMTP_TLS`             |     não     | `starttls`  | `starttls`, `tls` ou `none`. Padrão: `tls` na porta 465, `starttls` nas outras. `none` só sem usuário                    |
-| `PINGOU_NTFY_URL`             |     não     | (vazio)     | Servidor ntfy (http/https, sem query). Liga o ntfy. Ex.: `https://ntfy.sh`. Vazio = ntfy indisponível                    |
+| Variável                      | Obrigatória | Padrão      | Descrição                                                                                                                     |
+| ----------------------------- | :---------: | ----------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `PINGOU_DATABASE_URL`         |     não     | `pingou.db` | Caminho do arquivo SQLite                                                                                                     |
+| `PINGOU_API_KEY`              |     sim     | -           | Chave que protege o dashboard e as rotas `/api/*`                                                                             |
+| `PINGOU_LOG_LEVEL`            |     não     | `info`      | Nível de log (`DEBUG` habilita logs de debug)                                                                                 |
+| `PINGOU_CORS_ALLOWED_ORIGINS` |     não     | (vazio)     | Origins permitidas, separadas por vírgula. Vazio desabilita CORS. Ex.: `http://localhost:5173`                                |
+| `PINGOU_MAX_REDIRECTS`        |     não     | `5`         | Máximo de redirects seguidos pelo checker HTTP                                                                                |
+| `PINGOU_GLOBAL_TIMEOUT`       |     não     | `60`        | Timeout global, em segundos, das requisições HTTP                                                                             |
+| `PINGOU_PUBLIC_URL`           |     não     | (vazio)     | Endereço público do dashboard. Preenche `dashboard_url` no webhook e o link no e-mail. Ex.: `https://pingou.exemplo.com`      |
+| `PINGOU_SMTP_HOST`            |     não     | (vazio)     | Servidor SMTP. Liga o e-mail. Vazio = e-mail indisponível (as outras `PINGOU_SMTP_*` são ignoradas)                           |
+| `PINGOU_SMTP_PORT`            |     não     | `587`       | Porta do SMTP (1–65535)                                                                                                       |
+| `PINGOU_SMTP_USERNAME`        |     não     | (vazio)     | Usuário do SMTP. Vazio = sem autenticação (relay)                                                                             |
+| `PINGOU_SMTP_PASSWORD`        | com usuário | (vazio)     | Senha do SMTP. Nunca aparece em log, na API nem no `pingou config`                                                            |
+| `PINGOU_SMTP_FROM`            | com `HOST`  | -           | Remetente. Ex.: `Pingou <alerta@exemplo.com>`                                                                                 |
+| `PINGOU_SMTP_TLS`             |     não     | `starttls`  | `starttls`, `tls` ou `none`. Padrão: `tls` na porta 465, `starttls` nas outras. `none` só sem usuário                         |
+| `PINGOU_NTFY_URL`             |     não     | (vazio)     | Servidor ntfy (http/https, sem query). Liga o ntfy. Ex.: `https://ntfy.sh`. Vazio = ntfy indisponível                         |
 | `PINGOU_NTFY_TOKEN`           |     não     | (vazio)     | Token de acesso do ntfy (`tk_...`), enviado como `Authorization: Bearer`. Nunca aparece em log, na API nem no `pingou config` |
 
 Com `PINGOU_SMTP_HOST` setado e alguma regra violada (ex.: falta `PINGOU_SMTP_FROM`), o `serve` não sobe e mostra o motivo, como acontece quando falta `PINGOU_API_KEY`. O mesmo vale para `PINGOU_NTFY_URL` inválida.
@@ -404,6 +410,45 @@ O backend abre o SQLite com:
 - `SetMaxOpenConns(1)`
 
 Se `PINGOU_DATABASE_URL` já tiver query params, eles são preservados e os parâmetros acima são aplicados pelo app.
+
+### Desempenho e tamanho do banco
+
+Medido com 30 dias de dados no **perfil limite** (100 monitores a cada 10 s, ~25 milhões de checks, banco de ~6 GB), antes e depois da migration `0006`. Os valores são o p95 de 10 repetições, na faixa de 2 a 3 rodadas (Xeon 2,8 GHz, 4 núcleos, SQLite 3.51):
+
+| O que                                                   | Antes          | Depois       |
+| ------------------------------------------------------- | -------------- | ------------ |
+| `GET /api/monitors` (lista do painel)                   | 91 a 107 **s** | 114 a 203 ms |
+| `/stats?range=30d`                                      | 815 a 855 ms   | 208 a 340 ms |
+| `GET /api/monitors/:id/checks` (1ª página)              | 36 a 41 ms     | 13 a 22 ms   |
+| Gravar um check com falha                               | 40 ms          | 0,5 ms       |
+| Gravar um check com `/stats` 30d rodando                | 740 a 759 ms   | 247 a 258 ms |
+| Maior espera de uma gravação durante a limpeza de 1 dia | 2,4 s          | 104 ms       |
+| Índices da tabela `checks`                              | 4,1 GB         | 2,7 GB       |
+
+Antes, a lista do painel passava do limite de 30 s do servidor nesse volume, e o dashboard não carregava. No perfil típico (10 monitores a cada 60 s, ~400 mil checks), a lista caiu de 839 ms para 4 ms.
+
+O que mudou:
+
+- **Um índice de checks na ordem das consultas** (`monitor_id, checked_at, id, success, latency_ms`), no lugar do antigo. As consultas leem na ordem certa direto do índice, e o `/stats` nem passa pela tabela.
+- **A lista do painel busca só os 30 últimos checks de cada monitor**, em vez de numerar todos.
+- **A limpeza de retenção apaga em lotes de 5 mil linhas.** Entre um lote e outro, a gravação dos checks passa (o SQLite usa uma conexão só).
+
+Os resultados dependem do hardware, como na seção de memória. Para medir na sua máquina, veja [`scripts/README.md`](scripts/README.md#dbbench-desempenho-do-banco-com-volume-real).
+
+### Atualizando um banco grande
+
+Ao subir uma versão nova, o Pingou aplica as migrations **antes** de abrir a porta. A `0006` recria o índice principal da tabela `checks`, e isso leva tempo num banco grande:
+
+| Banco                         | Tempo da migration |
+| ----------------------------- | ------------------ |
+| ~400 mil checks (~100 MB)     | menos de 1 s       |
+| ~25 milhões de checks (~6 GB) | ~1 min 20 s        |
+
+- **Acompanhe pelo log.** Aparecem `applying database migrations (may take a while on a large database)` com as versões pendentes e, no fim, `database migrations applied` com o tempo. Nesse intervalo o `/healthz` não responde ainda. Isso é esperado; não reinicie o container.
+- **Espaço livre:** reserve pelo menos o tamanho atual do `pingou.db`. O índice novo tem cerca de 30 % do tamanho do banco, e o SQLite escreve no WAL e em arquivos temporários antes de gravar no arquivo.
+- **O arquivo cresce uma vez.** O índice antigo é apagado, mas o espaço dele fica livre dentro do arquivo e é reaproveitado pelos checks novos. Para devolver esse espaço ao disco agora, rode um `VACUUM` com o Pingou parado.
+- No Docker, o `HEALTHCHECK` tem `--start-period=5m`, para o container não ser marcado como `unhealthy` no meio da migration.
+- Faça backup do `pingou.db` antes de atualizar. Para desfazer, `pingou migrate down` recria o índice antigo (só índices, nenhum dado é perdido).
 
 ---
 
@@ -470,25 +515,25 @@ Sobre `/ping/{token}`:
 
 ### Protegidos
 
-| Método   | Rota                          | Descrição                                                       |
-| -------- | ----------------------------- | --------------------------------------------------------------- |
-| `GET`    | `/api/monitors`               | Lista os monitores                                              |
-| `POST`   | `/api/monitors`               | Cria um monitor                                                 |
-| `GET`    | `/api/monitors/:id`           | Busca um monitor                                                |
-| `PATCH`  | `/api/monitors/:id`           | Atualiza um monitor                                             |
-| `DELETE` | `/api/monitors/:id`           | Remove um monitor                                               |
-| `POST`   | `/api/monitors/:id/token`     | Gera um novo token de ping (Heartbeat)                          |
-| `GET`    | `/api/monitors/:id/checks`    | Histórico de checks, paginado (`limit`, `offset`)               |
-| `GET`    | `/api/monitors/:id/incidents` | Incidentes do monitor (mesmos filtros de `/api/incidents`)      |
-| `GET`    | `/api/monitors/:id/stats`     | Estatísticas numa janela (`range=24h\|7d\|14d\|30d`)            |
-| `GET`    | `/api/incidents`              | Lista incidentes (`status`, `monitor_id`, `limit`, `offset`)    |
-| `GET`    | `/api/settings`               | Busca as configurações globais                                  |
-| `PATCH`  | `/api/settings`               | Atualiza as configurações globais (`webhook_url` só http/https) |
-| `POST`   | `/api/settings/webhook/test`  | Envia um evento `test` ao webhook (5 por minuto por IP)         |
-| `POST`   | `/api/settings/email/test`    | Envia um e-mail de teste (5 por minuto por IP)                  |
-| `POST`   | `/api/settings/ntfy/test`     | Publica uma notificação de teste no ntfy (5 por minuto por IP)  |
-| `GET`    | `/api/info`                   | Versão, commit, data do build e tamanho do banco                |
-| `GET`    | `/api/export`                 | Baixa um dump do SQLite (`pingou-AAAA-MM-DD.db`, `VACUUM INTO`) |
+| Método   | Rota                          | Descrição                                                                             |
+| -------- | ----------------------------- | ------------------------------------------------------------------------------------- |
+| `GET`    | `/api/monitors`               | Lista os monitores                                                                    |
+| `POST`   | `/api/monitors`               | Cria um monitor                                                                       |
+| `GET`    | `/api/monitors/:id`           | Busca um monitor                                                                      |
+| `PATCH`  | `/api/monitors/:id`           | Atualiza um monitor                                                                   |
+| `DELETE` | `/api/monitors/:id`           | Remove um monitor                                                                     |
+| `POST`   | `/api/monitors/:id/token`     | Gera um novo token de ping (Heartbeat)                                                |
+| `GET`    | `/api/monitors/:id/checks`    | Histórico de checks, paginado (`limit`, `offset`)                                     |
+| `GET`    | `/api/monitors/:id/incidents` | Incidentes do monitor (mesmos filtros de `/api/incidents`)                            |
+| `GET`    | `/api/monitors/:id/stats`     | Estatísticas numa janela (`range=24h\|7d\|14d\|30d`)                                  |
+| `GET`    | `/api/incidents`              | Lista incidentes (`status`, `monitor_id`, `limit`, `offset`)                          |
+| `GET`    | `/api/settings`               | Busca as configurações globais                                                        |
+| `PATCH`  | `/api/settings`               | Atualiza as configurações globais (`webhook_url` só http/https; `timezone` nome IANA) |
+| `POST`   | `/api/settings/webhook/test`  | Envia um evento `test` ao webhook (5 por minuto por IP)                               |
+| `POST`   | `/api/settings/email/test`    | Envia um e-mail de teste (5 por minuto por IP)                                        |
+| `POST`   | `/api/settings/ntfy/test`     | Publica uma notificação de teste no ntfy (5 por minuto por IP)                        |
+| `GET`    | `/api/info`                   | Versão, commit, data do build e tamanho do banco                                      |
+| `GET`    | `/api/export`                 | Baixa um dump do SQLite (`pingou-AAAA-MM-DD.db`, `VACUUM INTO`)                       |
 
 ### Info
 
@@ -616,7 +661,17 @@ curl -X POST http://localhost:8956/api/monitors \
 
 A resposta do Heartbeat inclui o `ping_token` para montar a URL de ping.
 
+HTTP com aviso de expiração do certificado SSL:
+
+```bash
+curl -X POST http://localhost:8956/api/monitors \
+  -H "X-API-Key: dev-api-key" -H "Content-Type: application/json" \
+  -d '{"name":"Site","url":"https://exemplo.com","interval_seconds":300,"timeout_seconds":10,"failure_threshold":3,"cert_alert_enabled":true}'
+```
+
 > Se `type` não for enviado, o monitor é criado como `http`. Se `enabled` não for enviado, o monitor é criado ativo.
+
+`cert_alert_enabled` (opcional, padrão `false`) vale em `POST` e `PATCH`. Só é aceito em monitor `http` com URL `https://`; nos outros casos a API responde `400` (`VALIDATION_ERROR`). Num `PATCH` que troca a URL para `http://` sem mandar o campo, a opção é desligada sozinha. Trocar a URL zera `cert_expires_at`: o certificado antigo não vale para o endereço novo.
 
 Limites de `interval_seconds`: 10 a 86400 para `http` e `tcp`; 60 a 604800 (1 semana) para `heartbeat`.
 
@@ -624,9 +679,49 @@ Limites de `interval_seconds`: 10 a 86400 para `http` e `tcp`; 60 a 604800 (1 se
 
 ---
 
+## Aviso de expiração do certificado SSL
+
+Quando o certificado SSL vence, o site "cai" para todos os visitantes. O Pingou pode avisar antes.
+
+### Como ligar
+
+Marque **"Avisar quando o certificado SSL estiver perto de expirar"** no formulário do monitor (ou envie `"cert_alert_enabled": true` na API). A opção existe só para monitores **HTTP** com URL **`https://`**, e começa desmarcada.
+
+### Quando os avisos saem
+
+1. **30 dias antes** da expiração: um aviso.
+2. **7 dias antes**: outro aviso.
+
+Cada aviso sai **uma vez por certificado**. Os dois vão por todos os canais configurados (webhook, e-mail e ntfy).
+
+- Se a opção for ligada quando já faltam menos de 7 dias, sai **só** o aviso de 7 dias.
+- Se faltam entre 30 e 7 dias, o aviso de 30 sai no próximo check.
+- Quando o certificado é **renovado** (data nova), os avisos voltam a valer para o certificado novo, sem fazer nada.
+- Desligar e ligar a opção de novo não repete um aviso que já saiu.
+
+### Como funciona
+
+O check HTTP já faz a conexão TLS. A validade (`NotAfter`) vem no certificado da própria resposta, então ler a data **não custa conexão extra**. A data só é gravada quando muda, e as marcas de "aviso enviado" só quando um aviso sai: nenhuma escrita a mais por check.
+
+A data aparece na página de detalhe do monitor em todo monitor HTTP com `https://`, mesmo com o aviso desligado: normal (mais de 30 dias), atenção (30 dias ou menos), alerta (7 dias ou menos) ou vencido. Enquanto o monitor está `DOWN`, a tela mostra o último valor conhecido.
+
+### O que não cobre
+
+- Só o certificado do **próprio site** (o primeiro da cadeia), não os intermediários.
+- Só monitores HTTP com `https://`. TCP com TLS fica de fora.
+- Com redirect, vale o certificado da **resposta final** (o que o visitante vê).
+- Certificado já vencido não é lido: o Go recusa a conexão e o monitor cai como `DOWN`, com o erro do certificado.
+- Os limites (30 e 7 dias) são fixos.
+
+> **Renovação automática (Let's Encrypt/Certbot):** o Certbot costuma renovar quando faltam 30 dias, o mesmo limite do primeiro aviso. Quem usa renovação automática pode receber o aviso de 30 dias pouco antes da renovação. O aviso que indica "a renovação falhou" é o de **7 dias**.
+
+> **Balanceador ou CDN com certificados diferentes por servidor:** a data pode alternar entre os certificados. As marcas guardam a data já avisada, então um aviso só se repete se a alternância voltar a um certificado já avisado depois de outro.
+
+---
+
 ## Webhook
 
-Quando `webhook_url` está configurado em settings, o Pingou envia um `POST` JSON a cada transição para `DOWN` ou de volta para `UP`.
+Quando `webhook_url` está configurado em settings, o Pingou envia um `POST` JSON a cada transição para `DOWN` ou de volta para `UP`, e no [aviso de expiração do certificado SSL](#aviso-de-expiração-do-certificado-ssl).
 
 Evento de queda:
 
@@ -677,6 +772,41 @@ Campos `type` e `target`:
 `dashboard_url` leva à página de detalhe do monitor. É `null` sem `PINGOU_PUBLIC_URL` (o Pingou não sabe o próprio endereço público) e no evento `test`.
 
 > A URL de ping do Heartbeat **nunca** é enviada no webhook, porque ela contém o token secreto e webhooks costumam ir para serviços de terceiros (Slack, Discord etc.).
+
+### Evento `cert_expiring`
+
+Aviso de [certificado SSL perto de expirar](#aviso-de-expiração-do-certificado-ssl). Mesmo formato dos outros eventos, com três campos a mais:
+
+```json
+{
+  "event": "cert_expiring",
+  "monitor": {
+    "id": "018f2f7a-...",
+    "name": "API",
+    "type": "http",
+    "target": "https://api.exemplo.com",
+    "url": "https://api.exemplo.com"
+  },
+  "timestamp": "2026-11-01T12:00:00Z",
+  "last_error": null,
+  "downtime_duration_seconds": null,
+  "dashboard_url": "https://pingou.exemplo.com/monitors/018f2f7a-...",
+  "cert_expires_at": "2026-11-08T09:00:00Z",
+  "days_left": 6,
+  "threshold_days": 7
+}
+```
+
+| Campo             | Descrição                                                                |
+| ----------------- | ------------------------------------------------------------------------ |
+| `timestamp`       | Momento do aviso                                                         |
+| `cert_expires_at` | Validade do certificado (UTC, RFC 3339)                                  |
+| `days_left`       | Dias inteiros que faltam (arredondado para baixo; negativo se já venceu) |
+| `threshold_days`  | Qual aviso é: `30` ou `7`                                                |
+
+Os eventos `down` e `up` não mudam (não levam esses três campos).
+
+> **Atenção, quem consome o webhook:** `event` agora pode ter um terceiro valor, `cert_expiring`. Integrações que tratam "tudo que não é `up`" como queda vão mostrar o aviso de certificado como queda. Trate `event` pelo valor exato. Como a opção começa desligada, nada muda até alguém ligá-la.
 
 ### Testando o webhook
 
@@ -791,9 +921,26 @@ Detalhes: https://pingou.exemplo.com/monitors/<id>
 
 Na volta, o assunto é `[Pingou] 🟢 API de pagamentos voltou (fora por 5 min)` e o corpo troca `Erro` por `Voltou em` e `Fora do ar por: 5 min 12 s`.
 
+As datas usam o [fuso horário](#fuso-horário) das Configurações. Com `America/Sao_Paulo`, o exemplo acima vira `Caiu em: 2026-11-01 11:03:12 -03`.
+
 - `Alvo` não aparece no Heartbeat, e o token de ping **nunca** vai no e-mail.
 - `Detalhes` só aparece com `PINGOU_PUBLIC_URL`.
 - O log registra só `recipients_count`, nunca os endereços.
+
+Aviso de [certificado SSL](#aviso-de-expiração-do-certificado-ssl):
+
+```
+Subject: [Pingou] ⚠️ Certificado SSL de API de pagamentos expira em 7 dias
+
+Monitor: API de pagamentos
+URL: https://api.exemplo.com/health
+Expira em: 2026-11-08 09:00:00 UTC
+Faltam: 7 dias
+Aviso: 7 dias antes de expirar
+Detalhes: https://pingou.exemplo.com/monitors/<id>
+
+Renove o certificado antes dessa data, ou o site fica fora do ar para os visitantes.
+```
 
 ### Testando o e-mail
 
@@ -870,7 +1017,11 @@ Erro: connection refused
 Detalhes: https://pingou.exemplo.com/monitors/<id>
 ```
 
+Como no e-mail, as datas usam o [fuso horário](#fuso-horário) das Configurações.
+
 Na volta, o título é `API de pagamentos voltou (fora por 5 min)`, com prioridade normal e a tag ✅.
+
+No [aviso de certificado SSL](#aviso-de-expiração-do-certificado-ssl), o título é `Certificado SSL de API de pagamentos expira em 7 dias`, com as tags 🔒 ⚠️. A prioridade é normal no aviso de 30 dias e alta no de 7. O corpo é o mesmo do e-mail.
 
 - Com `PINGOU_PUBLIC_URL`, tocar na notificação abre a página do monitor (header `Click`).
 - `Alvo` não aparece no Heartbeat, e o token de ping **nunca** vai na notificação.
@@ -897,7 +1048,54 @@ curl -X POST http://localhost:8956/api/settings/ntfy/test \
 
 ## Entrega das notificações
 
-Webhook, e-mail e ntfy são enviados **fora** do processamento dos checks: um destino lento não atrasa os outros monitores. O Pingou avisa **uma vez por transição**, sem retry. No desligamento (SIGTERM), envios em andamento têm até 10 s para terminar; um crash ou `kill -9` pode perder o aviso.
+Webhook, e-mail e ntfy são enviados **fora** do processamento dos checks: um destino lento não atrasa os outros monitores. O Pingou avisa **uma vez por transição**, sem retry. No [desligamento](#desligamento), envios em andamento são esperados dentro do prazo de 15 s; um crash ou `kill -9` pode perder o aviso.
+
+## Fuso horário
+
+Na primeira vez que o painel é aberto, o Pingou salva o **fuso do navegador** (se o navegador não informar um fuso válido, fica em **UTC**). Até lá, e-mail e ntfy usam UTC. Para mudar, abra **Configurações → Fuso horário**, digite para filtrar (ex.: `sao paulo`) e escolha um nome da lista. O campo mostra a hora atual no fuso escolhido antes de salvar. O fuso é um só por instalação: quem abrir o painel primeiro define o fuso de todos.
+
+O fuso vale para:
+
+- **Painel:** todas as datas e horas (dashboard, detalhe do monitor, gráfico, incidentes, últimos checks). Muda na hora, sem recarregar.
+- **E-mail e ntfy:** `Caiu em` e `Voltou em`, com o sufixo do fuso (`UTC`, `-03`, `+09`). Vale a partir da próxima notificação, sem reiniciar.
+
+Continua sempre em UTC:
+
+- A API (`*_at` em RFC3339) e o banco.
+- O JSON do webhook (`timestamp`).
+- Os baldes do `/stats`. Em fusos com meia hora (ex.: `Asia/Kolkata`), os baldes de 1 h não começam em hora cheia.
+
+Pela API:
+
+```bash
+curl -X PATCH http://localhost:8956/api/settings \
+  -H "X-API-Key: dev-api-key" \
+  -d '{"timezone":"America/Sao_Paulo"}'
+```
+
+Nome desconhecido dá `400`; vazio volta para `UTC`. A base de fusos vai embutida no binário, então funciona em qualquer imagem.
+
+## Desligamento
+
+Ao receber **SIGTERM** ou **SIGINT** (Ctrl+C), o Pingou desliga em etapas, com prazo total de **15 s**:
+
+1. Para o agendador: nenhum check novo começa.
+2. Para de aceitar conexões e termina as requisições em andamento (incluindo pings `/ping/{token}`).
+3. Espera os checks em andamento. Um check cortado pelo desligamento é **descartado**: não conta como falha nem abre incidente.
+4. Espera as notificações em andamento.
+5. Fecha o banco.
+6. Remove o lock `~/.pingou/pingou.lock`.
+
+O log mostra `shutdown started`, uma linha por etapa e `shutdown complete`. Sai com código `0` quando termina limpo e `1` quando alguma etapa estoura o prazo (o log diz qual). Um segundo sinal durante o desligamento encerra na hora, com código `1`.
+
+**Docker:** o padrão do `docker stop` é 10 s, menos que o prazo do Pingou. O `docker-compose.yml` já usa `stop_grace_period: 20s`. Com `docker run`, passe `--stop-timeout 20`:
+
+```bash
+docker run -d --stop-timeout 20 -p 8956:8956 -v pingou_data:/data \
+  -e PINGOU_DATABASE_URL=/data/pingou.db \
+  -e PINGOU_API_KEY=troque-esta-chave \
+  bryanhcruz/pingou
+```
 
 ---
 

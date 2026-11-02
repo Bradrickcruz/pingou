@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/Bradrickcruz/pingou/internal/domain"
 )
@@ -35,12 +36,15 @@ type UnitOfWork interface {
 // Usado para operações dentro de UnitOfWork.
 type CheckRepositoryTx interface {
 	CreateWithTx(ctx context.Context, c *domain.Check) error
-	FindByMonitor(ctx context.Context, monitorID string, limit, offset int) ([]*domain.Check, int, error)
+	Latest(ctx context.Context, monitorID string, n int) ([]*domain.Check, error)
 }
 
 // MonitorRepositoryTx define métodos de repositório que aceitam transação.
 type MonitorRepositoryTx interface {
 	UpdateWithTx(ctx context.Context, m *domain.Monitor) error
+	// UpdateCertWithTx grava os campos de certificado se a URL ainda for url.
+	// Devolve false quando a URL mudou e nada foi gravado.
+	UpdateCertWithTx(ctx context.Context, id, url string, expiresAt, alerted30For, alerted7For *time.Time) (bool, error)
 	FindByID(ctx context.Context, id string) (*domain.Monitor, error)
 }
 

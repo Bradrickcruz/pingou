@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"strings"
 	"time"
 
 	"github.com/Bradrickcruz/pingou/internal/domain"
@@ -27,9 +26,7 @@ func (r *IncidentRepo) Create(ctx context.Context, i *domain.Incident) error {
 }
 
 func (r *IncidentRepo) FindOpenByMonitor(ctx context.Context, monitorID string) (*domain.Incident, error) {
-	row := r.db.QueryRowContext(ctx, `
-		SELECT `+incidentColumns+`
-		FROM incidents WHERE monitor_id = ? AND ended_at IS NULL`, monitorID)
+	row := r.db.QueryRowContext(ctx, sqlIncidentOpenByMonitor, monitorID)
 	return scanIncident(row)
 }
 
@@ -40,14 +37,11 @@ func (r *IncidentRepo) FindOpenByMonitors(ctx context.Context, monitorIDs []stri
 	if len(monitorIDs) == 0 {
 		return out, nil
 	}
-	in := strings.TrimSuffix(strings.Repeat("?,", len(monitorIDs)), ",")
 	args := make([]any, len(monitorIDs))
 	for i, id := range monitorIDs {
 		args[i] = id
 	}
-	rows, err := r.db.QueryContext(ctx, `
-		SELECT `+incidentColumns+`
-		FROM incidents WHERE ended_at IS NULL AND monitor_id IN (`+in+`)`, args...)
+	rows, err := r.db.QueryContext(ctx, sqlIncidentsOpenByMonitors(len(monitorIDs)), args...)
 	if err != nil {
 		return nil, err
 	}
@@ -86,23 +80,10 @@ func (r *IncidentRepo) CloseManually(ctx context.Context, monitorID string, ende
 // FindAll lista incidentes com os dados do monitor. O total vem de um COUNT(*)
 // com o mesmo WHERE, independente de limit/offset.
 func (r *IncidentRepo) FindAll(ctx context.Context, f domain.IncidentFilter) ([]*domain.Incident, int, error) {
-	where := ` WHERE 1=1`
-	args := []any{}
-	if f.MonitorID != "" {
-		where += ` AND i.monitor_id = ?`
-		args = append(args, f.MonitorID)
-	}
-	order := ` ORDER BY i.started_at DESC`
-	switch f.Status {
-	case domain.IncidentStatusOpen:
-		where += ` AND i.ended_at IS NULL`
-	case domain.IncidentStatusResolved:
-		where += ` AND i.ended_at IS NOT NULL`
-		order = ` ORDER BY i.ended_at DESC` // a tela agrupa resolvidos pelo dia do fim
-	}
+	countSQL, listSQL, args := incidentsListSQL(f)
 
 	var total int
-	if err := r.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM incidents i`+where, args...).Scan(&total); err != nil {
+	if err := r.db.QueryRowContext(ctx, countSQL, args...).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 
@@ -113,11 +94,7 @@ func (r *IncidentRepo) FindAll(ctx context.Context, f domain.IncidentFilter) ([]
 	limit = min(limit, 100)
 	offset := max(f.Offset, 0)
 
-	rows, err := r.db.QueryContext(ctx, `
-		SELECT i.id, i.monitor_id, i.started_at, i.ended_at, i.last_error, i.notification_sent,
-			i.duration_seconds, i.failure_count, i.closed_manually, m.name, m.type, m.url, m.config
-		FROM incidents i LEFT JOIN monitors m ON m.id = i.monitor_id`+where+order+` LIMIT ? OFFSET ?`,
-		append(args, limit, offset)...)
+	rows, err := r.db.QueryContext(ctx, listSQL, append(args, limit, offset)...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -197,10 +174,7 @@ func scanIncidentWithMonitor(s scanner) (*domain.Incident, error) {
 // depois de `since`, do mais antigo ao mais recente.
 // ponytail: sem limite; um monitor com milhares de quedas em 30 d é patológico, pôr LIMIT 1000 se aparecer
 func (r *IncidentRepo) FindInWindow(ctx context.Context, monitorID string, since time.Time) ([]*domain.Incident, error) {
-	rows, err := r.db.QueryContext(ctx, `
-		SELECT `+incidentColumns+`
-		FROM incidents WHERE monitor_id = ? AND (ended_at IS NULL OR ended_at > ?)
-		ORDER BY started_at`,
+	rows, err := r.db.QueryContext(ctx, sqlIncidentsInWindow,
 		monitorID, since.UTC().Format(time.RFC3339))
 	if err != nil {
 		return nil, err

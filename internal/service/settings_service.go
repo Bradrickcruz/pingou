@@ -27,6 +27,8 @@ type Settings struct {
 	EmailAvailable  bool   `json:"email_available"`  // false = SMTP não configurado no ambiente
 	NtfyTopic       string `json:"ntfy_topic"`       // "" = ntfy desligado
 	NtfyAvailable   bool   `json:"ntfy_available"`   // false = PINGOU_NTFY_URL não configurado
+	Timezone        string `json:"timezone"`         // nome IANA; painel, e-mail e ntfy. API e banco seguem em UTC
+	TimezoneSet     bool   `json:"timezone_set"`     // false = nunca configurado; o painel sugere o fuso do navegador
 }
 
 type UpdateSettingsInput struct {
@@ -34,17 +36,20 @@ type UpdateSettingsInput struct {
 	RetentionDays   *int
 	EmailRecipients *string
 	NtfyTopic       *string
+	Timezone        *string
 }
 
 const (
 	settingEmailRecipients = "email_recipients"
 	settingNtfyTopic       = "ntfy_topic"
+	settingTimezone        = "timezone"
 )
 
 var (
 	errEmailUnavailable = fmt.Errorf("%w: email is not configured on the server (PINGOU_SMTP_*)", ErrValidation)
 	errNtfyUnavailable  = fmt.Errorf("%w: ntfy is not configured on the server (PINGOU_NTFY_URL)", ErrValidation)
 	errNtfyTopicInvalid = fmt.Errorf("%w: ntfy_topic must have 1 to 64 characters: letters, numbers, _ or -", ErrValidation)
+	errTimezoneInvalid  = fmt.Errorf("%w: timezone must be a valid IANA time zone name (ex.: America/Sao_Paulo)", ErrValidation)
 )
 
 func (s *SettingsService) Get(ctx context.Context) (*Settings, error) {
@@ -71,6 +76,15 @@ func (s *SettingsService) Get(ctx context.Context) (*Settings, error) {
 		return nil, err
 	}
 
+	tz, err := s.repo.Get(ctx, settingTimezone)
+	if err != nil {
+		return nil, err
+	}
+	tzSet := tz != ""
+	if !tzSet {
+		tz = DefaultTimezone // instalação antiga: chave ainda não existe
+	}
+
 	return &Settings{
 		WebhookURL:      webhookURL,
 		RetentionDays:   retention,
@@ -78,6 +92,8 @@ func (s *SettingsService) Get(ctx context.Context) (*Settings, error) {
 		EmailAvailable:  s.smtp.Enabled(),
 		NtfyTopic:       topic,
 		NtfyAvailable:   s.ntfy.Enabled(),
+		Timezone:        tz,
+		TimezoneSet:     tzSet,
 	}, nil
 }
 
@@ -128,6 +144,16 @@ func (s *SettingsService) Update(ctx context.Context, in UpdateSettingsInput) (*
 			}
 		}
 		if err := s.repo.Set(ctx, settingNtfyTopic, topic); err != nil {
+			return nil, err
+		}
+	}
+
+	if in.Timezone != nil {
+		tz, err := normalizeTimezone(*in.Timezone)
+		if err != nil {
+			return nil, err
+		}
+		if err := s.repo.Set(ctx, settingTimezone, tz); err != nil {
 			return nil, err
 		}
 	}

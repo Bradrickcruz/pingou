@@ -1,4 +1,5 @@
 // Formatação de tempo e números para o painel (pt-BR).
+import { zonedParts } from "./timezone.js";
 
 const units = [
   { s: 604800, one: "semana", many: "semanas" },
@@ -95,33 +96,40 @@ const WEEKDAYS = [
   "Sábado",
 ];
 
-// dias de calendário (locais) entre a data e hoje: 0 = hoje, 1 = ontem
+// Todas as datas abaixo saem no fuso das Configurações (lib/timezone.js).
+const pad = (n) => String(n).padStart(2, "0");
+
+// dias de calendário (no fuso escolhido) entre a data e hoje: 0 = hoje, 1 = ontem
 function daysAgo(date, now) {
-  const start = (d) =>
-    new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-  return Math.round((start(new Date(now)) - start(date)) / 86_400_000);
+  const day = (d) => {
+    const p = zonedParts(d);
+    return Date.UTC(p.year, p.month, p.day);
+  };
+  return Math.round((day(new Date(now)) - day(date)) / 86_400_000);
 }
 
 function shortDate(date, now) {
-  const year =
-    date.getFullYear() !== new Date(now).getFullYear()
-      ? ` ${date.getFullYear()}`
-      : "";
-  return `${date.getDate()} ${MONTHS[date.getMonth()]}${year}`;
+  const p = zonedParts(date);
+  const year = p.year !== zonedParts(new Date(now)).year ? ` ${p.year}` : "";
+  return `${p.day} ${MONTHS[p.month]}${year}`;
 }
 
 // clock(iso) → "08:03"
 export function clock(iso) {
-  return new Date(iso).toLocaleTimeString("pt-BR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const p = zonedParts(new Date(iso));
+  return `${pad(p.hour)}:${pad(p.minute)}`;
 }
 
-// dayKey(iso) → "2026-10-28" no fuso local, para agrupar por dia
+// clockSeconds(iso) → "08:03:41"
+function clockSeconds(iso) {
+  const p = zonedParts(new Date(iso));
+  return `${pad(p.hour)}:${pad(p.minute)}:${pad(p.second)}`;
+}
+
+// dayKey(iso) → "2026-10-28" no fuso escolhido, para agrupar por dia
 export function dayKey(iso) {
-  const d = new Date(iso);
-  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+  const p = zonedParts(new Date(iso));
+  return `${p.year}-${p.month + 1}-${p.day}`;
 }
 
 // dayLabel → "Hoje · 28 out", "Ontem · 27 out", "Domingo · 26 out" (até 6 dias), "20 out"
@@ -131,7 +139,8 @@ export function dayLabel(iso, now = Date.now()) {
   const short = shortDate(date, now);
   if (diff === 0) return `Hoje · ${short}`;
   if (diff === 1) return `Ontem · ${short}`;
-  if (diff > 1 && diff < 7) return `${WEEKDAYS[date.getDay()]} · ${short}`;
+  if (diff > 1 && diff < 7)
+    return `${WEEKDAYS[zonedParts(date).weekday]} · ${short}`;
   return short;
 }
 
@@ -157,20 +166,27 @@ export function timeRange(startIso, endIso, now = Date.now()) {
 
 // fullDate → "20 out 2026, 14:32" (sempre com o ano e a hora)
 export function fullDate(iso) {
-  const d = new Date(iso);
-  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}, ${clock(iso)}`;
+  const p = zonedParts(new Date(iso));
+  return `${p.day} ${MONTHS[p.month]} ${p.year}, ${clock(iso)}`;
+}
+
+// dateTimeSeconds → "20 out 2026, 14:32:05" (aviso de conexão perdida)
+export function dateTimeSeconds(iso) {
+  const p = zonedParts(new Date(iso));
+  return `${p.day} ${MONTHS[p.month]} ${p.year}, ${clockSeconds(iso)}`;
 }
 
 // dayMonth → "27 out" (rótulo do eixo X do gráfico)
 export function dayMonth(date) {
-  return `${date.getDate()} ${MONTHS[date.getMonth()]}`;
+  const p = zonedParts(date);
+  return `${p.day} ${MONTHS[p.month]}`;
 }
 
 function dayWord(date, now) {
   const diff = daysAgo(date, now);
   if (diff === 0) return "Hoje";
   if (diff === 1) return "Ontem";
-  if (diff > 1 && diff < 7) return WEEKDAYS[date.getDay()];
+  if (diff > 1 && diff < 7) return WEEKDAYS[zonedParts(date).weekday];
   return shortDate(date, now);
 }
 
@@ -190,12 +206,6 @@ export function bucketLabel(startIso, bucketSeconds, now = Date.now()) {
 
 // checkTime → "14:02:41" hoje; "Ontem, 14:02", "24 out, 03:20" em outros dias
 export function checkTime(iso, now = Date.now()) {
-  if (daysAgo(new Date(iso), now) === 0) {
-    return new Date(iso).toLocaleTimeString("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
-  }
+  if (daysAgo(new Date(iso), now) === 0) return clockSeconds(iso);
   return whenLabel(iso, now);
 }
