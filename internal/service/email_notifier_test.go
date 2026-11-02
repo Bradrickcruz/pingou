@@ -75,7 +75,7 @@ func TestBodyFor(t *testing.T) {
 	httpMon := &domain.Monitor{ID: "abc", Name: "API de pagamentos", Type: domain.TypeHTTP, URL: "https://api.exemplo.com/health"}
 	hb := &domain.Monitor{ID: "hb", Name: "Backup", Type: domain.TypeHeartbeat, PingToken: &token}
 
-	down := bodyFor(httpMon, &domain.Incident{StartedAt: started, LastError: &errMsg}, false, "")
+	down := bodyFor(httpMon, &domain.Incident{StartedAt: started, LastError: &errMsg}, false, "", time.UTC)
 	for _, want := range []string{"Monitor: API de pagamentos", "Tipo: http", "Alvo: https://api.exemplo.com/health", "Caiu em: 2026-11-01 14:03:12 UTC", "Erro: connection refused"} {
 		if !strings.Contains(down, want) {
 			t.Fatalf("down sem %q:\n%s", want, down)
@@ -85,7 +85,7 @@ func TestBodyFor(t *testing.T) {
 		t.Fatalf("down com campo a mais:\n%s", down)
 	}
 
-	up := bodyFor(httpMon, &domain.Incident{StartedAt: started, EndedAt: &ended}, true, "https://pingou.exemplo.com")
+	up := bodyFor(httpMon, &domain.Incident{StartedAt: started, EndedAt: &ended}, true, "https://pingou.exemplo.com", time.UTC)
 	for _, want := range []string{"Fora do ar por: 5 min 12 s", "Detalhes: https://pingou.exemplo.com/monitors/abc"} {
 		if !strings.Contains(up, want) {
 			t.Fatalf("up sem %q:\n%s", want, up)
@@ -95,7 +95,7 @@ func TestBodyFor(t *testing.T) {
 		t.Fatalf("up com erro:\n%s", up)
 	}
 
-	beat := bodyFor(hb, &domain.Incident{StartedAt: started}, false, "")
+	beat := bodyFor(hb, &domain.Incident{StartedAt: started}, false, "", time.UTC)
 	if strings.Contains(beat, "Alvo") || strings.Contains(beat, token) {
 		t.Fatalf("heartbeat:\n%s", beat)
 	}

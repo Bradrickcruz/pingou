@@ -14,6 +14,7 @@ type updateSettingsRequest struct {
 	RetentionDays   *int    `json:"retention_days"`
 	EmailRecipients *string `json:"email_recipients"`
 	NtfyTopic       *string `json:"ntfy_topic"`
+	Timezone        *string `json:"timezone"`
 }
 
 type testWebhookRequest struct {
@@ -59,6 +60,7 @@ func toUpdateSettingsInput(req updateSettingsRequest) service.UpdateSettingsInpu
 		RetentionDays:   req.RetentionDays,
 		EmailRecipients: req.EmailRecipients,
 		NtfyTopic:       req.NtfyTopic,
+		Timezone:        req.Timezone,
 	}
 }
 

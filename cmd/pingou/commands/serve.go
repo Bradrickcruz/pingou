@@ -93,20 +93,23 @@ func runServe(cmd *cobra.Command, args []string) error {
 		return url
 	}, loadedConfig.PublicURL)
 
+	// fuso das datas no e-mail e no ntfy (o webhook segue em UTC, RFC3339)
+	messageLocation := service.LocationLoader(settingsRepository.Get)
+
 	// notifier: repassa cada evento para todos os canais, fora do lock do scheduler
 	notifier := service.NewMultiNotifier(webhookNotifier)
 	if loadedConfig.SMTP.Enabled() {
 		notifier.Add(service.NewEmailNotifier(loadedConfig.SMTP, func() string {
 			recipients, _ := settingsRepository.Get(context.Background(), "email_recipients")
 			return recipients
-		}, loadedConfig.PublicURL))
+		}, loadedConfig.PublicURL).WithLocation(messageLocation))
 		slog.Info("email notifications available", "host", loadedConfig.SMTP.Host, "port", loadedConfig.SMTP.Port, "tls", loadedConfig.SMTP.TLS)
 	}
 	if loadedConfig.Ntfy.Enabled() {
 		notifier.Add(service.NewNtfyNotifier(loadedConfig.Ntfy, func() string {
 			topic, _ := settingsRepository.Get(context.Background(), "ntfy_topic")
 			return topic
-		}, loadedConfig.PublicURL))
+		}, loadedConfig.PublicURL).WithLocation(messageLocation))
 		// só o host: a URL pode ter caminho e o token nunca vai para o log
 		slog.Info("ntfy notifications available", "host", loadedConfig.Ntfy.Host(), "auth", loadedConfig.Ntfy.Token != "")
 	}

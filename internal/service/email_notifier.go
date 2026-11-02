@@ -31,20 +31,34 @@ var (
 // nas settings. A config do servidor vem toda do ambiente (PINGOU_SMTP_*).
 type EmailNotifier struct {
 	cfg           config.SMTPConfig
-	getRecipients func() string // lista normalizada, separada por vírgula; vazio = desligado
-	publicURL     string        // PINGOU_PUBLIC_URL sem "/" final; vazio = sem link
+	getRecipients func() string         // lista normalizada, separada por vírgula; vazio = desligado
+	publicURL     string                // PINGOU_PUBLIC_URL sem "/" final; vazio = sem link
+	location      func() *time.Location // fuso das mensagens; nil = UTC
 }
 
 func NewEmailNotifier(cfg config.SMTPConfig, getRecipients func() string, publicURL string) *EmailNotifier {
 	return &EmailNotifier{cfg: cfg, getRecipients: getRecipients, publicURL: publicURL}
 }
 
+// WithLocation define de onde vem o fuso das datas da mensagem (lido a cada envio).
+func (n *EmailNotifier) WithLocation(fn func() *time.Location) *EmailNotifier {
+	n.location = fn
+	return n
+}
+
+func (n *EmailNotifier) loc() *time.Location {
+	if n.location == nil {
+		return time.UTC
+	}
+	return n.location()
+}
+
 func (n *EmailNotifier) NotifyDown(ctx context.Context, m *domain.Monitor, i *domain.Incident) {
-	n.send(ctx, "down", subjectDown(m), bodyFor(m, i, false, n.publicURL))
+	n.send(ctx, "down", subjectDown(m), bodyFor(m, i, false, n.publicURL, n.loc()))
 }
 
 func (n *EmailNotifier) NotifyRecovery(ctx context.Context, m *domain.Monitor, i *domain.Incident) {
-	n.send(ctx, "up", subjectUp(m, i), bodyFor(m, i, true, n.publicURL))
+	n.send(ctx, "up", subjectUp(m, i), bodyFor(m, i, true, n.publicURL, n.loc()))
 }
 
 func (n *EmailNotifier) send(ctx context.Context, event, subject, body string) {
@@ -91,8 +105,9 @@ func subjectUp(m *domain.Monitor, i *domain.Incident) string {
 
 const subjectTest = "[Pingou] Teste de e-mail"
 
-// bodyFor monta o corpo no formato do README. Nunca leva o ping_token.
-func bodyFor(m *domain.Monitor, i *domain.Incident, recovered bool, publicURL string) string {
+// bodyFor monta o corpo no formato do README, com as datas no fuso loc. Nunca
+// leva o ping_token.
+func bodyFor(m *domain.Monitor, i *domain.Incident, recovered bool, publicURL string, loc *time.Location) string {
 	var b strings.Builder
 	line := func(label, value string) { fmt.Fprintf(&b, "%s: %s\n", label, value) }
 
@@ -101,10 +116,10 @@ func bodyFor(m *domain.Monitor, i *domain.Incident, recovered bool, publicURL st
 	if t := m.Target(); t != nil {
 		line("Alvo", oneLine(*t))
 	}
-	line("Caiu em", i.StartedAt.UTC().Format("2006-01-02 15:04:05")+" UTC")
+	line("Caiu em", formatMessageTime(i.StartedAt, loc))
 	if recovered {
 		end := recoveredAt(i)
-		line("Voltou em", end.Format("2006-01-02 15:04:05")+" UTC")
+		line("Voltou em", formatMessageTime(end, loc))
 		line("Fora do ar por", formatDuration(downtimeSeconds(i, end)))
 	} else if i.LastError != nil && *i.LastError != "" {
 		line("Erro", oneLine(*i.LastError))
