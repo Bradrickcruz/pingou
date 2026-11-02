@@ -9,3 +9,4 @@ tmp/
 
 web/node_modules
 internal/handler/dist/
+.bench/

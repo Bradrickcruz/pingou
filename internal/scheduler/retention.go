@@ -80,7 +80,7 @@ func (w *RetentionWorker) purge(ctx context.Context) {
 
 	deleted, err := w.checks.DeleteOlderThan(ctx, before)
 	if err != nil && ctx.Err() != nil {
-		return // desligando: o DELETE foi cancelado inteiro, roda de novo na próxima vez
+		return // desligando: para entre lotes; o que sobrou sai na próxima vez
 	}
 	if err != nil {
 		slog.Error("retention worker: purge failed", "err", err)

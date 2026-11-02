@@ -31,9 +31,7 @@ func (r *IncidentRepoTx) CreateWithTx(ctx context.Context, tx *sql.Tx, i *domain
 
 // FindOpenByMonitor retorna o incidente aberto de um monitor, usando a transação.
 func (r *IncidentRepoTx) FindOpenByMonitor(ctx context.Context, tx *sql.Tx, monitorID string) (*domain.Incident, error) {
-	row := tx.QueryRowContext(ctx, `
-		SELECT `+incidentColumns+`
-		FROM incidents WHERE monitor_id = ? AND ended_at IS NULL`, monitorID)
+	row := tx.QueryRowContext(ctx, sqlIncidentOpenByMonitor, monitorID)
 	return scanIncident(row)
 }
 
@@ -51,8 +49,6 @@ func (r *IncidentRepoTx) Close(ctx context.Context, tx *sql.Tx, id string, ended
 
 // IncrementFailureCount soma uma falha ao incidente aberto do monitor.
 func (r *IncidentRepoTx) IncrementFailureCount(ctx context.Context, tx *sql.Tx, monitorID string) error {
-	_, err := tx.ExecContext(ctx,
-		`UPDATE incidents SET failure_count = failure_count + 1 WHERE monitor_id = ? AND ended_at IS NULL`,
-		monitorID)
+	_, err := tx.ExecContext(ctx, sqlIncidentIncrementFailures, monitorID)
 	return err
 }

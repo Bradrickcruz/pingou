@@ -194,3 +194,17 @@ func assertFKOn(t *testing.T, db *sql.DB) {
 		t.Fatal("foreign_keys ficou desligado após a migration")
 	}
 }
+
+// Regressão: com o banco já em dia, RunMigrations não pode falhar (o goose
+// devolve ErrNoMigrationFiles quando não há nada depois da versão atual), senão
+// o app não sobe na segunda vez.
+func TestOpenTwice(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "t.db")
+	for i := range 2 {
+		db, err := Open(path)
+		if err != nil {
+			t.Fatalf("abertura %d: %v", i+1, err)
+		}
+		db.Close()
+	}
+}
