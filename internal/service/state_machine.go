@@ -11,19 +11,27 @@ import (
 type StateMachine struct {
 	uow      UnitOfWork
 	notifier Notifier
+	clock    func() time.Time
 }
 
 func NewStateMachine(uow UnitOfWork, notifier Notifier) *StateMachine {
 	return &StateMachine{
 		uow:      uow,
 		notifier: notifier,
+		clock:    time.Now,
 	}
+}
+
+// WithClock troca o relógio (testes simulam dias de checks sem esperar).
+func (sm *StateMachine) WithClock(clock func() time.Time) *StateMachine {
+	sm.clock = clock
+	return sm
 }
 
 // Process recebe o resultado de um check e aplica as transições de estado.
 // Todas as operações de persistência são executadas dentro de uma transação.
 func (sm *StateMachine) Process(ctx context.Context, m *domain.Monitor, result domain.CheckResult) error {
-	now := time.Now().UTC()
+	now := sm.clock().UTC()
 
 	// Inicia transação
 	if err := sm.uow.Begin(ctx); err != nil {
@@ -65,6 +73,12 @@ func (sm *StateMachine) Process(ctx context.Context, m *domain.Monitor, result d
 		return err
 	}
 
+	// 3. certificado SSL: data de expiração e aviso de 30/7 dias
+	certNotify, err := sm.processCert(ctx, m, result, now)
+	if err != nil {
+		return err
+	}
+
 	// Commit da transação antes de notificar
 	if err := sm.uow.Commit(); err != nil {
 		return err
@@ -77,8 +91,67 @@ func (sm *StateMachine) Process(ctx context.Context, m *domain.Monitor, result d
 	if notify != nil {
 		notify()
 	}
+	if certNotify != nil {
+		certNotify()
+	}
 
 	return nil
+}
+
+// processCert atualiza a data do certificado e decide o aviso de expiração,
+// dentro da transação do check. Só escreve quando algo muda (data nova ou marca
+// nova): na maioria dos checks não há escrita extra. Devolve o aviso a enviar
+// após o commit (ou nil).
+//
+// Check sem certificado (falha de conexão, http://) não apaga a data guardada,
+// e o aviso ainda é avaliado com ela: um site fora do ar não adia o aviso.
+func (sm *StateMachine) processCert(ctx context.Context, m *domain.Monitor, result domain.CheckResult, now time.Time) (func(), error) {
+	if m.Type != domain.TypeHTTP {
+		return nil, nil
+	}
+
+	changed := false
+	// CertURL diferente: o usuário trocou a URL enquanto o check rodava, e o
+	// certificado lido é o do endereço antigo
+	if result.CertNotAfter != nil && result.CertURL == m.URL {
+		notAfter := result.CertNotAfter.UTC().Truncate(time.Second) // precisão do banco
+		if m.CertExpiresAt == nil || !m.CertExpiresAt.Equal(notAfter) {
+			m.CertExpiresAt = &notAfter
+			changed = true
+		}
+	}
+
+	var alert *domain.CertAlert
+	if m.CertAlertEnabled && m.CertExpiresAt != nil {
+		d := EvaluateCertAlert(now, *m.CertExpiresAt, m.CertAlerted30For, m.CertAlerted7For)
+		expiresAt := *m.CertExpiresAt
+		if d.Mark30 {
+			m.CertAlerted30For = &expiresAt
+		}
+		if d.Mark7 {
+			m.CertAlerted7For = &expiresAt
+		}
+		changed = changed || d.Mark30 || d.Mark7
+		alert = d.Alert
+	}
+
+	if !changed {
+		return nil, nil
+	}
+	// guardado pela URL: uma edição feita entre a leitura do monitor e esta
+	// transação zera os campos, e o certificado antigo não volta
+	saved, err := sm.uow.MonitorRepo().UpdateCertWithTx(ctx, m.ID, m.URL, m.CertExpiresAt, m.CertAlerted30For, m.CertAlerted7For)
+	if err != nil {
+		return nil, err
+	}
+	if !saved || alert == nil {
+		return nil, nil
+	}
+
+	a := *alert
+	slog.Info("cert expiring alert", "monitor_id", m.ID, "name", m.Name,
+		"threshold_days", a.ThresholdDays, "days_left", a.DaysLeft, "cert_expires_at", a.ExpiresAt.Format(time.RFC3339))
+	return func() { sm.notifier.NotifyCertExpiring(ctx, m, a) }, nil
 }
 
 // handleSuccess aplica a transição e devolve a notificação a enviar após o commit (ou nil).
