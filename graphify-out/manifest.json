@@ -636,9 +636,9 @@
     "semantic_hash": ""
   },
   "web/src/components/settings/EmailCard.jsx": {
-    "mtime": 1793564518.9766784,
-    "seen": 1793564681.7063835,
-    "ast_hash": "e020c8731624dca7a8f9ffba67ee98f0",
+    "mtime": 1793630371.129194,
+    "seen": 1793630380.7907429,
+    "ast_hash": "577128ca9d4108f4626445b3d68c0dc3",
     "semantic_hash": ""
   },
   "web/src/components/settings/RetentionCard.jsx": {
@@ -948,9 +948,9 @@
     "semantic_hash": ""
   },
   "DESIGN.md": {
-    "mtime": 1793564518.9566789,
-    "seen": 1793564681.7064607,
-    "ast_hash": "1d8e342f8a8c5f8036dfbfc7fc5c4e53",
+    "mtime": 1793630325.0198975,
+    "seen": 1793630380.7908065,
+    "ast_hash": "8b80e9616560b05d6291bdc0725d9140",
     "semantic_hash": ""
   },
   "PRD-divergencias-implementacao.md": {
@@ -966,9 +966,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1793627082.486682,
-    "seen": 1793627992.493265,
-    "ast_hash": "c03c9e2503a4a75ea89bfea9aa52f670",
+    "mtime": 1793630325.0188975,
+    "seen": 1793630380.7908106,
+    "ast_hash": "a8063df4a3ab49e3bbdd693c3aafa708",
     "semantic_hash": ""
   },
   "docker-compose.yml": {
@@ -978,9 +978,9 @@
     "semantic_hash": ""
   },
   "docs/implementacoes.md": {
-    "mtime": 1793628132.3051066,
-    "seen": 1793628184.2769756,
-    "ast_hash": "61e4552f3b76e9f26c9b8eb30d0defeb",
+    "mtime": 1793630500.4689138,
+    "seen": 1793630507.8879883,
+    "ast_hash": "334a45974b8dc80fc82e58caf686ff78",
     "semantic_hash": ""
   },
   "scripts/README.md": {
@@ -1413,12 +1413,6 @@
     "mtime": 1793627082.489682,
     "seen": 1793627992.4932666,
     "ast_hash": "e42552d1707d416d7cbe22ea5e5ad7c6",
-    "semantic_hash": ""
-  },
-  "plan-fuso-shutdown.md": {
-    "mtime": 1793627082.489682,
-    "seen": 1793627992.4932675,
-    "ast_hash": "4a027813058075f5689817777757e328",
     "semantic_hash": ""
   },
   "plan-ssl-expiry.md": {
