@@ -34,10 +34,7 @@ func (r *CheckRepoTx) FindByMonitor(ctx context.Context, tx *sql.Tx, monitorID s
 	if limit <= 0 || limit > 200 {
 		limit = 50
 	}
-	rows, err := tx.QueryContext(ctx, `
-		SELECT id, monitor_id, success, status_code, latency_ms, error_message, checked_at
-		FROM checks WHERE monitor_id = ?
-		ORDER BY checked_at DESC, id DESC LIMIT ? OFFSET ?`,
+	rows, err := tx.QueryContext(ctx, sqlChecksPage,
 		monitorID, limit, offset,
 	)
 	if err != nil {
@@ -59,7 +56,7 @@ func (r *CheckRepoTx) FindByMonitor(ctx context.Context, tx *sql.Tx, monitorID s
 	}
 
 	var total int
-	tx.QueryRowContext(ctx, `SELECT COUNT(*) FROM checks WHERE monitor_id = ?`, monitorID).Scan(&total)
+	tx.QueryRowContext(ctx, sqlChecksCount, monitorID).Scan(&total)
 
 	return checks, total, nil
 }

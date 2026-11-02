@@ -18,3 +18,6 @@ inspiration/
 
 graphify-out/cost.json        # local only
 graphify-out/cache
+
+# dados e resultados de benchmark do banco (scripts/dbbench.sh)
+.bench/
