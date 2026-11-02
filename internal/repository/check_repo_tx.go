@@ -29,16 +29,13 @@ func (r *CheckRepoTx) CreateWithTx(ctx context.Context, tx *sql.Tx, c *domain.Ch
 	return err
 }
 
-// FindByMonitor retorna checks de um monitor usando a transação (SQLite tem 1 conexão: ler via r.db com tx aberta trava).
-func (r *CheckRepoTx) FindByMonitor(ctx context.Context, tx *sql.Tx, monitorID string, limit, offset int) ([]*domain.Check, int, error) {
-	if limit <= 0 || limit > 200 {
-		limit = 50
-	}
-	rows, err := tx.QueryContext(ctx, sqlChecksPage,
-		monitorID, limit, offset,
-	)
+// Latest retorna os n checks mais recentes do monitor usando a transação
+// (SQLite tem 1 conexão: ler via r.db com tx aberta trava). Sem o COUNT(*) do
+// total: a state machine chama a cada check e só quer as últimas linhas.
+func (r *CheckRepoTx) Latest(ctx context.Context, tx *sql.Tx, monitorID string, n int) ([]*domain.Check, error) {
+	rows, err := tx.QueryContext(ctx, sqlChecksPage, monitorID, n, 0)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -48,15 +45,11 @@ func (r *CheckRepoTx) FindByMonitor(ctx context.Context, tx *sql.Tx, monitorID s
 		var success int
 		var checkedAt string
 		if err := rows.Scan(&c.ID, &c.MonitorID, &success, &c.StatusCode, &c.LatencyMs, &c.ErrorMessage, &checkedAt); err != nil {
-			return nil, 0, err
+			return nil, err
 		}
 		c.Success = success == 1
 		c.CheckedAt, _ = time.Parse(time.RFC3339, checkedAt)
 		checks = append(checks, &c)
 	}
-
-	var total int
-	tx.QueryRowContext(ctx, sqlChecksCount, monitorID).Scan(&total)
-
-	return checks, total, nil
+	return checks, rows.Err()
 }

@@ -177,7 +177,7 @@ func (sm *StateMachine) handleFailure(ctx context.Context, m *domain.Monitor, pr
 // Lê dentro da transação (SQLite tem 1 conexão; ler fora dela trava)
 func (sm *StateMachine) countConsecutiveFails(ctx context.Context, m *domain.Monitor) (int, error) {
 	// busca os últimos N checks (N = failure_threshold + 1 para ter margem)
-	checks, _, err := sm.uow.CheckRepo().FindByMonitor(ctx, m.ID, effectiveThreshold(m)+1, 0)
+	checks, err := sm.uow.CheckRepo().Latest(ctx, m.ID, effectiveThreshold(m)+1)
 	if err != nil {
 		return 0, err
 	}

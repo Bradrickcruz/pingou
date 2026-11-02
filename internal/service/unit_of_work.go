@@ -35,7 +35,7 @@ type UnitOfWork interface {
 // Usado para operações dentro de UnitOfWork.
 type CheckRepositoryTx interface {
 	CreateWithTx(ctx context.Context, c *domain.Check) error
-	FindByMonitor(ctx context.Context, monitorID string, limit, offset int) ([]*domain.Check, int, error)
+	Latest(ctx context.Context, monitorID string, n int) ([]*domain.Check, error)
 }
 
 // MonitorRepositoryTx define métodos de repositório que aceitam transação.

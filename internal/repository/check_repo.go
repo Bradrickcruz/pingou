@@ -62,7 +62,7 @@ func (r *CheckRepo) DeleteOlderThan(ctx context.Context, before string) (int64, 
 }
 
 // Summaries monta o resumo do painel para vários monitores em duas queries
-// (histórico e uptime), sem uma consulta por monitor.
+// (histórico e uptime), sem uma ida ao banco por monitor.
 func (r *CheckRepo) Summaries(ctx context.Context, monitorIDs []string, historySize int, since time.Time) (map[string]*domain.MonitorSummary, error) {
 	out := make(map[string]*domain.MonitorSummary, len(monitorIDs))
 	if len(monitorIDs) == 0 {
@@ -77,29 +77,20 @@ func (r *CheckRepo) Summaries(ctx context.Context, monitorIDs []string, historyS
 		args = append(args, id)
 	}
 
-	rows, err := r.db.QueryContext(ctx, sqlSummariesHistory(len(monitorIDs)),
-		append(args, historySize)...,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var id string
-		var success int
-		var latency int64
-		if err := rows.Scan(&id, &success, &latency); err != nil {
+	// o SQLite aceita até 500 partes num UNION ALL; a lista do painel tem no
+	// máximo 100 monitores, mas lotes deixam a função segura para qualquer N
+	for start := 0; start < len(monitorIDs); start += historyBatch {
+		batch := monitorIDs[start:min(start+historyBatch, len(monitorIDs))]
+		histArgs := make([]any, 0, 2*len(batch))
+		for _, id := range batch {
+			histArgs = append(histArgs, id, historySize)
+		}
+		if err := r.scanHistory(ctx, out, sqlSummariesHistory(len(batch)), histArgs); err != nil {
 			return nil, err
 		}
-		s := out[id]
-		s.History = append(s.History, success == 1)
-		s.LastLatencyMs = &latency
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
 	}
 
-	rows, err = r.db.QueryContext(ctx, sqlSummariesUptime(len(monitorIDs)),
+	rows, err := r.db.QueryContext(ctx, sqlSummariesUptime(len(monitorIDs)),
 		append(args, since.UTC().Format(time.RFC3339))...,
 	)
 	if err != nil {
@@ -116,6 +107,28 @@ func (r *CheckRepo) Summaries(ctx context.Context, monitorIDs []string, historyS
 		out[id].Uptime24h = &uptime
 	}
 	return out, rows.Err()
+}
+
+const historyBatch = 100
+
+func (r *CheckRepo) scanHistory(ctx context.Context, out map[string]*domain.MonitorSummary, q string, args []any) error {
+	rows, err := r.db.QueryContext(ctx, q, args...)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id string
+		var success int
+		var latency int64
+		if err := rows.Scan(&id, &success, &latency); err != nil {
+			return err
+		}
+		s := out[id]
+		s.History = append(s.History, success == 1)
+		s.LastLatencyMs = &latency
+	}
+	return rows.Err()
 }
 
 // Buckets agrupa os checks de [since, until) em baldes de bucketSeconds.

@@ -14,6 +14,7 @@ package repository_test
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -380,4 +381,67 @@ func TestDBBench(t *testing.T) {
 		t.Fatal(err)
 	}
 	fmt.Fprintf(&report, "\n### Retenção\n\nDELETE de 1 dia: %d linhas em %s ms (conexão presa o tempo todo)\n", n, ms(time.Since(s)))
+}
+
+// TestResultsSameWithOldIndex: as respostas das consultas quentes são as mesmas
+// com o índice novo (0006) e depois de desfazê-lo (goose down), no mesmo banco.
+func TestResultsSameWithOldIndex(t *testing.T) {
+	db := repository.SmallBenchDB(t)
+	ctx := context.Background()
+	now := time.Date(2026, 1, 10, 0, 0, 0, 0, time.UTC)
+	ids := []string{"m1", "m2", "m3"}
+
+	snapshot := func() string {
+		monitors := repository.NewMonitorRepo(db)
+		checks := repository.NewCheckRepo(db)
+		incidents := repository.NewIncidentRepo(db)
+		svc := service.NewMonitorService(monitors, checks, incidents)
+		var out []any
+		add := func(v any, err error) {
+			t.Helper()
+			if err != nil {
+				t.Fatal(err)
+			}
+			out = append(out, v)
+		}
+		for _, id := range ids {
+			for _, rng := range []string{"24h", "7d", "14d", "30d"} {
+				add(svc.Stats(ctx, id, rng, now))
+			}
+			for _, off := range []int{0, 7, 500} {
+				c, total, err := checks.FindByMonitor(ctx, id, 50, off)
+				add([]any{c, total}, err)
+			}
+			add(checks.Buckets(ctx, id, now.Add(-9*24*time.Hour), now, 600))
+		}
+		add(checks.Summaries(ctx, ids, 30, now.Add(-24*time.Hour)))
+		ms, _, err := monitors.FindAll(ctx, domain.MonitorFilter{Limit: 100})
+		add(ms, err)
+		add(svc.Summaries(ctx, ms))
+		for _, f := range []domain.IncidentFilter{
+			{}, {Status: domain.IncidentStatusOpen}, {Status: domain.IncidentStatusResolved},
+			{MonitorID: "m1"}, {Limit: 5, Offset: 10},
+		} {
+			l, total, err := incidents.FindAll(ctx, f)
+			add([]any{l, total}, err)
+		}
+		b, err := json.Marshal(out)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(b)
+	}
+
+	after := snapshot()
+	if err := database.Down(db); err != nil { // desfaz a 0006
+		t.Fatal(err)
+	}
+	var n int
+	db.QueryRow(`SELECT COUNT(*) FROM sqlite_master WHERE name = 'idx_checks_monitor_time'`).Scan(&n)
+	if n != 0 {
+		t.Fatal("down não removeu idx_checks_monitor_time")
+	}
+	if before := snapshot(); before != after {
+		t.Fatalf("respostas diferentes com e sem o índice novo\nantes: %.500s\ndepois: %.500s", before, after)
+	}
 }

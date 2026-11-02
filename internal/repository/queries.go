@@ -54,16 +54,24 @@ func placeholders(n int) string {
 	return strings.TrimSuffix(strings.Repeat("?,", n), ",")
 }
 
-// sqlSummariesHistory: últimos N checks de cada monitor da lista do painel
-// (mais recente por último: ordena pelo rank decrescente).
+// sqlSummariesHistory: últimos N checks de cada monitor da lista do painel,
+// agrupados por monitor e do mais antigo ao mais recente. Uma subconsulta com
+// LIMIT por monitor: cada uma lê só N entradas do índice, de trás para frente.
+// (Um ROW_NUMBER() sobre todos os checks dos monitores numerava a tabela
+// inteira para ficar com 30 linhas de cada.)
+// Argumentos: (monitor_id, N) para cada monitor.
 func sqlSummariesHistory(monitors int) string {
+	part := `SELECT * FROM (
+			SELECT monitor_id, success, latency_ms, checked_at, id FROM checks
+			WHERE monitor_id = ? ORDER BY checked_at DESC, id DESC LIMIT ?)`
+	parts := make([]string, monitors)
+	for i := range parts {
+		parts[i] = part
+	}
 	return `
 		SELECT monitor_id, success, latency_ms FROM (
-			SELECT monitor_id, success, latency_ms,
-				ROW_NUMBER() OVER (PARTITION BY monitor_id ORDER BY checked_at DESC, id DESC) AS rn
-			FROM checks WHERE monitor_id IN (` + placeholders(monitors) + `)
-		) WHERE rn <= ?
-		ORDER BY monitor_id, rn DESC`
+		` + strings.Join(parts, "\n\t\tUNION ALL ") + `
+		) ORDER BY monitor_id, checked_at, id`
 }
 
 // sqlSummariesUptime: uptime das últimas 24 h de cada monitor da lista.
