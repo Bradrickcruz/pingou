@@ -13,8 +13,9 @@ type funcNotifier struct {
 	fn func()
 }
 
-func (f funcNotifier) NotifyDown(context.Context, *domain.Monitor, *domain.Incident)     { f.fn() }
-func (f funcNotifier) NotifyRecovery(context.Context, *domain.Monitor, *domain.Incident) { f.fn() }
+func (f funcNotifier) NotifyDown(context.Context, *domain.Monitor, *domain.Incident)         { f.fn() }
+func (f funcNotifier) NotifyRecovery(context.Context, *domain.Monitor, *domain.Incident)     { f.fn() }
+func (f funcNotifier) NotifyCertExpiring(context.Context, *domain.Monitor, domain.CertAlert) { f.fn() }
 
 func TestMultiNotifierDoesNotBlock(t *testing.T) {
 	release := make(chan struct{})
@@ -77,5 +78,9 @@ func (c ctxNotifier) NotifyDown(ctx context.Context, _ *domain.Monitor, _ *domai
 }
 
 func (c ctxNotifier) NotifyRecovery(ctx context.Context, _ *domain.Monitor, _ *domain.Incident) {
+	c.got <- ctx.Err()
+}
+
+func (c ctxNotifier) NotifyCertExpiring(ctx context.Context, _ *domain.Monitor, _ domain.CertAlert) {
 	c.got <- ctx.Err()
 }

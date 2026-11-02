@@ -9,7 +9,7 @@ import (
 	"github.com/Bradrickcruz/pingou/internal/domain"
 )
 
-// MultiNotifier repassa cada evento para todos os canais (webhook, e-mail), cada
+// MultiNotifier repassa cada evento para todos os canais (webhook, e-mail, ntfy), cada
 // um na sua goroutine.
 //
 // Por que assíncrono: o StateMachine.Process chama o notifier dentro do
@@ -40,6 +40,10 @@ func (n *MultiNotifier) NotifyDown(ctx context.Context, m *domain.Monitor, i *do
 
 func (n *MultiNotifier) NotifyRecovery(ctx context.Context, m *domain.Monitor, i *domain.Incident) {
 	n.fanOut(ctx, "up", func(ctx context.Context, c Notifier) { c.NotifyRecovery(ctx, m, i) })
+}
+
+func (n *MultiNotifier) NotifyCertExpiring(ctx context.Context, m *domain.Monitor, a domain.CertAlert) {
+	n.fanOut(ctx, "cert_expiring", func(ctx context.Context, c Notifier) { c.NotifyCertExpiring(ctx, m, a) })
 }
 
 func (n *MultiNotifier) fanOut(ctx context.Context, event string, send func(context.Context, Notifier)) {

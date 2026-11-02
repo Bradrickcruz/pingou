@@ -96,6 +96,21 @@ func (n *NtfyNotifier) NotifyRecovery(ctx context.Context, m *domain.Monitor, i 
 	})
 }
 
+// NotifyCertExpiring: prioridade normal no aviso de 30 dias e alta no de 7.
+func (n *NtfyNotifier) NotifyCertExpiring(ctx context.Context, m *domain.Monitor, a domain.CertAlert) {
+	priority := "default"
+	if a.ThresholdDays <= domain.CertAlertFinalDays {
+		priority = "high"
+	}
+	n.send(ctx, "cert_expiring", ntfyMessage{
+		title:    ntfyTitle(subjectCert(m, a)),
+		body:     certBody(m, a, n.publicURL, n.loc()),
+		priority: priority,
+		tags:     "lock,warning",
+		click:    dashboardLink(n.publicURL, m),
+	})
+}
+
 func (n *NtfyNotifier) send(ctx context.Context, event string, msg ntfyMessage) {
 	topic := n.getTopic()
 	if topic == "" {
@@ -113,7 +128,7 @@ func (n *NtfyNotifier) send(ctx context.Context, event string, msg ntfyMessage) 
 // mostra a origem, e o emoji vai em Tags (header não leva emoji cru).
 func ntfyTitle(subject string) string {
 	s := strings.TrimPrefix(subject, "[Pingou] ")
-	for _, emoji := range []string{"🔴 ", "🟢 "} {
+	for _, emoji := range []string{"🔴 ", "🟢 ", "⚠️ "} {
 		s = strings.TrimPrefix(s, emoji)
 	}
 	return s

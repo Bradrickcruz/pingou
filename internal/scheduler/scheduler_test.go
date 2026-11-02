@@ -44,6 +44,8 @@ func (n *dbNotifier) NotifyRecovery(ctx context.Context, _ *domain.Monitor, _ *d
 	n.settings.Get(ctx, "webhook_url")
 }
 
+func (n *dbNotifier) NotifyCertExpiring(context.Context, *domain.Monitor, domain.CertAlert) {}
+
 type env struct {
 	db       *sql.DB
 	monitors *repository.MonitorRepo
@@ -229,7 +231,8 @@ func (n *slowNotifier) NotifyDown(context.Context, *domain.Monitor, *domain.Inci
 	n.started <- struct{}{}
 	<-n.release
 }
-func (n *slowNotifier) NotifyRecovery(context.Context, *domain.Monitor, *domain.Incident) {}
+func (n *slowNotifier) NotifyRecovery(context.Context, *domain.Monitor, *domain.Incident)     {}
+func (n *slowNotifier) NotifyCertExpiring(context.Context, *domain.Monitor, domain.CertAlert) {}
 
 // Regressão: o notifier rodava dentro do lock dbMu. Um destino lento no monitor
 // A pausava a gravação de todos os outros monitores.

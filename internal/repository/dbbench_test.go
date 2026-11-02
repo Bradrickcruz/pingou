@@ -34,8 +34,9 @@ import (
 
 type noopNotifier struct{}
 
-func (noopNotifier) NotifyDown(context.Context, *domain.Monitor, *domain.Incident)     {}
-func (noopNotifier) NotifyRecovery(context.Context, *domain.Monitor, *domain.Incident) {}
+func (noopNotifier) NotifyDown(context.Context, *domain.Monitor, *domain.Incident)         {}
+func (noopNotifier) NotifyRecovery(context.Context, *domain.Monitor, *domain.Incident)     {}
+func (noopNotifier) NotifyCertExpiring(context.Context, *domain.Monitor, domain.CertAlert) {}
 
 type benchEnv struct {
 	db        *sql.DB
