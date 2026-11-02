@@ -66,12 +66,30 @@ func (c *HTTPChecker) Check(ctx context.Context, m *domain.Monitor) domain.Check
 		errMsg = &s
 	}
 
-	return domain.CheckResult{
+	res := domain.CheckResult{
 		Success:      success,
 		StatusCode:   &code,
 		LatencyMs:    latency,
 		ErrorMessage: errMsg,
 	}
+	// O certificado já veio no handshake desta resposta (a final, depois dos
+	// redirects): ler a validade não custa conexão extra. Vale também para
+	// status de erro (ex.: 500), para a data seguir atualizada num incidente.
+	if notAfter := certNotAfter(resp); notAfter != nil {
+		res.CertNotAfter = notAfter
+		res.CertURL = m.URL
+	}
+	return res
+}
+
+// certNotAfter devolve a validade do certificado do próprio site (o primeiro
+// da cadeia), em UTC, ou nil sem TLS.
+func certNotAfter(resp *http.Response) *time.Time {
+	if resp.TLS == nil || len(resp.TLS.PeerCertificates) == 0 {
+		return nil
+	}
+	t := resp.TLS.PeerCertificates[0].NotAfter.UTC()
+	return &t
 }
 
 // requestErrorMessage tira o prefixo `Get "<url>": ` do *url.Error (a URL já
