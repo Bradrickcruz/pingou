@@ -17,6 +17,9 @@ services:
     volumes:
       - pingou_data:/data
     restart: unless-stopped
+    # o Pingou tem até 15 s para desligar com calma; o padrão do Docker (10 s)
+    # mataria o processo antes
+    stop_grace_period: 20s
 
 volumes:
   pingou_data:

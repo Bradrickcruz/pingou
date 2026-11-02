@@ -13,6 +13,7 @@ import (
 type RetentionWorker struct {
 	checks   domain.CheckRepository
 	settings *repository.SettingsRepo
+	done     chan struct{} // fechado quando o loop termina (nil antes do Start)
 }
 
 func NewRetentionWorker(checks domain.CheckRepository, settings *repository.SettingsRepo) *RetentionWorker {
@@ -20,7 +21,24 @@ func NewRetentionWorker(checks domain.CheckRepository, settings *repository.Sett
 }
 
 func (w *RetentionWorker) Start(ctx context.Context) {
-	go w.run(ctx)
+	w.done = make(chan struct{})
+	go func() {
+		defer close(w.done)
+		w.run(ctx)
+	}()
+}
+
+// Wait espera o loop terminar depois que o ctx de Start for cancelado.
+func (w *RetentionWorker) Wait(ctx context.Context) error {
+	if w.done == nil {
+		return nil
+	}
+	select {
+	case <-w.done:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 func (w *RetentionWorker) run(ctx context.Context) {
@@ -46,6 +64,9 @@ func (w *RetentionWorker) run(ctx context.Context) {
 func (w *RetentionWorker) purge(ctx context.Context) {
 	retentionStr, err := w.settings.Get(ctx, "retention_days")
 	if err != nil {
+		if ctx.Err() != nil {
+			return
+		}
 		slog.Error("retention worker: could not read settings", "err", err)
 		return
 	}
@@ -58,6 +79,9 @@ func (w *RetentionWorker) purge(ctx context.Context) {
 		Format(time.RFC3339)
 
 	deleted, err := w.checks.DeleteOlderThan(ctx, before)
+	if err != nil && ctx.Err() != nil {
+		return // desligando: o DELETE foi cancelado inteiro, roda de novo na próxima vez
+	}
 	if err != nil {
 		slog.Error("retention worker: purge failed", "err", err)
 		return

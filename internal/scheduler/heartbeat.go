@@ -35,16 +35,23 @@ func (s *Scheduler) checkHeartbeats(ctx context.Context, now time.Time) {
 		Limit:   100,
 	})
 	if err != nil {
-		slog.Error("heartbeat evaluator error", "err", err)
+		if ctx.Err() == nil {
+			slog.Error("heartbeat evaluator error", "err", err)
+		}
 		return
 	}
 
 	for _, m := range monitors {
+		// desligando: não gera DOWN novo
+		if ctx.Err() != nil {
+			return
+		}
 		if !s.heartbeatExpired(m, now) {
 			continue
 		}
-		// confere de novo dentro do lock: um ping pode ter chegado nesse meio tempo
-		err := s.withMonitor(ctx, m.ID, func(cur *domain.Monitor) *domain.CheckResult {
+		// confere de novo dentro do lock: um ping pode ter chegado nesse meio tempo.
+		// Sem cancelamento: a gravação que começou termina inteira.
+		err := s.withMonitor(context.WithoutCancel(ctx), m.ID, func(cur *domain.Monitor) *domain.CheckResult {
 			if !s.heartbeatExpired(cur, now) {
 				return nil
 			}
