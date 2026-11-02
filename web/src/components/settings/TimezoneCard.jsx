@@ -10,16 +10,20 @@ import {
 
 const pad = (n) => String(n).padStart(2, "0");
 
-// Campo com sugestões (datalist): digitar filtra a lista; UTC fica no topo.
+// Select com a lista de fusos; UTC fica no topo.
 // Mostra a hora de agora no fuso digitado, para conferir antes de salvar.
 export function TimezoneCard({ value, onChange }) {
-  const options = useMemo(() => timeZoneOptions(), []);
   const now = useNow();
-  const tz = value.trim();
-  const invalid = tz !== "" && !isValidTimeZone(tz);
+  const tz = value.trim() || "UTC";
+  // ponytail: fuso salvo fora da lista do navegador continua selecionável
+  const options = useMemo(() => {
+    const list = timeZoneOptions();
+    return list.includes(tz) ? list : [tz, ...list];
+  }, [tz]);
+  const invalid = !isValidTimeZone(tz);
 
   let preview = null;
-  if (tz && !invalid) {
+  if (!invalid) {
     const p = zonedParts(new Date(now), tz);
     preview = `Agora: ${pad(p.hour)}:${pad(p.minute)} (${zoneOffsetLabel(new Date(now), tz)})`;
   }
@@ -35,31 +39,26 @@ export function TimezoneCard({ value, onChange }) {
       >
         Fuso
       </label>
-      <input
+      <select
         id="timezone"
-        type="text"
-        list="timezone-options"
-        autoComplete="off"
-        spellCheck={false}
-        value={value}
+        value={tz}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="UTC"
-        aria-invalid={invalid || undefined}
         aria-describedby="timezone-help"
-        className="w-full md:max-w-[360px] px-3 py-2.5 rounded-pg-control font-pg-mono text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda aria-[invalid=true]:border-pg-down"
-      />
-      <datalist id="timezone-options">
+        className="w-full md:max-w-[360px] px-3 py-2.5 rounded-pg-control font-pg-mono text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano"
+      >
         {options.map((z) => (
-          <option key={z} value={z} />
+          <option key={z} value={z}>
+            {z}
+          </option>
         ))}
-      </datalist>
+      </select>
       <p
         id="timezone-help"
         className={`mt-1.5 mb-0 text-pg-caption ${invalid ? "text-pg-down" : "text-pg-neblina"}`}
       >
         {invalid
-          ? "Fuso desconhecido. Escolha um nome da lista, como America/Sao_Paulo."
-          : (preview ?? "Vazio volta para UTC.")}
+          ? "Fuso desconhecido neste navegador. Escolha outro da lista."
+          : preview}
       </p>
     </Card>
   );
