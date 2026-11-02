@@ -12,6 +12,7 @@ import { Button } from "../ui/Button";
 import { ChipGroup } from "../ui/ChipGroup";
 import { formatDuration, plural, timeAgo } from "../../lib/format";
 import { copyText, pingUrl } from "../../lib/monitors";
+import { isHttps } from "../../lib/cert";
 
 const TYPES = [
   {
@@ -65,6 +66,7 @@ const blank = {
   timeout_seconds: 10,
   failure_threshold: 3,
   grace_seconds: 3600,
+  cert_alert_enabled: false,
 };
 
 function fromMonitor(m) {
@@ -79,7 +81,48 @@ function fromMonitor(m) {
     timeout_seconds: m.timeout_seconds,
     failure_threshold: m.failure_threshold,
     grace_seconds: m.config?.grace_seconds ?? blank.grace_seconds,
+    cert_alert_enabled: Boolean(m.cert_alert_enabled),
   };
+}
+
+// Mensagens da API sobre o aviso de certificado, em português.
+function friendlyError(message) {
+  if (/cert_alert_enabled/.test(message))
+    return "O aviso de certificado SSL só funciona em monitores HTTP com URL https://.";
+  return message.replace(/^validation error: /, "Verifique os campos: ");
+}
+
+// Checkbox do aviso de expiração do certificado SSL (só HTTP).
+function CertAlertField({ id, checked, https, onChange }) {
+  const hintId = `${id}-hint`;
+  return (
+    <div className="mb-5 -mt-2">
+      <div className="flex items-start gap-2.5">
+        <input
+          id={id}
+          type="checkbox"
+          checked={https && checked}
+          disabled={!https}
+          onChange={(e) => onChange(e.target.checked)}
+          aria-describedby={hintId}
+          className="mt-0.5 w-4 h-4 flex-shrink-0 accent-pg-ciano-fundo cursor-pointer disabled:cursor-not-allowed"
+        />
+        <div className="min-w-0">
+          <label
+            htmlFor={id}
+            className={`text-pg-ui ${https ? "text-pg-ardosia cursor-pointer" : "text-pg-neblina cursor-not-allowed"}`}
+          >
+            Avisar quando o certificado SSL estiver perto de expirar
+          </label>
+          <p id={hintId} className="mt-0.5 text-pg-caption text-pg-neblina">
+            {https
+              ? "Envia um aviso 30 dias e outro 7 dias antes de expirar, por todos os canais configurados."
+              : "Disponível apenas para URLs https://"}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 const inputCls =
@@ -271,10 +314,20 @@ export function MonitorForm({
     port: useId(),
     timeout: useId(),
     threshold: useId(),
+    certAlert: useId(),
   };
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const isHeartbeat = form.type === "heartbeat";
+  const https = isHttps(form.url);
+
+  // URL trocada para http://: a opção desmarca sozinha
+  const setUrl = (url) =>
+    setForm((f) => ({
+      ...f,
+      url,
+      cert_alert_enabled: isHttps(url) && f.cert_alert_enabled,
+    }));
 
   const chooseType = (type) =>
     setForm((f) => ({
@@ -309,7 +362,11 @@ export function MonitorForm({
         config: { host: form.host.trim(), port: Number(form.port) },
       };
     }
-    return { ...base, url: form.url.trim() };
+    return {
+      ...base,
+      url: form.url.trim(),
+      cert_alert_enabled: https && form.cert_alert_enabled,
+    };
   };
 
   const handleSubmit = async (e) => {
@@ -323,9 +380,7 @@ export function MonitorForm({
     try {
       await onSubmit(payload());
     } catch (err) {
-      setError(
-        err.message.replace(/^validation error: /, "Verifique os campos: "),
-      );
+      setError(friendlyError(err.message));
     }
   };
 
@@ -397,17 +452,25 @@ export function MonitorForm({
       </Field>
 
       {form.type === "http" && (
-        <Field label="URL" id={ids.url}>
-          <input
-            id={ids.url}
-            type="url"
-            required
-            value={form.url}
-            onChange={(e) => set("url", e.target.value)}
-            placeholder="https://api.exemplo.com/health"
-            className={`${inputCls} font-pg-mono`}
+        <>
+          <Field label="URL" id={ids.url}>
+            <input
+              id={ids.url}
+              type="url"
+              required
+              value={form.url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://api.exemplo.com/health"
+              className={`${inputCls} font-pg-mono`}
+            />
+          </Field>
+          <CertAlertField
+            id={ids.certAlert}
+            checked={form.cert_alert_enabled}
+            https={https}
+            onChange={(v) => set("cert_alert_enabled", v)}
           />
-        </Field>
+        </>
       )}
 
       {form.type === "tcp" && (
