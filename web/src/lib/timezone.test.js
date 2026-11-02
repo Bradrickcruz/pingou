@@ -5,6 +5,7 @@ import {
   setTimeZone,
   getTimeZone,
   timeZoneOptions,
+  filterTimeZones,
   wallTicks,
   zoneOffsetLabel,
 } from "./timezone.js";
@@ -95,4 +96,16 @@ test("lista de fusos com UTC no topo", () => {
   assert.equal(list[0], "UTC");
   assert.ok(list.includes("America/Sao_Paulo"));
   assert.equal(list.filter((z) => z === "UTC").length, 1);
+});
+
+test("filtro: palavras em qualquer ordem, sem acento nem _ ou /", () => {
+  const zones = ["UTC", "America/Sao_Paulo", "America/Santiago", "Asia/Tokyo"];
+  assert.deepEqual(filterTimeZones(zones, "sao paulo"), ["America/Sao_Paulo"]);
+  assert.deepEqual(filterTimeZones(zones, "SÃO"), ["America/Sao_Paulo"]);
+  assert.deepEqual(filterTimeZones(zones, "paulo america"), [
+    "America/Sao_Paulo",
+  ]);
+  assert.deepEqual(filterTimeZones(zones, "san"), ["America/Santiago"]);
+  assert.deepEqual(filterTimeZones(zones, "  "), zones);
+  assert.deepEqual(filterTimeZones(zones, "marte"), []);
 });

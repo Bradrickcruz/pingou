@@ -1,7 +1,9 @@
 import { useMemo } from "react";
 import { Card } from "./Card";
+import { Combobox } from "../ui/Combobox";
 import { useNow } from "../../hooks/useNow";
 import {
+  filterTimeZones,
   isValidTimeZone,
   timeZoneOptions,
   zonedParts,
@@ -10,7 +12,7 @@ import {
 
 const pad = (n) => String(n).padStart(2, "0");
 
-// Select com a lista de fusos; UTC fica no topo.
+// Campo digitável que filtra a lista de fusos; UTC fica no topo.
 // Mostra a hora de agora no fuso digitado, para conferir antes de salvar.
 export function TimezoneCard({ value, onChange }) {
   const now = useNow();
@@ -39,19 +41,15 @@ export function TimezoneCard({ value, onChange }) {
       >
         Fuso
       </label>
-      <select
+      <Combobox
         id="timezone"
         value={tz}
-        onChange={(e) => onChange(e.target.value)}
+        options={options}
+        onChange={onChange}
+        filter={filterTimeZones}
+        emptyText="Nenhum fuso encontrado"
         aria-describedby="timezone-help"
-        className="w-full md:max-w-[360px] px-3 py-2.5 rounded-pg-control font-pg-mono text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano"
-      >
-        {options.map((z) => (
-          <option key={z} value={z}>
-            {z}
-          </option>
-        ))}
-      </select>
+      />
       <p
         id="timezone-help"
         className={`mt-1.5 mb-0 text-pg-caption ${invalid ? "text-pg-down" : "text-pg-neblina"}`}
