@@ -22,14 +22,14 @@ Hoje o Pingou avisa quando um site cai, mas não avisa quando o certificado SSL 
 
 **Decisões assumidas (revisar se discordar):**
 
-| # | Suposição | Se discordar |
-|---|---|---|
-| 1 | A **data aparece em todo monitor HTTP com URL https**, mesmo com a opção desligada (ler a data é grátis). O checkbox controla só o **aviso** | Mostrar a data só quando a opção estiver ligada (mudança pequena na T9) |
-| 2 | O checkbox começa **desmarcado** para monitores novos e existentes | Marcar por padrão em monitores https novos (mudança de uma linha na T8) |
-| 3 | O certificado lido é o da **resposta final**, depois dos redirects (o checker segue até `PINGOU_MAX_REDIRECTS`). É o certificado que o visitante vê | Capturar também o do primeiro host (exige `httptrace`, mais complexo) |
-| 4 | O recurso só vale para URL que começa com `https://`. Com `http://` o checkbox fica desabilitado | - |
-| 5 | "Uma vez" significa **uma vez por certificado e por limite**. Se o certificado for renovado (data nova), os avisos "rearmam" sozinhos | - |
-| 6 | O limite é medido por duração: 30 dias = 30 × 24 h antes da data de expiração | - |
+| #   | Suposição                                                                                                                                           | Se discordar                                                            |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| 1   | A **data aparece em todo monitor HTTP com URL https**, mesmo com a opção desligada (ler a data é grátis). O checkbox controla só o **aviso**        | Mostrar a data só quando a opção estiver ligada (mudança pequena na T9) |
+| 2   | O checkbox começa **desmarcado** para monitores novos e existentes                                                                                  | Marcar por padrão em monitores https novos (mudança de uma linha na T8) |
+| 3   | O certificado lido é o da **resposta final**, depois dos redirects (o checker segue até `PINGOU_MAX_REDIRECTS`). É o certificado que o visitante vê | Capturar também o do primeiro host (exige `httptrace`, mais complexo)   |
+| 4   | O recurso só vale para URL que começa com `https://`. Com `http://` o checkbox fica desabilitado                                                    | -                                                                       |
+| 5   | "Uma vez" significa **uma vez por certificado e por limite**. Se o certificado for renovado (data nova), os avisos "rearmam" sozinhos               | -                                                                       |
+| 6   | O limite é medido por duração: 30 dias = 30 × 24 h antes da data de expiração                                                                       | -                                                                       |
 
 **Fora de escopo:**
 
@@ -98,14 +98,14 @@ Este plano está concluído quando:
 
 ## Tech Stack
 
-| Technology | Choice Rationale |
-|---|---|
-| Go `net/http` + `crypto/tls` (`resp.TLS.PeerCertificates[0].NotAfter`) | O certificado já vem na resposta que o checker usa hoje. Sem dependência nova e sem conexão extra |
-| Go `crypto/x509` (só nos testes) | Gera um certificado com a validade que o teste precisar, sem esperar 30 dias |
-| SQLite + `goose` | Migration no mesmo padrão das anteriores (colunas novas na tabela `monitors`) |
-| Unit of Work existente (`StateMachine.Process`) | A atualização da data e a marca de "aviso enviado" entram na mesma transação do check. O envio fica para depois do commit |
-| Notificador existente (webhook, e-mail, ntfy) | Reaproveita os canais configurados. Só ganha um evento novo |
-| React + Tailwind | Checkbox e linha de detalhe, seguindo o `DESIGN.md` |
+| Technology                                                             | Choice Rationale                                                                                                          |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Go `net/http` + `crypto/tls` (`resp.TLS.PeerCertificates[0].NotAfter`) | O certificado já vem na resposta que o checker usa hoje. Sem dependência nova e sem conexão extra                         |
+| Go `crypto/x509` (só nos testes)                                       | Gera um certificado com a validade que o teste precisar, sem esperar 30 dias                                              |
+| SQLite + `goose`                                                       | Migration no mesmo padrão das anteriores (colunas novas na tabela `monitors`)                                             |
+| Unit of Work existente (`StateMachine.Process`)                        | A atualização da data e a marca de "aviso enviado" entram na mesma transação do check. O envio fica para depois do commit |
+| Notificador existente (webhook, e-mail, ntfy)                          | Reaproveita os canais configurados. Só ganha um evento novo                                                               |
+| React + Tailwind                                                       | Checkbox e linha de detalhe, seguindo o `DESIGN.md`                                                                       |
 
 ## File Structure
 
@@ -132,20 +132,20 @@ DESIGN.md                            (se surgir componente novo)
 
 ## Task Breakdown
 
-| Task ID | Agent | Name | Priority | Complexity | Dependencies |
-|---|---|---|---|---|---|
-| T1 | `go-backend-specialist` | Levantamento do código atual | P0 | S | - |
-| T2 | `design-db` | Migration dos campos de certificado | P0 | S | T1 |
-| T3 | `go-backend-specialist` | Checker HTTP captura a data do certificado | P1 | M | T1 |
-| T4 | `design-api` | Domínio, repositório e API (campo, validação, reset) | P1 | M | T2 |
-| T5 | `go-backend-specialist` | Regra pura de aviso (30 e 7 dias) | P1 | M | T1 |
-| T6 | `go-backend-specialist` | Notificações: novo evento nos 3 canais | P1 | L | T1 |
-| T7 | `go-backend-specialist` | Integração na state machine | P1 | L | T3, T4, T5, T6 |
-| T8 | `frontend-specialist` | Checkbox no formulário do monitor | P2 | S | T4 |
-| T9 | `frontend-specialist` | Data de expiração na página de detalhes | P2 | M | T4 |
-| T10 | `code-test` | Testes de integração e regressão | P3 | M | T7 |
-| T11 | `qa-review` | QA manual com certificado de validade escolhida | P3 | M | T7, T8, T9 |
-| T12 | `document` | Documentação | P3 | S | T7, T9 |
+| Task ID | Agent                   | Name                                                 | Priority | Complexity | Dependencies   |
+| ------- | ----------------------- | ---------------------------------------------------- | -------- | ---------- | -------------- |
+| T1      | `go-backend-specialist` | Levantamento do código atual                         | P0       | S          | -              |
+| T2      | `design-db`             | Migration dos campos de certificado                  | P0       | S          | T1             |
+| T3      | `go-backend-specialist` | Checker HTTP captura a data do certificado           | P1       | M          | T1             |
+| T4      | `design-api`            | Domínio, repositório e API (campo, validação, reset) | P1       | M          | T2             |
+| T5      | `go-backend-specialist` | Regra pura de aviso (30 e 7 dias)                    | P1       | M          | T1             |
+| T6      | `go-backend-specialist` | Notificações: novo evento nos 3 canais               | P1       | L          | T1             |
+| T7      | `go-backend-specialist` | Integração na state machine                          | P1       | L          | T3, T4, T5, T6 |
+| T8      | `frontend-specialist`   | Checkbox no formulário do monitor                    | P2       | S          | T4             |
+| T9      | `frontend-specialist`   | Data de expiração na página de detalhes              | P2       | M          | T4             |
+| T10     | `code-test`             | Testes de integração e regressão                     | P3       | M          | T7             |
+| T11     | `qa-review`             | QA manual com certificado de validade escolhida      | P3       | M          | T7, T8, T9     |
+| T12     | `document`              | Documentação                                         | P3       | S          | T7, T9         |
 
 **Duas trilhas em paralelo:** depois da T4, o frontend (T8 e T9) anda sozinho. Enquanto isso, o backend faz T3, T5 e T6, que não dependem uma da outra, e depois a T7.
 
@@ -268,7 +268,11 @@ DESIGN.md                            (se surgir componente novo)
      ```json
      {
        "event": "cert_expiring",
-       "monitor": { "id": "...", "name": "API", "url": "https://api.example.com" },
+       "monitor": {
+         "id": "...",
+         "name": "API",
+         "url": "https://api.example.com"
+       },
        "timestamp": "2026-11-01T12:00:00Z",
        "cert_expires_at": "2026-11-08T09:00:00Z",
        "days_left": 7,
@@ -417,20 +421,20 @@ DESIGN.md                            (se surgir componente novo)
 
 ## Risk Areas
 
-| Risk | Impact | Mitigation |
-|---|---|---|
+| Risk                                                                                                                                                                        | Impact                                                                                                     | Mitigation                                                                                                                                                                                                             |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Renovação automática coincide com o aviso de 30 dias.** O Certbot/Let's Encrypt renova quando faltam 30 dias, então o aviso de 30 dias pode sair horas antes da renovação | Aviso "falso" a cada ~60 dias para quem usa renovação automática. Pode irritar e levar a ignorar os avisos | Aceitar no MVP e documentar na T12. O aviso de 7 dias continua sendo o importante. Se incomodar, avaliar uma carência de ~24 h antes do aviso de 30 dias (exige guardar a data em que o limite foi cruzado). Ver Notes |
-| Aviso perdido: o envio não tem retry (comportamento atual do projeto) | Se o e-mail ou webhook falhar naquele momento, o aviso daquele limite se perde | Os dois avisos funcionam como redundância (30 e 7). O erro de envio vai para o log. Retry geral fica fora de escopo |
-| Redirect para outro host: o certificado lido é o da resposta final | A data pode não ser a do host configurado no monitor | Suposição 3, documentada. O que o visitante vê é o que importa. Capturar o primeiro host fica como melhoria futura |
-| Balanceador ou CDN com certificados diferentes por servidor | A data "oscila" entre dois certificados e os avisos podem repetir | Raro. As marcas guardam a data alertada, então só repete quando a oscilação volta para um certificado já avisado depois de outro. Registrado na documentação |
-| Check em andamento grava o certificado de uma URL antiga depois do usuário editar | Data errada no monitor novo | `UPDATE` dos campos de certificado só vale se a URL ainda é a mesma (T7) e reset na troca de URL (T4) |
-| `UpdateWithTx` grava a linha inteira e sobrescreve `cert_alert_enabled` editado durante o check | O checkbox "volta" sozinho | T1 confirma como o update funciona. Se gravar a linha inteira, usar um `UPDATE` específico só para os campos de certificado |
-| Novo `event` no webhook quebra integrações que assumem só `up` e `down` | Aviso de certificado vira alerta de queda em quem consome o webhook | Opção desligada por padrão (ninguém recebe sem ligar). Documentar na T12 |
-| Template de webhook configurável (se existir) não prevê o evento novo | Mensagem vazia ou quebrada | T1 descobre se existe; T6 define o que o template recebe |
-| Conflito de número de migration com pausa (`0005`), fuso e índices | Falha ao subir | T1 confere; combinar a ordem de merge antes da T2 |
-| Site fora do ar não devolve certificado | Aviso atrasado ou ausente durante a queda | O incidente DOWN já avisa. A data guardada continua válida; a tela marca "último valor conhecido" |
-| Certificado vencido: o Go recusa o handshake | Não dá para ler a data de um certificado já vencido | Não precisa: o monitor cai como DOWN com o erro do certificado. A regra ainda trata "vencido" por segurança (T5) |
-| Fuso do plano de fuso ainda não mesclado | Datas das mensagens em UTC | T6 e T9 usam UTC ou fuso do navegador até o helper existir |
+| Aviso perdido: o envio não tem retry (comportamento atual do projeto)                                                                                                       | Se o e-mail ou webhook falhar naquele momento, o aviso daquele limite se perde                             | Os dois avisos funcionam como redundância (30 e 7). O erro de envio vai para o log. Retry geral fica fora de escopo                                                                                                    |
+| Redirect para outro host: o certificado lido é o da resposta final                                                                                                          | A data pode não ser a do host configurado no monitor                                                       | Suposição 3, documentada. O que o visitante vê é o que importa. Capturar o primeiro host fica como melhoria futura                                                                                                     |
+| Balanceador ou CDN com certificados diferentes por servidor                                                                                                                 | A data "oscila" entre dois certificados e os avisos podem repetir                                          | Raro. As marcas guardam a data alertada, então só repete quando a oscilação volta para um certificado já avisado depois de outro. Registrado na documentação                                                           |
+| Check em andamento grava o certificado de uma URL antiga depois do usuário editar                                                                                           | Data errada no monitor novo                                                                                | `UPDATE` dos campos de certificado só vale se a URL ainda é a mesma (T7) e reset na troca de URL (T4)                                                                                                                  |
+| `UpdateWithTx` grava a linha inteira e sobrescreve `cert_alert_enabled` editado durante o check                                                                             | O checkbox "volta" sozinho                                                                                 | T1 confirma como o update funciona. Se gravar a linha inteira, usar um `UPDATE` específico só para os campos de certificado                                                                                            |
+| Novo `event` no webhook quebra integrações que assumem só `up` e `down`                                                                                                     | Aviso de certificado vira alerta de queda em quem consome o webhook                                        | Opção desligada por padrão (ninguém recebe sem ligar). Documentar na T12                                                                                                                                               |
+| Template de webhook configurável (se existir) não prevê o evento novo                                                                                                       | Mensagem vazia ou quebrada                                                                                 | T1 descobre se existe; T6 define o que o template recebe                                                                                                                                                               |
+| Conflito de número de migration com pausa (`0005`), fuso e índices                                                                                                          | Falha ao subir                                                                                             | T1 confere; combinar a ordem de merge antes da T2                                                                                                                                                                      |
+| Site fora do ar não devolve certificado                                                                                                                                     | Aviso atrasado ou ausente durante a queda                                                                  | O incidente DOWN já avisa. A data guardada continua válida; a tela marca "último valor conhecido"                                                                                                                      |
+| Certificado vencido: o Go recusa o handshake                                                                                                                                | Não dá para ler a data de um certificado já vencido                                                        | Não precisa: o monitor cai como DOWN com o erro do certificado. A regra ainda trata "vencido" por segurança (T5)                                                                                                       |
+| Fuso do plano de fuso ainda não mesclado                                                                                                                                    | Datas das mensagens em UTC                                                                                 | T6 e T9 usam UTC ou fuso do navegador até o helper existir                                                                                                                                                             |
 
 ## Rollback Strategy
 
@@ -470,14 +474,14 @@ SSL_CERT_FILE=.bench/ca.pem PINGOU_API_KEY=dev-api-key ./bin/pingou serve
 
 ## Cronograma Sugerido
 
-| Fase | Tarefas | Complexity | Esforço | Target | Status |
-|---|---|---|---|---|---|
-| Fase 0 | T1 | S | ~15 min | Levantamento do código | ⬜ Pendente |
-| Fase 1 | T2, T3, T5 | M | ~1 h | Migration, checker e regra pura (em paralelo) | ⬜ Pendente |
-| Fase 2 | T4, T6 | L | ~1 h 30 min | API e notificações (em paralelo) | ⬜ Pendente |
-| Fase 3 | T7 | L | ~1 h | Integração na state machine | ⬜ Pendente |
-| Fase 4 | T8, T9 | M | ~45 min | Frontend (pode começar após a T4, em paralelo com as fases 2 e 3) | ⬜ Pendente |
-| Fase 5 | T10, T11, T12 | M | ~1 h 15 min | Testes, QA manual e documentação | ⬜ Pendente |
+| Fase   | Tarefas       | Complexity | Esforço     | Target                                                            | Status      |
+| ------ | ------------- | ---------- | ----------- | ----------------------------------------------------------------- | ----------- |
+| Fase 0 | T1            | S          | ~15 min     | Levantamento do código                                            | ⬜ Pendente |
+| Fase 1 | T2, T3, T5    | M          | ~1 h        | Migration, checker e regra pura (em paralelo)                     | ⬜ Pendente |
+| Fase 2 | T4, T6        | L          | ~1 h 30 min | API e notificações (em paralelo)                                  | ⬜ Pendente |
+| Fase 3 | T7            | L          | ~1 h        | Integração na state machine                                       | ⬜ Pendente |
+| Fase 4 | T8, T9        | M          | ~45 min     | Frontend (pode começar após a T4, em paralelo com as fases 2 e 3) | ⬜ Pendente |
+| Fase 5 | T10, T11, T12 | M          | ~1 h 15 min | Testes, QA manual e documentação                                  | ⬜ Pendente |
 
 Total estimado: cerca de 6 horas de trabalho. Com o frontend em paralelo ao backend, o caminho mais longo fica em cerca de 4 h 30 min.
 
