@@ -236,6 +236,7 @@ type settingsBody struct {
 	NtfyTopic       string `json:"ntfy_topic"`
 	NtfyAvailable   bool   `json:"ntfy_available"`
 	Timezone        string `json:"timezone"`
+	TimezoneSet     bool   `json:"timezone_set"`
 }
 
 func TestSettingsEmailWithoutSMTP(t *testing.T) {
@@ -417,15 +418,15 @@ func TestNtfyTestRateLimit(t *testing.T) {
 func TestSettingsTimezone(t *testing.T) {
 	_, h, _ := newTestServer(t)
 
-	if got := decode[settingsBody](t, do(t, h, "GET", "/api/settings", "")); got.Timezone != "UTC" {
-		t.Fatalf("padrão = %q, want UTC", got.Timezone)
+	if got := decode[settingsBody](t, do(t, h, "GET", "/api/settings", "")); got.Timezone != "UTC" || got.TimezoneSet {
+		t.Fatalf("padrão = %q set=%v, want UTC não configurado", got.Timezone, got.TimezoneSet)
 	}
 	rec := do(t, h, "PATCH", "/api/settings", `{"timezone":"America/Sao_Paulo"}`)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("válido: %d %s", rec.Code, rec.Body)
 	}
-	if got := decode[settingsBody](t, rec); got.Timezone != "America/Sao_Paulo" {
-		t.Fatalf("PATCH = %q", got.Timezone)
+	if got := decode[settingsBody](t, rec); got.Timezone != "America/Sao_Paulo" || !got.TimezoneSet {
+		t.Fatalf("PATCH = %q set=%v", got.Timezone, got.TimezoneSet)
 	}
 	if rec := do(t, h, "PATCH", "/api/settings", `{"timezone":"Marte/Olimpo"}`); rec.Code != http.StatusBadRequest {
 		t.Fatalf("inválido: %d, want 400", rec.Code)

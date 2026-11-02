@@ -9,6 +9,7 @@ import {
 import { Button } from "../ui/Button";
 import { BottomNav } from "./BottomNav";
 import { incidentsApi } from "../../api/incidents";
+import { settingsApi } from "../../api/settings";
 import marca from "../../assets/brand/pingou-marca-horizontal.svg";
 
 const nav = [
@@ -49,6 +50,14 @@ function useOpenIncidents() {
 export function Shell({ children, onLogout }) {
   const openIncidents = useOpenIncidents();
   const { pathname } = useLocation();
+  const [version, setVersion] = useState(null);
+
+  useEffect(() => {
+    settingsApi
+      .info()
+      .then((i) => setVersion(i.version.split("-")[0]))
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
@@ -100,7 +109,9 @@ export function Shell({ children, onLogout }) {
             <LogOut size={16} aria-hidden="true" />
             Sair
           </Button>
-          <span className="text-pg-caption text-pg-neblina">Pingou v1.0</span>
+          <span className="text-pg-caption text-pg-neblina">
+            Pingou {version ?? "v1.0"}
+          </span>
         </div>
       </aside>
 

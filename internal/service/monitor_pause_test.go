@@ -5,8 +5,17 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Bradrickcruz/pingou/internal/domain"
+	"github.com/Bradrickcruz/pingou/internal/repository"
 	"github.com/Bradrickcruz/pingou/internal/service"
 )
+
+type countNotifier struct{ downs, recoveries int }
+
+func (n *countNotifier) NotifyDown(context.Context, *domain.Monitor, *domain.Incident) { n.downs++ }
+func (n *countNotifier) NotifyRecovery(context.Context, *domain.Monitor, *domain.Incident) {
+	n.recoveries++
+}
 
 func updateEnabled(b *bool) service.UpdateMonitorInput {
 	return service.UpdateMonitorInput{Enabled: b}
@@ -54,5 +63,53 @@ func TestPauseWithoutIncidentAndResumeKeepState(t *testing.T) {
 	db.QueryRow(`SELECT current_state FROM monitors WHERE id='m'`).Scan(&state)
 	if state != "UP" {
 		t.Fatalf("retomar não deve mexer no estado, got %s", state)
+	}
+}
+
+// Pausar não notifica; retomar um monitor que segue fora do ar abre incidente novo
+// na primeira falha (as falhas anteriores à pausa ainda contam para o threshold).
+func TestPauseIsSilentAndResumeReopensIncident(t *testing.T) {
+	svc, db := newStatsService(t)
+	ctx := context.Background()
+	notifier := &countNotifier{}
+	process := func() {
+		t.Helper()
+		m, err := repository.NewMonitorRepo(db).FindByID(ctx, "m")
+		if err != nil {
+			t.Fatal(err)
+		}
+		uow := service.NewUnitOfWork(db, repository.NewCheckRepoTx(db), repository.NewMonitorRepoTx(db), repository.NewIncidentRepoTx(db))
+		msg := "boom"
+		if err := service.NewStateMachine(uow, notifier).Process(ctx, m, domain.CheckResult{ErrorMessage: &msg}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	open := func() int {
+		var n int
+		db.QueryRow(`SELECT COUNT(*) FROM incidents WHERE monitor_id='m' AND ended_at IS NULL`).Scan(&n)
+		return n
+	}
+
+	for range 5 { // acima de qualquer threshold
+		process()
+	}
+	if notifier.downs != 1 || open() != 1 {
+		t.Fatalf("antes da pausa: downs=%d abertos=%d, want 1 e 1", notifier.downs, open())
+	}
+
+	off, on := false, true
+	if _, err := svc.Update(ctx, "m", updateEnabled(&off)); err != nil {
+		t.Fatal(err)
+	}
+	if notifier.downs != 1 || notifier.recoveries != 0 || open() != 0 {
+		t.Fatalf("pausa: downs=%d recoveries=%d abertos=%d, want 1, 0 e 0", notifier.downs, notifier.recoveries, open())
+	}
+
+	if _, err := svc.Update(ctx, "m", updateEnabled(&on)); err != nil {
+		t.Fatal(err)
+	}
+	process()
+	if notifier.downs != 2 || open() != 1 {
+		t.Fatalf("retomada: downs=%d abertos=%d, want 2 e 1", notifier.downs, open())
 	}
 }

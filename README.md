@@ -946,7 +946,7 @@ Webhook, e-mail e ntfy são enviados **fora** do processamento dos checks: um de
 
 ## Fuso horário
 
-Por padrão tudo aparece em **UTC**. Para mudar, abra **Configurações → Fuso horário** e escolha um nome da lista (ex.: `America/Sao_Paulo`). O campo mostra a hora atual no fuso escolhido antes de salvar.
+Na primeira vez que o painel é aberto, o Pingou salva o **fuso do navegador** (se o navegador não informar um fuso válido, fica em **UTC**). Até lá, e-mail e ntfy usam UTC. Para mudar, abra **Configurações → Fuso horário**, digite para filtrar (ex.: `sao paulo`) e escolha um nome da lista. O campo mostra a hora atual no fuso escolhido antes de salvar. O fuso é um só por instalação: quem abrir o painel primeiro define o fuso de todos.
 
 O fuso vale para:
 

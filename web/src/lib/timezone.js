@@ -72,6 +72,25 @@ export function timeZoneOptions() {
   return ["UTC", ...rest];
 }
 
+// Normaliza para comparar: sem acento, minúsculas, "/" e "_" viram espaço.
+const norm = (s) =>
+  s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[/_]+/g, " ");
+
+// filterTimeZones: cada palavra digitada precisa aparecer no nome, em qualquer
+// ordem. "sao paulo" acha America/Sao_Paulo; "tokyo" acha Asia/Tokyo.
+export function filterTimeZones(zones, query) {
+  const words = norm(query).split(/\s+/).filter(Boolean);
+  if (words.length === 0) return zones;
+  return zones.filter((z) => {
+    const n = norm(z);
+    return words.every((w) => n.includes(w));
+  });
+}
+
 function formatter(tz) {
   let f = formatters.get(tz);
   if (!f) {

@@ -1,11 +1,24 @@
 import { useCallback, useEffect, useState } from "react";
 import { settingsApi } from "../api/settings";
-import { setTimeZone as applyTimeZone } from "../lib/timezone";
+import { isValidTimeZone, setTimeZone as applyTimeZone } from "../lib/timezone";
 import { TimeZoneContext } from "./timeZoneContext";
 
 // Carrega o fuso das Configurações antes de mostrar o painel, para nenhuma
 // data aparecer primeiro em UTC e depois mudar. Se a API falhar, segue em UTC
 // (a tela de conexão perdida cuida do resto).
+// Fuso nunca configurado: salva o do navegador uma vez (e-mail e ntfy são
+// montados no servidor, então precisa persistir). Sem fuso válido, fica em UTC.
+async function loadTimeZone() {
+  const s = await settingsApi.get();
+  if (s.timezone_set) return s.timezone;
+  const browser = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  if (!isValidTimeZone(browser)) return s.timezone;
+  try {
+    return (await settingsApi.update({ timezone: browser })).timezone;
+  } catch {
+    return s.timezone;
+  }
+}
 export function TimeZoneProvider({ children }) {
   const [timeZone, setState] = useState(null);
 
@@ -16,9 +29,8 @@ export function TimeZoneProvider({ children }) {
 
   useEffect(() => {
     let mounted = true;
-    settingsApi
-      .get()
-      .then((s) => mounted && setTimeZone(s.timezone))
+    loadTimeZone()
+      .then((tz) => mounted && setTimeZone(tz))
       .catch(() => mounted && setTimeZone(null));
     return () => {
       mounted = false;
