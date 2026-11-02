@@ -978,9 +978,9 @@
     "semantic_hash": ""
   },
   "docs/implementacoes.md": {
-    "mtime": 1793565085.2081249,
-    "seen": 1793565095.1105301,
-    "ast_hash": "fb8378f6dcd541f770b0dfdc0c553680",
+    "mtime": 1793628132.3051066,
+    "seen": 1793628184.2769756,
+    "ast_hash": "61e4552f3b76e9f26c9b8eb30d0defeb",
     "semantic_hash": ""
   },
   "scripts/README.md": {
@@ -1311,12 +1311,6 @@
     "mtime": 1793564584.6110716,
     "seen": 1793564681.7064621,
     "ast_hash": "5da061572a0f1046a0f15a519a87d561",
-    "semantic_hash": ""
-  },
-  "plan-pause-closes-incident.md": {
-    "mtime": 1793628008.7619448,
-    "seen": 1793628070.2283292,
-    "ast_hash": "b1fd5f4b66fedf669d5057e7fb6f1c38",
     "semantic_hash": ""
   },
   "internal/service/ntfy_notifier.go": {
