@@ -120,6 +120,8 @@ Um novo tipo de check só entra no Pingou se passar nas quatro perguntas:
 - Login com API Key
 - Notificações de queda e recuperação por webhook, por e-mail (SMTP) e pelo [ntfy](https://ntfy.sh), ligados ao mesmo tempo se quiser
 - Retenção configurável: checks expiram após `retention_days`; incidentes são mantidos. A limpeza roda na subida e a cada 1 h
+- Fuso horário configurável (padrão UTC) para o painel, o e-mail e o ntfy
+- Desligamento ordenado (SIGTERM/SIGINT): termina checks, pings e notificações antes de sair
 - Export do banco SQLite
 - Atomicidade na state machine (transações SQL)
 
@@ -483,7 +485,7 @@ Sobre `/ping/{token}`:
 | `GET`    | `/api/monitors/:id/stats`     | Estatísticas numa janela (`range=24h\|7d\|14d\|30d`)            |
 | `GET`    | `/api/incidents`              | Lista incidentes (`status`, `monitor_id`, `limit`, `offset`)    |
 | `GET`    | `/api/settings`               | Busca as configurações globais                                  |
-| `PATCH`  | `/api/settings`               | Atualiza as configurações globais (`webhook_url` só http/https) |
+| `PATCH`  | `/api/settings`               | Atualiza as configurações globais (`webhook_url` só http/https; `timezone` nome IANA) |
 | `POST`   | `/api/settings/webhook/test`  | Envia um evento `test` ao webhook (5 por minuto por IP)         |
 | `POST`   | `/api/settings/email/test`    | Envia um e-mail de teste (5 por minuto por IP)                  |
 | `POST`   | `/api/settings/ntfy/test`     | Publica uma notificação de teste no ntfy (5 por minuto por IP)  |
@@ -791,6 +793,8 @@ Detalhes: https://pingou.exemplo.com/monitors/<id>
 
 Na volta, o assunto é `[Pingou] 🟢 API de pagamentos voltou (fora por 5 min)` e o corpo troca `Erro` por `Voltou em` e `Fora do ar por: 5 min 12 s`.
 
+As datas usam o [fuso horário](#fuso-horário) das Configurações. Com `America/Sao_Paulo`, o exemplo acima vira `Caiu em: 2026-11-01 11:03:12 -03`.
+
 - `Alvo` não aparece no Heartbeat, e o token de ping **nunca** vai no e-mail.
 - `Detalhes` só aparece com `PINGOU_PUBLIC_URL`.
 - O log registra só `recipients_count`, nunca os endereços.
@@ -870,6 +874,8 @@ Erro: connection refused
 Detalhes: https://pingou.exemplo.com/monitors/<id>
 ```
 
+Como no e-mail, as datas usam o [fuso horário](#fuso-horário) das Configurações.
+
 Na volta, o título é `API de pagamentos voltou (fora por 5 min)`, com prioridade normal e a tag ✅.
 
 - Com `PINGOU_PUBLIC_URL`, tocar na notificação abre a página do monitor (header `Click`).
@@ -897,7 +903,54 @@ curl -X POST http://localhost:8956/api/settings/ntfy/test \
 
 ## Entrega das notificações
 
-Webhook, e-mail e ntfy são enviados **fora** do processamento dos checks: um destino lento não atrasa os outros monitores. O Pingou avisa **uma vez por transição**, sem retry. No desligamento (SIGTERM), envios em andamento têm até 10 s para terminar; um crash ou `kill -9` pode perder o aviso.
+Webhook, e-mail e ntfy são enviados **fora** do processamento dos checks: um destino lento não atrasa os outros monitores. O Pingou avisa **uma vez por transição**, sem retry. No [desligamento](#desligamento), envios em andamento são esperados dentro do prazo de 15 s; um crash ou `kill -9` pode perder o aviso.
+
+## Fuso horário
+
+Por padrão tudo aparece em **UTC**. Para mudar, abra **Configurações → Fuso horário** e escolha um nome da lista (ex.: `America/Sao_Paulo`). O campo mostra a hora atual no fuso escolhido antes de salvar.
+
+O fuso vale para:
+
+- **Painel:** todas as datas e horas (dashboard, detalhe do monitor, gráfico, incidentes, últimos checks). Muda na hora, sem recarregar.
+- **E-mail e ntfy:** `Caiu em` e `Voltou em`, com o sufixo do fuso (`UTC`, `-03`, `+09`). Vale a partir da próxima notificação, sem reiniciar.
+
+Continua sempre em UTC:
+
+- A API (`*_at` em RFC3339) e o banco.
+- O JSON do webhook (`timestamp`).
+- Os baldes do `/stats`. Em fusos com meia hora (ex.: `Asia/Kolkata`), os baldes de 1 h não começam em hora cheia.
+
+Pela API:
+
+```bash
+curl -X PATCH http://localhost:8956/api/settings \
+  -H "X-API-Key: dev-api-key" \
+  -d '{"timezone":"America/Sao_Paulo"}'
+```
+
+Nome desconhecido dá `400`; vazio volta para `UTC`. A base de fusos vai embutida no binário, então funciona em qualquer imagem.
+
+## Desligamento
+
+Ao receber **SIGTERM** ou **SIGINT** (Ctrl+C), o Pingou desliga em etapas, com prazo total de **15 s**:
+
+1. Para o agendador: nenhum check novo começa.
+2. Para de aceitar conexões e termina as requisições em andamento (incluindo pings `/ping/{token}`).
+3. Espera os checks em andamento. Um check cortado pelo desligamento é **descartado**: não conta como falha nem abre incidente.
+4. Espera as notificações em andamento.
+5. Fecha o banco.
+6. Remove o lock `~/.pingou/pingou.lock`.
+
+O log mostra `shutdown started`, uma linha por etapa e `shutdown complete`. Sai com código `0` quando termina limpo e `1` quando alguma etapa estoura o prazo (o log diz qual). Um segundo sinal durante o desligamento encerra na hora, com código `1`.
+
+**Docker:** o padrão do `docker stop` é 10 s, menos que o prazo do Pingou. O `docker-compose.yml` já usa `stop_grace_period: 20s`. Com `docker run`, passe `--stop-timeout 20`:
+
+```bash
+docker run -d --stop-timeout 20 -p 8956:8956 -v pingou_data:/data \
+  -e PINGOU_DATABASE_URL=/data/pingou.db \
+  -e PINGOU_API_KEY=troque-esta-chave \
+  bryanhcruz/pingou
+```
 
 ---
 

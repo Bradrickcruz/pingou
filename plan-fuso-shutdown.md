@@ -30,9 +30,9 @@ Duas melhorias independentes no Pingou, planejadas juntas para dividir o levanta
 Este plano está concluído quando:
 
 - [ ] Todos os Success Criteria estão marcados
-- [ ] Build, lint e testes passam
+- [x] Build, lint e testes passam
 - [ ] Nenhum item pendente no Status de Execução
-- [ ] Evidências de verificação registradas
+- [x] Evidências de verificação registradas
 
 > Revisar o plano se: escopo mudar, nova dependência for descoberta, ou mais de 2 tasks forem bloqueadas.
 
@@ -40,22 +40,22 @@ Este plano está concluído quando:
 
 **Fuso horário**
 
-- [ ] `GET /api/settings` devolve `timezone` (padrão `"UTC"`); `PATCH` aceita nome IANA válido e responde `400` para inválido
-- [ ] Instalações existentes continuam em UTC após a migration, sem nenhuma ação
-- [ ] Painel mostra datas e horas no fuso escolhido (dashboard, detalhe do monitor, incidentes, últimos checks)
-- [ ] Mensagens de e-mail e ntfy mostram o horário no fuso escolhido, com o sufixo do fuso (ex.: `-03`)
-- [ ] Funciona na imagem Docker (sem depender de `tzdata` do sistema)
-- [ ] Webhook e API continuam em UTC
+- [x] `GET /api/settings` devolve `timezone` (padrão `"UTC"`); `PATCH` aceita nome IANA válido e responde `400` para inválido
+- [x] Instalações existentes continuam em UTC após a migration, sem nenhuma ação
+- [x] Painel mostra datas e horas no fuso escolhido (dashboard, detalhe do monitor, incidentes, últimos checks)
+- [x] Mensagens de e-mail e ntfy mostram o horário no fuso escolhido, com o sufixo do fuso (ex.: `-03`)
+- [ ] Funciona na imagem Docker (sem depender de `tzdata` do sistema) — `time/tzdata` embutido; falta testar na imagem (sem Docker no ambiente)
+- [x] Webhook e API continuam em UTC
 
 **Graceful shutdown**
 
-- [ ] SIGTERM/SIGINT para de aceitar novas conexões e aguarda as requisições em andamento
-- [ ] Nenhum check novo começa depois do sinal; checks em andamento são descartados **sem** gerar falha falsa
-- [ ] Transações da state machine em andamento terminam (commit ou rollback), nunca ficam pela metade
-- [ ] Notificações em andamento são aguardadas dentro do orçamento
-- [ ] O banco é fechado (WAL fechado) e o lock `~/.pingou/pingou.lock` é liberado
-- [ ] Sai com código `0` quando termina limpo; `1` se estourar o prazo (com log explicando)
-- [ ] `docker stop` conclui sem `SIGKILL` em condições normais
+- [x] SIGTERM/SIGINT para de aceitar novas conexões e aguarda as requisições em andamento
+- [x] Nenhum check novo começa depois do sinal; checks em andamento são descartados **sem** gerar falha falsa
+- [x] Transações da state machine em andamento terminam (commit ou rollback), nunca ficam pela metade
+- [x] Notificações em andamento são aguardadas dentro do orçamento
+- [x] O banco é fechado (WAL fechado) e o lock `~/.pingou/pingou.lock` é liberado
+- [x] Sai com código `0` quando termina limpo; `1` se estourar o prazo (com log explicando)
+- [ ] `docker stop` conclui sem `SIGKILL` em condições normais — `stop_grace_period: 20s` feito; falta testar (sem Docker no ambiente)
 
 ## Tech Stack
 
@@ -340,11 +340,11 @@ docker compose up -d && time docker compose stop
 
 | Fase | Tarefas | Complexity | Esforço | Target | Status |
 |---|---|---|---|---|---|
-| Fase 0 | T1 | S | ~15 min | Levantamento do código | ⬜ Pendente |
-| Fase 1 | T5, T6, T7 | M | ~1 h 5 min | Graceful shutdown completo | ⬜ Pendente |
-| Fase 2 | T2, T3, T4 | M | ~50 min | Fuso no backend e nas mensagens | ⬜ Pendente |
-| Fase 3 | T8 | L | ~1 h | UI do fuso | ⬜ Pendente |
-| Fase 4 | T9, T10, T11, T12 | M | ~1 h 45 min | Testes, QA e documentação | ⬜ Pendente |
+| Fase 0 | T1 | S | ~15 min | Levantamento do código | ✅ Concluído |
+| Fase 1 | T5, T6, T7 | M | ~1 h 5 min | Graceful shutdown completo | ✅ Concluído (Docker a testar) |
+| Fase 2 | T2, T3, T4 | M | ~50 min | Fuso no backend e nas mensagens | ✅ Concluído (T2 cancelada) |
+| Fase 3 | T8 | L | ~1 h | UI do fuso | ✅ Concluído |
+| Fase 4 | T9, T10, T11, T12 | M | ~1 h 45 min | Testes, QA e documentação | 🟡 T11 parcial |
 
 Total estimado: cerca de 5 horas de trabalho. A ordem das fases 1 e 2 pode mudar, porque as trilhas são independentes depois da T1.
 
@@ -352,17 +352,40 @@ Total estimado: cerca de 5 horas de trabalho. A ordem das fases 1 e 2 pode mudar
 
 ### Concluído
 
--
+- **T1 (levantamento)** — respostas:
+  - `serve` já usava `signal.NotifyContext` e chamava `server.Shutdown(context.Background())` (sem prazo), depois `Scheduler.Stop()` (só cancelava, sem esperar) e `notifier.Wait(10 s)`. Banco e lock fechavam por `defer`. Falha ao subir o servidor saía com código 0, e o `ErrServerClosed` normal virava log de erro.
+  - Checks rodavam com `context.Background()`: o desligamento não cortava o check, mas também não esperava por ele. O banco podia fechar com gravação em andamento.
+  - Avaliador de heartbeat: um ticker dentro do scheduler, cancelado no `Stop`. Retenção: goroutine própria parada pelo `ctx` do sinal, sem espera.
+  - **Settings são chave-valor** (`settings(key, value, updated_at)`), não colunas. `timezone` não precisa de migration: chave ausente = `UTC`. **T2 cancelada**, sem conflito com a `0005`.
+  - Frontend: datas em `web/src/lib/format.js` usando o fuso do navegador (`getHours`, `toLocaleTimeString`). Hook `useSettings` existe, sem contexto global.
+  - Achado extra: lock com o PID do próprio processo era tratado como "outro processo rodando". Num container reiniciado (PID 1 de novo) depois de um `kill -9`, o Pingou não subia. Corrigido.
+- **T2** — cancelada (ver T1).
+- **T3** — `timezone` em `GET/PATCH /api/settings`, validação com `time.LoadLocation`, máx. 64, `"Local"` recusado, vazio → `UTC`.
+- **T4** — `import _ "time/tzdata"`; e-mail e ntfy leem o fuso a cada envio (`service.LocationLoader`); fuso inválido cai em UTC com aviso; webhook inalterado.
+- **T5** — `Scheduler.Stop()` (cancela, bloqueia jobs novos) + `Scheduler.Wait(ctx)`; check cancelado descartado; gravação em andamento usa `context.WithoutCancel` e termina inteira; avaliador de heartbeat não gera DOWN no desligamento; `RetentionWorker.Wait(ctx)`.
+- **T6** — `runShutdown` com etapas e orçamento de 15 s; segundo sinal → `os.Exit(1)`; código 1 se alguma etapa falhar.
+- **T7** — `stop_grace_period: 20s`. O `ENTRYPOINT` já estava em formato exec.
+- **T8** — card "Fuso horário" (campo com `datalist`), `lib/timezone.js`, `format.js` no fuso, eixo do gráfico, `TimeZoneProvider`.
+- **T9** — testes Go: `internal/scheduler/shutdown_test.go`, `cmd/pingou/commands/serve_test.go`, `internal/service/timezone_test.go`, `TestSettingsTimezone`. Teste de integração com sinal real feito à mão (abaixo), não automatizado.
+- **T10** — `web/src/lib/timezone.test.js` (21 testes no total passando).
+- **T12** — README: seções "Fuso horário" e "Desligamento", notas no e-mail e no ntfy.
 
-### Em andamento
+### Evidências (ambiente de desenvolvimento, sem Docker)
 
--
+- `go build ./... && go vet ./... && go test ./...` verde; `go test -race ./internal/scheduler/ ./cmd/...` verde.
+- `cd web && npm test` (21/21), `npm run build` ok. `npm run lint`: só o erro de prettier em `EmailCard.jsx`, que já existe no `develop`.
+- Teste do descarte: removendo a checagem de `jobCtx.Err()`, `TestStopDiscardsCheckCancelledByShutdown` falha; com ela, passa.
+- Binário real + servidor HTTP que demora 5 s para responder + `kill -TERM` no meio do check: logs `shutdown started` → `scheduler` → `http server` → `checks` → `notifications` → `database` → `lock` → `shutdown complete`; `exit=0`; lock removido; **0 checks e 0 incidentes** gravados.
+- Navegador (Playwright): mesmo check aparece como `01:52:47` em UTC e `10:52:47` depois de salvar `Asia/Tokyo`, sem recarregar; eixo do gráfico em horas redondas de Tóquio; `Marte/Olimpo` mostra aviso e a API responde 400.
 
 ### Pendente
 
-- T1 a T12
+- **T11 (parcial)** — falta no seu ambiente: `docker compose up -d && time docker compose stop` (< 20 s, sem `Killed`); botão **Enviar teste** e uma queda real com fuso `America/Sao_Paulo` no Mailpit e no ntfy.
 
 ## Notes
+
+- **Mudança de comportamento no painel:** antes as datas usavam o fuso do navegador; agora usam o fuso das Configurações, padrão `UTC`. Quem usava o painel em `America/Sao_Paulo` vai ver as horas em UTC até escolher o fuso. Isso segue a decisão "padrão UTC" e "fuso do navegador descartado", mas vale avisar na release.
+- **Check cortado por edição ou pausa também é descartado** (antes era gravado se o monitor continuasse ativo). O job novo faz um check na hora, então não se perde nada.
 
 - O fuso é uma configuração global do Pingou (uma por instalação), igual ao webhook. Fuso por pessoa não faz sentido com uma única API Key.
 - Este plano prepara a futura **janela de manutenção**, que vai usar o fuso salvo aqui.
