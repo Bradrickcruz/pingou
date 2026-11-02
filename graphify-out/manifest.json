@@ -474,9 +474,9 @@
     "semantic_hash": ""
   },
   "web/package.json": {
-    "mtime": 1793565588.2992823,
-    "seen": 1793565591.1669157,
-    "ast_hash": "d5ab67108cc464b4c1d2f122494db014",
+    "mtime": 1793638684.492618,
+    "seen": 1793638685.4249923,
+    "ast_hash": "ec81f0790048b80a7851a21d4d72394a",
     "semantic_hash": ""
   },
   "web/postcss.config.js": {
