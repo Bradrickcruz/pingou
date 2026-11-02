@@ -1,7 +1,7 @@
 # Graph Report - pingou-health-checker  (2026-11-02)
 
 ## Corpus Check
-- 195 files · ~217,202 words
+- 195 files · ~217,250 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 17 file(s) not represented in the graph (top: (none) 11, .woff2 4, .example 1)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `e26264fa`
+- Built from commit: `5a93efc7`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -719,11 +719,9 @@ Nodes (3): at(), TestStatsBucketsAndTotals(), TestStatsIncidentsClipped()
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Histórico de implementações (planos aplicados)` connect `Histórico de implementações (planos aplicados)` to `5. Remodelagem mobile`, `2. Página de Incidentes`, `10. Pausar monitor fecha o incidente`, `12. Índices e desempenho do banco`, `8. Notificação via ntfy`, `MonitorDetail.jsx`, `dbbench: desempenho do banco com volume real`, `1. Tipos de check (HTTP, TCP, Heartbeat) + redesign do painel`, `6. E-mail (SMTP) e envio fora do lock`, `9. Eixo Y dinâmico + gráfico de pings`, `11. Fuso horário + desligamento ordenado`?**
-  _High betweenness centrality (0.017) - this node is a cross-community bridge._
+  _High betweenness centrality (0.020) - this node is a cross-community bridge._
 - **Why does `Monitor` connect `Monitor` to `serve.go`, `time.Time`, `context.Context`, `net/http.ResponseWriter`, `NewMultiNotifier`, `bodyFor`, `scanMonitor`, `Scheduler`, `newTestRegistry`, `newEnv`, `MonitorService`, `UnitOfWork`, `Notifier`?**
   _High betweenness centrality (0.011) - this node is a cross-community bridge._
-- **Why does `react` connect `react` to `main.jsx`, `package.json`, `format.js`, `MonitorDetail.jsx`, `MonitorForm.jsx`, `Dashboard.jsx`, `timezone.js`, `Incidents.jsx`?**
-  _High betweenness centrality (0.010) - this node is a cross-community bridge._
 - **What connects `Entregue`, `Decisões`, `Limitações conhecidas` to the rest of the system?**
   _495 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `serve.go` be split into smaller, more focused modules?**
@@ -732,3 +730,5 @@ _Questions this graph is uniquely positioned to answer:_
   _Cohesion score 0.13043478260869565 - nodes in this community are weakly interconnected._
 - **Should `package.json` be split into smaller, more focused modules?**
   _Cohesion score 0.12631578947368421 - nodes in this community are weakly interconnected._
+- **Should `net/http.ResponseWriter` be split into smaller, more focused modules?**
+  _Cohesion score 0.0609009009009009 - nodes in this community are weakly interconnected._
