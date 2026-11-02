@@ -14,6 +14,7 @@ Consolida o que os planos `plan-*.md` (já removidos; ficam no `git log`) entreg
 | 2026-11-01         | [Notificação via ntfy](#8-notificação-via-ntfy)                                                 | `feat/ntfy-notifications` (#11) |
 | 2026-11-01         | [Eixo Y dinâmico + gráfico de pings](#9-eixo-y-dinâmico--gráfico-de-pings)                      | `develop` (sem PR)              |
 | 2026-11-01 → 11-02 | [Pausar monitor fecha o incidente](#10-pausar-monitor-fecha-o-incidente)                        | `develop` (sem PR)              |
+| 2026-11-02         | [Fuso horário + desligamento ordenado](#11-fuso-horário--desligamento-ordenado)                 | `develop` (sem PR)              |
 
 Pendências de validação manual ainda abertas estão no [fim do documento](#pendências-abertas).
 
@@ -296,6 +297,56 @@ Lib de gráfico; p95 como teto; manter 3 intervalos fixos.
 ### Descartado
 
 Reutilizar a `StateMachine` para fechar (acoplada a notifier e a resultado de check); coluna enum `resolution`; filtro `status=closed_manually`; deixar `ended_at` nulo e marcar só por flag.
+
+---
+
+## 11. Fuso horário + desligamento ordenado
+
+**2026-11-02** (desligamento `65ecef3`, fuso `39e5f55`, painel `88f38da`, docs `403c89c`; detecção do navegador `bad6890`/`bf92800`; combobox `d4a4ee9`), direto em `develop`.
+
+### Entregue
+
+**Fuso horário**
+
+- `settings.timezone` (nome IANA) em `GET/PATCH /api/settings`, validado com `time.LoadLocation`: vazio vira `UTC`, máximo de 64 caracteres, `Local` e nomes desconhecidos dão 400. Sem migration (as settings são chave-valor; chave ausente = `UTC`).
+- `import _ "time/tzdata"` no `main`: os fusos vão no binário (~450 KB) e funcionam em imagem mínima.
+- E-mail e ntfy leem o fuso **a cada envio** (`service.LocationLoader`), então mudar vale na próxima notificação, sem reiniciar. Layout `2006-01-02 15:04:05 MST` (`UTC`, `-03`, `+09`) em `Caiu em` e `Voltou em`. Fuso salvo que não carrega cai em UTC com aviso no log, e a notificação sai mesmo assim.
+- Painel: `lib/timezone.js` (formatação com `Intl.DateTimeFormat`), `format.js` e eixo do gráfico no fuso salvo, `TimeZoneProvider` carrega o fuso antes de mostrar o painel; trocar vale sem recarregar.
+- Card **Fuso horário** em Configurações: combobox digitável (`ui/Combobox.jsx`, ARIA 1.2, ↑ ↓ Enter Esc) que filtra a lista ao digitar. O filtro ignora acento, caixa, `/` e `_` e aceita palavras em qualquer ordem ("sao paulo" acha `America/Sao_Paulo`). Mostra a hora atual no fuso escolhido antes de salvar. Registrado no `DESIGN.md`.
+- **Fuso do navegador na primeira abertura:** `GET /api/settings` ganhou `timezone_set` (`false` = nunca salvo). Nesse caso o painel salva o fuso do navegador, uma vez; sem fuso válido, fica em `UTC`. Quem escolheu `UTC` de propósito já tem `timezone_set: true` e não é sobrescrito.
+- Continua sempre em UTC: API (`*_at` em RFC3339), banco, JSON do webhook (`timestamp`) e baldes do `/stats`.
+
+**Desligamento ordenado**
+
+- `runShutdown` com orçamento de **15 s** para tudo, na ordem: scheduler (nenhum check novo) → servidor HTTP (inclui `/ping/{token}` em andamento) → checks e retenção → notificações → banco → lock. Uma etapa que falha ou estoura não pula as seguintes: banco e lock sempre fecham. Logs `shutdown started`, uma linha por etapa e `shutdown complete`.
+- Código de saída `0` se limpo, `1` se alguma etapa falhou. Segundo sinal durante o desligamento sai na hora com `1`. Falha ao subir o servidor também sai com `1` (antes saía com 0), e o `ErrServerClosed` normal deixou de virar log de erro.
+- `Scheduler.Stop()` (cancela e bloqueia jobs novos) + `Scheduler.Wait(ctx)`; `RetentionWorker.Wait(ctx)`. **Check cancelado pelo desligamento é descartado**, não vira falha nem incidente. A gravação em andamento usa `context.WithoutCancel` e termina inteira. O avaliador de heartbeat não gera `DOWN` durante o desligamento.
+- `stop_grace_period: 20s` no `docker-compose.yml` (o padrão do Docker é 10 s e mataria o processo antes). O `ENTRYPOINT` já estava em formato exec, então o binário é o PID 1.
+- **Correção extra:** lock com o PID do próprio processo era tratado como "outro processo rodando". Num container reiniciado (PID 1 de novo) depois de um `kill -9`, o Pingou não subia.
+- README: seções "Fuso horário" e "Desligamento".
+
+### Decisões
+
+- Fuso é uma configuração **global** (uma por instalação), como o webhook: com uma única API Key, fuso por pessoa não faz sentido.
+- O padrão deixou de ser "UTC fixo" durante a execução: salvar o fuso do navegador evita que quem já usava o painel passe a ver UTC, e mantém painel e e-mail no mesmo fuso (por isso o fuso é **salvo**, não só exibido).
+- Resultado de check cortado por edição ou pausa também é descartado (antes era gravado se o monitor continuasse ativo); o job novo faz um check na hora, então nada se perde.
+- Select nativo trocado por combobox: num `<select>` digitar só pula por prefixo, e quase todos os fusos começam com `America/` ou `Europe/`.
+
+### Limitações conhecidas
+
+- Quem abrir o painel primeiro define o fuso de todos; até esse primeiro acesso, e-mail e ntfy ficam em UTC.
+- Baldes do `/stats` seguem alinhados em UTC: em fusos com meia hora (ex.: `Asia/Kolkata`) os rótulos de 1 h não caem em hora cheia. Revisar junto com a futura janela de manutenção.
+- Mudar o fuso com notificações em andamento: a mensagem sai com o fuso antigo.
+- O teste de integração com sinal real (`kill -TERM` num binário com check lento) foi feito à mão, não automatizado; os testes cobrem `runShutdown` e o descarte do check cancelado.
+- `PATCH /api/settings` grava os campos em sequência: com fuso inválido, os campos anteriores já foram gravados e a resposta é 400 (padrão que já existia nos outros campos).
+
+### Descartado
+
+Migration de coluna `timezone` (T2: as settings são chave-valor); `PINGOU_TIMEZONE` por variável de ambiente (exigiria reiniciar); fuso do navegador só na exibição (painel e e-mail mostrariam horários diferentes); `os.Exit` logo após o timeout, sem log; esperar mais de 15 s no desligamento (o Docker mataria o processo antes); fuso por usuário; mudar os baldes do `/stats`.
+
+### Validação
+
+Testes Go (incluindo `-race` em scheduler e comandos) e `npm test` (22) verdes; `npm run lint` e `build` limpos. Binário real com check de 5 s e `kill -TERM` no meio: etapas na ordem esperada, `exit=0`, lock removido, 0 checks e 0 incidentes gravados. Docker testado pelo dono do projeto: `docker compose stop` sem `Killed`, fuso na imagem, **Enviar teste** e queda real no e-mail e no ntfy.
 
 ---
 
