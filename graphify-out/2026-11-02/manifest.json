@@ -978,9 +978,9 @@
     "semantic_hash": ""
   },
   "docs/implementacoes.md": {
-    "mtime": 1793630675.8626788,
-    "seen": 1793630686.306516,
-    "ast_hash": "334a45974b8dc80fc82e58caf686ff78",
+    "mtime": 1793631554.9825835,
+    "seen": 1793631561.2631183,
+    "ast_hash": "f3f079df26f5995e563847823dcdf7e7",
     "semantic_hash": ""
   },
   "scripts/README.md": {
@@ -1407,12 +1407,6 @@
     "mtime": 1793630675.8756788,
     "seen": 1793630686.3064795,
     "ast_hash": "d310977978b20144f00d1c71eb2a67a1",
-    "semantic_hash": ""
-  },
-  "plan-banco-indices.md": {
-    "mtime": 1793631354.5041893,
-    "seen": 1793631378.7846334,
-    "ast_hash": "ed7d54b83ba8129982092649aa73252b",
     "semantic_hash": ""
   },
   "plan-ssl-expiry.md": {
