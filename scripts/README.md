@@ -81,11 +81,11 @@ Requisitos: `go` e espaço livre de cerca de **2× o tamanho do banco** (o origi
 
 Variáveis opcionais:
 
-| Variável                   | Padrão | O que faz                                   |
-| -------------------------- | -----: | ------------------------------------------- |
-| `PINGOU_BENCH_REPS`        |     20 | Repetições de cada consulta                 |
-| `PINGOU_BENCH_WRITES`      |   5000 | Gravações no teste de custo de escrita      |
-| `PINGOU_BENCH_CONCURRENCY` |     30 | Segundos do cenário leitura + gravação      |
+| Variável                   | Padrão | O que faz                              |
+| -------------------------- | -----: | -------------------------------------- |
+| `PINGOU_BENCH_REPS`        |     20 | Repetições de cada consulta            |
+| `PINGOU_BENCH_WRITES`      |   5000 | Gravações no teste de custo de escrita |
+| `PINGOU_BENCH_CONCURRENCY` |     30 | Segundos do cenário leitura + gravação |
 
 Para rodar só uma parte:
 

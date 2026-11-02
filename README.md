@@ -376,22 +376,22 @@ PINGOU_API_KEY=...
 
 A porta HTTP é fixa em `8956` e não é configurável. Para expor em outra porta, mapeie no host (ex.: `-p 9000:8956`).
 
-| Variável                      | Obrigatória | Padrão      | Descrição                                                                                                                |
-| ----------------------------- | :---------: | ----------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `PINGOU_DATABASE_URL`         |     não     | `pingou.db` | Caminho do arquivo SQLite                                                                                                |
-| `PINGOU_API_KEY`              |     sim     | -           | Chave que protege o dashboard e as rotas `/api/*`                                                                        |
-| `PINGOU_LOG_LEVEL`            |     não     | `info`      | Nível de log (`DEBUG` habilita logs de debug)                                                                            |
-| `PINGOU_CORS_ALLOWED_ORIGINS` |     não     | (vazio)     | Origins permitidas, separadas por vírgula. Vazio desabilita CORS. Ex.: `http://localhost:5173`                           |
-| `PINGOU_MAX_REDIRECTS`        |     não     | `5`         | Máximo de redirects seguidos pelo checker HTTP                                                                           |
-| `PINGOU_GLOBAL_TIMEOUT`       |     não     | `60`        | Timeout global, em segundos, das requisições HTTP                                                                        |
-| `PINGOU_PUBLIC_URL`           |     não     | (vazio)     | Endereço público do dashboard. Preenche `dashboard_url` no webhook e o link no e-mail. Ex.: `https://pingou.exemplo.com` |
-| `PINGOU_SMTP_HOST`            |     não     | (vazio)     | Servidor SMTP. Liga o e-mail. Vazio = e-mail indisponível (as outras `PINGOU_SMTP_*` são ignoradas)                      |
-| `PINGOU_SMTP_PORT`            |     não     | `587`       | Porta do SMTP (1–65535)                                                                                                  |
-| `PINGOU_SMTP_USERNAME`        |     não     | (vazio)     | Usuário do SMTP. Vazio = sem autenticação (relay)                                                                        |
-| `PINGOU_SMTP_PASSWORD`        | com usuário | (vazio)     | Senha do SMTP. Nunca aparece em log, na API nem no `pingou config`                                                       |
-| `PINGOU_SMTP_FROM`            | com `HOST`  | -           | Remetente. Ex.: `Pingou <alerta@exemplo.com>`                                                                            |
-| `PINGOU_SMTP_TLS`             |     não     | `starttls`  | `starttls`, `tls` ou `none`. Padrão: `tls` na porta 465, `starttls` nas outras. `none` só sem usuário                    |
-| `PINGOU_NTFY_URL`             |     não     | (vazio)     | Servidor ntfy (http/https, sem query). Liga o ntfy. Ex.: `https://ntfy.sh`. Vazio = ntfy indisponível                    |
+| Variável                      | Obrigatória | Padrão      | Descrição                                                                                                                     |
+| ----------------------------- | :---------: | ----------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `PINGOU_DATABASE_URL`         |     não     | `pingou.db` | Caminho do arquivo SQLite                                                                                                     |
+| `PINGOU_API_KEY`              |     sim     | -           | Chave que protege o dashboard e as rotas `/api/*`                                                                             |
+| `PINGOU_LOG_LEVEL`            |     não     | `info`      | Nível de log (`DEBUG` habilita logs de debug)                                                                                 |
+| `PINGOU_CORS_ALLOWED_ORIGINS` |     não     | (vazio)     | Origins permitidas, separadas por vírgula. Vazio desabilita CORS. Ex.: `http://localhost:5173`                                |
+| `PINGOU_MAX_REDIRECTS`        |     não     | `5`         | Máximo de redirects seguidos pelo checker HTTP                                                                                |
+| `PINGOU_GLOBAL_TIMEOUT`       |     não     | `60`        | Timeout global, em segundos, das requisições HTTP                                                                             |
+| `PINGOU_PUBLIC_URL`           |     não     | (vazio)     | Endereço público do dashboard. Preenche `dashboard_url` no webhook e o link no e-mail. Ex.: `https://pingou.exemplo.com`      |
+| `PINGOU_SMTP_HOST`            |     não     | (vazio)     | Servidor SMTP. Liga o e-mail. Vazio = e-mail indisponível (as outras `PINGOU_SMTP_*` são ignoradas)                           |
+| `PINGOU_SMTP_PORT`            |     não     | `587`       | Porta do SMTP (1–65535)                                                                                                       |
+| `PINGOU_SMTP_USERNAME`        |     não     | (vazio)     | Usuário do SMTP. Vazio = sem autenticação (relay)                                                                             |
+| `PINGOU_SMTP_PASSWORD`        | com usuário | (vazio)     | Senha do SMTP. Nunca aparece em log, na API nem no `pingou config`                                                            |
+| `PINGOU_SMTP_FROM`            | com `HOST`  | -           | Remetente. Ex.: `Pingou <alerta@exemplo.com>`                                                                                 |
+| `PINGOU_SMTP_TLS`             |     não     | `starttls`  | `starttls`, `tls` ou `none`. Padrão: `tls` na porta 465, `starttls` nas outras. `none` só sem usuário                         |
+| `PINGOU_NTFY_URL`             |     não     | (vazio)     | Servidor ntfy (http/https, sem query). Liga o ntfy. Ex.: `https://ntfy.sh`. Vazio = ntfy indisponível                         |
 | `PINGOU_NTFY_TOKEN`           |     não     | (vazio)     | Token de acesso do ntfy (`tk_...`), enviado como `Authorization: Bearer`. Nunca aparece em log, na API nem no `pingou config` |
 
 Com `PINGOU_SMTP_HOST` setado e alguma regra violada (ex.: falta `PINGOU_SMTP_FROM`), o `serve` não sobe e mostra o motivo, como acontece quando falta `PINGOU_API_KEY`. O mesmo vale para `PINGOU_NTFY_URL` inválida.
@@ -411,15 +411,15 @@ Se `PINGOU_DATABASE_URL` já tiver query params, eles são preservados e os par�
 
 Medido com 30 dias de dados no **perfil limite** (100 monitores a cada 10 s, ~25 milhões de checks, banco de ~6 GB), antes e depois da migration `0006`. Os valores são o p95 de 10 repetições, na faixa de 2 a 3 rodadas (Xeon 2,8 GHz, 4 núcleos, SQLite 3.51):
 
-| O que                                        | Antes          | Depois       |
-| -------------------------------------------- | -------------- | ------------ |
-| `GET /api/monitors` (lista do painel)        | 91 a 107 **s** | 114 a 203 ms |
-| `/stats?range=30d`                           | 815 a 855 ms   | 208 a 340 ms |
-| `GET /api/monitors/:id/checks` (1ª página)   | 36 a 41 ms     | 13 a 22 ms   |
-| Gravar um check com falha                    | 40 ms          | 0,5 ms       |
-| Gravar um check com `/stats` 30d rodando     | 740 a 759 ms   | 247 a 258 ms |
-| Maior espera de uma gravação durante a limpeza de 1 dia | 2,4 s | 104 ms |
-| Índices da tabela `checks`                   | 4,1 GB         | 2,7 GB       |
+| O que                                                   | Antes          | Depois       |
+| ------------------------------------------------------- | -------------- | ------------ |
+| `GET /api/monitors` (lista do painel)                   | 91 a 107 **s** | 114 a 203 ms |
+| `/stats?range=30d`                                      | 815 a 855 ms   | 208 a 340 ms |
+| `GET /api/monitors/:id/checks` (1ª página)              | 36 a 41 ms     | 13 a 22 ms   |
+| Gravar um check com falha                               | 40 ms          | 0,5 ms       |
+| Gravar um check com `/stats` 30d rodando                | 740 a 759 ms   | 247 a 258 ms |
+| Maior espera de uma gravação durante a limpeza de 1 dia | 2,4 s          | 104 ms       |
+| Índices da tabela `checks`                              | 4,1 GB         | 2,7 GB       |
 
 Antes, a lista do painel passava do limite de 30 s do servidor nesse volume, e o dashboard não carregava. No perfil típico (10 monitores a cada 60 s, ~400 mil checks), a lista caiu de 839 ms para 4 ms.
 
@@ -435,10 +435,10 @@ Os resultados dependem do hardware, como na seção de memória. Para medir na s
 
 Ao subir uma versão nova, o Pingou aplica as migrations **antes** de abrir a porta. A `0006` recria o índice principal da tabela `checks`, e isso leva tempo num banco grande:
 
-| Banco                                   | Tempo da migration |
-| --------------------------------------- | ------------------ |
-| ~400 mil checks (~100 MB)               | menos de 1 s       |
-| ~25 milhões de checks (~6 GB)           | ~1 min 20 s        |
+| Banco                         | Tempo da migration |
+| ----------------------------- | ------------------ |
+| ~400 mil checks (~100 MB)     | menos de 1 s       |
+| ~25 milhões de checks (~6 GB) | ~1 min 20 s        |
 
 - **Acompanhe pelo log.** Aparecem `applying database migrations (may take a while on a large database)` com as versões pendentes e, no fim, `database migrations applied` com o tempo. Nesse intervalo o `/healthz` não responde ainda. Isso é esperado; não reinicie o container.
 - **Espaço livre:** reserve pelo menos o tamanho atual do `pingou.db`. O índice novo tem cerca de 30 % do tamanho do banco, e o SQLite escreve no WAL e em arquivos temporários antes de gravar no arquivo.
@@ -511,25 +511,25 @@ Sobre `/ping/{token}`:
 
 ### Protegidos
 
-| Método   | Rota                          | Descrição                                                       |
-| -------- | ----------------------------- | --------------------------------------------------------------- |
-| `GET`    | `/api/monitors`               | Lista os monitores                                              |
-| `POST`   | `/api/monitors`               | Cria um monitor                                                 |
-| `GET`    | `/api/monitors/:id`           | Busca um monitor                                                |
-| `PATCH`  | `/api/monitors/:id`           | Atualiza um monitor                                             |
-| `DELETE` | `/api/monitors/:id`           | Remove um monitor                                               |
-| `POST`   | `/api/monitors/:id/token`     | Gera um novo token de ping (Heartbeat)                          |
-| `GET`    | `/api/monitors/:id/checks`    | Histórico de checks, paginado (`limit`, `offset`)               |
-| `GET`    | `/api/monitors/:id/incidents` | Incidentes do monitor (mesmos filtros de `/api/incidents`)      |
-| `GET`    | `/api/monitors/:id/stats`     | Estatísticas numa janela (`range=24h\|7d\|14d\|30d`)            |
-| `GET`    | `/api/incidents`              | Lista incidentes (`status`, `monitor_id`, `limit`, `offset`)    |
-| `GET`    | `/api/settings`               | Busca as configurações globais                                  |
+| Método   | Rota                          | Descrição                                                                             |
+| -------- | ----------------------------- | ------------------------------------------------------------------------------------- |
+| `GET`    | `/api/monitors`               | Lista os monitores                                                                    |
+| `POST`   | `/api/monitors`               | Cria um monitor                                                                       |
+| `GET`    | `/api/monitors/:id`           | Busca um monitor                                                                      |
+| `PATCH`  | `/api/monitors/:id`           | Atualiza um monitor                                                                   |
+| `DELETE` | `/api/monitors/:id`           | Remove um monitor                                                                     |
+| `POST`   | `/api/monitors/:id/token`     | Gera um novo token de ping (Heartbeat)                                                |
+| `GET`    | `/api/monitors/:id/checks`    | Histórico de checks, paginado (`limit`, `offset`)                                     |
+| `GET`    | `/api/monitors/:id/incidents` | Incidentes do monitor (mesmos filtros de `/api/incidents`)                            |
+| `GET`    | `/api/monitors/:id/stats`     | Estatísticas numa janela (`range=24h\|7d\|14d\|30d`)                                  |
+| `GET`    | `/api/incidents`              | Lista incidentes (`status`, `monitor_id`, `limit`, `offset`)                          |
+| `GET`    | `/api/settings`               | Busca as configurações globais                                                        |
 | `PATCH`  | `/api/settings`               | Atualiza as configurações globais (`webhook_url` só http/https; `timezone` nome IANA) |
-| `POST`   | `/api/settings/webhook/test`  | Envia um evento `test` ao webhook (5 por minuto por IP)         |
-| `POST`   | `/api/settings/email/test`    | Envia um e-mail de teste (5 por minuto por IP)                  |
-| `POST`   | `/api/settings/ntfy/test`     | Publica uma notificação de teste no ntfy (5 por minuto por IP)  |
-| `GET`    | `/api/info`                   | Versão, commit, data do build e tamanho do banco                |
-| `GET`    | `/api/export`                 | Baixa um dump do SQLite (`pingou-AAAA-MM-DD.db`, `VACUUM INTO`) |
+| `POST`   | `/api/settings/webhook/test`  | Envia um evento `test` ao webhook (5 por minuto por IP)                               |
+| `POST`   | `/api/settings/email/test`    | Envia um e-mail de teste (5 por minuto por IP)                                        |
+| `POST`   | `/api/settings/ntfy/test`     | Publica uma notificação de teste no ntfy (5 por minuto por IP)                        |
+| `GET`    | `/api/info`                   | Versão, commit, data do build e tamanho do banco                                      |
+| `GET`    | `/api/export`                 | Baixa um dump do SQLite (`pingou-AAAA-MM-DD.db`, `VACUUM INTO`)                       |
 
 ### Info
 
