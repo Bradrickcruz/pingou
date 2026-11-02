@@ -534,9 +534,9 @@
     "semantic_hash": ""
   },
   "web/src/components/layout/Shell.jsx": {
-    "mtime": 1793391650.222113,
-    "seen": 1793556441.37143,
-    "ast_hash": "d067ea9f78aaadf8bd6667f55053d6f4",
+    "mtime": 1793630021.1642199,
+    "seen": 1793630049.808334,
+    "ast_hash": "c58fbea699d33736a83759ac2e06dd2b",
     "semantic_hash": ""
   },
   "web/src/components/monitor-detail/ChecksTable.jsx": {
