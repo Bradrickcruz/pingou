@@ -13,6 +13,7 @@ Consolida o que os planos `plan-*.md` (já removidos; ficam no `git log`) entreg
 | 2026-11-01         | [Largura no desktop + busca parcial](#7-largura-no-desktop--busca-parcial)                      | `feature/largura-busca` (#10)   |
 | 2026-11-01         | [Notificação via ntfy](#8-notificação-via-ntfy)                                                 | `feat/ntfy-notifications` (#11) |
 | 2026-11-01         | [Eixo Y dinâmico + gráfico de pings](#9-eixo-y-dinâmico--gráfico-de-pings)                      | `develop` (sem PR)              |
+| 2026-11-01 → 11-02 | [Pausar monitor fecha o incidente](#10-pausar-monitor-fecha-o-incidente)                        | `develop` (sem PR)              |
 
 Pendências de validação manual ainda abertas estão no [fim do documento](#pendências-abertas).
 
@@ -264,6 +265,40 @@ Lib de gráfico; p95 como teto; manter 3 intervalos fixos.
 
 ---
 
+## 10. Pausar monitor fecha o incidente
+
+**2026-11-01** (`19e0f24`), testes em **2026-11-02** (`33e492a`), direto em `develop`.
+
+### Entregue
+
+- **Bug corrigido:** pausar um monitor `DOWN` deixava o incidente aberto para sempre e o monitor em `DOWN`, porque só uma transição `DOWN→UP` fecha incidente e o scheduler não checa monitor pausado.
+- `MonitorService.Update` com `enabled:false` (único caminho de pausa) fecha o incidente aberto **sem notificar** (e-mail, webhook e ntfy ficam de fora: o service não tem acesso a notifier) e devolve o monitor a `UNKNOWN`.
+- **Migration 0005**: `incidents.closed_manually INTEGER NOT NULL DEFAULT 0`. Incidentes existentes ficam `0`.
+- `IncidentRepository.CloseManually(ctx, monitorID, endedAt)`: um `UPDATE` só, sem leitura prévia, que preenche `ended_at`, `closed_manually = 1` e `duration_seconds` (início até a pausa, mínimo 0). Não faz nada se não há incidente aberto.
+- `GET /api/incidents` expõe `closed_manually`. `status=resolved` continua incluindo os fechados manualmente.
+- `ResolvedTable.jsx`: selo neutro "Fechado manualmente" (tabela e cartão mobile).
+- Testes em `monitor_pause_test.go` e `incidents_test.go`: fecha com duração e `UNKNOWN`, pausa repetida, pausa sem incidente, nenhuma notificação na pausa e retomada abrindo incidente novo.
+
+### Decisões
+
+- Booleano, não enum: cobre o único caso novo. Vira enum se surgir um terceiro motivo de fechamento.
+- `ended_at` preenchido, para "aberto = `ended_at IS NULL`" continuar valendo em todas as queries e as stats de uptime não mudarem.
+- Fechamento **idempotente**: roda a cada `Update` com `enabled:false`. Se a segunda escrita falhar, o erro volta ao usuário e repetir a pausa conclui.
+- O estado precisa ir a `UNKNOWN`: `handleFailure` só abre incidente se `prevState != DOWN`, então retomar um monitor ainda `DOWN` nunca abriria outro.
+- Check em andamento que termina depois da pausa não reabre incidente (`scheduler.withMonitor` descarta resultado de monitor desabilitado).
+
+### Limitações conhecidas
+
+- Após retomar, a **primeira falha já reabre o incidente**: `countConsecutiveFails` lê o histórico de checks, que a pausa não zera. Aceito, pois o monitor segue fora do ar. Exigir o threshold inteiro pede uma coluna com o instante da pausa.
+- Pausa e fechamento são duas escritas sem transação (ver idempotência acima). Atomicidade de verdade pede mover o fechamento para dentro do `UPDATE` do monitor.
+- Incidentes que ficaram órfãos em pausas anteriores à 0005 continuam abertos.
+
+### Descartado
+
+Reutilizar a `StateMachine` para fechar (acoplada a notifier e a resultado de check); coluna enum `resolution`; filtro `status=closed_manually`; deixar `ended_at` nulo e marcar só por flag.
+
+---
+
 ## Pendências abertas
 
 - **Migrations 0003 e 0004** foram testadas em bancos de teste e de QA, mas **não** rodadas no `pingou.db` real. Fazer backup antes e conferir `failure_count` / `last_error`.
@@ -272,4 +307,4 @@ Lib de gráfico; p95 como teto; manter 3 intervalos fixos.
 - **Observação de infraestrutura**: o incidente do monitor `c10` vinha de certificado de outro domínio servido em `api.c10.site` (provável proxy roteando errado). Não é bug do Pingou.
 - **E-mail (T14)**: QA manual com Mailpit e provedor real (587/465); o ambiente de desenvolvimento não tinha Docker nem SMTP real.
 - **Eixo Y**: verificação manual (T5) dos 4 ranges nos 3 tipos, tema claro/escuro e mobile; conferir em um `/stats` real que `checks`/`failures` do heartbeat batem com pings e prazos perdidos.
-- **Pausar fecha o incidente** (`docs/plan-pause-closes-incident.md`): plano **não implementado** (sem `closed_manually` no código); por isso o arquivo foi mantido.
+- **Pausar fecha o incidente**: QA manual (T7) no navegador (HTTP/TCP e heartbeat: incidente sai de "Abertos", aparece em "Resolvidos" com selo, sem e-mail/ntfy; retomar reabre) e `npm run lint`/`build` do frontend. Decidir se vale limpar incidentes órfãos antigos de monitores já pausados.
