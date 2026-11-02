@@ -50,3 +50,6 @@ rss=$(awk '/VmRSS/{print $2}' /proc/$PID/status)
 hwm=$(awk '/VmHWM/{print $2}' /proc/$PID/status)
 echo "ciclos: $n (3× /stats 30d + lista) em $SECS s"
 echo "rss: $((rss / 1024)) MB · pico: $((hwm / 1024)) MB (meta < 50 MB)"
+# composição do RSS: heap/pilhas do Go e do SQLite (anon), arquivos mapeados
+# (file) e memória compartilhada, como o índice do WAL (-shm)
+grep -E '^Rss(Anon|File|Shmem)' /proc/$PID/status | awk '{printf "%s %d MB  ", $1, $2/1024} END {print ""}'

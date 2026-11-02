@@ -407,6 +407,45 @@ O backend abre o SQLite com:
 
 Se `PINGOU_DATABASE_URL` já tiver query params, eles são preservados e os parâmetros acima são aplicados pelo app.
 
+### Desempenho e tamanho do banco
+
+Medido com 30 dias de dados no **perfil limite** (100 monitores a cada 10 s, ~25 milhões de checks, banco de ~6 GB), antes e depois da migration `0006`. Os valores são o p95 de 10 repetições, na faixa de 2 a 3 rodadas (Xeon 2,8 GHz, 4 núcleos, SQLite 3.51):
+
+| O que                                        | Antes          | Depois       |
+| -------------------------------------------- | -------------- | ------------ |
+| `GET /api/monitors` (lista do painel)        | 91 a 107 **s** | 114 a 203 ms |
+| `/stats?range=30d`                           | 815 a 855 ms   | 208 a 340 ms |
+| `GET /api/monitors/:id/checks` (1ª página)   | 36 a 41 ms     | 13 a 22 ms   |
+| Gravar um check com falha                    | 40 ms          | 0,5 ms       |
+| Gravar um check com `/stats` 30d rodando     | 740 a 759 ms   | 247 a 258 ms |
+| Maior espera de uma gravação durante a limpeza de 1 dia | 2,4 s | 104 ms |
+| Índices da tabela `checks`                   | 4,1 GB         | 2,7 GB       |
+
+Antes, a lista do painel passava do limite de 30 s do servidor nesse volume, e o dashboard não carregava. No perfil típico (10 monitores a cada 60 s, ~400 mil checks), a lista caiu de 839 ms para 4 ms.
+
+O que mudou:
+
+- **Um índice de checks na ordem das consultas** (`monitor_id, checked_at, id, success, latency_ms`), no lugar do antigo. As consultas leem na ordem certa direto do índice, e o `/stats` nem passa pela tabela.
+- **A lista do painel busca só os 30 últimos checks de cada monitor**, em vez de numerar todos.
+- **A limpeza de retenção apaga em lotes de 5 mil linhas.** Entre um lote e outro, a gravação dos checks passa (o SQLite usa uma conexão só).
+
+Os resultados dependem do hardware, como na seção de memória. Para medir na sua máquina, veja [`scripts/README.md`](scripts/README.md#dbbench-desempenho-do-banco-com-volume-real).
+
+### Atualizando um banco grande
+
+Ao subir uma versão nova, o Pingou aplica as migrations **antes** de abrir a porta. A `0006` recria o índice principal da tabela `checks`, e isso leva tempo num banco grande:
+
+| Banco                                   | Tempo da migration |
+| --------------------------------------- | ------------------ |
+| ~400 mil checks (~100 MB)               | menos de 1 s       |
+| ~25 milhões de checks (~6 GB)           | ~1 min 20 s        |
+
+- **Acompanhe pelo log.** Aparecem `applying database migrations (may take a while on a large database)` com as versões pendentes e, no fim, `database migrations applied` com o tempo. Nesse intervalo o `/healthz` não responde ainda. Isso é esperado; não reinicie o container.
+- **Espaço livre:** reserve pelo menos o tamanho atual do `pingou.db`. O índice novo tem cerca de 30 % do tamanho do banco, e o SQLite escreve no WAL e em arquivos temporários antes de gravar no arquivo.
+- **O arquivo cresce uma vez.** O índice antigo é apagado, mas o espaço dele fica livre dentro do arquivo e é reaproveitado pelos checks novos. Para devolver esse espaço ao disco agora, rode um `VACUUM` com o Pingou parado.
+- No Docker, o `HEALTHCHECK` tem `--start-period=5m`, para o container não ser marcado como `unhealthy` no meio da migration.
+- Faça backup do `pingou.db` antes de atualizar. Para desfazer, `pingou migrate down` recria o índice antigo (só índices, nenhum dado é perdido).
+
 ---
 
 ## Autenticação da API

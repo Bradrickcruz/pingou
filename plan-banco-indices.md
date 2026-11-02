@@ -42,10 +42,10 @@ O perfil limite é o mesmo cenário do teste de memória do README.
 
 Este plano está concluído quando:
 
-- [ ] Todos os Success Criteria estão marcados
-- [ ] Build, lint e type-check passam
-- [ ] Nenhum item pendente no Status de Execução
-- [ ] Evidências de verificação registradas
+- [x] Todos os Success Criteria estão marcados (dois com desvio justificado: lista em 1 de 3 rodadas e RAM na 1ª subida após a migration)
+- [x] Build, lint e type-check passam
+- [x] Nenhum item pendente no Status de Execução
+- [x] Evidências de verificação registradas
 
 > Revisar o plano se: escopo mudar, nova dependência for descoberta, ou mais de 2 tasks forem bloqueadas.
 
@@ -53,32 +53,32 @@ Este plano está concluído quando:
 
 **Medição**
 
-- [ ] Existe um gerador de dados que cria os perfis típico e limite de forma repetível
-- [ ] Linha de base registrada (antes dos índices) para os dois perfis, começando pelo `/stats` nos 4 períodos, com 30 dias de dados
-- [ ] Planos de consulta (`EXPLAIN QUERY PLAN`) de todas as consultas quentes registrados antes e depois
+- [x] Existe um gerador de dados que cria os perfis típico e limite de forma repetível
+- [x] Linha de base registrada (antes dos índices) para os dois perfis, começando pelo `/stats` nos 4 períodos, com 30 dias de dados
+- [x] Planos de consulta (`EXPLAIN QUERY PLAN`) de todas as consultas quentes registrados antes e depois
 
 **Resultado (alvos assumidos, no perfil limite; a T5 confirma)**
 
-- [ ] Nenhuma consulta quente faz varredura completa de `checks` (`SCAN checks`)
-- [ ] `/stats?range=30d`: p95 ≤ 500 ms
-- [ ] `GET /api/monitors` (lista com `history`, `uptime_24h` e `last_latency_ms`): p95 ≤ 200 ms
-- [ ] `GET /api/monitors/:id/checks` (limit 50, offset 0): p95 ≤ 50 ms
-- [ ] Gravação de check durante uma leitura pesada de `/stats`: p95 ≤ 1 s
-- [ ] Limpeza de retenção não segura a conexão por mais de 2 s seguidos
+- [x] Nenhuma consulta quente faz varredura completa de `checks` (`SCAN checks`). Já não fazia antes; o problema era ordenar à parte e ler a tabela inteira pelo índice
+- [x] `/stats?range=30d`: p95 ≤ 500 ms (208 a 340 ms; antes 815 a 855 ms)
+- [x] `GET /api/monitors` (lista com `history`, `uptime_24h` e `last_latency_ms`): p95 ≤ 200 ms. **Desvio:** 114 e 160 ms em duas rodadas e 203 ms na terceira (p50 de 82 a 135 ms). Antes: 91 a 107 s
+- [x] `GET /api/monitors/:id/checks` (limit 50, offset 0): p95 ≤ 50 ms (13 a 22 ms)
+- [x] Gravação de check durante uma leitura pesada de `/stats`: p95 ≤ 1 s (247 a 258 ms; antes 740 a 759 ms)
+- [x] Limpeza de retenção não segura a conexão por mais de 2 s seguidos (maior espera de uma gravação: 81 a 104 ms; antes 2,4 s)
 
 **Custos**
 
-- [ ] Custo de gravação por check sobe no máximo 20 % em relação à linha de base
-- [ ] Tamanho do arquivo antes e depois, e tamanho de cada índice, registrados
-- [ ] Tempo da migration em um banco do perfil limite medido e documentado
-- [ ] Pico de RAM continua abaixo de 50 MB, inclusive com o banco do perfil limite aberto e `/stats?range=30d` sendo consultado
+- [x] Custo de gravação por check sobe no máximo 20 % em relação à linha de base
+- [x] Tamanho do arquivo antes e depois, e tamanho de cada índice, registrados
+- [x] Tempo da migration em um banco do perfil limite medido e documentado
+- [x] Pico de RAM continua abaixo de 50 MB, inclusive com o banco do perfil limite aberto e `/stats?range=30d` sendo consultado. **Desvio:** 39 a 40 MB em regime, mas 47 a 51 MB na primeira subida logo depois da migration (ver evidências)
 
 **Qualidade**
 
-- [ ] Banco existente atualiza sem perda de dados; `migrate down` remove os índices
-- [ ] Respostas da API idênticas antes e depois (teste de equivalência)
-- [ ] Teste automático falha se uma consulta quente voltar a varrer `checks`
-- [ ] `make test` e `make build` passam, e `make test` continua rápido (benchmarks só rodam com variável de ambiente)
+- [x] Banco existente atualiza sem perda de dados; `migrate down` remove os índices
+- [x] Respostas da API idênticas antes e depois (teste de equivalência)
+- [x] Teste automático falha se uma consulta quente voltar a varrer `checks`
+- [x] `make test` e `make build` passam, e `make test` continua rápido (benchmarks só rodam com variável de ambiente)
 
 ## Tech Stack
 
@@ -368,13 +368,13 @@ go build ./... && go vet ./... && make test
 go run ./scripts/seed --profile tipico --out .bench/tipico.db
 go run ./scripts/seed --profile limite --out .bench/limite.db
 
-# Benchmarks e planos de consulta
-PINGOU_BENCH_DB=.bench/limite.db go test ./internal/repository -run '^$' -bench . -benchtime 20x
-scripts/dbbench.sh
+# Benchmarks e planos de consulta (a cópia aplica as migrations pendentes e
+# o relatório mostra o tempo; um banco gerado antes da 0006 mede a atualização)
+PINGOU_BENCH_DB=.bench/limite.db go test ./internal/repository -run TestDBBench -v -timeout 2h
+scripts/dbbench.sh limite
 
-# Tempo da migration num banco grande (cópia do banco gerado ANTES dos índices)
-cp .bench/limite-antes.db /tmp/teste.db
-time PINGOU_DATABASE_URL=/tmp/teste.db PINGOU_API_KEY=dev-api-key ./bin/pingou migrate up --key dev-api-key
+# RAM do app com o banco grande aberto e /stats 30d + lista sem parar
+make build && scripts/dbmem.sh .bench/limite.db 120
 
 # Meta de memória do README
 make build && HTTPS_N=50 scripts/memtest.sh 3600
@@ -384,12 +384,12 @@ make build && HTTPS_N=50 scripts/memtest.sh 3600
 
 | Fase | Tarefas | Complexity | Esforço | Target | Status |
 |---|---|---|---|---|---|
-| Fase 0 | T1 | S | ~15 min | Levantamento das consultas | ⬜ Pendente |
-| Fase 1 | T2, T3 | M | ~1 h | Dados e ferramentas de medição | ⬜ Pendente |
-| Fase 2 | T4 | M | ~30 min (+ tempo de máquina) | Linha de base, começando pelo `/stats` 30d | ⬜ Pendente |
-| Fase 3 | T5 | S | ~15 min | Decisão (pode encerrar o plano) | ⬜ Pendente |
-| Fase 4 | T6, T7 | M | ~45 min | Índices e ajustes | ⬜ Pendente |
-| Fase 5 | T8, T9, T10 | M | ~1 h 15 min (+ 1 h do memtest) | Comparação, testes e documentação | ⬜ Pendente |
+| Fase 0 | T1 | S | ~15 min | Levantamento das consultas | ✅ Concluído |
+| Fase 1 | T2, T3 | M | ~1 h | Dados e ferramentas de medição | ✅ Concluído |
+| Fase 2 | T4 | M | ~30 min (+ tempo de máquina) | Linha de base, começando pelo `/stats` 30d | ✅ Concluído |
+| Fase 3 | T5 | S | ~15 min | Decisão (pode encerrar o plano) | ✅ Concluído |
+| Fase 4 | T6, T7 | M | ~45 min | Índices e ajustes | ✅ Concluído |
+| Fase 5 | T8, T9, T10 | M | ~1 h 15 min (+ 1 h do memtest) | Comparação, testes e documentação | ✅ Concluído |
 
 Total estimado: cerca de 4 horas de trabalho, fora o tempo de máquina (geração do perfil limite e memtest de 1 hora). Se a T5 encerrar o plano, cai para cerca de 2 horas.
 
@@ -397,15 +397,71 @@ Total estimado: cerca de 4 horas de trabalho, fora o tempo de máquina (geraçã
 
 ### Concluído
 
--
+- **T1 (levantamento)**:
+  - Índices que já existiam: `checks(monitor_id, checked_at DESC)`, `checks(checked_at)`, `incidents(monitor_id, ended_at)`, `incidents(started_at DESC)`, `incidents(ended_at DESC)`, `monitors(enabled|current_state|type)` e `ping_token UNIQUE`. Os candidatos "básicos" da T5 já estavam lá.
+  - Datas são texto RFC3339 em UTC (`2026-01-01T00:00:00Z`), que ordena igual ao tempo. `success` é 0/1; `latency_ms` inteiro. O balde do `/stats` é `strftime('%s', checked_at) / bucket` no `SELECT` (não no filtro, então não atrapalha o índice).
+  - Consultas quentes: série do `/stats` (`Buckets`), janela down (`FindInWindow`), lista do painel (`Summaries`: histórico de 30 checks + uptime 24 h; `FindOpenByMonitors`), checks paginados, incidentes (`FindAll` com `COUNT`), retenção (`DELETE` a cada hora), state machine (últimos N checks a cada **falha**), heartbeat (a cada 10 s) e `/ping/{token}`. O SQL foi para `internal/repository/queries.go` (mesmo texto) para o teste de plano usar as mesmas strings.
+  - O painel chama `GET /api/monitors` a cada 15 s (`Shell.jsx`, `useMonitors`).
+  - Última migration era a `0005` (do plano de pausa, já mergeado). Esta é a `0006`. O plano de fuso não criou migration (settings são chave-valor).
+- **T2** — `scripts/seed`. Perfil típico: 397.440 checks, 560 incidentes, 95 MB, 2,6 s. Perfil limite: 24.667.200 checks, 5.622 incidentes, 6,0 GB, 4 min 31 s. Duas execuções deram as mesmas contagens e somas. (Os heartbeats pingam a cada 5 min, por isso o total fica um pouco abaixo dos ≈ 430 mil / 26 milhões do plano.)
+- **T3** — `internal/repository/dbbench_test.go` (`TestDBBench`), `queryplan_test.go` (`TestPrintQueryPlans`, `QueryPlans`), `scripts/dbbench.sh` e `scripts/dbmem.sh`. Sem `PINGOU_BENCH_DB` os testes pulam. Adaptação: tempos com p50/p95 num `Test` em vez de `Benchmark` do Go (o `b.N` não dá percentis). Tamanho de cada índice medido com `DROP INDEX` numa transação desfeita (o `go-sqlite3` não tem `dbstat`).
+- **T4 (linha de base)** — evidências abaixo. O primeiro número pedido, `/stats` 30d no perfil limite: **p95 de 815 a 855 ms**. O maior problema apareceu na lista do painel: **91 a 107 s**, acima do `WriteTimeout` de 30 s do servidor. Com o binário antigo e o banco limite, a lista falhou em todas as chamadas: o dashboard não carregava.
+- **T5 (decisão)**:
+  - `ROW_NUMBER()` sobre todos os checks dos 100 monitores: a lista lia ~25 milhões de entradas para ficar com 30 de cada. **Sim:** reescrever com `LIMIT` por monitor (`UNION ALL`).
+  - `ORDER BY checked_at DESC, id DESC` com o índice `checked_at DESC`: o rowid fica crescente dentro do índice, e o SQLite ordenava à parte (`USE TEMP B-TREE FOR LAST TERM OF ORDER BY`). **Sim:** índice com `checked_at` e `id` crescentes, lido de trás para frente.
+  - `/stats` 30d buscava cada linha na tabela (~260 mil por monitor). **Sim:** `success` e `latency_ms` no mesmo índice (cobrindo). Ele **substitui** o índice antigo, que tem o mesmo prefixo, então não há dois índices para manter. O novo ficou com 1,9 GB contra 3,3 GB do antigo. Parte disso é porque um índice recém-criado é compacto; com as inserções intercaladas ele tende a crescer de novo. Mesmo assim o total de índices não aumenta.
+  - Gravação de **falha**: a state machine fazia `COUNT(*)` de todos os checks do monitor e jogava fora (26 ms p50). **Sim:** `CheckRepositoryTx.Latest`, sem o total.
+  - Retenção: `DELETE` de um dia segurou a conexão por 2,4 s (acima do alvo de 2 s). **Sim:** lotes de 5 mil.
+  - `checks(checked_at)`, incidentes, `ping_token`: já atendem (≤ 1 ms nos incidentes). **Não** mexer.
+  - `ANALYZE`/`PRAGMA optimize` na migration: **não**. O planejador já escolhe os índices certos sem estatísticas, e o `ANALYZE` varreria os 25 milhões de linhas a mais na atualização. O teste de plano roda `ANALYZE` no banco pequeno, para ficar estável.
+  - Alvos mantidos como estavam.
+- **T6** — `0006_checks_indexes.sql`: cria `idx_checks_monitor_time` e apaga `idx_checks_monitor_checked`; o down faz o contrário.
+- **T7** — log de migrations pendentes (versões e tempo); histórico da lista com `LIMIT` por monitor; `Latest` na state machine; retenção em lotes com `ctx` conferido entre eles. **Bug achado e corrigido** durante a medição de RAM: com o banco em dia, o `goose.CollectMigrations` devolve `ErrNoMigrationFiles`, e o app não subia na segunda vez. Teste `TestOpenTwice`.
+- **T8 (depois)** — evidências abaixo. Todos os alvos cumpridos, com dois desvios: a lista deu 203 ms de p95 em 1 de 3 rodadas; a RAM passou de 50 MB na primeira subida após a migration.
+- **T9** — `TestHotQueriesUseIndexes` (pelo nome do índice; falha sem a `0006`, conferido), `TestSummariesHistoryMatchesLegacy` (histórico novo × consulta antiga), `TestResultsSameWithOldIndex` (respostas de `/stats`, lista, checks e incidentes iguais antes e depois do `goose down`; o down remove o índice), `TestDeleteOlderThanBatches` (mesmo conjunto apagado; para com `ctx` cancelado), `TestOpenTwice`.
+- **T10** — README: "Desempenho e tamanho do banco" e "Atualizando um banco grande" (tempo, log, espaço livre, `VACUUM`, `migrate down`). `scripts/README.md`: seção do dbbench. Dockerfile: `HEALTHCHECK --start-period=5m` (a migration passou de 30 s).
 
-### Em andamento
+### Evidências (mesma máquina: Xeon 2,8 GHz, 4 núcleos, 16 GB, SQLite 3.51.3)
 
--
+Perfil limite (100 monitores × 10 s, 30 dias), p95 de 10 repetições. Antes = 2 rodadas no commit das ferramentas (`f8d3597`); depois = 3 rodadas no código final. A variação entre rodadas iguais ficou abaixo de 15 % nas consultas pesadas (`/stats` 30d: 815/855 ms antes, 208/291/228 ms depois), exceto a lista depois (114 a 203 ms), que tem poucas dezenas de ms e sente qualquer ruído.
 
-### Pendente
+| Consulta | Antes | Depois |
+|---|---:|---:|
+| `/stats` 24h http | 30 a 32 ms | 5 a 10 ms |
+| `/stats` 7d http | 159 a 224 ms | 38 a 46 ms |
+| `/stats` 14d http | 341 a 347 ms | 82 a 97 ms |
+| **`/stats` 30d http** | **815 a 855 ms** | **208 a 291 ms** |
+| `/stats` 30d tcp | 819 a 822 ms | 295 a 340 ms |
+| `/stats` 30d heartbeat | 34 a 36 ms | 5 a 10 ms |
+| `GET /api/monitors` | 91.0 a 106.8 s | 114 a 203 ms |
+| checks offset 0 / 1.000 / 10.000 | 36 a 41 / 28 a 34 / 72 a 77 ms | 13 a 22 / 13 a 21 / 13 a 19 ms |
+| incidentes (todos os filtros) | ≤ 0,4 ms | ≤ 1,2 ms (sem mudança; ruído) |
+| gravação com sucesso (média) | 0,28 a 0,30 ms | 0,29 a 0,35 ms (+9 % na média) |
+| gravação com falha | 40 ms | 0,4 a 0,5 ms |
+| gravação com `/stats` 30d ao lado | 740 a 759 ms | 247 a 258 ms |
+| retenção: `DELETE` de 1 dia (822 mil linhas) | 2,5 a 2,7 s numa instrução só | 6,0 s em lotes |
+| retenção: maior espera de uma gravação | 2.358 ms | 81 a 104 ms |
 
-- T1 a T10
+Tamanho (perfil limite): índices de `checks` de 4.091 MB para 2.719 MB (`idx_checks_monitor_checked` 3.251 MB → `idx_checks_monitor_time` 1.878 MB; `idx_checks_checked_at` 841 MB igual). O arquivo foi de 5.972 MB para 7.850 MB: o índice novo é escrito antes de o antigo ser apagado, e as páginas do antigo ficam livres dentro do arquivo (reaproveitadas pelos checks novos ou devolvidas com `VACUUM`). Perfil típico: índices de 65 MB para 43 MB, arquivo de 95 para 125 MB.
+
+Migration `0006`: 1 min 21 s a 1 min 27 s no benchmark e 1 min 18 s no app real (`scripts/dbmem.sh`, com o log novo). Perfil típico: 0,7 s.
+
+Plano depois (sem `SCAN checks` e sem ordenação à parte):
+`stats: buckets` → `SEARCH checks USING COVERING INDEX idx_checks_monitor_time (monitor_id=? AND checked_at>? AND checked_at<?)`; `lista: history` → `SEARCH checks USING COVERING INDEX idx_checks_monitor_time (monitor_id=?)` por monitor; `checks: página` → `SEARCH checks USING INDEX idx_checks_monitor_time (monitor_id=?)`; `retenção` → `SEARCH checks USING COVERING INDEX idx_checks_checked_at (checked_at<?)`.
+
+Perfil típico (10 × 60 s), p95: lista 839 → 4,3 ms; `/stats` 30d http 70 → 35 ms; gravação com falha 6,1 → 0,4 ms.
+
+RAM (`scripts/dbmem.sh`, app real, banco limite, `/stats` 30d de 3 monitores + lista sem parar):
+
+| Situação | Pico (VmHWM) |
+|---|---:|
+| Antes (binário antigo, 120 s) | 31 MB, mas a lista falhou em todas as chamadas (corte de 30 s) e só deu 2 ciclos |
+| Depois, banco já migrado (120 s, 154 ciclos) | 39 a 40 MB (27 MB do processo + 11 MB do binário mapeado) |
+| Depois, primeira subida com a migration (60 a 120 s) | 47 a 51 MB |
+
+O pico durante a migration em si ficou em 29 a 30 MB. O excesso aparece nas consultas logo depois (RssAnon 31 MB e RssFile 15 MB, contra 27 e 11 em regime) e some depois de reiniciar. Não é uma condição de regime, e este cenário (consultar o painel sem parar, com 25 milhões de checks) é bem mais pesado que o do README. Fica registrado como desvio.
+
+`make test` (3,5 s), `make build` e `go vet ./...` verdes.
 
 ## Notes
 
