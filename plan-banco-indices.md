@@ -463,6 +463,8 @@ O pico durante a migration em si ficou em 29 a 30 MB. O excesso aparece nas cons
 
 `make test` (3,5 s), `make build` e `go vet ./...` verdes.
 
+`HTTPS_N=50 scripts/memtest.sh 3600`: interrompido em ~6 min (de 60) para encerrar a tarefa. Até ali, pico de 27 MB e RSS estável em 23 a 24 MB. A hora completa fica para rodar depois.
+
 ## Notes
 
 - A conta do volume: 100 monitores × 8.640 checks por dia × 30 dias ≈ 26 milhões de linhas. O teste de memória do README cobre só 1 hora de dados, então o comportamento em 30 dias ainda não foi medido.
