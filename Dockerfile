@@ -41,8 +41,12 @@ COPY --from=go-builder /bin/pingou .
 
 EXPOSE 8956
 
-# Health check via endpoint público /healthz (sem auth); porta fixa em internal/config
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+# Health check via endpoint público /healthz (sem auth); porta fixa em internal/config.
+# start-period longo: na atualização, as migrations rodam antes do servidor
+# subir, e criar um índice num banco grande leva minutos (1 min 22 s com
+# ~25 milhões de checks, medido com scripts/dbbench.sh). Falhas nesse período
+# não contam; numa subida normal o container fica healthy no primeiro check.
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5m --retries=3 \
   CMD wget -qO- http://localhost:8956/healthz || exit 1
 
 ENTRYPOINT ["./pingou"]
