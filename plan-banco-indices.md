@@ -13,9 +13,9 @@ Há um agravante: o SQLite abre com `SetMaxOpenConns(1)`. Com uma conexão só, 
 **Perfis de teste (assumidos):**
 
 | Perfil | Monitores | Intervalo | Checks em 30 dias |
-|---|---|---|---|
-| típico | 10 | 60 s | ≈ 430 mil |
-| limite | 100 | 10 s | ≈ 26 milhões |
+| ------ | --------- | --------- | ----------------- |
+| típico | 10        | 60 s      | ≈ 430 mil         |
+| limite | 100       | 10 s      | ≈ 26 milhões      |
 
 O perfil limite é o mesmo cenário do teste de memória do README.
 
@@ -82,13 +82,13 @@ Este plano está concluído quando:
 
 ## Tech Stack
 
-| Technology | Choice Rationale |
-|---|---|
-| SQLite (`EXPLAIN QUERY PLAN`, índices parciais, `ANALYZE`/`PRAGMA optimize`) | Já é o banco do projeto. O plano de consulta mostra se o índice é usado |
-| Go `testing` (benchmarks) | Biblioteca padrão. Mede o código real, incluindo o efeito da conexão única |
-| Go + `go-sqlite3` no gerador de dados | Dependência que já existe. Evita exigir o `sqlite3` instalado na máquina |
-| `goose` | Migration no padrão das anteriores |
-| `scripts/memtest.sh` | Já existe. Reaproveitado para conferir a meta de RAM |
+| Technology                                                                   | Choice Rationale                                                           |
+| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| SQLite (`EXPLAIN QUERY PLAN`, índices parciais, `ANALYZE`/`PRAGMA optimize`) | Já é o banco do projeto. O plano de consulta mostra se o índice é usado    |
+| Go `testing` (benchmarks)                                                    | Biblioteca padrão. Mede o código real, incluindo o efeito da conexão única |
+| Go + `go-sqlite3` no gerador de dados                                        | Dependência que já existe. Evita exigir o `sqlite3` instalado na máquina   |
+| `goose`                                                                      | Migration no padrão das anteriores                                         |
+| `scripts/memtest.sh`                                                         | Já existe. Reaproveitado para conferir a meta de RAM                       |
 
 ## File Structure
 
@@ -114,18 +114,18 @@ README.md                               (documentação)
 
 ## Task Breakdown
 
-| Task ID | Agent | Name | Priority | Complexity | Dependencies |
-|---|---|---|---|---|---|
-| T1 | `go-backend-specialist` | Levantamento: consultas quentes e índices atuais | P0 | S | - |
-| T2 | `performance` | Gerador de dados sintéticos (perfis típico e limite) | P0 | M | T1 |
-| T3 | `go-backend-specialist` | Ferramentas de medição (benchmarks e planos) | P0 | M | T1 |
-| T4 | `performance` | Linha de base antes dos índices | P0 | M | T2, T3 |
-| T5 | `performance` | Decisão: quais índices e ajustes valem a pena | P1 | S | T4 |
-| T6 | `design-db` | Migration dos índices | P1 | S | T5 |
-| T7 | `go-backend-specialist` | Ajustes de código (log de migration, consultas, retenção) | P1 | M | T5 |
-| T8 | `performance` | Medição depois e comparação | P1 | M | T6, T7 |
-| T9 | `code-test` | Testes de regressão | P3 | M | T6, T7 |
-| T10 | `document` | Documentação e operação | P3 | S | T8 |
+| Task ID | Agent                   | Name                                                      | Priority | Complexity | Dependencies |
+| ------- | ----------------------- | --------------------------------------------------------- | -------- | ---------- | ------------ |
+| T1      | `go-backend-specialist` | Levantamento: consultas quentes e índices atuais          | P0       | S          | -            |
+| T2      | `performance`           | Gerador de dados sintéticos (perfis típico e limite)      | P0       | M          | T1           |
+| T3      | `go-backend-specialist` | Ferramentas de medição (benchmarks e planos)              | P0       | M          | T1           |
+| T4      | `performance`           | Linha de base antes dos índices                           | P0       | M          | T2, T3       |
+| T5      | `performance`           | Decisão: quais índices e ajustes valem a pena             | P1       | S          | T4           |
+| T6      | `design-db`             | Migration dos índices                                     | P1       | S          | T5           |
+| T7      | `go-backend-specialist` | Ajustes de código (log de migration, consultas, retenção) | P1       | M          | T5           |
+| T8      | `performance`           | Medição depois e comparação                               | P1       | M          | T6, T7       |
+| T9      | `code-test`             | Testes de regressão                                       | P3       | M          | T6, T7       |
+| T10     | `document`              | Documentação e operação                                   | P3       | S          | T8           |
 
 **Sobre a ordem:** a primeira medição pedida (o `/stats` com 30 dias) é a T4. As tasks T1 a T3 existem porque não dá para medir sem saber quais são as consultas, sem dados e sem ferramenta. T2 e T3 podem andar ao mesmo tempo.
 
@@ -337,19 +337,19 @@ README.md                               (documentação)
 
 ## Risk Areas
 
-| Risk | Impact | Mitigation |
-|---|---|---|
-| Dados de teste agrupados por monitor deixam as consultas artificialmente rápidas | Conclusão errada: parece não precisar de índice | T2 gera em ordem cronológica com monitores intercalados, igual ao app real |
-| `CREATE INDEX` em banco com milhões de linhas demora e usa espaço temporário | Subida lenta após atualizar; healthcheck do Docker pode derrubar o container | Medir o tempo na T8, log antes de aplicar (T7), `--start-period` se passar de 30 s (T10), documentar espaço livre |
-| Índice grande aumenta muito o arquivo (no limite, na ordem de centenas de MB a GB, a medir) | Disco de VPS pequena enche | Medir cada índice na T5; preferir índices estreitos; índice "cobrindo" só se o ganho justificar |
-| Mais índices deixam a gravação mais lenta | Atraso nos checks | Critério de no máximo 20 % a mais, medido na T8 |
-| Pool com uma conexão: leitura lenta bloqueia gravação | Checks atrasados ou perdidos durante o painel aberto | Medir o cenário de concorrência (T3, T4, T8); trocar o pool está fora do escopo e só é revisto se os índices não bastarem |
-| Planejador não usa o índice sem estatísticas | Índice criado e ignorado | `ANALYZE` ou `PRAGMA optimize` na migration (T6); teste de plano com `ANALYZE` (T9) |
-| Três planos pedem migration ao mesmo tempo (pausa, fuso e este) | Dois arquivos com o mesmo número; falha ao subir | T1 confere o último número; combinar a ordem de merge antes da T6 |
-| Reescrever consulta muda o resultado | Painel mostra número diferente | T7 sem mudança de comportamento; teste de equivalência (T9) |
-| Resultado depende do hardware | Números absolutos viram promessa | Comparar antes e depois só na mesma máquina; documentar como medição, não garantia |
-| Índices aumentam o uso de cache e RAM | Estoura a meta de 50 MB | Conferir RSS e rodar `scripts/memtest.sh` na T8 |
-| Paginação com `offset` grande continua lenta mesmo com índice | Página 1.000 do histórico demora | Fora do escopo (cursor); registrar o tempo na T4 e decidir depois |
+| Risk                                                                                        | Impact                                                                       | Mitigation                                                                                                                |
+| ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Dados de teste agrupados por monitor deixam as consultas artificialmente rápidas            | Conclusão errada: parece não precisar de índice                              | T2 gera em ordem cronológica com monitores intercalados, igual ao app real                                                |
+| `CREATE INDEX` em banco com milhões de linhas demora e usa espaço temporário                | Subida lenta após atualizar; healthcheck do Docker pode derrubar o container | Medir o tempo na T8, log antes de aplicar (T7), `--start-period` se passar de 30 s (T10), documentar espaço livre         |
+| Índice grande aumenta muito o arquivo (no limite, na ordem de centenas de MB a GB, a medir) | Disco de VPS pequena enche                                                   | Medir cada índice na T5; preferir índices estreitos; índice "cobrindo" só se o ganho justificar                           |
+| Mais índices deixam a gravação mais lenta                                                   | Atraso nos checks                                                            | Critério de no máximo 20 % a mais, medido na T8                                                                           |
+| Pool com uma conexão: leitura lenta bloqueia gravação                                       | Checks atrasados ou perdidos durante o painel aberto                         | Medir o cenário de concorrência (T3, T4, T8); trocar o pool está fora do escopo e só é revisto se os índices não bastarem |
+| Planejador não usa o índice sem estatísticas                                                | Índice criado e ignorado                                                     | `ANALYZE` ou `PRAGMA optimize` na migration (T6); teste de plano com `ANALYZE` (T9)                                       |
+| Três planos pedem migration ao mesmo tempo (pausa, fuso e este)                             | Dois arquivos com o mesmo número; falha ao subir                             | T1 confere o último número; combinar a ordem de merge antes da T6                                                         |
+| Reescrever consulta muda o resultado                                                        | Painel mostra número diferente                                               | T7 sem mudança de comportamento; teste de equivalência (T9)                                                               |
+| Resultado depende do hardware                                                               | Números absolutos viram promessa                                             | Comparar antes e depois só na mesma máquina; documentar como medição, não garantia                                        |
+| Índices aumentam o uso de cache e RAM                                                       | Estoura a meta de 50 MB                                                      | Conferir RSS e rodar `scripts/memtest.sh` na T8                                                                           |
+| Paginação com `offset` grande continua lenta mesmo com índice                               | Página 1.000 do histórico demora                                             | Fora do escopo (cursor); registrar o tempo na T4 e decidir depois                                                         |
 
 ## Rollback Strategy
 
@@ -382,14 +382,14 @@ make build && HTTPS_N=50 scripts/memtest.sh 3600
 
 ## Cronograma Sugerido
 
-| Fase | Tarefas | Complexity | Esforço | Target | Status |
-|---|---|---|---|---|---|
-| Fase 0 | T1 | S | ~15 min | Levantamento das consultas | ✅ Concluído |
-| Fase 1 | T2, T3 | M | ~1 h | Dados e ferramentas de medição | ✅ Concluído |
-| Fase 2 | T4 | M | ~30 min (+ tempo de máquina) | Linha de base, começando pelo `/stats` 30d | ✅ Concluído |
-| Fase 3 | T5 | S | ~15 min | Decisão (pode encerrar o plano) | ✅ Concluído |
-| Fase 4 | T6, T7 | M | ~45 min | Índices e ajustes | ✅ Concluído |
-| Fase 5 | T8, T9, T10 | M | ~1 h 15 min (+ 1 h do memtest) | Comparação, testes e documentação | ✅ Concluído |
+| Fase   | Tarefas     | Complexity | Esforço                        | Target                                     | Status       |
+| ------ | ----------- | ---------- | ------------------------------ | ------------------------------------------ | ------------ |
+| Fase 0 | T1          | S          | ~15 min                        | Levantamento das consultas                 | ✅ Concluído |
+| Fase 1 | T2, T3      | M          | ~1 h                           | Dados e ferramentas de medição             | ✅ Concluído |
+| Fase 2 | T4          | M          | ~30 min (+ tempo de máquina)   | Linha de base, começando pelo `/stats` 30d | ✅ Concluído |
+| Fase 3 | T5          | S          | ~15 min                        | Decisão (pode encerrar o plano)            | ✅ Concluído |
+| Fase 4 | T6, T7      | M          | ~45 min                        | Índices e ajustes                          | ✅ Concluído |
+| Fase 5 | T8, T9, T10 | M          | ~1 h 15 min (+ 1 h do memtest) | Comparação, testes e documentação          | ✅ Concluído |
 
 Total estimado: cerca de 4 horas de trabalho, fora o tempo de máquina (geração do perfil limite e memtest de 1 hora). Se a T5 encerrar o plano, cai para cerca de 2 horas.
 
@@ -425,22 +425,22 @@ Total estimado: cerca de 4 horas de trabalho, fora o tempo de máquina (geraçã
 
 Perfil limite (100 monitores × 10 s, 30 dias), p95 de 10 repetições. Antes = 2 rodadas no commit das ferramentas (`f8d3597`); depois = 3 rodadas no código final. A variação entre rodadas iguais ficou abaixo de 15 % nas consultas pesadas (`/stats` 30d: 815/855 ms antes, 208/291/228 ms depois), exceto a lista depois (114 a 203 ms), que tem poucas dezenas de ms e sente qualquer ruído.
 
-| Consulta | Antes | Depois |
-|---|---:|---:|
-| `/stats` 24h http | 30 a 32 ms | 5 a 10 ms |
-| `/stats` 7d http | 159 a 224 ms | 38 a 46 ms |
-| `/stats` 14d http | 341 a 347 ms | 82 a 97 ms |
-| **`/stats` 30d http** | **815 a 855 ms** | **208 a 291 ms** |
-| `/stats` 30d tcp | 819 a 822 ms | 295 a 340 ms |
-| `/stats` 30d heartbeat | 34 a 36 ms | 5 a 10 ms |
-| `GET /api/monitors` | 91.0 a 106.8 s | 114 a 203 ms |
-| checks offset 0 / 1.000 / 10.000 | 36 a 41 / 28 a 34 / 72 a 77 ms | 13 a 22 / 13 a 21 / 13 a 19 ms |
-| incidentes (todos os filtros) | ≤ 0,4 ms | ≤ 1,2 ms (sem mudança; ruído) |
-| gravação com sucesso (média) | 0,28 a 0,30 ms | 0,29 a 0,35 ms (+9 % na média) |
-| gravação com falha | 40 ms | 0,4 a 0,5 ms |
-| gravação com `/stats` 30d ao lado | 740 a 759 ms | 247 a 258 ms |
-| retenção: `DELETE` de 1 dia (822 mil linhas) | 2,5 a 2,7 s numa instrução só | 6,0 s em lotes |
-| retenção: maior espera de uma gravação | 2.358 ms | 81 a 104 ms |
+| Consulta                                     |                          Antes |                         Depois |
+| -------------------------------------------- | -----------------------------: | -----------------------------: |
+| `/stats` 24h http                            |                     30 a 32 ms |                      5 a 10 ms |
+| `/stats` 7d http                             |                   159 a 224 ms |                     38 a 46 ms |
+| `/stats` 14d http                            |                   341 a 347 ms |                     82 a 97 ms |
+| **`/stats` 30d http**                        |               **815 a 855 ms** |               **208 a 291 ms** |
+| `/stats` 30d tcp                             |                   819 a 822 ms |                   295 a 340 ms |
+| `/stats` 30d heartbeat                       |                     34 a 36 ms |                      5 a 10 ms |
+| `GET /api/monitors`                          |                 91.0 a 106.8 s |                   114 a 203 ms |
+| checks offset 0 / 1.000 / 10.000             | 36 a 41 / 28 a 34 / 72 a 77 ms | 13 a 22 / 13 a 21 / 13 a 19 ms |
+| incidentes (todos os filtros)                |                       ≤ 0,4 ms |  ≤ 1,2 ms (sem mudança; ruído) |
+| gravação com sucesso (média)                 |                 0,28 a 0,30 ms | 0,29 a 0,35 ms (+9 % na média) |
+| gravação com falha                           |                          40 ms |                   0,4 a 0,5 ms |
+| gravação com `/stats` 30d ao lado            |                   740 a 759 ms |                   247 a 258 ms |
+| retenção: `DELETE` de 1 dia (822 mil linhas) |  2,5 a 2,7 s numa instrução só |                 6,0 s em lotes |
+| retenção: maior espera de uma gravação       |                       2.358 ms |                    81 a 104 ms |
 
 Tamanho (perfil limite): índices de `checks` de 4.091 MB para 2.719 MB (`idx_checks_monitor_checked` 3.251 MB → `idx_checks_monitor_time` 1.878 MB; `idx_checks_checked_at` 841 MB igual). O arquivo foi de 5.972 MB para 7.850 MB: o índice novo é escrito antes de o antigo ser apagado, e as páginas do antigo ficam livres dentro do arquivo (reaproveitadas pelos checks novos ou devolvidas com `VACUUM`). Perfil típico: índices de 65 MB para 43 MB, arquivo de 95 para 125 MB.
 
@@ -453,11 +453,11 @@ Perfil típico (10 × 60 s), p95: lista 839 → 4,3 ms; `/stats` 30d http 70 →
 
 RAM (`scripts/dbmem.sh`, app real, banco limite, `/stats` 30d de 3 monitores + lista sem parar):
 
-| Situação | Pico (VmHWM) |
-|---|---:|
-| Antes (binário antigo, 120 s) | 31 MB, mas a lista falhou em todas as chamadas (corte de 30 s) e só deu 2 ciclos |
-| Depois, banco já migrado (120 s, 154 ciclos) | 39 a 40 MB (27 MB do processo + 11 MB do binário mapeado) |
-| Depois, primeira subida com a migration (60 a 120 s) | 47 a 51 MB |
+| Situação                                             |                                                                     Pico (VmHWM) |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------: |
+| Antes (binário antigo, 120 s)                        | 31 MB, mas a lista falhou em todas as chamadas (corte de 30 s) e só deu 2 ciclos |
+| Depois, banco já migrado (120 s, 154 ciclos)         |                        39 a 40 MB (27 MB do processo + 11 MB do binário mapeado) |
+| Depois, primeira subida com a migration (60 a 120 s) |                                                                       47 a 51 MB |
 
 O pico durante a migration em si ficou em 29 a 30 MB. O excesso aparece nas consultas logo depois (RssAnon 31 MB e RssFile 15 MB, contra 27 e 11 em regime) e some depois de reiniciar. Não é uma condição de regime, e este cenário (consultar o painel sem parar, com 25 milhões de checks) é bem mais pesado que o do README. Fica registrado como desvio.
 
