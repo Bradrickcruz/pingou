@@ -46,6 +46,14 @@ type Monitor struct {
 	CurrentState     MonitorState
 	LastCheckedAt    *time.Time
 	LastPingAt       *time.Time // só heartbeat
+	// Certificado SSL (só http com URL https). CertAlertEnabled é a opção de
+	// aviso; CertExpiresAt é a validade do último certificado visto (gravada
+	// mesmo com o aviso desligado); CertAlerted*For é a data de expiração para
+	// a qual o aviso de 30/7 dias já saiu.
+	CertAlertEnabled bool
+	CertExpiresAt    *time.Time
+	CertAlerted30For *time.Time
+	CertAlerted7For  *time.Time
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 }
