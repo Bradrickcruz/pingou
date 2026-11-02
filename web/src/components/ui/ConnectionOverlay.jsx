@@ -1,6 +1,7 @@
 import { WifiOff } from "lucide-react";
 import { useConnection } from "../../hooks/connectionContext";
 import { useNow } from "../../hooks/useNow";
+import { dateTimeSeconds } from "../../lib/format";
 
 export function ConnectionOverlay({ children }) {
   const { online, offlineSince, nextCheckAt } = useConnection();
@@ -10,7 +11,7 @@ export function ConnectionOverlay({ children }) {
     return children;
   }
 
-  const since = new Date(offlineSince ?? now).toLocaleString("pt-BR");
+  const since = dateTimeSeconds(offlineSince ?? now);
   const seconds = Math.max(0, Math.ceil(((nextCheckAt ?? now) - now) / 1000));
 
   return (

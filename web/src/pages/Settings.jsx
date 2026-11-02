@@ -7,6 +7,8 @@ import { WebhookCard } from "../components/settings/WebhookCard";
 import { EmailCard } from "../components/settings/EmailCard";
 import { NtfyCard } from "../components/settings/NtfyCard";
 import { RetentionCard } from "../components/settings/RetentionCard";
+import { TimezoneCard } from "../components/settings/TimezoneCard";
+import { useTimeZone } from "../hooks/timeZoneContext";
 import { BackupCard } from "../components/settings/BackupCard";
 import { UnsavedBar } from "../components/settings/UnsavedBar";
 import { MobileHeader } from "../components/layout/MobileHeader";
@@ -22,6 +24,7 @@ export function Settings({ onLogout }) {
     update,
     reload,
   } = useSettings({ withInfo: true });
+  const { setTimeZone } = useTimeZone();
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -56,10 +59,12 @@ export function Settings({ onLogout }) {
   const webhookURL = current.webhook_url ?? "";
   const emailRecipients = current.email_recipients ?? "";
   const ntfyTopic = current.ntfy_topic ?? "";
+  const timezone = current.timezone ?? "UTC";
   const dirty =
     webhookURL !== (settings.webhook_url ?? "") ||
     emailRecipients !== (settings.email_recipients ?? "") ||
     ntfyTopic !== (settings.ntfy_topic ?? "") ||
+    timezone !== (settings.timezone ?? "UTC") ||
     current.retention_days !== settings.retention_days;
   const size = info?.database_size_bytes;
 
@@ -75,14 +80,17 @@ export function Settings({ onLogout }) {
     setError(null);
     try {
       // o valor exibido depois vem da resposta, já normalizado pelo backend
-      await update({
+      const updated = await update({
         webhook_url: webhookURL,
         retention_days: current.retention_days,
+        timezone: timezone.trim(),
         // com o e-mail bloqueado, mandar o campo daria 400
         ...(settings.email_available && { email_recipients: emailRecipients }),
         // idem para o ntfy sem PINGOU_NTFY_URL
         ...(settings.ntfy_available && { ntfy_topic: ntfyTopic }),
       });
+      // o painel inteiro passa a usar o fuso salvo, sem recarregar
+      setTimeZone(updated.timezone);
       setForm(null);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -133,6 +141,7 @@ export function Settings({ onLogout }) {
             available={settings.ntfy_available}
           />
         </div>
+        <TimezoneCard value={timezone} onChange={(v) => set("timezone", v)} />
         <RetentionCard
           value={current.retention_days}
           savedValue={settings.retention_days}

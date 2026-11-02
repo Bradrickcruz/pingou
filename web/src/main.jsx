@@ -6,6 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 import "./index.css";
 import { injectGlobalStyles } from "./theme/globalStyles";
 import { ConnectionProvider } from "./hooks/useConnection";
+import { TimeZoneProvider } from "./hooks/useTimeZone";
 import { ConnectionOverlay } from "./components/ui/ConnectionOverlay";
 import { Shell } from "./components/layout/Shell";
 import { Dashboard } from "./pages/Dashboard";
@@ -36,19 +37,21 @@ function App() {
     <ConnectionProvider onUnauthorized={handleLogout}>
       <ToastContainer position="bottom-right" autoClose={3000} />
       <ConnectionOverlay>
-        <BrowserRouter>
-          <Shell onLogout={handleLogout}>
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/monitors/:id" element={<MonitorDetail />} />
-              <Route path="/incidents" element={<Incidents />} />
-              <Route
-                path="/settings"
-                element={<Settings onLogout={handleLogout} />}
-              />
-            </Routes>
-          </Shell>
-        </BrowserRouter>
+        <TimeZoneProvider>
+          <BrowserRouter>
+            <Shell onLogout={handleLogout}>
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/monitors/:id" element={<MonitorDetail />} />
+                <Route path="/incidents" element={<Incidents />} />
+                <Route
+                  path="/settings"
+                  element={<Settings onLogout={handleLogout} />}
+                />
+              </Routes>
+            </Shell>
+          </BrowserRouter>
+        </TimeZoneProvider>
       </ConnectionOverlay>
     </ConnectionProvider>
   );
