@@ -18,6 +18,9 @@ import (
 type Notifier interface {
 	NotifyDown(ctx context.Context, m *domain.Monitor, i *domain.Incident)
 	NotifyRecovery(ctx context.Context, m *domain.Monitor, i *domain.Incident)
+	// NotifyCertExpiring avisa que o certificado SSL de um monitor http está
+	// perto de expirar (limite de 30 ou 7 dias).
+	NotifyCertExpiring(ctx context.Context, m *domain.Monitor, a domain.CertAlert)
 }
 
 // WebhookNotifier envia payloads para a URL configurada nas settings
@@ -73,6 +76,10 @@ type webhookPayload struct {
 	LastError               *string               `json:"last_error"`
 	DowntimeDurationSeconds *int64                `json:"downtime_duration_seconds"`
 	DashboardURL            *string               `json:"dashboard_url"`
+	// só no evento cert_expiring (omitidos nos demais, que não mudam)
+	CertExpiresAt *string `json:"cert_expires_at,omitempty"`
+	DaysLeft      *int    `json:"days_left,omitempty"`
+	ThresholdDays *int    `json:"threshold_days,omitempty"`
 }
 
 // webhookPayloadMonitor nunca leva o ping_token: webhooks costumam ir para
@@ -127,6 +134,29 @@ func (n *WebhookNotifier) NotifyRecovery(ctx context.Context, m *domain.Monitor,
 		LastError:               nil,
 		DowntimeDurationSeconds: &downtimeDurationSeconds,
 		DashboardURL:            n.dashboardURL(m),
+	}
+
+	n.send(url, payload)
+}
+
+// NotifyCertExpiring envia o evento "cert_expiring". timestamp é o momento do
+// aviso; cert_expires_at é a validade do certificado (UTC, RFC 3339).
+func (n *WebhookNotifier) NotifyCertExpiring(ctx context.Context, m *domain.Monitor, a domain.CertAlert) {
+	url := n.getWebhookURL()
+	if url == "" {
+		return
+	}
+
+	expiresAt := a.ExpiresAt.UTC().Format(time.RFC3339)
+	daysLeft, threshold := a.DaysLeft, a.ThresholdDays
+	payload := webhookPayload{
+		Event:         "cert_expiring",
+		Monitor:       toWebhookMonitor(m),
+		Timestamp:     time.Now().UTC().Format(time.RFC3339),
+		DashboardURL:  n.dashboardURL(m),
+		CertExpiresAt: &expiresAt,
+		DaysLeft:      &daysLeft,
+		ThresholdDays: &threshold,
 	}
 
 	n.send(url, payload)

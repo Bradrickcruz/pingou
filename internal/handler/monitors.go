@@ -29,6 +29,7 @@ type createMonitorRequest struct {
 	TimeoutSeconds   int                  `json:"timeout_seconds"`
 	FailureThreshold int                  `json:"failure_threshold"`
 	Enabled          *bool                `json:"enabled"` // ausente = true
+	CertAlertEnabled bool                 `json:"cert_alert_enabled"`
 }
 
 type updateMonitorRequest struct {
@@ -40,6 +41,7 @@ type updateMonitorRequest struct {
 	TimeoutSeconds   *int                 `json:"timeout_seconds"`
 	FailureThreshold *int                 `json:"failure_threshold"`
 	Enabled          *bool                `json:"enabled"`
+	CertAlertEnabled *bool                `json:"cert_alert_enabled"`
 }
 
 type monitorResponse struct {
@@ -56,8 +58,11 @@ type monitorResponse struct {
 	CurrentState     string         `json:"current_state"`
 	LastCheckedAt    *string        `json:"last_checked_at"`
 	LastPingAt       *string        `json:"last_ping_at"`
-	CreatedAt        string         `json:"created_at"`
-	UpdatedAt        string         `json:"updated_at"`
+	// Certificado SSL: as marcas internas de aviso não saem na API.
+	CertAlertEnabled bool    `json:"cert_alert_enabled"`
+	CertExpiresAt    *string `json:"cert_expires_at"` // null se ainda não visto
+	CreatedAt        string  `json:"created_at"`
+	UpdatedAt        string  `json:"updated_at"`
 }
 
 // monitorListItem acrescenta o resumo do painel na listagem.
@@ -96,6 +101,7 @@ func (s *Server) handleCreateMonitor(w http.ResponseWriter, r *http.Request) {
 		TimeoutSeconds:   req.TimeoutSeconds,
 		FailureThreshold: req.FailureThreshold,
 		Enabled:          enabled,
+		CertAlertEnabled: req.CertAlertEnabled,
 	}
 	if req.Config.Host != nil {
 		in.Host = *req.Config.Host
@@ -197,6 +203,7 @@ func (s *Server) handleUpdateMonitor(w http.ResponseWriter, r *http.Request) {
 		TimeoutSeconds:   req.TimeoutSeconds,
 		FailureThreshold: req.FailureThreshold,
 		Enabled:          req.Enabled,
+		CertAlertEnabled: req.CertAlertEnabled,
 	})
 	if err != nil {
 		writeServiceError(w, err)
@@ -253,6 +260,8 @@ func toMonitorResponse(m *domain.Monitor) monitorResponse {
 		CurrentState:     string(m.CurrentState),
 		LastCheckedAt:    formatTime(m.LastCheckedAt),
 		LastPingAt:       formatTime(m.LastPingAt),
+		CertAlertEnabled: m.CertAlertEnabled,
+		CertExpiresAt:    formatTime(m.CertExpiresAt),
 		CreatedAt:        m.CreatedAt.Format("2006-01-02T15:04:05Z"),
 		UpdatedAt:        m.UpdatedAt.Format("2006-01-02T15:04:05Z"),
 	}

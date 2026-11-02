@@ -61,6 +61,10 @@ func (n *EmailNotifier) NotifyRecovery(ctx context.Context, m *domain.Monitor, i
 	n.send(ctx, "up", subjectUp(m, i), bodyFor(m, i, true, n.publicURL, n.loc()))
 }
 
+func (n *EmailNotifier) NotifyCertExpiring(ctx context.Context, m *domain.Monitor, a domain.CertAlert) {
+	n.send(ctx, "cert_expiring", subjectCert(m, a), certBody(m, a, n.publicURL, n.loc()))
+}
+
 func (n *EmailNotifier) send(ctx context.Context, event, subject, body string) {
 	to := splitRecipients(n.getRecipients())
 	if len(to) == 0 {
@@ -104,6 +108,48 @@ func subjectUp(m *domain.Monitor, i *domain.Incident) string {
 }
 
 const subjectTest = "[Pingou] Teste de e-mail"
+
+// certPhrase: "expira em 7 dias", "expira em 1 dia", "expira hoje", "expirou".
+func certPhrase(daysLeft int) string {
+	switch {
+	case daysLeft < 0:
+		return "expirou"
+	case daysLeft == 0:
+		return "expira hoje"
+	case daysLeft == 1:
+		return "expira em 1 dia"
+	}
+	return fmt.Sprintf("expira em %d dias", daysLeft)
+}
+
+func subjectCert(m *domain.Monitor, a domain.CertAlert) string {
+	return fmt.Sprintf("[Pingou] ⚠️ Certificado SSL de %s %s", oneLine(m.Name), certPhrase(a.DaysLeft))
+}
+
+// certBody monta o corpo do aviso de certificado (e-mail e ntfy), com a data
+// no fuso loc.
+func certBody(m *domain.Monitor, a domain.CertAlert, publicURL string, loc *time.Location) string {
+	var b strings.Builder
+	line := func(label, value string) { fmt.Fprintf(&b, "%s: %s\n", label, value) }
+
+	line("Monitor", oneLine(m.Name))
+	line("URL", oneLine(m.URL))
+	line("Expira em", formatMessageTime(a.ExpiresAt, loc))
+	switch {
+	case a.DaysLeft < 0:
+		line("Situação", "o certificado já expirou")
+	case a.DaysLeft == 1:
+		line("Faltam", "1 dia")
+	default:
+		line("Faltam", fmt.Sprintf("%d dias", a.DaysLeft))
+	}
+	line("Aviso", fmt.Sprintf("%d dias antes de expirar", a.ThresholdDays))
+	if u := dashboardLink(publicURL, m); u != nil {
+		line("Detalhes", *u)
+	}
+	b.WriteString("\nRenove o certificado antes dessa data, ou o site fica fora do ar para os visitantes.\n")
+	return b.String()
+}
 
 // bodyFor monta o corpo no formato do README, com as datas no fuso loc. Nunca
 // leva o ping_token.

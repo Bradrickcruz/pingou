@@ -123,3 +123,39 @@ O gerador cria os dados pelas migrations reais, em **ordem cronológica e com os
 ### Como interpretar
 
 Os números dependem do hardware. Compare só rodadas feitas na mesma máquina, sem outra carga pesada ao lado. Rode mais de uma vez: uma diferença menor que ~15 % entre rodadas iguais é ruído.
+
+## certserver: testar o aviso de certificado SSL
+
+Servidor HTTPS local com um certificado de **validade escolhida**, para ver o [aviso de expiração do certificado SSL](../README.md#aviso-de-expiração-do-certificado-ssl) funcionando sem esperar 30 dias.
+
+Ele cria uma CA de teste e grava o certificado dela em `.bench/ca.pem` (fica fora do git). A CA é reaproveitada nas próximas execuções, então dá para reiniciar o servidor com outra validade sem reiniciar o Pingou.
+
+### Como usar (Linux)
+
+1. Suba o servidor com um certificado que vence em 25 dias:
+
+```sh
+go run ./scripts/certserver --days 25 --port 9443
+```
+
+2. Em outro terminal, rode o Pingou confiando na CA de teste:
+
+```sh
+SSL_CERT_FILE=.bench/ca.pem PINGOU_API_KEY=dev-api-key ./bin/pingou serve
+```
+
+3. Crie um monitor `https://localhost:9443` com a opção de aviso ligada. Como 25 dias é menos que 30, o aviso de 30 dias sai no primeiro check.
+
+> No macOS, o Go não lê `SSL_CERT_FILE`. Rode o Pingou em Linux ou no Docker.
+
+Roteiro sugerido:
+
+| Passo                                  | Esperado                                               |
+| -------------------------------------- | ------------------------------------------------------ |
+| `--days 25`, opção ligada              | data na página de detalhe e aviso de 30 dias           |
+| reiniciar com `--days 5`               | aviso de 7 dias, uma vez; checks seguintes não repetem |
+| reiniciar com `--days 90` (renovação)  | data atualizada, nenhum aviso                          |
+| trocar a URL do monitor                | data zerada até o próximo check                        |
+| desligar a opção, reiniciar `--days 3` | nenhum aviso; a data continua visível                  |
+
+Opções: `--days` (aceita fração, ex.: `0.5`), `--port`, `--out` (caminho da CA) e `--status` (status HTTP das respostas, ex.: `500` para testar o aviso com o monitor `DOWN`).

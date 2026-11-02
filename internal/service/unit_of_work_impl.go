@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/Bradrickcruz/pingou/internal/domain"
 	"github.com/Bradrickcruz/pingou/internal/repository"
@@ -92,6 +93,10 @@ type monitorRepoWithTx struct {
 
 func (r *monitorRepoWithTx) UpdateWithTx(ctx context.Context, m *domain.Monitor) error {
 	return r.repo.UpdateWithTx(ctx, r.tx, m)
+}
+
+func (r *monitorRepoWithTx) UpdateCertWithTx(ctx context.Context, id, url string, expiresAt, alerted30For, alerted7For *time.Time) (bool, error) {
+	return r.repo.UpdateCertWithTx(ctx, r.tx, id, url, expiresAt, alerted30For, alerted7For)
 }
 
 func (r *monitorRepoWithTx) FindByID(ctx context.Context, id string) (*domain.Monitor, error) {

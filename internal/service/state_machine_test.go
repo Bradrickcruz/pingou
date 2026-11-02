@@ -14,8 +14,9 @@ import (
 
 type noopNotifier struct{}
 
-func (noopNotifier) NotifyDown(context.Context, *domain.Monitor, *domain.Incident)     {}
-func (noopNotifier) NotifyRecovery(context.Context, *domain.Monitor, *domain.Incident) {}
+func (noopNotifier) NotifyDown(context.Context, *domain.Monitor, *domain.Incident)         {}
+func (noopNotifier) NotifyRecovery(context.Context, *domain.Monitor, *domain.Incident)     {}
+func (noopNotifier) NotifyCertExpiring(context.Context, *domain.Monitor, domain.CertAlert) {}
 
 // Regressão: com MaxOpenConns=1, ler fora da transação travava o caminho de falha
 // e o monitor nunca saía de UNKNOWN.
@@ -67,6 +68,8 @@ func (n *dbNotifier) NotifyRecovery(ctx context.Context, _ *domain.Monitor, i *d
 		n.lastRecovery = i
 	}
 }
+
+func (n *dbNotifier) NotifyCertExpiring(context.Context, *domain.Monitor, domain.CertAlert) {}
 
 // Regressão: o notifier rodava com a transação aberta e, ao ler o banco,
 // travava esperando a única conexão do SQLite.

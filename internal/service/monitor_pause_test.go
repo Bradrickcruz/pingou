@@ -16,6 +16,7 @@ func (n *countNotifier) NotifyDown(context.Context, *domain.Monitor, *domain.Inc
 func (n *countNotifier) NotifyRecovery(context.Context, *domain.Monitor, *domain.Incident) {
 	n.recoveries++
 }
+func (n *countNotifier) NotifyCertExpiring(context.Context, *domain.Monitor, domain.CertAlert) {}
 
 func updateEnabled(b *bool) service.UpdateMonitorInput {
 	return service.UpdateMonitorInput{Enabled: b}

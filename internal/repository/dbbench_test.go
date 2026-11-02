@@ -34,8 +34,9 @@ import (
 
 type noopNotifier struct{}
 
-func (noopNotifier) NotifyDown(context.Context, *domain.Monitor, *domain.Incident)     {}
-func (noopNotifier) NotifyRecovery(context.Context, *domain.Monitor, *domain.Incident) {}
+func (noopNotifier) NotifyDown(context.Context, *domain.Monitor, *domain.Incident)         {}
+func (noopNotifier) NotifyRecovery(context.Context, *domain.Monitor, *domain.Incident)     {}
+func (noopNotifier) NotifyCertExpiring(context.Context, *domain.Monitor, domain.CertAlert) {}
 
 type benchEnv struct {
 	db        *sql.DB
@@ -504,7 +505,10 @@ func TestResultsSameWithOldIndex(t *testing.T) {
 	}
 
 	after := snapshot()
-	if err := database.Down(db); err != nil { // desfaz a 0006
+	// desfaz só o índice da 0006 (mesmo SQL do Down dela): um database.Down
+	// desfaria a migration mais recente, que não é mais a 0006
+	if _, err := db.Exec(`CREATE INDEX IF NOT EXISTS idx_checks_monitor_checked ON checks (monitor_id, checked_at DESC);
+		DROP INDEX IF EXISTS idx_checks_monitor_time;`); err != nil {
 		t.Fatal(err)
 	}
 	var n int

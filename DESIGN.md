@@ -146,6 +146,17 @@ Tailwind v4: declare os mesmos valores em `@theme` (`--color-pg-ciano: #1E9BB3;`
 - Badge de status: pílula (`border-radius: 9999px`), fundo `*-bg`, ícone na cor forte e texto em `--pg-ardosia` (o texto na cor forte dá 4,1:1 e 4,2:1 sobre `*-bg`, abaixo de AA), Inter Medium 12–13 px.
 - Bolinha de status (dot) pode acompanhar, mas nunca substitui o badge com texto.
 
+### 4.1 Certificado SSL (página de detalhe)
+
+O bloco "Certificado SSL" (`web/src/components/monitor-detail/CertCard.jsx`) usa a mesma pílula do badge, com os tokens de status. Não há token de "atenção": o nível de 30 dias usa o neutro.
+
+| Nível | Quando | Fundo | Ícone | Texto |
+|---|---|---|---|---|
+| Válido | mais de 30 dias | `--pg-up-bg` | escudo com check, `--pg-up` | `VÁLIDO` |
+| Atenção | 30 dias ou menos | `--pg-unknown-bg` | escudo com alerta, `--pg-ardosia` | `ATENÇÃO` |
+| Alerta | 7 dias ou menos | `--pg-down-bg` | escudo com alerta, `--pg-down` | `RENOVE JÁ` (data em `--pg-down`) |
+| Vencido | já expirou | `--pg-down-bg` | escudo com ×, `--pg-down` | `EXPIRADO` (data em `--pg-down`) |
+
 ## 5. Tipografia
 
 | Papel | Fonte | Tamanho | Linha | Peso |
