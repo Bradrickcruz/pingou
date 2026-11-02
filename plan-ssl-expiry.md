@@ -56,10 +56,10 @@ Hoje o Pingou avisa quando um site cai, mas não avisa quando o certificado SSL 
 
 Este plano está concluído quando:
 
-- [ ] Todos os Success Criteria estão marcados
-- [ ] Build, lint e type-check passam
-- [ ] Nenhum item pendente no Status de Execução
-- [ ] Evidências de verificação registradas
+- [x] Todos os Success Criteria estão marcados
+- [x] Build, lint e type-check passam
+- [x] Nenhum item pendente no Status de Execução
+- [x] Evidências de verificação registradas
 
 > Revisar o plano se: escopo mudar, nova dependência for descoberta, ou mais de 2 tasks forem bloqueadas.
 
@@ -67,34 +67,34 @@ Este plano está concluído quando:
 
 **Comportamento**
 
-- [ ] O checker HTTP guarda a data de expiração (`NotAfter`) do certificado a cada resposta HTTPS, inclusive quando o status HTTP é de erro
-- [ ] Monitor HTTP com a opção ligada recebe **exatamente 1 aviso** ao cruzar 30 dias e **exatamente 1 aviso** ao cruzar 7 dias, sem repetir nos checks seguintes
-- [ ] Se a opção for ligada quando já faltam menos de 7 dias, sai **só o aviso de 7 dias** (não dois avisos de uma vez)
-- [ ] Se o certificado for renovado (data nova), os avisos voltam a funcionar para o certificado novo
-- [ ] Se a URL do monitor mudar, a data guardada e as marcas de aviso são zeradas
-- [ ] O aviso chega por todos os canais configurados (webhook, e-mail e ntfy), com o texto correto em cada um
-- [ ] Monitor com a opção desligada nunca envia aviso, mas continua mostrando a data
-- [ ] Os avisos de queda e recuperação continuam iguais (nenhuma regressão)
+- [x] O checker HTTP guarda a data de expiração (`NotAfter`) do certificado a cada resposta HTTPS, inclusive quando o status HTTP é de erro
+- [x] Monitor HTTP com a opção ligada recebe **exatamente 1 aviso** ao cruzar 30 dias e **exatamente 1 aviso** ao cruzar 7 dias, sem repetir nos checks seguintes
+- [x] Se a opção for ligada quando já faltam menos de 7 dias, sai **só o aviso de 7 dias** (não dois avisos de uma vez)
+- [x] Se o certificado for renovado (data nova), os avisos voltam a funcionar para o certificado novo
+- [x] Se a URL do monitor mudar, a data guardada e as marcas de aviso são zeradas
+- [x] O aviso chega por todos os canais configurados (webhook, e-mail e ntfy), com o texto correto em cada um
+- [x] Monitor com a opção desligada nunca envia aviso, mas continua mostrando a data
+- [x] Os avisos de queda e recuperação continuam iguais (nenhuma regressão)
 
 **API**
 
-- [ ] `POST` e `PATCH /api/monitors` aceitam `cert_alert_enabled`; `GET /api/monitors/:id` devolve `cert_alert_enabled` e `cert_expires_at`
-- [ ] Ligar a opção em monitor que não é HTTP, ou cuja URL não é `https://`, retorna erro 400 claro
+- [x] `POST` e `PATCH /api/monitors` aceitam `cert_alert_enabled`; `GET /api/monitors/:id` devolve `cert_alert_enabled` e `cert_expires_at`
+- [x] Ligar a opção em monitor que não é HTTP, ou cuja URL não é `https://`, retorna erro 400 claro
 
 **Interface**
 
-- [ ] Checkbox no formulário de monitor HTTP, desabilitado quando a URL não é https
-- [ ] A página de detalhes mostra a data de expiração e os dias que faltam, com cor de atenção (30 dias) e de alerta (7 dias ou vencido)
-- [ ] O visual segue o `DESIGN.md`
+- [x] Checkbox no formulário de monitor HTTP, desabilitado quando a URL não é https
+- [x] A página de detalhes mostra a data de expiração e os dias que faltam, com cor de atenção (30 dias) e de alerta (7 dias ou vencido)
+- [x] O visual segue o `DESIGN.md`
 
 **Qualidade**
 
-- [ ] Regra de aviso testada em função pura, com tabela de casos (limites, renovação, ativação tardia, certificado já vencido)
-- [ ] Teste do checker com certificado de validade conhecida, gerado no próprio teste
-- [ ] Teste de integração: sequência de checks ao longo do tempo gera o número certo de avisos
-- [ ] Migration sobe e desce sem perder dados
-- [ ] README atualizado (recurso, campos da API, novo evento do webhook)
-- [ ] `make test` e `make build` passam
+- [x] Regra de aviso testada em função pura, com tabela de casos (limites, renovação, ativação tardia, certificado já vencido)
+- [x] Teste do checker com certificado de validade conhecida, gerado no próprio teste
+- [x] Teste de integração: sequência de checks ao longo do tempo gera o número certo de avisos
+- [x] Migration sobe e desce sem perder dados
+- [x] README atualizado (recurso, campos da API, novo evento do webhook)
+- [x] `make test` e `make build` passam
 
 ## Tech Stack
 
@@ -474,14 +474,14 @@ SSL_CERT_FILE=.bench/ca.pem PINGOU_API_KEY=dev-api-key ./bin/pingou serve
 
 ## Cronograma Sugerido
 
-| Fase   | Tarefas       | Complexity | Esforço     | Target                                                            | Status      |
-| ------ | ------------- | ---------- | ----------- | ----------------------------------------------------------------- | ----------- |
-| Fase 0 | T1            | S          | ~15 min     | Levantamento do código                                            | ⬜ Pendente |
-| Fase 1 | T2, T3, T5    | M          | ~1 h        | Migration, checker e regra pura (em paralelo)                     | ⬜ Pendente |
-| Fase 2 | T4, T6        | L          | ~1 h 30 min | API e notificações (em paralelo)                                  | ⬜ Pendente |
-| Fase 3 | T7            | L          | ~1 h        | Integração na state machine                                       | ⬜ Pendente |
-| Fase 4 | T8, T9        | M          | ~45 min     | Frontend (pode começar após a T4, em paralelo com as fases 2 e 3) | ⬜ Pendente |
-| Fase 5 | T10, T11, T12 | M          | ~1 h 15 min | Testes, QA manual e documentação                                  | ⬜ Pendente |
+| Fase   | Tarefas       | Complexity | Esforço     | Target                                                            | Status       |
+| ------ | ------------- | ---------- | ----------- | ----------------------------------------------------------------- | ------------ |
+| Fase 0 | T1            | S          | ~15 min     | Levantamento do código                                            | ✅ Concluído |
+| Fase 1 | T2, T3, T5    | M          | ~1 h        | Migration, checker e regra pura (em paralelo)                     | ✅ Concluído |
+| Fase 2 | T4, T6        | L          | ~1 h 30 min | API e notificações (em paralelo)                                  | ✅ Concluído |
+| Fase 3 | T7            | L          | ~1 h        | Integração na state machine                                       | ✅ Concluído |
+| Fase 4 | T8, T9        | M          | ~45 min     | Frontend (pode começar após a T4, em paralelo com as fases 2 e 3) | ✅ Concluído |
+| Fase 5 | T10, T11, T12 | M          | ~1 h 15 min | Testes, QA manual e documentação                                  | ✅ Concluído |
 
 Total estimado: cerca de 6 horas de trabalho. Com o frontend em paralelo ao backend, o caminho mais longo fica em cerca de 4 h 30 min.
 
@@ -489,7 +489,36 @@ Total estimado: cerca de 6 horas de trabalho. Com o frontend em paralelo ao back
 
 ### Concluído
 
--
+- **T1 (levantamento):** checker HTTP em `internal/checker/http_checker.go` (o `resp` está disponível; sem TLS inseguro; redirects pelo `CheckRedirect`). Datas em texto RFC 3339. `UpdateWithTx` grava só campos de estado, então os campos de certificado ganharam um `UPDATE` próprio (`UpdateCertWithTx`). Notificações pós-commit via closure no `Process`. Sem template de webhook configurável. Plano de fuso já mesclado (`formatMessageTime`, `zonedParts`). Última migration: `0006`. Frontend tem `node --test` em `src/lib`. `StateMachine` usava `time.Now()` direto: ganhou `WithClock`.
+- **T2:** `0007_monitor_cert_expiry.sql` (sobe e desce; `DROP COLUMN` funciona, como na `0005`)
+- **T3:** `CheckResult.CertNotAfter` e `CertURL`; testes com certificado gerado no teste (200, 500, http://, vencido)
+- **T4:** campos na API, validação (400 `VALIDATION_ERROR`), reset na troca de URL dentro do próprio `UPDATE`
+- **T5:** `EvaluateCertAlert` com testes em tabela
+- **T6:** `NotifyCertExpiring` nos três canais
+- **T7:** passo de certificado dentro da transação do `Process`, escrita guardada pela URL
+- **T8 e T9:** checkbox no formulário e bloco "Certificado SSL" no detalhe
+- **T10:** testes de integração em `internal/service/cert_state_machine_test.go`
+- **T11:** `scripts/certserver` e QA manual (abaixo)
+- **T12:** README, `scripts/README.md` e `DESIGN.md` (§4.1)
+
+**Desvios do plano (decididos na implementação):**
+
+1. `cert_alert_enabled` e `cert_expires_at` também saem na **lista** `GET /api/monitors`. O formulário de edição abre a partir da lista do painel; sem o campo, salvar pelo painel desligaria a opção sem querer. Custo: ~60 bytes por monitor.
+2. Trocar o tipo do monitor (T4, item 6) não se aplica: o `PATCH` já recusa troca de tipo.
+3. `DESIGN.md` não tem token de "atenção". O nível de 30 dias usa o neutro (`unknown`) com o texto "ATENÇÃO"; vermelho fica para 7 dias ou vencido. Uma cor âmbar precisaria de aprovação (§3.4).
+
+### Evidências
+
+- `go vet ./...` e `go test ./...` verdes; `cd web && npm run lint && npm test && npm run build` verdes
+- Simulação de 90 dias (1 check por hora): exatamente 1 aviso de 30 dias e 1 de 7, no horário certo
+- Trigger SQLite contando escritas: 1 escrita de certificado em 23 checks (só a data nova)
+- QA manual com `certserver` + Pingou real + receptor falso de webhook, ntfy e SMTP:
+  - `--days 25`: aviso de 30 dias nos três canais no primeiro check; checks seguintes não repetem
+  - `--days 5`: aviso de 7 dias uma vez (ntfy com prioridade alta)
+  - `--days 90`: data atualizada, nenhum aviso novo
+  - troca de URL: data zerada e relida no próximo check
+  - opção desligada com `--days 3`: data atualizada, nenhum aviso
+  - página de detalhe conferida em desktop e celular (390 px, sem rolagem horizontal) nos estados válido, atenção, alerta, vencido, aguardando e fora do ar ("último valor conhecido")
 
 ### Em andamento
 
@@ -497,7 +526,7 @@ Total estimado: cerca de 6 horas de trabalho. Com o frontend em paralelo ao back
 
 ### Pendente
 
-- T1 a T12
+-
 
 ## Notes
 

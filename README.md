@@ -50,6 +50,7 @@ Faz uma requisição para a URL configurada. Considera `UP` quando a resposta ch
 
 - Segue até `PINGOU_MAX_REDIRECTS` redirects.
 - Vira `DOWN` depois de `threshold` falhas seguidas.
+- Com URL `https://`, guarda a validade do certificado SSL e pode [avisar antes de ele expirar](#aviso-de-expiração-do-certificado-ssl).
 
 ### TCP
 
@@ -119,6 +120,7 @@ Um novo tipo de check só entra no Pingou se passar nas quatro perguntas:
 - Página de detalhe por monitor (`/monitors/:id`): uptime, resposta média, incidentes e tempo fora do ar em 24h / 7 / 14 / 30 dias, gráfico de tempo de resposta, últimos checks e configuração
 - Login com API Key
 - Notificações de queda e recuperação por webhook, por e-mail (SMTP) e pelo [ntfy](https://ntfy.sh), ligados ao mesmo tempo se quiser
+- [Aviso de expiração do certificado SSL](#aviso-de-expiração-do-certificado-ssl) em monitores HTTP com `https://`: um aviso 30 dias e outro 7 dias antes, por todos os canais
 - Retenção configurável: checks expiram após `retention_days`; incidentes são mantidos. A limpeza roda na subida e a cada 1 h
 - Fuso horário configurável (padrão UTC) para o painel, o e-mail e o ntfy
 - Desligamento ordenado (SIGTERM/SIGINT): termina checks, pings e notificações antes de sair
@@ -211,12 +213,14 @@ Garantias:
 
 Campos do monitor, além dos básicos (nome, intervalo, timeout, threshold):
 
-| Campo          | Descrição                                                                    |
-| -------------- | ---------------------------------------------------------------------------- |
-| `type`         | `http`, `tcp` ou `heartbeat`. Padrão `http`: monitores existentes não mudam. |
-| `config`       | JSON com os campos específicos do tipo.                                      |
-| `ping_token`   | Token secreto da URL de ping (somente `heartbeat`).                          |
-| `last_ping_at` | Quando chegou o último ping (somente `heartbeat`; `null` antes do primeiro). |
+| Campo                | Descrição                                                                                     |
+| -------------------- | --------------------------------------------------------------------------------------------- |
+| `type`               | `http`, `tcp` ou `heartbeat`. Padrão `http`: monitores existentes não mudam.                  |
+| `config`             | JSON com os campos específicos do tipo.                                                       |
+| `ping_token`         | Token secreto da URL de ping (somente `heartbeat`).                                           |
+| `last_ping_at`       | Quando chegou o último ping (somente `heartbeat`; `null` antes do primeiro).                  |
+| `cert_alert_enabled` | Aviso de expiração do certificado SSL ligado (somente `http` com `https://`). Padrão `false`. |
+| `cert_expires_at`    | Validade do último certificado visto (UTC, RFC 3339; `null` antes do primeiro check https).   |
 
 Campos de `config` por tipo:
 
@@ -657,7 +661,17 @@ curl -X POST http://localhost:8956/api/monitors \
 
 A resposta do Heartbeat inclui o `ping_token` para montar a URL de ping.
 
+HTTP com aviso de expiração do certificado SSL:
+
+```bash
+curl -X POST http://localhost:8956/api/monitors \
+  -H "X-API-Key: dev-api-key" -H "Content-Type: application/json" \
+  -d '{"name":"Site","url":"https://exemplo.com","interval_seconds":300,"timeout_seconds":10,"failure_threshold":3,"cert_alert_enabled":true}'
+```
+
 > Se `type` não for enviado, o monitor é criado como `http`. Se `enabled` não for enviado, o monitor é criado ativo.
+
+`cert_alert_enabled` (opcional, padrão `false`) vale em `POST` e `PATCH`. Só é aceito em monitor `http` com URL `https://`; nos outros casos a API responde `400` (`VALIDATION_ERROR`). Num `PATCH` que troca a URL para `http://` sem mandar o campo, a opção é desligada sozinha. Trocar a URL zera `cert_expires_at`: o certificado antigo não vale para o endereço novo.
 
 Limites de `interval_seconds`: 10 a 86400 para `http` e `tcp`; 60 a 604800 (1 semana) para `heartbeat`.
 
@@ -665,9 +679,49 @@ Limites de `interval_seconds`: 10 a 86400 para `http` e `tcp`; 60 a 604800 (1 se
 
 ---
 
+## Aviso de expiração do certificado SSL
+
+Quando o certificado SSL vence, o site "cai" para todos os visitantes. O Pingou pode avisar antes.
+
+### Como ligar
+
+Marque **"Avisar quando o certificado SSL estiver perto de expirar"** no formulário do monitor (ou envie `"cert_alert_enabled": true` na API). A opção existe só para monitores **HTTP** com URL **`https://`**, e começa desmarcada.
+
+### Quando os avisos saem
+
+1. **30 dias antes** da expiração: um aviso.
+2. **7 dias antes**: outro aviso.
+
+Cada aviso sai **uma vez por certificado**. Os dois vão por todos os canais configurados (webhook, e-mail e ntfy).
+
+- Se a opção for ligada quando já faltam menos de 7 dias, sai **só** o aviso de 7 dias.
+- Se faltam entre 30 e 7 dias, o aviso de 30 sai no próximo check.
+- Quando o certificado é **renovado** (data nova), os avisos voltam a valer para o certificado novo, sem fazer nada.
+- Desligar e ligar a opção de novo não repete um aviso que já saiu.
+
+### Como funciona
+
+O check HTTP já faz a conexão TLS. A validade (`NotAfter`) vem no certificado da própria resposta, então ler a data **não custa conexão extra**. A data só é gravada quando muda, e as marcas de "aviso enviado" só quando um aviso sai: nenhuma escrita a mais por check.
+
+A data aparece na página de detalhe do monitor em todo monitor HTTP com `https://`, mesmo com o aviso desligado: normal (mais de 30 dias), atenção (30 dias ou menos), alerta (7 dias ou menos) ou vencido. Enquanto o monitor está `DOWN`, a tela mostra o último valor conhecido.
+
+### O que não cobre
+
+- Só o certificado do **próprio site** (o primeiro da cadeia), não os intermediários.
+- Só monitores HTTP com `https://`. TCP com TLS fica de fora.
+- Com redirect, vale o certificado da **resposta final** (o que o visitante vê).
+- Certificado já vencido não é lido: o Go recusa a conexão e o monitor cai como `DOWN`, com o erro do certificado.
+- Os limites (30 e 7 dias) são fixos.
+
+> **Renovação automática (Let's Encrypt/Certbot):** o Certbot costuma renovar quando faltam 30 dias, o mesmo limite do primeiro aviso. Quem usa renovação automática pode receber o aviso de 30 dias pouco antes da renovação. O aviso que indica "a renovação falhou" é o de **7 dias**.
+
+> **Balanceador ou CDN com certificados diferentes por servidor:** a data pode alternar entre os certificados. As marcas guardam a data já avisada, então um aviso só se repete se a alternância voltar a um certificado já avisado depois de outro.
+
+---
+
 ## Webhook
 
-Quando `webhook_url` está configurado em settings, o Pingou envia um `POST` JSON a cada transição para `DOWN` ou de volta para `UP`.
+Quando `webhook_url` está configurado em settings, o Pingou envia um `POST` JSON a cada transição para `DOWN` ou de volta para `UP`, e no [aviso de expiração do certificado SSL](#aviso-de-expiração-do-certificado-ssl).
 
 Evento de queda:
 
@@ -718,6 +772,41 @@ Campos `type` e `target`:
 `dashboard_url` leva à página de detalhe do monitor. É `null` sem `PINGOU_PUBLIC_URL` (o Pingou não sabe o próprio endereço público) e no evento `test`.
 
 > A URL de ping do Heartbeat **nunca** é enviada no webhook, porque ela contém o token secreto e webhooks costumam ir para serviços de terceiros (Slack, Discord etc.).
+
+### Evento `cert_expiring`
+
+Aviso de [certificado SSL perto de expirar](#aviso-de-expiração-do-certificado-ssl). Mesmo formato dos outros eventos, com três campos a mais:
+
+```json
+{
+  "event": "cert_expiring",
+  "monitor": {
+    "id": "018f2f7a-...",
+    "name": "API",
+    "type": "http",
+    "target": "https://api.exemplo.com",
+    "url": "https://api.exemplo.com"
+  },
+  "timestamp": "2026-11-01T12:00:00Z",
+  "last_error": null,
+  "downtime_duration_seconds": null,
+  "dashboard_url": "https://pingou.exemplo.com/monitors/018f2f7a-...",
+  "cert_expires_at": "2026-11-08T09:00:00Z",
+  "days_left": 6,
+  "threshold_days": 7
+}
+```
+
+| Campo             | Descrição                                                                |
+| ----------------- | ------------------------------------------------------------------------ |
+| `timestamp`       | Momento do aviso                                                         |
+| `cert_expires_at` | Validade do certificado (UTC, RFC 3339)                                  |
+| `days_left`       | Dias inteiros que faltam (arredondado para baixo; negativo se já venceu) |
+| `threshold_days`  | Qual aviso é: `30` ou `7`                                                |
+
+Os eventos `down` e `up` não mudam (não levam esses três campos).
+
+> **Atenção, quem consome o webhook:** `event` agora pode ter um terceiro valor, `cert_expiring`. Integrações que tratam "tudo que não é `up`" como queda vão mostrar o aviso de certificado como queda. Trate `event` pelo valor exato. Como a opção começa desligada, nada muda até alguém ligá-la.
 
 ### Testando o webhook
 
@@ -838,6 +927,21 @@ As datas usam o [fuso horário](#fuso-horário) das Configurações. Com `Americ
 - `Detalhes` só aparece com `PINGOU_PUBLIC_URL`.
 - O log registra só `recipients_count`, nunca os endereços.
 
+Aviso de [certificado SSL](#aviso-de-expiração-do-certificado-ssl):
+
+```
+Subject: [Pingou] ⚠️ Certificado SSL de API de pagamentos expira em 7 dias
+
+Monitor: API de pagamentos
+URL: https://api.exemplo.com/health
+Expira em: 2026-11-08 09:00:00 UTC
+Faltam: 7 dias
+Aviso: 7 dias antes de expirar
+Detalhes: https://pingou.exemplo.com/monitors/<id>
+
+Renove o certificado antes dessa data, ou o site fica fora do ar para os visitantes.
+```
+
 ### Testando o e-mail
 
 `POST /api/settings/email/test` envia um e-mail de teste sem gravar nada. Com `{"recipients": "..."}` no corpo, usa esses destinatários (sem salvar). Sem corpo, usa os salvos.
@@ -916,6 +1020,8 @@ Detalhes: https://pingou.exemplo.com/monitors/<id>
 Como no e-mail, as datas usam o [fuso horário](#fuso-horário) das Configurações.
 
 Na volta, o título é `API de pagamentos voltou (fora por 5 min)`, com prioridade normal e a tag ✅.
+
+No [aviso de certificado SSL](#aviso-de-expiração-do-certificado-ssl), o título é `Certificado SSL de API de pagamentos expira em 7 dias`, com as tags 🔒 ⚠️. A prioridade é normal no aviso de 30 dias e alta no de 7. O corpo é o mesmo do e-mail.
 
 - Com `PINGOU_PUBLIC_URL`, tocar na notificação abre a página do monitor (header `Click`).
 - `Alvo` não aparece no Heartbeat, e o token de ping **nunca** vai na notificação.
