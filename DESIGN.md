@@ -184,6 +184,7 @@ Tailwind v4: declare os mesmos valores em `@theme` (`--color-pg-ciano: #1E9BB3;`
 - **Botão destrutivo** (ex.: remover monitor): texto/borda `--pg-down`; fundo sólido só na confirmação.
 - **Link**: `--pg-ciano-fundo`, sublinhado no hover.
 - **Input**: fundo branco, borda `1px solid var(--pg-neblina)` (não `--pg-borda`: 5,5:1 contra o fundo, contra ~1,3:1 e abaixo dos 3:1 exigidos para componentes de interface), raio 8 px; foco com anel `--pg-ciano`.
+- **Combobox** (`ui/Combobox.jsx`, usado no fuso horário): campo de texto com lista que filtra ao digitar. Mesmo estilo do input; lista com fundo branco, borda `--pg-borda`, opção ativa em `--pg-ciano-nevoa`. Teclado: ↑ ↓ Enter Esc. Só aceita valores da lista.
 - **Card**: fundo branco sobre `--pg-nuvem`, borda `--pg-borda`, raio 12 px.
 - **Tabela**: header com fundo `--pg-ciano-nevoa` e texto `--pg-ciano-fundo`; linhas separadas por `--pg-borda`.
 - **Header do dashboard**: símbolo (24–32 px) + logotipo, via SVG oficial.
