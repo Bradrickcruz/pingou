@@ -8,26 +8,33 @@
 
 1. **Pausa com motivo.** Motivo opcional (até 200 caracteres), instante da pausa e da retomada guardados. A contagem de falhas passa a olhar só checks feitos depois da retomada. Isso corrige um bug real: hoje falhas de antes da pausa somam com as de depois (`countConsecutiveFails` em `internal/service/state_machine.go` lê os últimos N checks sem filtro de data).
 2. **Janela agendada.** Início, fim e motivo opcional. Janela única (sem recorrência), por monitor, com criação em lote para vários monitores.
+3. **Página de manutenções (Etapa 3, nova).** Uma página `/maintenance` que lista as janelas vivas (agendadas e em curso) de todos os monitores, permite **editar** reabrindo o modal e **desligar** (cancelar) qualquer uma. Janela agendada tem tudo editável; janela já iniciada tem o **horário travado** (só o motivo muda) e pode ser desligada. A edição também fica disponível no card de manutenção do detalhe do monitor.
 
 **Decisões fechadas (aprovadas na análise de viabilidade):**
 
-| #   | Decisão                                                                                                                       |
-| --- | ----------------------------------------------------------------------------------------------------------------------------- |
-| D1  | Teto de **7 dias** por janela. Início no futuro, fim depois do início.                                                        |
-| D2  | **Uma janela viva por monitor** (agendada ou em curso). "Próxima janela marcada" é essa mesma janela.                         |
-| D3  | **Pausa manual vence a janela.** Monitor pausado continua pausado quando a janela termina.                                    |
-| D4  | Motivo **opcional** na pausa e na janela, máx. 200 caracteres.                                                                |
-| D5  | Criação em lote **tudo ou nada**: se um monitor já tem janela viva, nada é criado e o erro diz qual.                          |
-| D6  | **"Em manutenção" é derivado do relógio** (`starts_at <= agora < ends_at`, não cancelada), não de flag. Sobrevive a reinício. |
-| D7  | Pingou roda com **uma instância** (`dbMu` + SQLite `MaxOpenConns=1`). Sem lock distribuído.                                   |
-| D8  | Uptime de 24 h não muda: sem checks na janela, não há o que contar.                                                           |
-| D9  | `closed_manually` (INTEGER sem CHECK) passa a guardar 0/1/2 = nenhum/pausa/manutenção. Sem migração de esquema para isso.     |
-| D10 | No modal de agendar, o rótulo de Início e Fim mostra o **nome do fuso** das Configurações (ex.: `America/Sao_Paulo`), não o offset (`-03`). |
-| D11 | No modal de agendar, monitores **pausados** ou com **janela viva** (agendada ou em curso) aparecem na lista **desabilitados** (selo "pausado" / "já agendada"), pois não podem entrar numa janela. |
+| #   | Decisão                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | Teto de **7 dias** por janela. Início no futuro, fim depois do início.                                                                                                                                                                                                                                                                                                                                                       |
+| D2  | **Uma janela viva por monitor** (agendada ou em curso). "Próxima janela marcada" é essa mesma janela.                                                                                                                                                                                                                                                                                                                        |
+| D3  | **Pausa manual vence a janela.** Monitor pausado continua pausado quando a janela termina.                                                                                                                                                                                                                                                                                                                                   |
+| D4  | Motivo **opcional** na pausa e na janela, máx. 200 caracteres.                                                                                                                                                                                                                                                                                                                                                               |
+| D5  | Criação em lote **tudo ou nada**: se um monitor já tem janela viva, nada é criado e o erro diz qual.                                                                                                                                                                                                                                                                                                                         |
+| D6  | **"Em manutenção" é derivado do relógio** (`starts_at <= agora < ends_at`, não cancelada), não de flag. Sobrevive a reinício.                                                                                                                                                                                                                                                                                                |
+| D7  | Pingou roda com **uma instância** (`dbMu` + SQLite `MaxOpenConns=1`). Sem lock distribuído.                                                                                                                                                                                                                                                                                                                                  |
+| D8  | Uptime de 24 h não muda: sem checks na janela, não há o que contar.                                                                                                                                                                                                                                                                                                                                                          |
+| D9  | `closed_manually` (INTEGER sem CHECK) passa a guardar 0/1/2 = nenhum/pausa/manutenção. Sem migração de esquema para isso.                                                                                                                                                                                                                                                                                                    |
+| D10 | No modal de agendar, o rótulo de Início e Fim mostra o **nome do fuso** das Configurações (ex.: `America/Sao_Paulo`), não o offset (`-03`).                                                                                                                                                                                                                                                                                  |
+| D11 | No modal de agendar, monitores **pausados** ou com **janela viva** (agendada ou em curso) aparecem na lista **desabilitados** (selo "pausado" / "já agendada"), pois não podem entrar numa janela.                                                                                                                                                                                                                           |
+| D12 | **Janela iniciada tem o horário travado; só o motivo muda.** "Iniciada" é decidido pelo relógio do servidor (`starts_at <= agora`, igual a D6), não pelo tick (`started_at`). Iniciada: `starts_at` e `ends_at` não editáveis, só `reason`; para parar antes, **desligar** (cancelar, que encerra na hora). Agendada: início, fim e motivo editáveis.                                                                        |
+| D13 | **Editar não troca o monitor.** Cada janela pertence a um monitor; editar mexe só em `starts_at`, `ends_at` e `reason` dela. Para mudar o monitor: desligar e agendar outra. A edição revalida D1 (início no futuro, fim depois do início, teto de 7 dias) e D4. D2 não é afetada (a janela já é a única viva do monitor).                                                                                                   |
+| D14 | **A página lista só janelas vivas** (agendadas e em curso), ordenadas por início. Janelas encerradas ou canceladas não aparecem (não há histórico: cancelar antes do início apaga a linha, ver T8). Máx. 100 linhas (uma por monitor, limite de 100 monitores), sem paginação.                                                                                                                                               |
+| D15 | **O modal é reaproveitado** em dois modos: criar (como hoje) e editar (monitor fixo, campos preenchidos, fuso das Configurações). Em janela iniciada, os campos de início e fim ficam desabilitados com a explicação "A manutenção já começou: só o motivo pode mudar". Corrida: se a janela começar enquanto o modal está aberto com horário alterado, o servidor recusa com 409 `MAINTENANCE_LOCKED` e a página recarrega. |
+| D16 | **Etapa 3 em branch e PR próprios, empilhados.** O PR das etapas 1 e 2 ainda não foi mergeado: `feature/maintenance-page` parte de `feature/maintenance-windows` e o PR da Etapa 3 abre com base nela. Quando o PR das etapas 1 e 2 for mergeado, rebasear a branch em `develop` e trocar a base do PR para `develop`.                                                                                                       |
+| D17 | **Editar também no card de manutenção do detalhe do monitor** (`MaintenanceCard`): botão "Editar" abre o mesmo modal em modo editar (D15), com as mesmas regras.                                                                                                                                                                                                                                                             |
 
-**Fora do escopo:** janela recorrente, aviso de "começou/terminou", página pública de status, limpeza de incidentes órfãos, edição de janela (cancela e cria outra), revisão dos baldes do `/stats` em UTC.
+**Fora do escopo:** janela recorrente, aviso de "começou/terminou", página pública de status, limpeza de incidentes órfãos, histórico de janelas encerradas, estender ou encurtar o horário de janela em curso, trocar o monitor de uma janela, revisão dos baldes do `/stats` em UTC.
 
-**Fluxo de git:** branch `feature/maintenance-windows` a partir de `develop`, commits por etapa, PR para `develop`.
+**Fluxo de git:** branch `feature/maintenance-windows` a partir de `develop`, commits por etapa, PR para `develop`. Etapa 3: branch `feature/maintenance-page` a partir de `feature/maintenance-windows`, commits por camada (backend, frontend), PR empilhado com base em `feature/maintenance-windows` (D16).
 
 ## Project Type
 
@@ -35,13 +42,13 @@
 
 ## Definition of Done (DoD)
 
-Este plano está concluído quando:
+Este plano está concluído quando (reaberto pela Etapa 3; as etapas 1 e 2 já cumpriram estes itens):
 
-- [x] Todos os Success Criteria estão marcados
-- [x] Build, lint e type-check passam
-- [x] Nenhum item pendente no Status de Execução
-- [x] Evidências de verificação registradas
-- [x] PR aberto contra `develop` com descrição e checklist de teste manual
+- [ ] Todos os Success Criteria estão marcados
+- [ ] Build, lint e type-check passam
+- [ ] Nenhum item pendente no Status de Execução
+- [ ] Evidências de verificação registradas
+- [ ] PR aberto contra `develop` com descrição e checklist de teste manual (um por etapa: etapas 1–2 já abertos; Etapa 3 pendente)
 
 > Revisar o plano se: escopo mudar, nova dependência for descoberta, ou mais de 2 tasks forem bloqueadas.
 
@@ -67,6 +74,20 @@ Este plano está concluído quando:
 - [x] Datas digitadas são interpretadas no fuso das Configurações, não no do navegador (teste cobre fuso diferente de UTC)
 - [x] Rótulos de Início/Fim do modal mostram o nome do fuso das Configurações (D10)
 - [x] Monitores pausados ou com janela viva aparecem desabilitados na lista do modal (D11)
+
+**Etapa 3**
+
+- [ ] `GET /api/maintenance-windows` devolve as janelas vivas com nome do monitor, estado (`scheduled` | `active`), início, fim e motivo, ordenadas por início (D14)
+- [ ] `PATCH /api/maintenance-windows/{id}` edita início, fim e motivo de janela **agendada**, revalidando D1 e D4 (D12, D13)
+- [ ] PATCH em janela **iniciada** aceita só `reason`; com `starts_at` ou `ends_at` → 409 `MAINTENANCE_LOCKED`, nada é alterado; janela inexistente ou já finalizada → 404 (D12)
+- [ ] Mudar o motivo de janela em curso não reaplica nenhum efeito de início/fim (incidente, estado, `resumed_at` ficam como estão)
+- [ ] Página `/maintenance` acessível pelo menu (desktop e `BottomNav`), com estados de carregando, vazio e erro
+- [ ] A lista mostra monitor, estado, início e fim no fuso das Configurações, e motivo
+- [ ] Toda janela tem "Editar" (abre o modal preenchido, monitor fixo). Agendada: início, fim e motivo editáveis, e botão "Cancelar". Em curso: início e fim desabilitados no modal, motivo editável, e botão "Desligar" com confirmação (D12, D15)
+- [ ] Salvar a edição atualiza a linha sem recarregar a página; janela que começa com o modal aberto e horário alterado mostra o erro do 409 e a lista se atualiza (D15)
+- [ ] Linha passa de "Agendada" para "Em curso" sozinha, sem recarregar a página (o botão "Cancelar" vira "Desligar")
+- [ ] Botão "Agendar manutenção" na página abre o modal em modo criar
+- [ ] O `MaintenanceCard` do detalhe do monitor tem "Editar", que abre o mesmo modal em modo editar (D17)
 
 ## Tech Stack
 
@@ -128,6 +149,35 @@ web/src/
 docs/implementacoes.md, README.md (API)
 ```
 
+**Etapa 3 (arquivos novos ou alterados)**
+
+```
+internal/
+  domain/
+    maintenance.go                   # + Started(now) (starts_at <= now); MaintenanceRepository ganha ListLive e Update
+  repository/
+    maintenance_repo.go              # + ListLive (JOIN com monitors.name), UpdateTimes (guarda starts_at > now), UpdateReason
+    queries.go                       # + SQL da listagem (entra no queryplan_test)
+  service/
+    maintenance_service.go           # + List, Update (agendada: tudo; iniciada: só reason, horário → ErrMaintenanceLocked)
+    validate.go                      # reaproveita validação da janela (extrair função comum a CreateBatch e Update)
+  handler/
+    maintenance.go                   # + GET /maintenance-windows, PATCH /maintenance-windows/{id}; 409 MAINTENANCE_LOCKED
+    server.go                        # rotas novas
+
+web/src/
+  api/maintenance.js                 # + list, update
+  lib/maintenance.js                 # + windowState(w, now), validateWindow aceita edição (início futuro só se mudou)
+  pages/Maintenance.jsx              # NOVO: página /maintenance
+  components/maintenance/            # NOVO
+    WindowsTable.jsx                 # tabela (desktop) e cartões (celular)
+    CancelWindowDialog.jsx           # confirmação de cancelar / desligar
+  components/monitors/MaintenanceModal.jsx  # + modo editar (prop `window`; horário desabilitado se iniciada)
+  components/monitor-detail/MaintenanceCard.jsx  # + botão "Editar" (abre o modal em modo editar)
+  components/layout/{Shell,BottomNav}.jsx   # + item "Manutenções"
+  main.jsx                           # + rota /maintenance
+```
+
 ## Task Breakdown
 
 | Task ID        | Agent                           | Name                                                      | Priority | Complexity | Dependencies  |
@@ -157,6 +207,21 @@ docs/implementacoes.md, README.md (API)
 | T19            | `qa-review` + `security-review` | Revisão de bordas e de entrada                            | P3       | M          | T15, T17, T18 |
 | T20            | `document`                      | Docs e README                                             | P3       | S          | T19           |
 | T21            | —                               | Verificação final, `graphify update .`, PR para `develop` | P3       | S          | T20           |
+| **Etapa 3**    |                                 |                                                           |          |            |               |
+| T22            | —                               | Criar branch `feature/maintenance-page`                   | P0       | XS         | T21           |
+| T23            | `design-api`                    | Contrato `GET` e `PATCH /maintenance-windows`             | P0       | S          | T22           |
+| T24            | `go-backend-specialist`         | Repositório: `ListLive` e `Update`                        | P0       | M          | T23           |
+| T25            | `go-backend-specialist`         | `MaintenanceService`: `List` e `Update` (regra D12/D13)   | P1       | M          | T24           |
+| T26            | `go-backend-specialist`         | Handlers `GET` e `PATCH` + erro 409 `MAINTENANCE_LOCKED`  | P1       | M          | T25           |
+| T27            | `code-test`                     | Testes da Etapa 3 (backend)                               | P1       | M          | T26           |
+| T28            | `design-ux`                     | Fluxo e estados da página `/maintenance`                  | P2       | S          | T23           |
+| T29            | `frontend-specialist`           | API client, rota, menu e `lib/maintenance.js`             | P2       | S          | T26, T28      |
+| T30            | `frontend-specialist`           | Página `Maintenance.jsx`: lista, cancelar, atualização    | P2       | L          | T29           |
+| T31            | `frontend-specialist`           | `MaintenanceModal` em modo editar                         | P2       | M          | T29           |
+| T32            | `frontend-specialist`           | "Editar" no `MaintenanceCard` do detalhe                  | P2       | S          | T31           |
+| T33            | `qa-review` + `security-review` | Revisão de bordas e de entrada da Etapa 3                 | P3       | M          | T27, T30, T32 |
+| T34            | `document`                      | Docs e README da Etapa 3                                  | P3       | S          | T33           |
+| T35            | —                               | Verificação final, `graphify update .`, PR da Etapa 3     | P3       | S          | T34           |
 
 ---
 
@@ -597,17 +662,290 @@ docs/implementacoes.md, README.md (API)
 - **VERIFY**:
   - `gh pr view --web` abre o PR contra `develop`; CI verde
 
+---
+
+## Etapa 3: Página de manutenções
+
+### Task T22: Criar branch
+
+- **Agent**: —
+- **Priority**: P0
+- **Complexity**: XS
+- **Dependencies**: T21
+- **PRE-CONDITIONS**:
+  - `feature/maintenance-windows` com as etapas 1 e 2 commitadas (o PR delas ainda não foi mergeado, D16)
+- **INPUT**: branch `feature/maintenance-windows`
+- **OUTPUT**:
+  1. `git switch feature/maintenance-windows && git switch -c feature/maintenance-page`
+- **VERIFY**:
+  - `git branch --show-current` → `feature/maintenance-page`
+- **Rollback**: apagar a branch; `feature/maintenance-windows` não muda.
+
+### Task T23: Contrato `GET` e `PATCH /maintenance-windows`
+
+- **Agent**: `design-api`
+- **Priority**: P0
+- **Complexity**: S
+- **Dependencies**: T22
+- **PRE-CONDITIONS**:
+  - Contrato da T10 (`POST`, `DELETE`, bloco `maintenance`) conhecido
+- **INPUT**: só `POST` e `DELETE` existem; a lista de janelas só aparece embutida em cada monitor
+- **OUTPUT**:
+  1. `GET /api/maintenance-windows` → 200 `{windows: [{id, monitor_id, monitor_name, starts_at, ends_at, reason, state}]}`
+     - `state`: `"scheduled"` | `"active"`, calculado no servidor (D12, mesmo relógio de D6)
+     - só janelas vivas (`finalized_at IS NULL`), por `starts_at` crescente (D14)
+  2. `PATCH /api/maintenance-windows/{id}` → 200 com a janela atualizada
+     - corpo: `{starts_at?, ends_at?, reason?}`; campo ausente = não muda; `reason: ""` ou `null` limpa o motivo
+     - janela **agendada**: os três campos valem
+     - janela **iniciada**: só `reason` vale; corpo com `starts_at` ou `ends_at` → 409 (mesmo que o valor seja igual ao atual, para o contrato ficar simples)
+     - 400 `VALIDATION_ERROR`: início no passado, fim antes do início, mais de 7 dias, motivo longo, corpo vazio
+     - 404: não existe ou já finalizada
+     - 409 `MAINTENANCE_LOCKED`: tentativa de mudar horário de janela iniciada (D12)
+  3. `DELETE` não muda (já cobre "desligar" a janela em curso)
+- **VERIFY**:
+  - Contrato revisado antes da T24 e registrado no README (T34)
+- **Why**: o front precisa de uma lista única, sem montar a página com N chamadas a `GET /monitors`, e de um erro distinguível para a corrida do D15.
+
+### Task T24: Repositório: `ListLive` e `Update`
+
+- **Agent**: `go-backend-specialist`
+- **Priority**: P0
+- **Complexity**: M
+- **Dependencies**: T23
+- **PRE-CONDITIONS**:
+  - `MaintenanceRepository` da T9 funcionando
+- **INPUT**: `FindLiveByMonitors(ids)` exige os IDs; não há listagem geral nem update de horários
+- **OUTPUT**:
+  1. `domain.MaintenanceWindow.Started(now) bool` (`!now.Before(StartsAt)`), ao lado de `Active`
+  2. `MaintenanceRepository.ListLive(ctx) ([]MaintenanceWindowView, error)`: `JOIN monitors` para o nome, `finalized_at IS NULL`, `ORDER BY starts_at`; SQL em `queries.go`
+  3. Dois métodos, porque as regras são diferentes:
+     - `UpdateTimes(ctx, id, startsAt, endsAt, reason, now)`: `UPDATE ... WHERE id = ? AND finalized_at IS NULL AND starts_at > ?` (o `now` entra como parâmetro); nenhuma linha mudou → `ErrNotFound`. A guarda no SQL fecha a corrida entre o service e o início da janela
+     - `UpdateReason(ctx, id, reason)`: `UPDATE ... WHERE id = ? AND finalized_at IS NULL`; vale para agendada e em curso; nenhuma linha → `ErrNotFound`
+  4. `ListLive` incluído no `queryplan_test.go` (sem SCAN indesejado; com 100 linhas máx., SCAN da tabela pequena é aceitável se o teste documentar)
+- **VERIFY**:
+  - `go test ./internal/repository/...`
+  - `CHECK (ends_at > starts_at)` continua valendo (teste: `UpdateTimes` com fim antes do início falha)
+
+### Task T25: `MaintenanceService`: `List` e `Update`
+
+- **Agent**: `go-backend-specialist`
+- **Priority**: P1
+- **Complexity**: M
+- **Dependencies**: T24
+- **PRE-CONDITIONS**:
+  - Repositório pronto
+- **INPUT**: `CreateBatch` valida inline; `Cancel` já distingue antes/durante
+- **OUTPUT**:
+  1. `List(ctx)`: chama `ListLive` e preenche `state` com `Started(now)` do relógio injetável
+  2. `Update(ctx, id, in UpdateMaintenanceInput)`:
+     - `FindByID`; ausente ou finalizada → `ErrNotFound`
+     - corpo sem nenhum campo → `ErrValidation`; motivo com trim e `<= 200` runes (D4)
+     - `Started(now)` e o corpo traz `starts_at` ou `ends_at` → `ErrMaintenanceLocked` (novo erro; D12)
+     - `Started(now)` e só `reason` → `UpdateReason`; **não** toca em incidente, estado do monitor nem `resumed_at` (os efeitos de início/fim são do tick, T13)
+     - agendada: monta os valores finais (campo ausente mantém o atual) e valida início `> now`, fim `> início`, duração `<= 7*24h`; grava via `UpdateTimes`; se o repo devolver "nenhuma linha" (a janela começou no meio), reler: iniciada → `ErrMaintenanceLocked` se o corpo trazia horário (mas aplicar `UpdateReason` quando o corpo só tinha `reason`), sumiu → `ErrNotFound`
+  3. Extrair a validação de janela para uma função usada por `CreateBatch` e `Update` (uma regra só para D1 e D4)
+- **VERIFY**:
+  - Testes de validação e de trava em T27
+
+### Task T26: Handlers `GET` e `PATCH` + 409 `MAINTENANCE_LOCKED`
+
+- **Agent**: `go-backend-specialist`
+- **Priority**: P1
+- **Complexity**: M
+- **Dependencies**: T25
+- **PRE-CONDITIONS**:
+  - Contrato da T23 fechado
+- **INPUT**: `handler/maintenance.go` com `POST` e `DELETE`; `writeMaintenanceError`
+- **OUTPUT**:
+  1. `handleListMaintenance` e `handleUpdateMaintenance`; corpo do `PATCH` limitado com `http.MaxBytesReader`, como o `POST`
+  2. `writeMaintenanceError`: `ErrMaintenanceLocked` → 409 com código `MAINTENANCE_LOCKED`; os demais mapeamentos não mudam
+  3. Rotas em `server.go`, dentro do `authMiddleware` e do mesmo `if s.maintenanceService != nil`
+  4. `PATCH` distingue "campo ausente" de `reason: null` (ponteiros ou `json.RawMessage`), já que ambos significam coisas diferentes
+- **VERIFY**:
+  - `go test ./internal/handler/...`
+  - `cmd/pingou/commands/serve_test.go` verde
+
+### Task T27: Testes da Etapa 3 (backend)
+
+- **Agent**: `code-test`
+- **Priority**: P1
+- **Complexity**: M
+- **Dependencies**: T26
+- **PRE-CONDITIONS**:
+  - Relógio injetável (T11)
+- **INPUT**: testes da T15 como molde
+- **OUTPUT**:
+  1. `List`: janelas vivas ordenadas; `state` correto antes e depois do `starts_at`; finalizadas fora da lista
+  2. `Update` em agendada: troca início, fim e motivo; troca só o motivo; limpa o motivo
+  3. `Update` recusado: início no passado, fim antes do início, 7 dias + 1 s, motivo longo, corpo vazio
+  4. `Update` em janela iniciada com `starts_at` ou `ends_at` → `ErrMaintenanceLocked`, valores intactos (inclusive no segundo exato do início)
+     4b. `Update` em janela iniciada só com `reason` → ok; motivo novo gravado; incidente, `current_state` e `resumed_at` do monitor intactos; a janela continua bloqueando o monitor
+  5. `Update` em janela inexistente ou finalizada → `ErrNotFound`
+  6. Janela editada continua com o monitor em manutenção só no novo intervalo (gate de T12 usa os valores novos)
+  7. Handler: `GET` 200, `PATCH` 200/400/404/409 e sem autenticação → 401
+- **VERIFY**:
+  - `go test -race ./...` verde
+
+### Task T28: Fluxo e estados da página
+
+- **Agent**: `design-ux`
+- **Priority**: P2
+- **Complexity**: S
+- **Dependencies**: T23
+- **PRE-CONDITIONS**:
+  - Decisões D12–D15 aprovadas
+- **INPUT**: padrão visual de `Incidents.jsx` (abas, tabela, cartões no celular) e `MaintenanceCard`
+- **OUTPUT**:
+  1. Colunas: Monitor (link para o detalhe), Estado (selo "Agendada" / "Em curso"), Início, Fim, Motivo, Ações
+  2. Ações por linha: agendada → "Editar" e "Cancelar"; em curso → "Editar" (só o motivo, horário desabilitado no modal) e "Desligar" (rótulo diferente porque o efeito é diferente: encerra uma manutenção que já está valendo)
+  3. Confirmação: texto distinto para cancelar (agendada: "A janela será removida") e desligar (em curso: "O monitor volta a ser checado agora")
+  4. Estados: carregando (`Spinner`), vazio ("Nenhuma manutenção agendada" + botão "Agendar manutenção"), erro com "Tentar de novo"
+  5. Celular: uma linha vira cartão; ações em menu ou botões de largura toda; foco e `aria-label` com o nome do monitor ("Editar manutenção de <monitor>")
+  6. Botão "Agendar manutenção" no topo
+- **VERIFY**:
+  - Revisão do fluxo antes da T30; checklist de acessibilidade (foco, teclado, `aria-live` na troca de estado) anexado à T33
+
+### Task T29: API client, rota, menu e `lib/maintenance.js`
+
+- **Agent**: `frontend-specialist`
+- **Priority**: P2
+- **Complexity**: S
+- **Dependencies**: T26, T28
+- **PRE-CONDITIONS**:
+  - `GET` e `PATCH` respondendo
+- **INPUT**: `api/maintenance.js` só tem `create` e `cancel`; `main.jsx` com rotas `/`, `/monitors/:id`, `/incidents`, `/settings`
+- **OUTPUT**:
+  1. `api/maintenance.js`: `list()` e `update(id, patch)`
+  2. `lib/maintenance.js`: `windowState(w, now)` (usa `state` do servidor e vira "em curso" quando o relógio local passa de `starts_at`, só para a UI não esperar o próximo poll) e `validateWindow` ajustada para edição (início futuro exigido só quando o início mudou; janela iniciada não valida horário; mensagens iguais às do servidor)
+  3. Teste em `lib/maintenance.test.js`: edição sem mudar o início não acusa "início no passado"; troca de estado na virada do `starts_at`; janela iniciada ignora a validação de horário
+  4. Rota `/maintenance` em `main.jsx` e item "Manutenções" em `Shell.jsx` e `BottomNav.jsx`
+- **VERIFY**:
+  - `cd web && npm test && npm run lint`
+
+### Task T30: Página `Maintenance.jsx`
+
+- **Agent**: `frontend-specialist`
+- **Priority**: P2
+- **Complexity**: L
+- **Dependencies**: T29
+- **PRE-CONDITIONS**:
+  - Fluxo da T28 aprovado
+- **INPUT**: `Incidents.jsx` e `MaintenanceCard.jsx` como molde; `useNow` para o relógio
+- **OUTPUT**:
+  1. `pages/Maintenance.jsx` + `components/maintenance/WindowsTable.jsx`: carrega com `maintenanceApi.list()`, mostra datas no fuso das Configurações (`formatDateTime` já existente) e o nome do fuso no cabeçalho (D10)
+  2. `CancelWindowDialog.jsx`: confirmação com os dois textos da T28; chama `maintenanceApi.cancel` e recarrega; toast de sucesso
+  3. Atualização sem recarregar: `useNow` vira a linha para "Em curso" (o "Cancelar" vira "Desligar") e recarrega a lista quando passa do `starts_at` ou `ends_at` de alguma janela (a que terminou sai da lista)
+  4. "Agendar manutenção" abre o `MaintenanceModal` em modo criar; ao criar, recarrega
+  5. "Editar" abre o modal da T31 e, ao salvar, recarrega
+  6. Erros de rede da lista aparecem na página; erro de cancelar aparece em toast
+- **VERIFY**:
+  - `npm run lint && npm test && npm run build`
+  - Manual: janela de 2 min cruza agendada → em curso → some, sem recarregar a página
+
+### Task T31: `MaintenanceModal` em modo editar
+
+- **Agent**: `frontend-specialist`
+- **Priority**: P2
+- **Complexity**: M
+- **Dependencies**: T29
+- **PRE-CONDITIONS**:
+  - `maintenanceApi.update` disponível
+- **INPUT**: `MaintenanceModal` com lista de monitores, datas e motivo; só cria
+- **OUTPUT**:
+  1. Prop `window` (opcional). Com ela: título "Editar manutenção", botão "Salvar", **sem a lista de monitores** (mostra o nome do monitor como texto fixo, D13), início/fim preenchidos com `utcToZonedInput` no fuso das Configurações, motivo preenchido
+     1b. Janela iniciada (`windowState` = em curso): início e fim `disabled` com o texto de apoio "A manutenção já começou: só o motivo pode mudar" ligado por `aria-describedby`; só o motivo é enviado
+  2. Envia `maintenanceApi.update(id, patch)` só com os campos que mudaram; nada mudou → fecha sem chamar a API
+  3. 409 `MAINTENANCE_LOCKED` (a janela começou com o modal aberto e o horário foi alterado): mensagem "Esta manutenção começou enquanto você editava, então o horário não pode mais mudar. O motivo ainda pode", mantém o modal aberto com o horário desabilitado, e chama `onStale()` para quem abriu recarregar (D15)
+  4. 404: "Esta manutenção não existe mais" + `onStale()`
+  5. Reaproveita validação, foco no primeiro erro, `aria-invalid`/`aria-describedby` e o rótulo com o nome do fuso já existentes
+  6. Modo criar continua igual (inclusive monitores pausados e com janela viva desabilitados, D11)
+- **VERIFY**:
+  - `npm run lint && npm test && npm run build`
+  - Manual: editar horário e motivo de uma agendada; editar só o motivo de uma em curso; deixar o `starts_at` passar com o modal aberto e salvar o horário → mensagem do 409 e horário desabilitado
+
+### Task T32: "Editar" no `MaintenanceCard` do detalhe
+
+- **Agent**: `frontend-specialist`
+- **Priority**: P2
+- **Complexity**: S
+- **Dependencies**: T31
+- **PRE-CONDITIONS**:
+  - Modal em modo editar pronto (T31)
+- **INPUT**: `MaintenanceCard.jsx` mostra motivo, início, fim, estado e "Cancelar"; `MonitorDetail.jsx` já recarrega o monitor depois de cancelar
+- **OUTPUT**:
+  1. Botão "Editar" no card, para janela agendada e em curso (mesmas regras da página, D12), ao lado de "Cancelar"/"Desligar"
+  2. Abre `MaintenanceModal` com `window` montada a partir de `monitor.maintenance` (`id`, `starts_at`, `ends_at`, `reason`, `active`) e o nome do monitor; o estado vem de `maintenance.active`, sem consulta nova
+  3. Ao salvar, `MonitorDetail` recarrega o monitor (mesmo caminho do cancelar); o card mostra o motivo e o horário novos
+  4. Rótulo acessível "Editar manutenção" no botão
+- **VERIFY**:
+  - `npm run lint && npm test && npm run build`
+  - Manual: editar pelo detalhe uma janela agendada e uma em curso; o resultado aparece também na página `/maintenance`
+- **Why**: quem está no detalhe de um monitor em manutenção quer ajustar ali, sem ir à página (D17).
+
+### Task T33: Revisão de bordas e segurança da Etapa 3
+
+- **Agent**: `qa-review` + `security-review`
+- **Priority**: P3
+- **Complexity**: M
+- **Dependencies**: T27, T30, T32
+- **PRE-CONDITIONS**:
+  - Etapa 3 completa na branch
+- **INPUT**: diff da branch
+- **OUTPUT**:
+  1. QA: editar no segundo exato do início; editar o motivo de janela em curso e conferir que nada mais mudou (incidente, estado, check); editar duas vezes seguidas; editar para um intervalo que já está em curso; pausar o monitor com janela agendada e editar; excluir o monitor com janela e abrir a página; fuso trocado nas Configurações com a página aberta; cancelar a janela que acabou de terminar; duas abas editando a mesma janela; editar pelo card do detalhe e pela página
+  2. Segurança: `GET` e `PATCH` atrás do `authMiddleware`; corpo do `PATCH` limitado; ID do caminho validado; motivo e nome do monitor renderizados como texto (sem `dangerouslySetInnerHTML`); SQL do `Update` e do `ListLive` parametrizado; o `PATCH` não permite mudar `monitor_id` (campo ignorado ou 400)
+- **VERIFY**:
+  - Achados corrigidos ou registrados em Notes
+
+### Task T34: Docs da Etapa 3
+
+- **Agent**: `document`
+- **Priority**: P3
+- **Complexity**: S
+- **Dependencies**: T33
+- **PRE-CONDITIONS**:
+  - Comportamento final estável
+- **INPUT**: `docs/implementacoes.md`, `README.md`
+- **OUTPUT**:
+  1. `docs/implementacoes.md`: seção da Etapa 3, decisões D12–D17 e as limitações (sem histórico, horário de janela em curso não muda)
+  2. README: `GET` e `PATCH /api/maintenance-windows`, erro `MAINTENANCE_LOCKED` e o campo `state`
+- **VERIFY**:
+  - Revisão visual dos arquivos
+
+### Task T35: Verificação final e PR da Etapa 3
+
+- **Agent**: —
+- **Priority**: P3
+- **Complexity**: S
+- **Dependencies**: T34
+- **PRE-CONDITIONS**:
+  - Tudo verde localmente
+- **INPUT**: branch `feature/maintenance-page`
+- **OUTPUT**:
+  1. Rodar a Phase X inteira
+  2. `graphify update .`
+  3. Commit(s) por camada, seguindo o padrão do projeto (`feat(maintenance): …`), com a linha de `Co-Authored-By` indicada pela sessão
+  4. `git push -u origin feature/maintenance-page` e `gh pr create --base feature/maintenance-windows` (PR empilhado, D16), com resumo, decisões D12–D17, checklist de teste manual da Etapa 3 e aviso no topo: "Depende do PR das etapas 1 e 2"
+  5. Depois que o PR das etapas 1 e 2 for mergeado: `git rebase --onto develop feature/maintenance-windows` e trocar a base do PR para `develop` (`gh pr edit --base develop`)
+- **VERIFY**:
+  - `gh pr view --web` abre o PR com a base certa; CI verde
+
 ## Risk Areas
 
-| Risk                                                 | Impact                                                 | Mitigation                                                                                             |
-| ---------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| Fuso: `datetime-local` usa o fuso do navegador       | Janela deslocada em horas                              | `zonedToUtc` com o fuso das Configurações + testes com fusos de meia hora e DST; fuso visível no modal |
-| Consulta extra por check no `withMonitor`            | Latência no caminho quente                             | Consulta indexada coberta pelo `queryplan_test`; 100 monitores no máximo                               |
-| Corrida entre o tick e um `Update`/`Cancel`          | Estado gravado por cima                                | Tudo sob `dbMu`; o tick recarrega o monitor dentro do lock, como `withMonitor`                         |
-| Efeitos de início/fim atrasam até um tick            | Incidente fecha ou primeiro check roda até 10 s depois | Aceitável; o bloqueio em si é exato (relógio). Documentado                                             |
-| `foreign_keys` desligado no SQLite                   | Janelas órfãs ao excluir monitor                       | Verificar em T8; apagar no service se preciso                                                          |
-| Troca de `ClosedManually` por enum quebra chamadores | Build quebrado                                         | Grep completo em T2; manter `closed_manually` na resposta JSON                                         |
-| Teste de scheduler instável por tempo real           | CI intermitente                                        | Relógio e ticks injetáveis; sem `time.Sleep` longo                                                     |
+| Risk                                                   | Impact                                                                          | Mitigation                                                                                                                                                    |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fuso: `datetime-local` usa o fuso do navegador         | Janela deslocada em horas                                                       | `zonedToUtc` com o fuso das Configurações + testes com fusos de meia hora e DST; fuso visível no modal                                                        |
+| Consulta extra por check no `withMonitor`              | Latência no caminho quente                                                      | Consulta indexada coberta pelo `queryplan_test`; 100 monitores no máximo                                                                                      |
+| Corrida entre o tick e um `Update`/`Cancel`            | Estado gravado por cima                                                         | Tudo sob `dbMu`; o tick recarrega o monitor dentro do lock, como `withMonitor`                                                                                |
+| Efeitos de início/fim atrasam até um tick              | Incidente fecha ou primeiro check roda até 10 s depois                          | Aceitável; o bloqueio em si é exato (relógio). Documentado                                                                                                    |
+| `foreign_keys` desligado no SQLite                     | Janelas órfãs ao excluir monitor                                                | Verificar em T8; apagar no service se preciso                                                                                                                 |
+| Troca de `ClosedManually` por enum quebra chamadores   | Build quebrado                                                                  | Grep completo em T2; manter `closed_manually` na resposta JSON                                                                                                |
+| Teste de scheduler instável por tempo real             | CI intermitente                                                                 | Relógio e ticks injetáveis; sem `time.Sleep` longo                                                                                                            |
+| Editar janela que começa no meio da operação (Etapa 3) | Horário de janela iniciada alterado, ou incidente já fechado com horário antigo | Trava por relógio do servidor (D12) + guarda `starts_at > now` no próprio `UPDATE` do horário; o 409 recarrega a página                                       |
+| Editar o motivo de janela em curso (Etapa 3)           | `close_note` dos incidentes fechados no início continua com o motivo antigo     | Aceito: `close_note` é cópia de propósito (ver Notes); só a janela e o card mostram o motivo novo. Documentar na T34                                          |
+| Editar mexe no tick de início/fim (Etapa 3)            | Efeitos de início/fim aplicados no horário antigo                               | `DueStart`/`DueEnd` leem `starts_at`/`ends_at` da linha a cada tick; editar antes do início não deixa efeito pendente (`started_at` ainda nulo). Teste na T27 |
+| Duas abas editando a mesma janela (Etapa 3)            | Última gravação vence sem aviso                                                 | Aceito: janela pequena, uso de uma pessoa. O `PATCH` só envia campos alterados; registrar em Notes                                                            |
+| Página e modal duplicam regras de validação (Etapa 3)  | Mensagens divergentes entre cliente e servidor                                  | `validateWindow` único em `lib/maintenance.js`; o servidor continua sendo a fonte da verdade (T25)                                                            |
 
 ## Rollback Strategy
 
@@ -615,6 +953,7 @@ docs/implementacoes.md, README.md (API)
 2. **Depois do merge, só etapa 2:** `git revert` do commit da etapa 2. A 0009 tem Down (`pingou migrate down` uma vez) e a tabela nova não afeta as antigas.
 3. **Depois do merge, tudo:** reverter os dois commits e descer as migrações 0009 e 0008. Incidentes com `closed_manually=2` continuam lidos como "fechado" (valor ≠ 0).
 4. Banco do usuário: recomendar `GET /api/export` antes de atualizar (já existe).
+5. **Etapa 3:** não há migração nova. Antes do merge, fechar o PR e apagar `feature/maintenance-page`; as etapas 1 e 2 não são afetadas. Depois do merge, `git revert` do(s) commit(s) da Etapa 3: as rotas `GET`/`PATCH`, a página, o modo editar e o botão "Editar" do card somem; janelas, `POST` e `DELETE` continuam como estavam. Se o PR das etapas 1 e 2 for revertido, a Etapa 3 vai junto (ela depende dele).
 
 ## Phase X: Verification
 
@@ -641,15 +980,29 @@ Teste manual mínimo (registrar no PR):
 - Cancelar uma janela agendada e uma em curso
 - Heartbeat em manutenção: `curl /ping/<token>` → 200, sem check novo
 
+Teste manual da Etapa 3 (registrar no PR):
+
+- Página `/maintenance` com 0 janelas → estado vazio; agendar duas (uma em 2 min, outra amanhã) → aparecem ordenadas
+- Editar a de amanhã (horário e motivo) → linha atualiza sem recarregar; conferir o UTC gravado com o fuso das Configurações ≠ fuso do navegador
+- Deixar a de 2 min começar → linha vira "Em curso" sozinha e o "Cancelar" vira "Desligar"
+- "Editar" na janela em curso → início e fim desabilitados; mudar o motivo e salvar → motivo novo na lista e no card, monitor segue em manutenção, sem incidente novo
+- "Desligar" → monitor volta a ser checado
+- Abrir "Editar" na janela de 2 min antes de começar, esperar passar do início e salvar o horário → mensagem do 409, horário desabilitado, lista atualizada
+- Detalhe do monitor em manutenção → "Editar" no card abre o mesmo modal; salvar atualiza o card
+- `curl -X PATCH` com `starts_at` em janela iniciada → 409 `MAINTENANCE_LOCKED`; só com `reason` → 200
+
 ## Cronograma Sugerido
 
-| Fase                         | Tarefas | Complexity | Esforço | Target                                       | Status      |
-| ---------------------------- | ------- | ---------- | ------- | -------------------------------------------- | ----------- |
-| Fase 0                       | T0      | XS         | 5 min   | Branch criada                                | ✅ Concluído |
-| Fase 1 (etapa 1)             | T1–T7   | M          | ~3 h    | Pausa com motivo + bug da retomada corrigido | ✅ Concluído |
-| Fase 2 (backend da etapa 2)  | T8–T15  | XL         | ~6 h    | Janela funcionando via API, com testes       | ✅ Concluído |
-| Fase 3 (frontend da etapa 2) | T16–T18 | L          | ~3–4 h  | UI completa                                  | ✅ Concluído |
-| Fase 4 (fechamento)          | T19–T21 | M          | ~1,5 h  | PR aberto contra `develop`                   | ✅ Concluído |
+| Fase                         | Tarefas | Complexity | Esforço | Target                                                                      | Status       |
+| ---------------------------- | ------- | ---------- | ------- | --------------------------------------------------------------------------- | ------------ |
+| Fase 0                       | T0      | XS         | 5 min   | Branch criada                                                               | ✅ Concluído |
+| Fase 1 (etapa 1)             | T1–T7   | M          | ~3 h    | Pausa com motivo + bug da retomada corrigido                                | ✅ Concluído |
+| Fase 2 (backend da etapa 2)  | T8–T15  | XL         | ~6 h    | Janela funcionando via API, com testes                                      | ✅ Concluído |
+| Fase 3 (frontend da etapa 2) | T16–T18 | L          | ~3–4 h  | UI completa                                                                 | ✅ Concluído |
+| Fase 4 (fechamento)          | T19–T21 | M          | ~1,5 h  | PR aberto contra `develop`                                                  | ✅ Concluído |
+| Fase 5 (backend da Etapa 3)  | T22–T27 | L          | ~3 h    | `GET`/`PATCH` com testes                                                    | ⬜ Pendente  |
+| Fase 6 (frontend da Etapa 3) | T28–T32 | L          | ~3,5 h  | Página `/maintenance`, modal em modo editar e "Editar" no card              | ⬜ Pendente  |
+| Fase 7 (fechamento Etapa 3)  | T33–T35 | M          | ~1,5 h  | PR da Etapa 3 aberto (base `feature/maintenance-windows`, depois `develop`) | ⬜ Pendente  |
 
 ## Status de Execução
 
@@ -665,6 +1018,8 @@ Teste manual mínimo (registrar no PR):
 ### Pendente
 
 - QA em dispositivo real / leitor de tela (registrado em Pendências abertas)
+- Etapa 3 inteira (T22–T35): página de manutenções, edição de janela (horário só da agendada, motivo também da em curso), desligar janela em curso, "Editar" no card do detalhe. Decisões D12–D17 aprovadas; aguardando o aval final do plano para construir
+- Merge do PR das etapas 1 e 2 (a Etapa 3 está empilhada nele, D16)
 
 ## Notes
 
@@ -672,6 +1027,10 @@ Teste manual mínimo (registrar no PR):
 - `resumed_at` serve à pausa e ao fim da janela; não há campo separado para "fim da manutenção".
 - `close_note` copia o motivo no fechamento para o histórico não mudar se o motivo da pausa for alterado depois.
 - Baldes do `/stats` em fusos de meia hora seguem fora do escopo (registrado em `docs/implementacoes.md`).
+- Etapa 3: "iniciada" vem do relógio (`starts_at <= agora`), não de `started_at`, porque o tick pode atrasar até 10 s e a janela já está bloqueando o monitor nesse intervalo (D6, D12).
+- Etapa 3: editar uma janela agendada não precisa tocar em incidentes nem em estado do monitor, já que os efeitos de início só rodam quando `starts_at` chega (T13).
+- Etapa 3: editar o motivo de janela em curso grava só em `maintenance_windows.reason`. O `close_note` dos incidentes fechados no início da janela é cópia do motivo da época e não muda (mesma razão da nota anterior sobre `close_note`).
+- Etapa 3: `PATCH` com `starts_at` ou `ends_at` em janela iniciada recusa mesmo quando o valor é igual ao atual. Contrato simples; o front só envia o que mudou.
 
 ### Alternativas consideradas e descartadas
 
@@ -681,3 +1040,8 @@ Teste manual mínimo (registrar no PR):
 - `Biblioteca de date picker` → descartada: `datetime-local` nativo + helper de fuso resolve.
 - `Criação em lote parcial` → descartada por D5 (tudo ou nada é mais previsível).
 - `Coluna nova close_reason TEXT` → descartada: `closed_manually` INTEGER sem CHECK já comporta 0/1/2 (D9).
+- `Montar a página com GET /monitors e filtrar maintenance != null` → descartada (Etapa 3): paginada por monitor, devolve payload grande e não dá o nome do monitor ordenado por início; um `GET /maintenance-windows` dedicado é uma consulta só.
+- `Editar = cancelar e criar outra` → descartada (Etapa 3): perde o ID, pode falhar no meio (cancelou e não criou) e briga com a trava D2; `PATCH` é atômico.
+- `Permitir editar o fim de janela em curso (estender/encurtar)` → descartada (Etapa 3): o horário de janela iniciada é travado por decisão; mexer no fim em curso exigiria reaplicar efeitos do tick (T13). Para parar antes, "Desligar".
+- `PR da Etapa 3 direto contra develop, sem esperar o merge` → descartada (Etapa 3): o diff mostraria as etapas 1 e 2 junto. PR empilhado (D16) mantém a revisão só do que é novo.
+- `Tela de histórico de janelas encerradas` → descartada (Etapa 3): cancelar antes do início apaga a linha e não há coluna de histórico; precisaria de migração.
