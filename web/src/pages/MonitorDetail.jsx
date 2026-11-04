@@ -23,6 +23,8 @@ import { Button } from "../components/ui/Button";
 import { Spinner } from "../components/ui/Spinner";
 import { RowMenu } from "../components/monitors/RowMenu";
 import { MonitorModals } from "../components/monitors/MonitorModals";
+import { MaintenanceModal } from "../components/monitors/MaintenanceModal";
+import { MaintenanceCard } from "../components/monitor-detail/MaintenanceCard";
 import { PingBlock } from "../components/monitors/MonitorForm";
 import { RangeTabs } from "../components/monitor-detail/RangeTabs";
 import { RANGES, clampRange } from "../lib/ranges";
@@ -455,9 +457,11 @@ export function MonitorDetail() {
   const lastLabel = heartbeat ? "último ping" : "último check";
   const last = paused
     ? "pausado"
-    : lastAt
-      ? `${lastLabel} ${timeAgo(lastAt, now)}`
-      : `${lastLabel}: ainda não houve`;
+    : status === "MAINTENANCE"
+      ? "em manutenção"
+      : lastAt
+        ? `${lastLabel} ${timeAgo(lastAt, now)}`
+        : `${lastLabel}: ainda não houve`;
   // o incidente aberto é sempre o mais novo; fora dos 3 carregados, o cartão não aparece
   const openIncident = status === "DOWN" ? incidents.find((i) => i.open) : null;
   const menu = (
@@ -466,6 +470,7 @@ export function MonitorDetail() {
       onEdit={openModal("edit")}
       onToggle={handleToggle}
       onDelete={openModal("delete")}
+      onSchedule={openModal("maintenance")}
     />
   );
 
@@ -546,6 +551,13 @@ export function MonitorDetail() {
           <span className="font-medium">Motivo da pausa:</span>{" "}
           {monitor.pause_reason}
         </p>
+      )}
+
+      {monitor.maintenance && (
+        <MaintenanceCard
+          maintenance={monitor.maintenance}
+          onChanged={refresh}
+        />
       )}
 
       {openIncident && <DownAlert incident={openIncident} now={now} />}
@@ -663,6 +675,14 @@ export function MonitorDetail() {
           </section>
         </div>
       </div>
+
+      {modal === "maintenance" && selected && (
+        <MaintenanceModal
+          initialIds={[selected.id]}
+          onClose={closeModal}
+          onCreated={refresh}
+        />
+      )}
 
       <MonitorModals
         modal={modal}

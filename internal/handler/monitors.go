@@ -66,8 +66,10 @@ type monitorResponse struct {
 	PauseReason *string `json:"pause_reason"`
 	PausedAt    *string `json:"paused_at"`
 	ResumedAt   *string `json:"resumed_at"`
-	CreatedAt   string  `json:"created_at"`
-	UpdatedAt   string  `json:"updated_at"`
+	// Maintenance: janela viva (agendada ou em curso) ou null.
+	Maintenance *maintenanceResponse `json:"maintenance"`
+	CreatedAt   string               `json:"created_at"`
+	UpdatedAt   string               `json:"updated_at"`
 }
 
 // monitorListItem acrescenta o resumo do painel na listagem.
@@ -154,9 +156,11 @@ func (s *Server) handleListMonitors(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	live, now := s.liveMaintenance(r.Context(), monitors...)
 	data := make([]monitorListItem, len(monitors))
 	for i, m := range monitors {
 		item := monitorListItem{monitorResponse: toMonitorResponse(m), History: []bool{}}
+		item.Maintenance = toMaintenanceResponse(live[m.ID], now)
 		if sum := summaries[m.ID]; sum != nil {
 			item.History = sum.History
 			item.Uptime24h = sum.Uptime24h
@@ -185,7 +189,7 @@ func (s *Server) handleGetMonitor(w http.ResponseWriter, r *http.Request) {
 		writeServiceError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, toMonitorResponse(m))
+	writeJSON(w, http.StatusOK, s.monitorWithMaintenance(r, m))
 }
 
 func (s *Server) handleUpdateMonitor(w http.ResponseWriter, r *http.Request) {
@@ -216,7 +220,15 @@ func (s *Server) handleUpdateMonitor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, toMonitorResponse(m))
+	writeJSON(w, http.StatusOK, s.monitorWithMaintenance(r, m))
+}
+
+// monitorWithMaintenance é a resposta de um monitor com a janela viva.
+func (s *Server) monitorWithMaintenance(r *http.Request, m *domain.Monitor) monitorResponse {
+	res := toMonitorResponse(m)
+	live, now := s.liveMaintenance(r.Context(), m)
+	res.Maintenance = toMaintenanceResponse(live[m.ID], now)
+	return res
 }
 
 func (s *Server) handleRegenerateToken(w http.ResponseWriter, r *http.Request) {

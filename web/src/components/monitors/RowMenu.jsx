@@ -8,12 +8,14 @@ import {
   Pause,
   Play,
   Trash2,
+  Wrench,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { copyText, pingUrl } from "../../lib/monitors";
 
 // Menu ⋮ da linha. "Ver detalhes" abre a página do monitor (some nela mesma).
-export function RowMenu({ monitor, onEdit, onToggle, onDelete }) {
+// onSchedule (opcional) agenda uma manutenção; some se já há janela viva.
+export function RowMenu({ monitor, onEdit, onToggle, onDelete, onSchedule }) {
   const navigate = useNavigate();
   const onDetailPage = useMatch("/monitors/:id") != null;
   const [open, setOpen] = useState(false);
@@ -107,6 +109,17 @@ export function RowMenu({ monitor, onEdit, onToggle, onDelete }) {
             )}
             {monitor.enabled ? "Pausar" : "Retomar"}
           </button>
+          {onSchedule && !monitor.maintenance && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={run(onSchedule)}
+              className={`${item} text-pg-ardosia`}
+            >
+              <Wrench size={16} aria-hidden="true" />
+              Agendar manutenção
+            </button>
+          )}
           {!onDetailPage && (
             <button
               type="button"

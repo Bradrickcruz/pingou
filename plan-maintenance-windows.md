@@ -35,11 +35,11 @@
 
 Este plano está concluído quando:
 
-- [ ] Todos os Success Criteria estão marcados
-- [ ] Build, lint e type-check passam
-- [ ] Nenhum item pendente no Status de Execução
-- [ ] Evidências de verificação registradas
-- [ ] PR aberto contra `develop` com descrição e checklist de teste manual
+- [x] Todos os Success Criteria estão marcados
+- [x] Build, lint e type-check passam
+- [x] Nenhum item pendente no Status de Execução
+- [x] Evidências de verificação registradas
+- [x] PR aberto contra `develop` com descrição e checklist de teste manual
 
 > Revisar o plano se: escopo mudar, nova dependência for descoberta, ou mais de 2 tasks forem bloqueadas.
 
@@ -47,22 +47,22 @@ Este plano está concluído quando:
 
 **Etapa 1**
 
-- [ ] Pausar abre um modal com motivo opcional; motivo e `paused_at` são gravados
-- [ ] Lista e detalhes mostram "Pausado" com o motivo
-- [ ] Retomar grava `resumed_at`; falhas anteriores à retomada não contam para o threshold (teste cobre: threshold 3, 2 falhas antes da pausa, 1 depois → sem incidente)
-- [ ] Incidente fechado pela pausa mostra "Fechado manualmente" com o motivo
+- [x] Pausar abre um modal com motivo opcional; motivo e `paused_at` são gravados
+- [x] Lista e detalhes mostram "Pausado" com o motivo
+- [x] Retomar grava `resumed_at`; falhas anteriores à retomada não contam para o threshold (teste cobre: threshold 3, 2 falhas antes da pausa, 1 depois → sem incidente)
+- [x] Incidente fechado pela pausa mostra "Fechado manualmente" com o motivo
 
 **Etapa 2**
 
-- [ ] `POST /api/maintenance-windows` cria uma janela por monitor, tudo ou nada, validando D1, D2, D4
-- [ ] Durante a janela: nenhum check gravado, nenhum incidente, nenhum aviso (e-mail, webhook, ntfy, SSL); ping de heartbeat responde 200 sem registrar
-- [ ] Incidente aberto no início da janela fecha em silêncio com "Fechado por manutenção" e o motivo
-- [ ] Ao terminar: estado `UNKNOWN`, primeiro check roda na hora, contagem de falhas recomeça, prazo do heartbeat recomeça de "agora"
-- [ ] Pausa manual vence a janela (D3)
-- [ ] Cancelar antes do início apaga a janela; durante, encerra na hora e o monitor volta
-- [ ] Reiniciar o Pingou no meio da janela mantém o monitor em manutenção e aplica início/fim pendentes
-- [ ] Lista mostra "Em manutenção até HH:MM" (fuso das Configurações); detalhes mostram motivo, início, fim e botão de cancelar
-- [ ] Datas digitadas são interpretadas no fuso das Configurações, não no do navegador (teste cobre fuso diferente de UTC)
+- [x] `POST /api/maintenance-windows` cria uma janela por monitor, tudo ou nada, validando D1, D2, D4
+- [x] Durante a janela: nenhum check gravado, nenhum incidente, nenhum aviso (e-mail, webhook, ntfy, SSL); ping de heartbeat responde 200 sem registrar
+- [x] Incidente aberto no início da janela fecha em silêncio com "Fechado por manutenção" e o motivo
+- [x] Ao terminar: estado `UNKNOWN`, primeiro check roda na hora, contagem de falhas recomeça, prazo do heartbeat recomeça de "agora"
+- [x] Pausa manual vence a janela (D3)
+- [x] Cancelar antes do início apaga a janela; durante, encerra na hora e o monitor volta
+- [x] Reiniciar o Pingou no meio da janela mantém o monitor em manutenção e aplica início/fim pendentes
+- [x] Lista mostra "Em manutenção até HH:MM" (fuso das Configurações); detalhes mostram motivo, início, fim e botão de cancelar
+- [x] Datas digitadas são interpretadas no fuso das Configurações, não no do navegador (teste cobre fuso diferente de UTC)
 
 ## Tech Stack
 
@@ -641,17 +641,18 @@ Teste manual mínimo (registrar no PR):
 
 | Fase                         | Tarefas | Complexity | Esforço | Target                                       | Status      |
 | ---------------------------- | ------- | ---------- | ------- | -------------------------------------------- | ----------- |
-| Fase 0                       | T0      | XS         | 5 min   | Branch criada                                | ⬜ Pendente |
-| Fase 1 (etapa 1)             | T1–T7   | M          | ~3 h    | Pausa com motivo + bug da retomada corrigido | ⬜ Pendente |
-| Fase 2 (backend da etapa 2)  | T8–T15  | XL         | ~6 h    | Janela funcionando via API, com testes       | ⬜ Pendente |
-| Fase 3 (frontend da etapa 2) | T16–T18 | L          | ~3–4 h  | UI completa                                  | ⬜ Pendente |
-| Fase 4 (fechamento)          | T19–T21 | M          | ~1,5 h  | PR aberto contra `develop`                   | ⬜ Pendente |
+| Fase 0                       | T0      | XS         | 5 min   | Branch criada                                | ✅ Concluído |
+| Fase 1 (etapa 1)             | T1–T7   | M          | ~3 h    | Pausa com motivo + bug da retomada corrigido | ✅ Concluído |
+| Fase 2 (backend da etapa 2)  | T8–T15  | XL         | ~6 h    | Janela funcionando via API, com testes       | ✅ Concluído |
+| Fase 3 (frontend da etapa 2) | T16–T18 | L          | ~3–4 h  | UI completa                                  | ✅ Concluído |
+| Fase 4 (fechamento)          | T19–T21 | M          | ~1,5 h  | PR aberto contra `develop`                   | ✅ Concluído |
 
 ## Status de Execução
 
 ### Concluído
 
 - Análise de viabilidade e decisões D1–D9 aprovadas
+- T0–T21: etapas 1 e 2, testes, QA manual, docs e PR (desvios registrados em `docs/implementacoes.md`, seção 14)
 
 ### Em andamento
 
@@ -659,7 +660,7 @@ Teste manual mínimo (registrar no PR):
 
 ### Pendente
 
-- T0–T21
+- QA em dispositivo real / leitor de tela (registrado em Pendências abertas)
 
 ## Notes
 

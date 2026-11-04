@@ -1,5 +1,6 @@
-import { X, Check, CircleHelp } from "lucide-react";
+import { X, Check, CircleHelp, Wrench } from "lucide-react";
 import { plural } from "../../lib/format";
+import { statusOf } from "../../lib/monitors";
 
 function joinNames(names) {
   if (names.length <= 1) return names[0] ?? "";
@@ -10,8 +11,9 @@ function joinNames(names) {
 
 // Faixa de situação do topo do painel: frase principal + contagens.
 export function StatusBanner({ monitors, counts }) {
-  const down = monitors.filter((m) => m.enabled && m.current_state === "DOWN");
-  const active = monitors.length - counts.PAUSED;
+  // em manutenção não é "fora do ar", nem "ativo respondendo"
+  const down = monitors.filter((m) => statusOf(m) === "DOWN");
+  const active = monitors.length - counts.PAUSED - counts.MAINTENANCE;
 
   let tone, Icon, title, detail;
   if (down.length > 0) {
@@ -22,6 +24,11 @@ export function StatusBanner({ monitors, counts }) {
         ? "1 monitor fora do ar"
         : `${down.length} monitores fora do ar`;
     detail = `${joinNames(down.map((m) => m.name))} ${down.length === 1 ? "não está respondendo" : "não estão respondendo"}.`;
+  } else if (active === 0 && counts.MAINTENANCE > 0) {
+    tone = { box: "bg-pg-branco border-pg-borda", icon: "bg-pg-ciano-fundo" };
+    Icon = Wrench;
+    title = "Monitores em manutenção";
+    detail = "Os checks voltam sozinhos quando a manutenção termina.";
   } else if (counts.UNKNOWN > 0 && counts.UP === 0) {
     tone = { box: "bg-pg-branco border-pg-borda", icon: "bg-pg-unknown" };
     Icon = CircleHelp;
@@ -45,8 +52,9 @@ export function StatusBanner({ monitors, counts }) {
       n: counts.UNKNOWN,
       label: counts.UNKNOWN === 1 ? "desconhecido" : "desconhecidos",
     },
+    { n: counts.MAINTENANCE, label: "em manutenção" },
     { n: counts.PAUSED, label: counts.PAUSED === 1 ? "pausado" : "pausados" },
-  ];
+  ].filter((s) => s.label !== "em manutenção" || s.n > 0);
 
   // linha curta do mobile: "3 no ar · 2 fora · 1 desconhecido · 1 pausado"
   const short = [
@@ -56,6 +64,7 @@ export function StatusBanner({ monitors, counts }) {
       n: counts.UNKNOWN,
       label: counts.UNKNOWN === 1 ? "desconhecido" : "desconhecidos",
     },
+    { n: counts.MAINTENANCE, label: "em manutenção" },
     { n: counts.PAUSED, label: counts.PAUSED === 1 ? "pausado" : "pausados" },
   ].filter((s) => s.n > 0);
 

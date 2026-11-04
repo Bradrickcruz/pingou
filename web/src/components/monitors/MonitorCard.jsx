@@ -13,6 +13,7 @@ const stateLabel = {
   UP: "no ar",
   DOWN: "fora do ar",
   UNKNOWN: "desconhecido",
+  MAINTENANCE: "em manutenção",
   PAUSED: "pausado",
 };
 
@@ -22,6 +23,7 @@ export function MonitorCard({ monitor, now }) {
   const status = statusOf(monitor);
   const down = status === "DOWN";
   const paused = status === "PAUSED";
+  const muted = paused || status === "MAINTENANCE";
   const isHeartbeat = monitor.type === "heartbeat";
 
   return (
@@ -36,7 +38,7 @@ export function MonitorCard({ monitor, now }) {
           to={`/monitors/${monitor.id}`}
           aria-label={`${monitor.name}, ${stateLabel[status]}`}
           className={`flex-1 min-w-0 truncate text-pg-body font-medium no-underline outline-none after:absolute after:inset-0 after:content-[''] ${
-            paused ? "text-pg-neblina" : "text-pg-ardosia"
+            muted ? "text-pg-neblina" : "text-pg-ardosia"
           }`}
         >
           {monitor.name}
@@ -63,7 +65,7 @@ export function MonitorCard({ monitor, now }) {
       )}
 
       <div className="mt-3">
-        <HistoryBar history={monitor.history} dimmed={paused} fluid />
+        <HistoryBar history={monitor.history} dimmed={muted} fluid />
       </div>
 
       <p

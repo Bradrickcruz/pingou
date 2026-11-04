@@ -66,6 +66,26 @@ const (
 	sqlIncidentIncrementFailures = `UPDATE incidents SET failure_count = failure_count + 1 WHERE monitor_id = ? AND ended_at IS NULL`
 )
 
+const (
+	// sqlMaintenanceActive: gate de manutenção (a cada check e ping). Ativa do
+	// início até o fim ser aplicado (ver domain.MaintenanceWindow.Active).
+	sqlMaintenanceActive = `
+		SELECT 1 FROM maintenance_windows
+		WHERE monitor_id = ? AND finalized_at IS NULL AND starts_at <= ? LIMIT 1`
+
+	// sqlMaintenanceLiveByMonitor: janela viva (agendada ou em curso) do monitor.
+	sqlMaintenanceLiveByMonitor = `
+		SELECT ` + maintenanceColumns + `
+		FROM maintenance_windows WHERE monitor_id = ? AND finalized_at IS NULL`
+)
+
+// sqlMaintenanceLiveByMonitors: janela viva de cada monitor da lista do painel.
+func sqlMaintenanceLiveByMonitors(monitors int) string {
+	return `
+		SELECT ` + maintenanceColumns + `
+		FROM maintenance_windows WHERE finalized_at IS NULL AND monitor_id IN (` + placeholders(monitors) + `)`
+}
+
 // placeholders devolve "?,?,…" com n posições.
 func placeholders(n int) string {
 	return strings.TrimSuffix(strings.Repeat("?,", n), ",")

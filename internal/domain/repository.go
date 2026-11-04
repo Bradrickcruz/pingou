@@ -35,6 +35,34 @@ type IncidentRepository interface {
 	FindInWindow(ctx context.Context, monitorID string, since time.Time) ([]*Incident, error)
 }
 
+// MaintenanceRepository guarda as janelas de manutenção. "Viva" = ainda não
+// finalizada (agendada ou em curso); há no máximo uma por monitor.
+type MaintenanceRepository interface {
+	// CreateBatch insere todas as janelas numa transação (tudo ou nada).
+	CreateBatch(ctx context.Context, windows []*MaintenanceWindow) error
+	FindByID(ctx context.Context, id string) (*MaintenanceWindow, error)
+	FindLiveByMonitor(ctx context.Context, monitorID string) (*MaintenanceWindow, error)
+	// FindLiveByMonitors devolve a janela viva de cada monitor, indexada pelo id.
+	FindLiveByMonitors(ctx context.Context, monitorIDs []string) (map[string]*MaintenanceWindow, error)
+	// ActiveForMonitor: consulta quente do gate (a cada check e ping).
+	ActiveForMonitor(ctx context.Context, monitorID string, now time.Time) (bool, error)
+	// Delete apaga uma janela que ainda não começou.
+	Delete(ctx context.Context, id string) error
+	// DueStart: janelas cujo início chegou e cujos efeitos de início não rodaram.
+	DueStart(ctx context.Context, now time.Time) ([]*MaintenanceWindow, error)
+	// DueEnd: janelas cujo fim chegou e que ainda não foram finalizadas.
+	DueEnd(ctx context.Context, now time.Time) ([]*MaintenanceWindow, error)
+	// Start aplica o início numa transação: fecha o incidente aberto do monitor
+	// (motivo manutenção), põe o estado em UNKNOWN e marca started_at.
+	// Devolve false se já tinha sido aplicado.
+	Start(ctx context.Context, w *MaintenanceWindow, now time.Time) (bool, error)
+	// Finalize aplica o fim numa transação (e o início antes, se não rodou):
+	// marca finalized_at, grava resumed_at = now, estado UNKNOWN e recomeça o
+	// prazo do heartbeat. endsAt != nil encurta a janela (cancelamento).
+	// Devolve false se já estava finalizada.
+	Finalize(ctx context.Context, w *MaintenanceWindow, now time.Time, endsAt *time.Time) (bool, error)
+}
+
 type MonitorFilter struct {
 	Enabled *bool
 	State   *MonitorState

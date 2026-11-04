@@ -73,11 +73,11 @@ function ManualBadge({ incident, className = "" }) {
 }
 
 // Motivo da pausa ou da manutenção, guardado no fechamento.
-function CloseNote({ incident, className = "" }) {
+function CloseNote({ incident, className = "line-clamp-2" }) {
   if (!incident.close_note) return null;
   return (
     <p
-      className={`mt-0.5 mb-0 text-pg-caption text-pg-neblina break-words line-clamp-2 ${className}`}
+      className={`mt-0.5 mb-0 text-pg-caption text-pg-neblina break-words ${className}`}
       title={incident.close_note}
     >
       {incident.close_note}
@@ -142,15 +142,18 @@ export function ResolvedTable({ incidents, total, onLoadMore, loadingMore }) {
                   className={`${cell} text-right text-pg-ui font-medium text-pg-ardosia whitespace-nowrap`}
                 >
                   {formatDuration(i.duration_seconds)}
-                  <ManualBadge incident={i} className="ml-auto" />
-                  <CloseNote incident={i} className="font-normal" />
                 </td>
-                <td
-                  className={`${cell} font-pg-mono text-pg-caption text-pg-neblina`}
-                >
-                  <div className="truncate" title={i.last_error ?? undefined}>
+                <td className={`${cell} text-pg-caption text-pg-neblina`}>
+                  <div
+                    className="truncate font-pg-mono"
+                    title={i.last_error ?? undefined}
+                  >
                     {i.last_error ?? "—"}
                   </div>
+                  {/* pausa ou manutenção: selo e motivo abaixo do erro, sem
+                      apertar a coluna de duração */}
+                  <ManualBadge incident={i} />
+                  <CloseNote incident={i} className="line-clamp-1" />
                 </td>
               </tr>
             ))}

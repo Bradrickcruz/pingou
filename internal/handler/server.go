@@ -19,7 +19,9 @@ type Server struct {
 	monitorService  *service.MonitorService
 	incidentService *service.IncidentService
 	settingsService *service.SettingsService
-	pingLimiter     *rateLimiter
+	// maintenanceService: nil desliga as rotas de manutenção e o bloco maintenance
+	maintenanceService *service.MaintenanceService
+	pingLimiter        *rateLimiter
 	// webhookTestLimiter: o teste faz uma requisição de saída por chamada
 	webhookTestLimiter *rateLimiter
 	// emailTestLimiter: cada teste abre uma conversa SMTP de saída
@@ -34,6 +36,7 @@ func NewServer(
 	monitorService *service.MonitorService,
 	incidentService *service.IncidentService,
 	settingsService *service.SettingsService,
+	maintenanceService *service.MaintenanceService,
 ) *Server {
 	s := &Server{
 		cfg:                cfg,
@@ -42,6 +45,7 @@ func NewServer(
 		monitorService:     monitorService,
 		incidentService:    incidentService,
 		settingsService:    settingsService,
+		maintenanceService: maintenanceService,
 		pingLimiter:        newRateLimiter(pingRateLimit, time.Minute),
 		webhookTestLimiter: newRateLimiter(webhookTestRateLimit, time.Minute),
 		emailTestLimiter:   newRateLimiter(emailTestRateLimit, time.Minute),
@@ -95,6 +99,12 @@ func (s *Server) registerRoutes() {
 
 	// incidents
 	api.HandleFunc("GET /incidents", s.handleListIncidents)
+
+	// janelas de manutenção
+	if s.maintenanceService != nil {
+		api.HandleFunc("POST /maintenance-windows", s.handleCreateMaintenance)
+		api.HandleFunc("DELETE /maintenance-windows/{id}", s.handleCancelMaintenance)
+	}
 
 	// settings
 	api.HandleFunc("GET /settings", s.handleGetSettings)

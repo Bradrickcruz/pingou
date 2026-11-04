@@ -54,6 +54,9 @@ func hotQueries(monitorID string, all []string, now time.Time) []hotQuery {
 		{"incidentes: resolvidos total", countRes, argsRes},
 		{"incidentes: resolvidos", listRes, append(argsRes, 20, 0)},
 		{"incidentes: do monitor", listMon, append(argsMon, 20, 0)},
+		{"manutenção: ativa", sqlMaintenanceActive, []any{monitorID, ts(now)}},
+		{"manutenção: viva do monitor", sqlMaintenanceLiveByMonitor, []any{monitorID}},
+		{"manutenção: vivas da lista", sqlMaintenanceLiveByMonitors(len(ids)), ids},
 	}
 }
 
@@ -158,6 +161,9 @@ func TestHotQueriesUseIndexes(t *testing.T) {
 		"checks: página":              "INDEX idx_checks_monitor_time",
 		"checks: total":               "COVERING INDEX idx_checks_monitor_time",
 		"state machine: falhas desde": "INDEX idx_checks_monitor_time",
+		"manutenção: ativa":           "INDEX idx_maintenance_",
+		"manutenção: viva do monitor": "INDEX idx_maintenance_",
+		"manutenção: vivas da lista":  "INDEX idx_maintenance_",
 		"retenção: delete":            "INDEX idx_checks_checked_at",
 		"stats: down window":          "INDEX idx_incidents_monitor_ended",
 		"lista: down_since":           "INDEX idx_incidents_monitor_ended",

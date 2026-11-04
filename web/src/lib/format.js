@@ -120,6 +120,13 @@ export function clock(iso) {
   return `${pad(p.hour)}:${pad(p.minute)}`;
 }
 
+// untilLabel → "14:00" hoje; "12 nov, 14:00" em outro dia
+export function untilLabel(iso, now = Date.now()) {
+  const date = new Date(iso);
+  if (daysAgo(date, now) === 0) return clock(iso);
+  return `${shortDate(date, now)}, ${clock(iso)}`;
+}
+
 // clockSeconds(iso) → "08:03:41"
 function clockSeconds(iso) {
   const p = zonedParts(new Date(iso));

@@ -1,4 +1,4 @@
-import { Check, X, CircleHelp, Pause } from "lucide-react";
+import { Check, X, CircleHelp, Pause, Wrench } from "lucide-react";
 
 const stateStyles = {
   UP: { bg: "bg-pg-up-bg", iconColor: "text-pg-up", icon: Check, label: "UP" },
@@ -13,6 +13,14 @@ const stateStyles = {
     iconColor: "text-pg-unknown",
     icon: CircleHelp,
     label: "UNKNOWN",
+  },
+  // neutro e distinto do pausado: o monitor não está sendo conferido de propósito
+  MAINTENANCE: {
+    bg: "bg-pg-ciano-nevoa",
+    iconColor: "text-pg-ciano-fundo",
+    icon: Wrench,
+    label: "MANUTENÇÃO",
+    text: "text-pg-ciano-fundo",
   },
   PAUSED: {
     bg: "bg-pg-branco border border-pg-borda",
