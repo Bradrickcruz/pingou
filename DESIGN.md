@@ -7,6 +7,15 @@
 ## 0. Como usar este arquivo
 
 - Leia tudo antes de criar ou alterar qualquer UI, README, doc ou asset.
+- Use **somente** os tokens daqui. Não invente cores, fon# DESIGN.md — Design system do Pingou
+
+> Fonte da verdade visual para agentes de IA e contribuidores.
+> Resumo do "Manual de Identidade Visual v1.1" (Bryan H. Cruz, nov/2026).
+> Em caso de conflito, **este arquivo vence qualquer preferência de estilo do agente**.
+
+## 0. Como usar este arquivo
+
+- Leia tudo antes de criar ou alterar qualquer UI, README, doc ou asset.
 - Use **somente** os tokens daqui. Não invente cores, fontes, pesos ou sombras.
 - Se precisar de algo que não existe aqui, **pare e pergunte** em vez de improvisar.
 - Regras marcadas com **SEMPRE** e **NUNCA** não têm exceção.
@@ -22,11 +31,11 @@ Atributos: **sério · acolhedor · leve · confiável.**
 
 ## 2. Marca
 
-| Termo | O que é | Pode aparecer sozinho? |
-|---|---|---|
-| Símbolo | Gota + 2 ondas em quadrado arredondado | Sim (favicon, avatar) |
-| Logotipo | "pingou" em Rubik Medium, em curvas | **NUNCA** |
-| Marca | Símbolo + logotipo | Sim (assinatura padrão) |
+| Termo    | O que é                                | Pode aparecer sozinho?  |
+| -------- | -------------------------------------- | ----------------------- |
+| Símbolo  | Gota + 2 ondas em quadrado arredondado | Sim (favicon, avatar)   |
+| Logotipo | "pingou" em Rubik Medium, em curvas    | **NUNCA**               |
+| Marca    | Símbolo + logotipo                     | Sim (assinatura padrão) |
 
 Regras:
 
@@ -39,17 +48,17 @@ Regras:
 
 ### Arquivos oficiais
 
-| Arquivo | Uso |
-|---|---|
-| `pingou-simbolo.svg` | Padrão. Favicon, avatar, header do dashboard |
-| `pingou-simbolo-livre.svg` | Símbolo sem caixa, sobre fundo claro |
-| `pingou-simbolo-invertido.svg` | Caixa branca + arte ciano. **Só** sobre fundo escuro |
-| `pingou-simbolo-mono.svg` | Uma cor só |
-| `pingou-marca-horizontal.svg` | Assinatura padrão em fundo claro |
-| `pingou-marca-horizontal-negativa.svg` | Fundo escuro (ardósia, tema escuro) |
-| `pingou-marca-horizontal-mono.svg` | Uma cor só |
-| `pingou-marca-vertical.svg` | Espaços quadrados/estreitos |
-| `favicon-16/32/180/512.png` | Favicons e ícones de app |
+| Arquivo                                | Uso                                                  |
+| -------------------------------------- | ---------------------------------------------------- |
+| `pingou-simbolo.svg`                   | Padrão. Favicon, avatar, header do dashboard         |
+| `pingou-simbolo-livre.svg`             | Símbolo sem caixa, sobre fundo claro                 |
+| `pingou-simbolo-invertido.svg`         | Caixa branca + arte ciano. **Só** sobre fundo escuro |
+| `pingou-simbolo-mono.svg`              | Uma cor só                                           |
+| `pingou-marca-horizontal.svg`          | Assinatura padrão em fundo claro                     |
+| `pingou-marca-horizontal-negativa.svg` | Fundo escuro (ardósia, tema escuro)                  |
+| `pingou-marca-horizontal-mono.svg`     | Uma cor só                                           |
+| `pingou-marca-vertical.svg`            | Espaços quadrados/estreitos                          |
+| `favicon-16/32/180/512.png`            | Favicons e ícones de app                             |
 
 > Ajuste o caminho conforme onde os assets forem colocados no repositório.
 
@@ -60,24 +69,347 @@ Regras:
 ```css
 :root {
   /* marca */
-  --pg-ciano: #1E9BB3;        /* primária: símbolo, ícones, textos >= 24px */
-  --pg-ciano-fundo: #146E80;  /* botões com texto, links, hover, texto em ciano */
-  --pg-ciano-nevoa: #E3F2F5;  /* fundos de destaque, cards, header de tabela */
+  --pg-ciano: #1e9bb3; /* primária: símbolo, ícones, textos >= 24px */
+  --pg-ciano-fundo: #146e80; /* botões com texto, links, hover, texto em ciano */
+  --pg-ciano-nevoa: #e3f2f5; /* fundos de destaque, cards, header de tabela */
 
   /* neutros */
-  --pg-ardosia: #1E2B33;      /* texto principal, fundos escuros */
-  --pg-neblina: #5B6B75;      /* texto secundário, legendas, UNKNOWN */
-  --pg-nuvem: #F3F7F8;        /* fundo geral */
-  --pg-branco: #FFFFFF;       /* superfícies (cards, inputs) */
-  --pg-borda: #D9E3E6;        /* bordas e divisórias */
+  --pg-ardosia: #1e2b33; /* texto principal, fundos escuros */
+  --pg-neblina: #5b6b75; /* texto secundário, legendas, UNKNOWN */
+  --pg-nuvem: #f3f7f8; /* fundo geral */
+  --pg-branco: #ffffff; /* superfícies (cards, inputs) */
+  --pg-borda: #d9e3e6; /* bordas e divisórias */
 
   /* status — uso exclusivo para estado */
-  --pg-up: #1F8456;           /* verde sinal */
-  --pg-up-bg: #E4F3EC;
-  --pg-down: #C93A46;         /* alerta */
-  --pg-down-bg: #F8E6E8;
-  --pg-unknown: #5B6B75;
-  --pg-unknown-bg: #EDF1F3;
+  --pg-up: #1f8456; /* verde sinal */
+  --pg-up-bg: #e4f3ec;
+  --pg-down: #c93a46; /* alerta */
+  --pg-down-bg: #f8e6e8;
+  --pg-unknown: #5b6b75;
+  --pg-unknown-bg: #edf1f3;
+}
+```
+
+### 3.2 Tailwind
+
+Tailwind v3 (`tailwind.config.js`):
+
+```js
+theme: {
+  extend: {
+    colors: {
+      pg: {
+        ciano: '#1E9BB3', 'ciano-fundo': '#146E80', 'ciano-nevoa': '#E3F2F5',
+        ardosia: '#1E2B33', neblina: '#5B6B75', nuvem: '#F3F7F8', borda: '#D9E3E6',
+        up: '#1F8456', 'up-bg': '#E4F3EC',
+        down: '#C93A46', 'down-bg': '#F8E6E8',
+        unknown: '#5B6B75', 'unknown-bg': '#EDF1F3',
+        // tema escuro (ver 3.6)
+        'ardosia-clara': '#273640', 'ardosia-linha': '#31424D',
+        'neblina-clara': '#9DB0BA', 'ciano-luz': '#4FC1D9',
+        'up-claro': '#4CC38A', 'up-bg-escuro': '#1B3A33',
+        'down-claro': '#FF7480', 'down-bg-escuro': '#3D2A31',
+        'unknown-bg-escuro': '#2C3C47',
+      },
+    },
+    fontFamily: {
+      heading: ['Rubik', 'system-ui', 'sans-serif'],
+      sans: ['Inter', 'system-ui', 'sans-serif'],
+      mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
+    },
+  },
+}
+```
+
+Tailwind v4: declare os mesmos valores em `@theme` (`--color-pg-ciano: #1E9BB3;` etc.).
+
+> **Migração gradual (`web/`):** o projeto já tinha tokens Tailwind próprios antes deste design system. Para não quebrá-los, `fontFamily`, `fontSize` e `borderRadius` usam chaves com prefixo `pg-` (`font-pg-heading`, `text-pg-h1`, `rounded-pg-card`, ver `web/tailwind.config.js`) em vez de sobrescrever `heading`/`sans`/`h1`/`sm` existentes. `colors.pg` não precisa de prefixo extra: já é um namespace próprio. Conforme os componentes forem migrados, as chaves antigas somem e o prefixo `pg-` pode cair.
+
+### 3.3 Proporção
+
+~60% nuvem/branco · ~25% ardósia · ~10% ciano · ~5% ciano-fundo/névoa. Status só onde houver estado.
+
+### 3.4 Regras de cor
+
+- **NUNCA** use cores quentes (vermelho, laranja, amarelo, rosa) fora de status/erro.
+- **NUNCA** use verde ou vermelho em logo, grafismos, ilustrações ou peças de divulgação.
+- **NUNCA** use preto puro (`#000`). O mais escuro é `--pg-ardosia`.
+- **NUNCA** use `--pg-ciano` para texto menor que 24 px (contraste 3,3:1, reprova AA).
+- **SEMPRE** use `--pg-ciano-fundo` como fundo de botão com texto branco (5,9:1). No tema escuro vale a seção 3.6.
+- Cores fora desta lista só com aprovação. Tints novos derivam da própria cor, não de outra paleta.
+
+### 3.5 Contraste sobre branco
+
+| Cor         | Contraste | Texto pequeno?                 |
+| ----------- | --------- | ------------------------------ |
+| Ardósia     | 14,5:1    | Sim                            |
+| Ciano fundo | 5,9:1     | Sim                            |
+| Neblina     | 5,5:1     | Sim                            |
+| Alerta      | 5,0:1     | Sim                            |
+| Verde sinal | 4,7:1     | Sim                            |
+| Ciano pingo | 3,3:1     | **Não** (só ≥ 24 px ou ícones) |
+
+### 3.6 Tema escuro (dark mode)
+
+Mesma família de cores, invertida: a **ardósia vira o fundo** e a nuvem vira o texto. Continua sem preto puro. Como as cores escuras do tema claro perdem contraste sobre a ardósia, o ciano e os status ganham **versões mais claras**, usadas **somente** no tema escuro.
+
+#### 3.6.1 Tokens
+
+Valores constantes (não mudam entre temas). `--pg-ardosia`, `--pg-nuvem` e `--pg-ciano` são os mesmos da seção 3.1.
+
+```css
+:root {
+  --pg-ardosia-clara: #273640; /* superfície: cards, inputs, tabelas, menus */
+  --pg-ardosia-linha: #31424d; /* bordas, divisórias, hover de linha, fundo de header de tabela. Nunca cor de texto */
+  --pg-neblina-clara: #9db0ba; /* texto secundário, legendas, UNKNOWN */
+  --pg-ciano-luz: #4fc1d9; /* links, URLs, texto em ciano, fundo do botão primário */
+
+  /* status no tema escuro */
+  --pg-up-claro: #4cc38a;
+  --pg-up-bg-escuro: #1b3a33;
+  --pg-down-claro: #ff7480;
+  --pg-down-bg-escuro: #3d2a31;
+  --pg-unknown-bg-escuro: #2c3c47; /* UNKNOWN usa --pg-neblina-clara como cor forte */
+}
+```
+
+#### 3.6.2 Papéis: claro → escuro
+
+Componentes trocam o token pelo equivalente da coluna "Escuro". Tudo que não aparece aqui não muda.
+
+| Papel                             | Claro                                              | Escuro                                             |
+| --------------------------------- | -------------------------------------------------- | -------------------------------------------------- |
+| Fundo geral                       | `--pg-nuvem`                                       | `--pg-ardosia`                                     |
+| Superfície (card, input, menu)    | `--pg-branco`                                      | `--pg-ardosia-clara`                               |
+| Borda e divisória                 | `--pg-borda`                                       | `--pg-ardosia-linha`                               |
+| Texto principal                   | `--pg-ardosia`                                     | `--pg-nuvem`                                       |
+| Texto secundário, legenda         | `--pg-neblina`                                     | `--pg-neblina-clara`                               |
+| Link, URL/ID mono, texto em ciano | `--pg-ciano-fundo`                                 | `--pg-ciano-luz`                                   |
+| Botão primário                    | fundo `--pg-ciano-fundo`, texto branco             | fundo `--pg-ciano-luz`, texto `--pg-ardosia`       |
+| Borda de input                    | `--pg-neblina`                                     | `--pg-neblina-clara`                               |
+| Header de tabela                  | fundo `--pg-ciano-nevoa`, texto `--pg-ciano-fundo` | fundo `--pg-ardosia-linha`, texto `--pg-ciano-luz` |
+| Opção ativa (combobox)            | `--pg-ciano-nevoa`                                 | `--pg-ardosia-linha`                               |
+| Símbolo, ícones, texto ≥ 24 px    | `--pg-ciano`                                       | `--pg-ciano` (igual)                               |
+| Logo                              | marca horizontal / símbolo                         | marca **negativa** / símbolo **invertido**         |
+
+#### 3.6.3 Status no tema escuro
+
+| Estado  | Cor forte            | Fundo                    | Ícone     | Texto     |
+| ------- | -------------------- | ------------------------ | --------- | --------- |
+| UP      | `--pg-up-claro`      | `--pg-up-bg-escuro`      | ✓ (check) | `UP`      |
+| DOWN    | `--pg-down-claro`    | `--pg-down-bg-escuro`    | × (x)     | `DOWN`    |
+| UNKNOWN | `--pg-neblina-clara` | `--pg-unknown-bg-escuro` | ?         | `UNKNOWN` |
+
+- Badge: mesma pílula do tema claro. Ícone na cor forte; texto em `--pg-nuvem` (10,6:1 a 12,4:1 sobre os fundos escuros). Dot na cor forte.
+- As regras da seção 4 valem igual: **SEMPRE** texto + ícone, **NUNCA** só a cor.
+
+#### 3.6.4 Contraste no tema escuro
+
+| Cor               | Sobre `--pg-ardosia` | Sobre `--pg-ardosia-clara` | Texto pequeno?                 |
+| ----------------- | -------------------- | -------------------------- | ------------------------------ |
+| Nuvem             | 13,4:1               | 11,5:1                     | Sim                            |
+| Neblina clara     | 6,5:1                | 5,5:1                      | Sim                            |
+| Ciano luz         | 6,9:1                | 5,9:1                      | Sim                            |
+| Verde sinal claro | 6,5:1                | 5,6:1                      | Sim                            |
+| Alerta claro      | 5,6:1                | 4,8:1                      | Sim                            |
+| Ciano pingo       | 4,4:1                | 3,8:1                      | **Não** (só ≥ 24 px ou ícones) |
+
+Texto `--pg-ardosia` sobre `--pg-ciano-luz` (botão primário): 6,9:1.
+
+#### 3.6.5 Regras do tema escuro
+
+- **SEMPRE** use `--pg-ardosia` como fundo. **NUNCA** `#000`.
+- **NUNCA** use no escuro `--pg-ciano-fundo`, `--pg-up`, `--pg-down` ou `--pg-neblina`: ficam entre 2,5:1 e 3,1:1 sobre a ardósia, baixo demais para texto.
+- **NUNCA** use as versões claras (`--pg-ciano-luz`, `--pg-up-claro`, `--pg-down-claro`, `--pg-neblina-clara`) no tema claro.
+- **SEMPRE** botão primário no escuro: fundo `--pg-ciano-luz` e texto `--pg-ardosia`. Continua no máximo um por tela.
+- **NUNCA** use `--pg-ardosia-linha` como cor de texto (só em hover de linha e header de tabela, onde o texto é `--pg-nuvem` ou `--pg-ciano-luz`).
+- **NUNCA** use `--pg-ciano` para texto menor que 24 px, também no escuro (4,4:1, reprova AA).
+- Sem sombras: a elevação vem do degrau `--pg-ardosia` → `--pg-ardosia-clara`.
+- Tokens novos de tema escuro só derivam das cores desta seção. Cores fora dela só com aprovação.
+
+## 4. Status
+
+| Estado  | Cor            | Fundo             | Ícone     | Texto     |
+| ------- | -------------- | ----------------- | --------- | --------- |
+| UP      | `--pg-up`      | `--pg-up-bg`      | ✓ (check) | `UP`      |
+| DOWN    | `--pg-down`    | `--pg-down-bg`    | × (x)     | `DOWN`    |
+| UNKNOWN | `--pg-unknown` | `--pg-unknown-bg` | ?         | `UNKNOWN` |
+
+- **SEMPRE** mostre status com **texto + ícone**, além da cor. **NUNCA** só a cor (daltonismo).
+- Badge de status: pílula (`border-radius: 9999px`), fundo `*-bg`, ícone na cor forte e texto em `--pg-ardosia` (o texto na cor forte dá 4,1:1 e 4,2:1 sobre `*-bg`, abaixo de AA), Inter Medium 12–13 px.
+- Bolinha de status (dot) pode acompanhar, mas nunca substitui o badge com texto.
+- No tema escuro, use os tokens da seção 3.6.3 (mesma estrutura, cores mais claras).
+
+### 4.1 Certificado SSL (página de detalhe)
+
+O bloco "Certificado SSL" (`web/src/components/monitor-detail/CertCard.jsx`) usa a mesma pílula do badge, com os tokens de status. Não há token de "atenção": o nível de 30 dias usa o neutro.
+
+| Nível   | Quando           | Fundo             | Ícone                             | Texto                             |
+| ------- | ---------------- | ----------------- | --------------------------------- | --------------------------------- |
+| Válido  | mais de 30 dias  | `--pg-up-bg`      | escudo com check, `--pg-up`       | `VÁLIDO`                          |
+| Atenção | 30 dias ou menos | `--pg-unknown-bg` | escudo com alerta, `--pg-ardosia` | `ATENÇÃO`                         |
+| Alerta  | 7 dias ou menos  | `--pg-down-bg`    | escudo com alerta, `--pg-down`    | `RENOVE JÁ` (data em `--pg-down`) |
+| Vencido | já expirou       | `--pg-down-bg`    | escudo com ×, `--pg-down`         | `EXPIRADO` (data em `--pg-down`)  |
+
+No tema escuro, troque pelos equivalentes da seção 3.6.3: `--pg-up-bg` → `--pg-up-bg-escuro`, `--pg-down-bg` → `--pg-down-bg-escuro`, `--pg-unknown-bg` → `--pg-unknown-bg-escuro`, `--pg-up` → `--pg-up-claro`, `--pg-down` → `--pg-down-claro`, e o ícone/texto em `--pg-ardosia` (nível Atenção) → `--pg-nuvem`.
+
+## 5. Tipografia
+
+| Papel         | Fonte           | Tamanho | Linha | Peso |
+| ------------- | --------------- | ------- | ----- | ---- |
+| Título 1      | Rubik           | 32 px   | 1.2   | 500  |
+| Título 2      | Rubik           | 24 px   | 1.25  | 500  |
+| Título 3      | Rubik           | 20 px   | 1.3   | 500  |
+| Texto         | Inter           | 16 px   | 1.6   | 400  |
+| Interface     | Inter           | 14 px   | 1.5   | 400  |
+| Legenda       | Inter           | 12 px   | 1.4   | 400  |
+| Código/URL/ID | mono do sistema | 14 px   | 1.5   | 400  |
+
+- Só **dois pesos**: 400 e 500. **NUNCA** 300, 600, 700 ou mais.
+- Títulos **SEMPRE** em Rubik 500. Textos e UI **SEMPRE** em Inter.
+- **NUNCA** carregue fonte mono externa. Use a pilha `ui-monospace, ...`.
+- URLs, IDs e logs: fonte mono na cor `--pg-ciano-fundo` (no tema escuro, `--pg-ciano-luz`).
+- Números no dashboard (tempo de resposta, %, contagens): `font-variant-numeric: tabular-nums`.
+- Nada menor que 12 px.
+- Fontes: **self-hosted**, licença SIL OFL 1.1. **NUNCA** carregar via Google Fonts ou outro CDN externo em runtime.
+  - Arquivos `.woff2`, subset latin, só pesos 400/500, versionados em `web/src/assets/fonts/` (`inter-latin-400.woff2`, `inter-latin-500.woff2`, `rubik-latin-400.woff2`, `rubik-latin-500.woff2`), com as licenças `OFL-Inter.txt` e `OFL-Rubik.txt` ao lado.
+  - Carregamento via `@font-face` em `web/src/index.css`, com `font-display: swap`. O Vite empacota os arquivos com hash e o binário Go os serve via `go:embed` — nenhuma requisição de fonte sai do próprio host.
+
+## 6. Forma e espaço
+
+- Cantos arredondados, ecoando o símbolo: controles `8px`, cards `12px`, badges `9999px`.
+- Bordas finas: `1px solid var(--pg-borda)`.
+- Sombras: evite. No máximo uma sombra muito sutil em elementos flutuantes (menus, modais).
+- Espaçamento em escala de 4 px (4, 8, 12, 16, 24, 32, 48).
+- Prefira espaço em branco a divisórias e caixas extras.
+- Largura: Painel, Incidentes e Detalhe do monitor usam `max-w-[1680px]` (aproveita telas largas sem esticar as linhas em ultrawide). Configurações segue estreita (`760px`) por ser formulário.
+
+## 7. Componentes base
+
+- **Botão primário**: fundo `--pg-ciano-fundo`, texto branco, Inter 500 14 px, raio 8 px. No máximo **um** por tela. Hover: `brightness-90` sobre a própria cor (sem token novo).
+- **Botão secundário**: fundo transparente, borda `--pg-borda`, texto `--pg-ardosia`.
+- **Botão destrutivo** (ex.: remover monitor): texto/borda `--pg-down`; fundo sólido só na confirmação.
+- **Link**: `--pg-ciano-fundo`, sublinhado no hover.
+- **Input**: fundo branco, borda `1px solid var(--pg-neblina)` (não `--pg-borda`: 5,5:1 contra o fundo, contra ~1,3:1 e abaixo dos 3:1 exigidos para componentes de interface), raio 8 px; foco com anel `--pg-ciano`.
+- **Combobox** (`ui/Combobox.jsx`, usado no fuso horário): campo de texto com lista que filtra ao digitar. Mesmo estilo do input; lista com fundo branco, borda `--pg-borda`, opção ativa em `--pg-ciano-nevoa`. Teclado: ↑ ↓ Enter Esc. Só aceita valores da lista.
+- **Card**: fundo branco sobre `--pg-nuvem`, borda `--pg-borda`, raio 12 px.
+- **Tabela**: header com fundo `--pg-ciano-nevoa` e texto `--pg-ciano-fundo`; linhas separadas por `--pg-borda`.
+- **Header do dashboard**: símbolo (24–32 px) + logotipo, via SVG oficial.
+- **Tema escuro**: todos os componentes acima seguem o mapa de papéis da seção 3.6.2 (mesmo raio, borda de 1 px, sem sombra).
+
+## 8. Grafismos de apoio
+
+| Grafismo            | Função                              | Onde                                   |
+| ------------------- | ----------------------------------- | -------------------------------------- |
+| Ondas               | Destaque/fundo (ping se espalhando) | Banners, capa do README, slides, posts |
+| Arco divisor        | Sublinhar um título (uma onda só)   | Títulos de seção, login                |
+| Barras de histórico | Separar blocos                      | Divisórias, rodapés                    |
+| Gota marcador       | Marcador de lista                   | Listas de features                     |
+
+- **NUNCA** mais de 2 grafismos por peça.
+- **NUNCA** ondas e arco divisor na mesma peça.
+- Ondas nascem de um ponto (canto, borda ou símbolo), máx. 5 anéis, transparência crescente.
+- Grafismos **só em ciano** (ou branco sobre ciano). Nunca verde/vermelho.
+- Barras decorativas têm **altura igual**; variar altura parece dado real.
+- Barras que mostram **dados** (ex.: histórico de checks do monitor) **podem** usar as cores de status (`--pg-up`, `--pg-down`, `--pg-unknown`), pois representam estado real. Barras **decorativas** (divisórias, rodapés) **NUNCA**: só ciano.
+- **NUNCA** grafismo atrás de texto pequeno.
+- Telas de trabalho (listas, formulários) ficam limpas: no máximo o arco divisor.
+
+## 9. Tom de voz (UI)
+
+- Português, frases curtas, voz ativa, verbo primeiro: "Criar monitor", "Salvar".
+- Sem "por favor", sem "com sucesso", sem exclamação em mensagens do sistema.
+- Erros: o que aconteceu + o que fazer. Ex.: "Não foi possível conectar. Verifique a URL."
+- Estados de status ficam em inglês (`UP`, `DOWN`, `UNKNOWN`), por serem termos técnicos de monitoramento, mesmo com a interface em português.
+- Aba de configurações: no celular, o rótulo da aba é **"Ajustes"** (cabe na barra inferior); a tela e o menu no desktop continuam "Configurações".
+- Slogan oficial: **"Rodou, pingou."**
+
+## 10. Pendências (não definidas na v1.1)
+
+- **Tema escuro**: tokens definidos na seção 3.6. Como o tema é trocado (mecanismo, onde fica o controle) é decisão de produto e não faz parte deste arquivo. Cores novas para o escuro **só com aprovação**.
+- Estados de gráfico/métricas e ilustrações ainda não definidos (claro e escuro).
+
+## 11. Checklist antes de entregar
+
+- [ ] Só usei tokens deste arquivo?
+- [ ] Nenhuma cor quente fora de status/erro?
+- [ ] Status com texto + ícone, não só cor?
+- [ ] Botões com texto usam `--pg-ciano-fundo` (tema claro)?
+- [ ] Só Rubik/Inter, só pesos 400/500?
+- [ ] Logo via SVG oficial, em minúsculas, com área de proteção?
+- [ ] No máximo 2 grafismos, e sem ondas + arco juntos?
+- [ ] Contraste de texto ≥ 4,5:1?
+- [ ] No tema escuro, só tokens da seção 3.6, botão primário em `--pg-ciano-luz` com texto `--pg-ardosia` e marca negativa?tes, pesos ou sombras.
+- Se precisar de algo que não existe aqui, **pare e pergunte** em vez de improvisar.
+- Regras marcadas com **SEMPRE** e **NUNCA** não têm exceção.
+
+## 1. Conceito
+
+Atributos: **sério · acolhedor · leve · confiável.**
+
+- Formas arredondadas, cores frias e suaves, muito espaço em branco.
+- Visual calmo: o ciano aparece pouco; o vermelho só quando algo quebra.
+- Nada de visual "gamer", neon, degradê, glassmorphism ou sombra pesada.
+- Teste rápido: se a tela parecer pesada, fria demais ou infantil, está errada.
+
+## 2. Marca
+
+| Termo    | O que é                                | Pode aparecer sozinho?  |
+| -------- | -------------------------------------- | ----------------------- |
+| Símbolo  | Gota + 2 ondas em quadrado arredondado | Sim (favicon, avatar)   |
+| Logotipo | "pingou" em Rubik Medium, em curvas    | **NUNCA**               |
+| Marca    | Símbolo + logotipo                     | Sim (assinatura padrão) |
+
+Regras:
+
+- **SEMPRE** escreva "pingou" em minúsculas no logotipo.
+- Em texto corrido, escreva "Pingou" (nome próprio). **NUNCA** "PingoU", "PINGOU" ou "PinGoU".
+- **NUNCA** recrie o logo com `<span>` e fonte. Use os SVGs oficiais (estão em curvas).
+- **NUNCA** distorça, gire, recolora, aplique sombra/brilho/degradê ou coloque sobre fundo poluído.
+- Área de proteção: espaço livre de **1/4 da altura do símbolo** em todos os lados.
+- Tamanho mínimo: símbolo **16 px**; marca horizontal **24 px** de altura; marca vertical **48 px**.
+
+### Arquivos oficiais
+
+| Arquivo                                | Uso                                                  |
+| -------------------------------------- | ---------------------------------------------------- |
+| `pingou-simbolo.svg`                   | Padrão. Favicon, avatar, header do dashboard         |
+| `pingou-simbolo-livre.svg`             | Símbolo sem caixa, sobre fundo claro                 |
+| `pingou-simbolo-invertido.svg`         | Caixa branca + arte ciano. **Só** sobre fundo escuro |
+| `pingou-simbolo-mono.svg`              | Uma cor só                                           |
+| `pingou-marca-horizontal.svg`          | Assinatura padrão em fundo claro                     |
+| `pingou-marca-horizontal-negativa.svg` | Fundo escuro (ardósia, tema escuro)                  |
+| `pingou-marca-horizontal-mono.svg`     | Uma cor só                                           |
+| `pingou-marca-vertical.svg`            | Espaços quadrados/estreitos                          |
+| `favicon-16/32/180/512.png`            | Favicons e ícones de app                             |
+
+> Ajuste o caminho conforme onde os assets forem colocados no repositório.
+
+## 3. Cores
+
+### 3.1 Tokens
+
+```css
+:root {
+  /* marca */
+  --pg-ciano: #1e9bb3; /* primária: símbolo, ícones, textos >= 24px */
+  --pg-ciano-fundo: #146e80; /* botões com texto, links, hover, texto em ciano */
+  --pg-ciano-nevoa: #e3f2f5; /* fundos de destaque, cards, header de tabela */
+
+  /* neutros */
+  --pg-ardosia: #1e2b33; /* texto principal, fundos escuros */
+  --pg-neblina: #5b6b75; /* texto secundário, legendas, UNKNOWN */
+  --pg-nuvem: #f3f7f8; /* fundo geral */
+  --pg-branco: #ffffff; /* superfícies (cards, inputs) */
+  --pg-borda: #d9e3e6; /* bordas e divisórias */
+
+  /* status — uso exclusivo para estado */
+  --pg-up: #1f8456; /* verde sinal */
+  --pg-up-bg: #e4f3ec;
+  --pg-down: #c93a46; /* alerta */
+  --pg-down-bg: #f8e6e8;
+  --pg-unknown: #5b6b75;
+  --pg-unknown-bg: #edf1f3;
 }
 ```
 
@@ -125,22 +457,22 @@ Tailwind v4: declare os mesmos valores em `@theme` (`--color-pg-ciano: #1E9BB3;`
 
 ### 3.5 Contraste sobre branco
 
-| Cor | Contraste | Texto pequeno? |
-|---|---|---|
-| Ardósia | 14,5:1 | Sim |
-| Ciano fundo | 5,9:1 | Sim |
-| Neblina | 5,5:1 | Sim |
-| Alerta | 5,0:1 | Sim |
-| Verde sinal | 4,7:1 | Sim |
-| Ciano pingo | 3,3:1 | **Não** (só ≥ 24 px ou ícones) |
+| Cor         | Contraste | Texto pequeno?                 |
+| ----------- | --------- | ------------------------------ |
+| Ardósia     | 14,5:1    | Sim                            |
+| Ciano fundo | 5,9:1     | Sim                            |
+| Neblina     | 5,5:1     | Sim                            |
+| Alerta      | 5,0:1     | Sim                            |
+| Verde sinal | 4,7:1     | Sim                            |
+| Ciano pingo | 3,3:1     | **Não** (só ≥ 24 px ou ícones) |
 
 ## 4. Status
 
-| Estado | Cor | Fundo | Ícone | Texto |
-|---|---|---|---|---|
-| UP | `--pg-up` | `--pg-up-bg` | ✓ (check) | `UP` |
-| DOWN | `--pg-down` | `--pg-down-bg` | × (x) | `DOWN` |
-| UNKNOWN | `--pg-unknown` | `--pg-unknown-bg` | ? | `UNKNOWN` |
+| Estado  | Cor            | Fundo             | Ícone     | Texto     |
+| ------- | -------------- | ----------------- | --------- | --------- |
+| UP      | `--pg-up`      | `--pg-up-bg`      | ✓ (check) | `UP`      |
+| DOWN    | `--pg-down`    | `--pg-down-bg`    | × (x)     | `DOWN`    |
+| UNKNOWN | `--pg-unknown` | `--pg-unknown-bg` | ?         | `UNKNOWN` |
 
 - **SEMPRE** mostre status com **texto + ícone**, além da cor. **NUNCA** só a cor (daltonismo).
 - Badge de status: pílula (`border-radius: 9999px`), fundo `*-bg`, ícone na cor forte e texto em `--pg-ardosia` (o texto na cor forte dá 4,1:1 e 4,2:1 sobre `*-bg`, abaixo de AA), Inter Medium 12–13 px.
@@ -150,24 +482,24 @@ Tailwind v4: declare os mesmos valores em `@theme` (`--color-pg-ciano: #1E9BB3;`
 
 O bloco "Certificado SSL" (`web/src/components/monitor-detail/CertCard.jsx`) usa a mesma pílula do badge, com os tokens de status. Não há token de "atenção": o nível de 30 dias usa o neutro.
 
-| Nível | Quando | Fundo | Ícone | Texto |
-|---|---|---|---|---|
-| Válido | mais de 30 dias | `--pg-up-bg` | escudo com check, `--pg-up` | `VÁLIDO` |
-| Atenção | 30 dias ou menos | `--pg-unknown-bg` | escudo com alerta, `--pg-ardosia` | `ATENÇÃO` |
-| Alerta | 7 dias ou menos | `--pg-down-bg` | escudo com alerta, `--pg-down` | `RENOVE JÁ` (data em `--pg-down`) |
-| Vencido | já expirou | `--pg-down-bg` | escudo com ×, `--pg-down` | `EXPIRADO` (data em `--pg-down`) |
+| Nível   | Quando           | Fundo             | Ícone                             | Texto                             |
+| ------- | ---------------- | ----------------- | --------------------------------- | --------------------------------- |
+| Válido  | mais de 30 dias  | `--pg-up-bg`      | escudo com check, `--pg-up`       | `VÁLIDO`                          |
+| Atenção | 30 dias ou menos | `--pg-unknown-bg` | escudo com alerta, `--pg-ardosia` | `ATENÇÃO`                         |
+| Alerta  | 7 dias ou menos  | `--pg-down-bg`    | escudo com alerta, `--pg-down`    | `RENOVE JÁ` (data em `--pg-down`) |
+| Vencido | já expirou       | `--pg-down-bg`    | escudo com ×, `--pg-down`         | `EXPIRADO` (data em `--pg-down`)  |
 
 ## 5. Tipografia
 
-| Papel | Fonte | Tamanho | Linha | Peso |
-|---|---|---|---|---|
-| Título 1 | Rubik | 32 px | 1.2 | 500 |
-| Título 2 | Rubik | 24 px | 1.25 | 500 |
-| Título 3 | Rubik | 20 px | 1.3 | 500 |
-| Texto | Inter | 16 px | 1.6 | 400 |
-| Interface | Inter | 14 px | 1.5 | 400 |
-| Legenda | Inter | 12 px | 1.4 | 400 |
-| Código/URL/ID | mono do sistema | 14 px | 1.5 | 400 |
+| Papel         | Fonte           | Tamanho | Linha | Peso |
+| ------------- | --------------- | ------- | ----- | ---- |
+| Título 1      | Rubik           | 32 px   | 1.2   | 500  |
+| Título 2      | Rubik           | 24 px   | 1.25  | 500  |
+| Título 3      | Rubik           | 20 px   | 1.3   | 500  |
+| Texto         | Inter           | 16 px   | 1.6   | 400  |
+| Interface     | Inter           | 14 px   | 1.5   | 400  |
+| Legenda       | Inter           | 12 px   | 1.4   | 400  |
+| Código/URL/ID | mono do sistema | 14 px   | 1.5   | 400  |
 
 - Só **dois pesos**: 400 e 500. **NUNCA** 300, 600, 700 ou mais.
 - Títulos **SEMPRE** em Rubik 500. Textos e UI **SEMPRE** em Inter.
@@ -202,12 +534,12 @@ O bloco "Certificado SSL" (`web/src/components/monitor-detail/CertCard.jsx`) usa
 
 ## 8. Grafismos de apoio
 
-| Grafismo | Função | Onde |
-|---|---|---|
-| Ondas | Destaque/fundo (ping se espalhando) | Banners, capa do README, slides, posts |
-| Arco divisor | Sublinhar um título (uma onda só) | Títulos de seção, login |
-| Barras de histórico | Separar blocos | Divisórias, rodapés |
-| Gota marcador | Marcador de lista | Listas de features |
+| Grafismo            | Função                              | Onde                                   |
+| ------------------- | ----------------------------------- | -------------------------------------- |
+| Ondas               | Destaque/fundo (ping se espalhando) | Banners, capa do README, slides, posts |
+| Arco divisor        | Sublinhar um título (uma onda só)   | Títulos de seção, login                |
+| Barras de histórico | Separar blocos                      | Divisórias, rodapés                    |
+| Gota marcador       | Marcador de lista                   | Listas de features                     |
 
 - **NUNCA** mais de 2 grafismos por peça.
 - **NUNCA** ondas e arco divisor na mesma peça.
