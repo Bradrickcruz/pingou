@@ -8,24 +8,50 @@ import { Button } from "../ui/Button";
 import { Spinner } from "../ui/Spinner";
 import { ReasonField } from "./MonitorModals";
 import { matchesQuery } from "../../lib/monitors";
-import { defaultRange, toApiDate, validateWindow } from "../../lib/maintenance";
-import { getTimeZone } from "../../lib/timezone";
+import {
+  defaultRange,
+  toApiDate,
+  validateWindow,
+  windowState,
+} from "../../lib/maintenance";
+import { getTimeZone, utcToZonedInput } from "../../lib/timezone";
 
-// Agendar uma janela para um ou mais monitores. `monitors` é a lista para
-// escolher (sem ela, o modal busca); `initialIds` vem marcado (detalhe).
+const LOCKED_NOTE = "A manutenção já começou: só o motivo pode mudar.";
+
+// Dois modos (D15):
+// - criar: agenda uma janela para um ou mais monitores. `monitors` é a lista
+//   para escolher (sem ela, o modal busca); `initialIds` vem marcado (detalhe).
+// - editar (`window`): uma janela existente, com o monitor fixo (D13). Janela já
+//   iniciada tem início e fim desabilitados: só o motivo muda (D12).
+// onStale: a janela mudou no servidor (começou ou sumiu); quem abriu recarrega.
 export function MaintenanceModal({
   monitors,
   initialIds = [],
+  window: editing,
   onClose,
   onCreated,
+  onSaved,
+  onStale,
 }) {
-  const [list, setList] = useState(monitors ?? null);
+  const edit = editing != null;
+  const [initial] = useState(() =>
+    edit
+      ? {
+          starts: utcToZonedInput(new Date(editing.starts_at)),
+          ends: utcToZonedInput(new Date(editing.ends_at)),
+          reason: editing.reason ?? "",
+        }
+      : { ...defaultRange(), reason: "" },
+  );
+  const [locked, setLocked] = useState(
+    () => edit && windowState(editing) === "active",
+  );
+  const [list, setList] = useState(edit ? [] : (monitors ?? null));
   const [ids, setIds] = useState(initialIds);
   const [query, setQuery] = useState("");
-  const [range] = useState(() => defaultRange());
-  const [starts, setStarts] = useState(range.starts);
-  const [ends, setEnds] = useState(range.ends);
-  const [reason, setReason] = useState("");
+  const [starts, setStarts] = useState(initial.starts);
+  const [ends, setEnds] = useState(initial.ends);
+  const [reason, setReason] = useState(initial.reason);
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -34,9 +60,10 @@ export function MaintenanceModal({
   const fieldId = (name) => `${uid}-${name}`;
   const errorId = (name) => `${uid}-${name}-error`;
   const zone = getTimeZone();
+  const lockedNoteId = `${uid}-locked`;
 
   useEffect(() => {
-    if (monitors) return;
+    if (monitors || edit) return;
     let alive = true;
     monitorsApi
       .list({ limit: 100 })
@@ -45,7 +72,7 @@ export function MaintenanceModal({
     return () => {
       alive = false;
     };
-  }, [monitors]);
+  }, [monitors, edit]);
 
   const byName = useMemo(
     () =>
@@ -70,14 +97,63 @@ export function MaintenanceModal({
     el?.focus();
   };
 
+  // edição: só os campos que mudaram; nada mudou → fecha sem chamar a API
+  const saveEdit = async () => {
+    const patch = {};
+    if (!locked && starts !== initial.starts)
+      patch.starts_at = toApiDate(starts);
+    if (!locked && ends !== initial.ends) patch.ends_at = toApiDate(ends);
+    if (reason.trim() !== initial.reason.trim()) patch.reason = reason.trim();
+    if (Object.keys(patch).length === 0) {
+      onClose();
+      return;
+    }
+    setSaving(true);
+    try {
+      await maintenanceApi.update(editing.id, patch);
+      toast.success("Manutenção atualizada");
+      await onSaved?.();
+      onClose();
+    } catch (err) {
+      if (err.status === 409 && err.data?.code === "MAINTENANCE_LOCKED") {
+        setLocked(true);
+        setStarts(initial.starts);
+        setEnds(initial.ends);
+        setErrors({});
+        setSubmitError(
+          "Esta manutenção começou enquanto você editava, então o horário não pode mais mudar. O motivo ainda pode.",
+        );
+        void onStale?.();
+      } else if (err.status === 404) {
+        setSubmitError("Esta manutenção não existe mais.");
+        void onStale?.();
+      } else {
+        setSubmitError(err.message);
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const submit = async (e) => {
     e.preventDefault();
     if (saving) return;
     setSubmitError(null);
-    const errs = validateWindow({ ids, starts, ends });
+    const errs = validateWindow({
+      ids,
+      starts,
+      ends,
+      edit,
+      initialStarts: initial.starts,
+      locked,
+    });
     setErrors(errs);
     if (Object.keys(errs).length > 0) {
       focusFirstError(errs);
+      return;
+    }
+    if (edit) {
+      await saveEdit();
       return;
     }
     setSaving(true);
@@ -134,9 +210,14 @@ export function MaintenanceModal({
         type="datetime-local"
         value={value}
         onChange={(e) => set(e.target.value)}
+        disabled={locked}
         aria-invalid={errors[name] ? true : undefined}
-        aria-describedby={errors[name] ? errorId(name) : undefined}
-        className={inputCls(errors[name])}
+        aria-describedby={
+          [errors[name] && errorId(name), locked && lockedNoteId]
+            .filter(Boolean)
+            .join(" ") || undefined
+        }
+        className={`${inputCls(errors[name])} disabled:bg-pg-nuvem disabled:text-pg-neblina disabled:cursor-not-allowed`}
       />
       {fieldError(name)}
     </div>
@@ -144,97 +225,113 @@ export function MaintenanceModal({
 
   return (
     <Modal
-      title="Agendar manutenção"
+      title={edit ? "Editar manutenção" : "Agendar manutenção"}
       subtitle="Durante a janela, nenhum check roda, nenhum incidente abre e ninguém é avisado."
       onClose={onClose}
     >
       <form ref={formRef} onSubmit={submit} noValidate>
-        <fieldset
-          id={fieldId("monitors")}
-          className="mb-5 border-0 p-0 m-0 min-w-0"
-          aria-invalid={errors.monitors ? true : undefined}
-          aria-describedby={errors.monitors ? errorId("monitors") : undefined}
-        >
-          <legend className="mb-2 text-pg-ui font-medium text-pg-ardosia">
-            Monitores{" "}
-            <span className="font-normal text-pg-neblina">
-              ({ids.length} {ids.length === 1 ? "escolhido" : "escolhidos"})
-            </span>
-          </legend>
-          {list == null ? (
-            <div className="flex justify-center py-6">
-              <Spinner />
-            </div>
-          ) : (
-            <>
-              {byName.length > 6 && (
-                <div className="relative mb-2">
-                  <Search
-                    size={16}
-                    aria-hidden="true"
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-pg-neblina"
-                  />
-                  <input
-                    type="search"
-                    aria-label="Filtrar monitores"
-                    placeholder="Filtrar por nome ou endereço"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 rounded-pg-control text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda placeholder:text-pg-neblina"
-                  />
-                </div>
-              )}
-              <ul
-                className={`list-none m-0 p-1 max-h-52 overflow-y-auto rounded-pg-control border ${
-                  errors.monitors ? "border-pg-down" : "border-pg-borda"
-                }`}
-              >
-                {visible.map((m) => {
-                  // ponytail: espelha a regra do backend (pausado ou com janela viva não entra)
-                  const blocked = !m.enabled || !!m.maintenance;
-                  return (
-                    <li key={m.id}>
-                      <label
-                        className={`flex items-center gap-2.5 px-2 py-2 rounded-pg-control ${
-                          blocked
-                            ? "cursor-not-allowed opacity-60"
-                            : "cursor-pointer hover:bg-pg-nuvem"
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={ids.includes(m.id)}
-                          disabled={blocked}
-                          onChange={() => toggle(m.id)}
-                          className="w-4 h-4 flex-shrink-0 accent-pg-ciano-fundo"
-                        />
-                        <span className="truncate text-pg-ui text-pg-ardosia">
-                          {m.name}
-                        </span>
-                        {blocked && (
-                          <span className="ml-auto flex-shrink-0 text-pg-caption text-pg-neblina">
-                            {!m.enabled ? "pausado" : "já agendada"}
-                          </span>
-                        )}
-                      </label>
-                    </li>
-                  );
-                })}
-                {visible.length === 0 && (
-                  <li className="px-2 py-3 text-pg-caption text-pg-neblina">
-                    Nenhum monitor encontrado.
-                  </li>
+        {edit ? (
+          <p className="mb-5 text-pg-ui text-pg-ardosia">
+            <span className="text-pg-neblina">Monitor:</span>{" "}
+            <strong className="font-medium">
+              {editing.monitor_name ?? "—"}
+            </strong>
+          </p>
+        ) : (
+          <fieldset
+            id={fieldId("monitors")}
+            className="mb-5 border-0 p-0 m-0 min-w-0"
+            aria-invalid={errors.monitors ? true : undefined}
+            aria-describedby={errors.monitors ? errorId("monitors") : undefined}
+          >
+            <legend className="mb-2 text-pg-ui font-medium text-pg-ardosia">
+              Monitores{" "}
+              <span className="font-normal text-pg-neblina">
+                ({ids.length} {ids.length === 1 ? "escolhido" : "escolhidos"})
+              </span>
+            </legend>
+            {list == null ? (
+              <div className="flex justify-center py-6">
+                <Spinner />
+              </div>
+            ) : (
+              <>
+                {byName.length > 6 && (
+                  <div className="relative mb-2">
+                    <Search
+                      size={16}
+                      aria-hidden="true"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-pg-neblina"
+                    />
+                    <input
+                      type="search"
+                      aria-label="Filtrar monitores"
+                      placeholder="Filtrar por nome ou endereço"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 rounded-pg-control text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda placeholder:text-pg-neblina"
+                    />
+                  </div>
                 )}
-              </ul>
-            </>
-          )}
-          {fieldError("monitors")}
-        </fieldset>
+                <ul
+                  className={`list-none m-0 p-1 max-h-52 overflow-y-auto rounded-pg-control border ${
+                    errors.monitors ? "border-pg-down" : "border-pg-borda"
+                  }`}
+                >
+                  {visible.map((m) => {
+                    // ponytail: espelha a regra do backend (pausado ou com janela viva não entra)
+                    const blocked = !m.enabled || !!m.maintenance;
+                    return (
+                      <li key={m.id}>
+                        <label
+                          className={`flex items-center gap-2.5 px-2 py-2 rounded-pg-control ${
+                            blocked
+                              ? "cursor-not-allowed opacity-60"
+                              : "cursor-pointer hover:bg-pg-nuvem"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={ids.includes(m.id)}
+                            disabled={blocked}
+                            onChange={() => toggle(m.id)}
+                            className="w-4 h-4 flex-shrink-0 accent-pg-ciano-fundo"
+                          />
+                          <span className="truncate text-pg-ui text-pg-ardosia">
+                            {m.name}
+                          </span>
+                          {blocked && (
+                            <span className="ml-auto flex-shrink-0 text-pg-caption text-pg-neblina">
+                              {!m.enabled ? "pausado" : "já agendada"}
+                            </span>
+                          )}
+                        </label>
+                      </li>
+                    );
+                  })}
+                  {visible.length === 0 && (
+                    <li className="px-2 py-3 text-pg-caption text-pg-neblina">
+                      Nenhum monitor encontrado.
+                    </li>
+                  )}
+                </ul>
+              </>
+            )}
+            {fieldError("monitors")}
+          </fieldset>
+        )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+        <div
+          className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${locked ? "mb-2" : "mb-5"}`}
+        >
           {dateField("starts", "Início", starts, setStarts)}
           {dateField("ends", "Fim", ends, setEnds)}
         </div>
+        {locked && (
+          <p id={lockedNoteId} className="mb-5 text-pg-caption text-pg-neblina">
+            {LOCKED_NOTE}
+          </p>
+        )}
 
         <ReasonField
           label="Motivo"
@@ -254,7 +351,13 @@ export function MaintenanceModal({
             Cancelar
           </Button>
           <Button type="submit" disabled={saving || list == null}>
-            {saving ? "Agendando..." : "Agendar"}
+            {edit
+              ? saving
+                ? "Salvando..."
+                : "Salvar"
+              : saving
+                ? "Agendando..."
+                : "Agendar"}
           </Button>
         </div>
       </form>

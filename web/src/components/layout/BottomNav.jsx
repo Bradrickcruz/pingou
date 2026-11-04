@@ -9,7 +9,12 @@ export function BottomNav({ items, openIncidents }) {
       aria-label="Principal"
       className="md:hidden fixed inset-x-0 bottom-0 z-40 bg-pg-branco border-t border-pg-borda pb-[env(safe-area-inset-bottom)]"
     >
-      <ul className="grid grid-cols-3">
+      <ul
+        className="grid"
+        style={{
+          gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))`,
+        }}
+      >
         {items.map(({ to, label, short, icon: Icon }) => (
           <li key={to}>
             <NavLink

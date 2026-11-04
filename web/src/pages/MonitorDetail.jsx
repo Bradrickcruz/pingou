@@ -556,6 +556,7 @@ export function MonitorDetail() {
       {monitor.maintenance && (
         <MaintenanceCard
           maintenance={monitor.maintenance}
+          monitorName={monitor.name}
           onChanged={refresh}
         />
       )}

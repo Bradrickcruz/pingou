@@ -528,7 +528,9 @@ Sobre `/ping/{token}`:
 | `GET`    | `/api/monitors/:id/incidents`  | Incidentes do monitor (mesmos filtros de `/api/incidents`)                            |
 | `GET`    | `/api/monitors/:id/stats`      | Estatísticas numa janela (`range=24h\|7d\|14d\|30d`)                                  |
 | `GET`    | `/api/incidents`               | Lista incidentes (`status`, `monitor_id`, `limit`, `offset`)                          |
+| `GET`    | `/api/maintenance-windows`     | Lista as janelas agendadas e em curso, com o nome do monitor                          |
 | `POST`   | `/api/maintenance-windows`     | Agenda uma janela de manutenção para um ou mais monitores (tudo ou nada)              |
+| `PATCH`  | `/api/maintenance-windows/:id` | Edita uma janela (em curso: só o motivo)                                              |
 | `DELETE` | `/api/maintenance-windows/:id` | Cancela uma janela agendada ou encerra a que está em curso                            |
 | `GET`    | `/api/settings`                | Busca as configurações globais                                                        |
 | `PATCH`  | `/api/settings`                | Atualiza as configurações globais (`webhook_url` só http/https; `timezone` nome IANA) |
@@ -744,6 +746,38 @@ curl -X POST http://localhost:8956/api/maintenance-windows \
 | `409`  | `MAINTENANCE_CONFLICT`: algum monitor já tem janela viva; `monitor_ids` diz quais. Nada é criado                             |
 
 `DELETE /api/maintenance-windows/:id` responde `204`. Antes do início, apaga a janela. Durante, encerra na hora e o monitor volta. Janela já encerrada: `404`.
+
+#### Página de manutenções
+
+O menu **Manutenções** (`/maintenance`) lista as janelas agendadas e em curso de todos os monitores, pelo início. Cada uma tem:
+
+- **Editar**: abre o mesmo modal de agendar, com o monitor fixo.
+- **Cancelar** (agendada): apaga a janela.
+- **Desligar** (em curso): encerra agora e o monitor volta a ser checado.
+
+O card de manutenção no detalhe do monitor tem os mesmos botões.
+
+#### Listando e editando
+
+`GET /api/maintenance-windows` devolve `{"windows": [{id, monitor_id, monitor_name, starts_at, ends_at, reason, state}]}`. `state` é `"scheduled"` ou `"active"`, calculado com o relógio do servidor. Janelas encerradas não aparecem (não há histórico).
+
+`PATCH /api/maintenance-windows/:id` recebe `{starts_at?, ends_at?, reason?}`. Campo ausente não muda; `"reason": null` ou `""` apaga o motivo.
+
+| Janela   | O que pode mudar     |
+| -------- | -------------------- |
+| Agendada | início, fim e motivo |
+| Em curso | **só o motivo**      |
+
+Para parar uma janela em curso antes da hora, use o `DELETE`. Para trocar o monitor, cancele e agende outra.
+
+| Status | Quando                                                                                                                       |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `200`  | a janela atualizada                                                                                                          |
+| `400`  | `VALIDATION_ERROR`: corpo vazio, início no passado, fim antes do início, mais de 7 dias, motivo longo, `monitor_id` no corpo |
+| `404`  | a janela não existe ou já terminou                                                                                           |
+| `409`  | `MAINTENANCE_LOCKED`: a janela já começou e o corpo traz `starts_at` ou `ends_at`. Nada muda                                 |
+
+Editar o motivo de uma janela em curso não muda o motivo já gravado nos incidentes que ela fechou: o incidente guarda o texto do momento em que fechou.
 
 #### Campos nas respostas
 

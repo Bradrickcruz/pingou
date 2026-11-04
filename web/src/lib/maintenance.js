@@ -15,19 +15,37 @@ export function defaultRange(now = Date.now()) {
 
 // validateWindow → { campo: mensagem }; vazio = válido. starts/ends são valores
 // de <input type="datetime-local"> no fuso das Configurações.
-export function validateWindow({ ids, starts, ends }, now = Date.now()) {
+// Edição (edit = true): não há lista de monitores; o início só precisa ser
+// futuro se mudou (initialStarts é o valor com que o modal abriu); janela já
+// iniciada (locked) não valida horário, porque só o motivo é enviado.
+export function validateWindow(
+  { ids = [], starts, ends, edit = false, initialStarts, locked = false },
+  now = Date.now(),
+) {
   const errors = {};
-  if (ids.length === 0) errors.monitors = "Escolha pelo menos um monitor.";
+  if (!edit && ids.length === 0)
+    errors.monitors = "Escolha pelo menos um monitor.";
+  if (locked) return errors;
   const s = zonedToUtc(starts);
   const e = zonedToUtc(ends);
+  const startChanged = !edit || starts !== initialStarts;
   if (!s) errors.starts = "Informe a data e a hora do início.";
-  else if (s.getTime() <= now)
+  else if (startChanged && s.getTime() <= now)
     errors.starts = "O início precisa ser no futuro.";
   if (!e) errors.ends = "Informe a data e a hora do fim.";
   else if (s && e <= s) errors.ends = "O fim precisa ser depois do início.";
   else if (s && e - s > MAX_MAINTENANCE_MS)
     errors.ends = "Uma manutenção dura no máximo 7 dias.";
   return errors;
+}
+
+// windowState → "scheduled" | "active". Usa o estado do servidor (state ou
+// active) e vira "active" sozinho quando o relógio local passa do início, para
+// a tela não esperar o próximo recarregamento.
+export function windowState(w, now = Date.now()) {
+  const serverActive = w.state === "active" || w.active === true;
+  if (serverActive || new Date(w.starts_at).getTime() <= now) return "active";
+  return "scheduled";
 }
 
 // toApiDate("2026-11-10T02:00") → "2026-11-10T05:00:00Z" (RFC 3339, UTC, sem ms)

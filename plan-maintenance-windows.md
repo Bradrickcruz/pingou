@@ -29,12 +29,12 @@
 | D13 | **Editar não troca o monitor.** Cada janela pertence a um monitor; editar mexe só em `starts_at`, `ends_at` e `reason` dela. Para mudar o monitor: desligar e agendar outra. A edição revalida D1 (início no futuro, fim depois do início, teto de 7 dias) e D4. D2 não é afetada (a janela já é a única viva do monitor).                                                                                                   |
 | D14 | **A página lista só janelas vivas** (agendadas e em curso), ordenadas por início. Janelas encerradas ou canceladas não aparecem (não há histórico: cancelar antes do início apaga a linha, ver T8). Máx. 100 linhas (uma por monitor, limite de 100 monitores), sem paginação.                                                                                                                                               |
 | D15 | **O modal é reaproveitado** em dois modos: criar (como hoje) e editar (monitor fixo, campos preenchidos, fuso das Configurações). Em janela iniciada, os campos de início e fim ficam desabilitados com a explicação "A manutenção já começou: só o motivo pode mudar". Corrida: se a janela começar enquanto o modal está aberto com horário alterado, o servidor recusa com 409 `MAINTENANCE_LOCKED` e a página recarrega. |
-| D16 | **Etapa 3 em branch e PR próprios, empilhados.** O PR das etapas 1 e 2 ainda não foi mergeado: `feature/maintenance-page` parte de `feature/maintenance-windows` e o PR da Etapa 3 abre com base nela. Quando o PR das etapas 1 e 2 for mergeado, rebasear a branch em `develop` e trocar a base do PR para `develop`.                                                                                                       |
+| D16 | **Etapa 3 no mesmo PR das etapas 1 e 2** (revisto na aplicação, a pedido do autor). Antes era branch e PR próprios, empilhados; ficou tudo em `feature/maintenance-windows` e na PR #18, com commits por camada.                                                                                                                                                                                                             |
 | D17 | **Editar também no card de manutenção do detalhe do monitor** (`MaintenanceCard`): botão "Editar" abre o mesmo modal em modo editar (D15), com as mesmas regras.                                                                                                                                                                                                                                                             |
 
 **Fora do escopo:** janela recorrente, aviso de "começou/terminou", página pública de status, limpeza de incidentes órfãos, histórico de janelas encerradas, estender ou encurtar o horário de janela em curso, trocar o monitor de uma janela, revisão dos baldes do `/stats` em UTC.
 
-**Fluxo de git:** branch `feature/maintenance-windows` a partir de `develop`, commits por etapa, PR para `develop`. Etapa 3: branch `feature/maintenance-page` a partir de `feature/maintenance-windows`, commits por camada (backend, frontend), PR empilhado com base em `feature/maintenance-windows` (D16).
+**Fluxo de git:** branch `feature/maintenance-windows` a partir de `develop`, commits por etapa, PR para `develop`. Etapa 3: na mesma branch e no mesmo PR (D16 revisto), commits por camada (backend, frontend).
 
 ## Project Type
 
@@ -44,11 +44,11 @@
 
 Este plano está concluído quando (reaberto pela Etapa 3; as etapas 1 e 2 já cumpriram estes itens):
 
-- [ ] Todos os Success Criteria estão marcados
-- [ ] Build, lint e type-check passam
-- [ ] Nenhum item pendente no Status de Execução
-- [ ] Evidências de verificação registradas
-- [ ] PR aberto contra `develop` com descrição e checklist de teste manual (um por etapa: etapas 1–2 já abertos; Etapa 3 pendente)
+- [x] Todos os Success Criteria estão marcados
+- [x] Build, lint e type-check passam
+- [x] Nenhum item pendente no Status de Execução
+- [x] Evidências de verificação registradas
+- [x] PR aberto contra `develop` com descrição e checklist de teste manual (#18, com as três etapas)
 
 > Revisar o plano se: escopo mudar, nova dependência for descoberta, ou mais de 2 tasks forem bloqueadas.
 
@@ -77,17 +77,17 @@ Este plano está concluído quando (reaberto pela Etapa 3; as etapas 1 e 2 já c
 
 **Etapa 3**
 
-- [ ] `GET /api/maintenance-windows` devolve as janelas vivas com nome do monitor, estado (`scheduled` | `active`), início, fim e motivo, ordenadas por início (D14)
-- [ ] `PATCH /api/maintenance-windows/{id}` edita início, fim e motivo de janela **agendada**, revalidando D1 e D4 (D12, D13)
-- [ ] PATCH em janela **iniciada** aceita só `reason`; com `starts_at` ou `ends_at` → 409 `MAINTENANCE_LOCKED`, nada é alterado; janela inexistente ou já finalizada → 404 (D12)
-- [ ] Mudar o motivo de janela em curso não reaplica nenhum efeito de início/fim (incidente, estado, `resumed_at` ficam como estão)
-- [ ] Página `/maintenance` acessível pelo menu (desktop e `BottomNav`), com estados de carregando, vazio e erro
-- [ ] A lista mostra monitor, estado, início e fim no fuso das Configurações, e motivo
-- [ ] Toda janela tem "Editar" (abre o modal preenchido, monitor fixo). Agendada: início, fim e motivo editáveis, e botão "Cancelar". Em curso: início e fim desabilitados no modal, motivo editável, e botão "Desligar" com confirmação (D12, D15)
-- [ ] Salvar a edição atualiza a linha sem recarregar a página; janela que começa com o modal aberto e horário alterado mostra o erro do 409 e a lista se atualiza (D15)
-- [ ] Linha passa de "Agendada" para "Em curso" sozinha, sem recarregar a página (o botão "Cancelar" vira "Desligar")
-- [ ] Botão "Agendar manutenção" na página abre o modal em modo criar
-- [ ] O `MaintenanceCard` do detalhe do monitor tem "Editar", que abre o mesmo modal em modo editar (D17)
+- [x] `GET /api/maintenance-windows` devolve as janelas vivas com nome do monitor, estado (`scheduled` | `active`), início, fim e motivo, ordenadas por início (D14)
+- [x] `PATCH /api/maintenance-windows/{id}` edita início, fim e motivo de janela **agendada**, revalidando D1 e D4 (D12, D13)
+- [x] PATCH em janela **iniciada** aceita só `reason`; com `starts_at` ou `ends_at` → 409 `MAINTENANCE_LOCKED`, nada é alterado; janela inexistente ou já finalizada → 404 (D12)
+- [x] Mudar o motivo de janela em curso não reaplica nenhum efeito de início/fim (incidente, estado, `resumed_at` ficam como estão)
+- [x] Página `/maintenance` acessível pelo menu (desktop e `BottomNav`), com estados de carregando, vazio e erro
+- [x] A lista mostra monitor, estado, início e fim no fuso das Configurações, e motivo
+- [x] Toda janela tem "Editar" (abre o modal preenchido, monitor fixo). Agendada: início, fim e motivo editáveis, e botão "Cancelar". Em curso: início e fim desabilitados no modal, motivo editável, e botão "Desligar" com confirmação (D12, D15)
+- [x] Salvar a edição atualiza a linha sem recarregar a página; janela que começa com o modal aberto e horário alterado mostra o erro do 409 e a lista se atualiza (D15)
+- [x] Linha passa de "Agendada" para "Em curso" sozinha, sem recarregar a página (o botão "Cancelar" vira "Desligar")
+- [x] Botão "Agendar manutenção" na página abre o modal em modo criar
+- [x] O `MaintenanceCard` do detalhe do monitor tem "Editar", que abre o mesmo modal em modo editar (D17)
 
 ## Tech Stack
 
@@ -993,16 +993,16 @@ Teste manual da Etapa 3 (registrar no PR):
 
 ## Cronograma Sugerido
 
-| Fase                         | Tarefas | Complexity | Esforço | Target                                                                      | Status       |
-| ---------------------------- | ------- | ---------- | ------- | --------------------------------------------------------------------------- | ------------ |
-| Fase 0                       | T0      | XS         | 5 min   | Branch criada                                                               | ✅ Concluído |
-| Fase 1 (etapa 1)             | T1–T7   | M          | ~3 h    | Pausa com motivo + bug da retomada corrigido                                | ✅ Concluído |
-| Fase 2 (backend da etapa 2)  | T8–T15  | XL         | ~6 h    | Janela funcionando via API, com testes                                      | ✅ Concluído |
-| Fase 3 (frontend da etapa 2) | T16–T18 | L          | ~3–4 h  | UI completa                                                                 | ✅ Concluído |
-| Fase 4 (fechamento)          | T19–T21 | M          | ~1,5 h  | PR aberto contra `develop`                                                  | ✅ Concluído |
-| Fase 5 (backend da Etapa 3)  | T22–T27 | L          | ~3 h    | `GET`/`PATCH` com testes                                                    | ⬜ Pendente  |
-| Fase 6 (frontend da Etapa 3) | T28–T32 | L          | ~3,5 h  | Página `/maintenance`, modal em modo editar e "Editar" no card              | ⬜ Pendente  |
-| Fase 7 (fechamento Etapa 3)  | T33–T35 | M          | ~1,5 h  | PR da Etapa 3 aberto (base `feature/maintenance-windows`, depois `develop`) | ⬜ Pendente  |
+| Fase                         | Tarefas | Complexity | Esforço | Target                                                         | Status       |
+| ---------------------------- | ------- | ---------- | ------- | -------------------------------------------------------------- | ------------ |
+| Fase 0                       | T0      | XS         | 5 min   | Branch criada                                                  | ✅ Concluído |
+| Fase 1 (etapa 1)             | T1–T7   | M          | ~3 h    | Pausa com motivo + bug da retomada corrigido                   | ✅ Concluído |
+| Fase 2 (backend da etapa 2)  | T8–T15  | XL         | ~6 h    | Janela funcionando via API, com testes                         | ✅ Concluído |
+| Fase 3 (frontend da etapa 2) | T16–T18 | L          | ~3–4 h  | UI completa                                                    | ✅ Concluído |
+| Fase 4 (fechamento)          | T19–T21 | M          | ~1,5 h  | PR aberto contra `develop`                                     | ✅ Concluído |
+| Fase 5 (backend da Etapa 3)  | T22–T27 | L          | ~3 h    | `GET`/`PATCH` com testes                                       | ✅ Concluído |
+| Fase 6 (frontend da Etapa 3) | T28–T32 | L          | ~3,5 h  | Página `/maintenance`, modal em modo editar e "Editar" no card | ✅ Concluído |
+| Fase 7 (fechamento Etapa 3)  | T33–T35 | M          | ~1,5 h  | Etapa 3 incluída na PR #18                                     | ✅ Concluído |
 
 ## Status de Execução
 
@@ -1010,6 +1010,7 @@ Teste manual da Etapa 3 (registrar no PR):
 
 - Análise de viabilidade e decisões D1–D9 aprovadas
 - T0–T21: etapas 1 e 2, testes, QA manual, docs e PR (desvios registrados em `docs/implementacoes.md`, seção 14)
+- T22–T35: Etapa 3 na mesma branch e PR (D16 revisto); T22 (branch nova) não se aplica
 
 ### Em andamento
 
@@ -1017,9 +1018,8 @@ Teste manual da Etapa 3 (registrar no PR):
 
 ### Pendente
 
-- QA em dispositivo real / leitor de tela (registrado em Pendências abertas)
-- Etapa 3 inteira (T22–T35): página de manutenções, edição de janela (horário só da agendada, motivo também da em curso), desligar janela em curso, "Editar" no card do detalhe. Decisões D12–D17 aprovadas; aguardando o aval final do plano para construir
-- Merge do PR das etapas 1 e 2 (a Etapa 3 está empilhada nele, D16)
+- Merge da PR #18 (etapas 1, 2 e 3)
+- QA em dispositivo real / leitor de tela (registrado em Pendências abertas de `docs/implementacoes.md`)
 
 ## Notes
 

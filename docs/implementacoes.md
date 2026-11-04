@@ -484,6 +484,15 @@ Plano `plan-maintenance-windows.md`, em duas etapas num PR só.
 - Tick de 10 s (`runMaintenance`, no molde do `runHeartbeats`): aplica início (fecha incidente como manutenção, estado `UNKNOWN`) e fim (`resumed_at`, `UNKNOWN`, prazo do heartbeat, `Reload` com check imediato). Roda uma vez no `Start`.
 - Web: status `MAINTENANCE` (selo próprio, filtro, contagem na faixa), "Em manutenção até HH:MM" no fuso das Configurações, modal de agendar com multi-seleção, card no detalhe com cancelar/encerrar, `zonedToUtc` para ler o `datetime-local` no fuso das Configurações.
 
+**Etapa 3: página de manutenções e edição**
+
+- `GET /api/maintenance-windows` (janelas vivas com o nome do monitor e `state` = `scheduled` | `active`) e `PATCH /api/maintenance-windows/{id}`.
+- Agendada: edita início, fim e motivo. Iniciada (pelo relógio do servidor): só o motivo; horário vira `409 MAINTENANCE_LOCKED`. A guarda `starts_at > now` no próprio `UPDATE` fecha a corrida com o início.
+- Página `/maintenance` (menu lateral e aba do celular): lista, editar, cancelar/desligar, vira "Em curso" sozinha e recarrega nas viradas de início e fim.
+- `MaintenanceModal` em modo editar: monitor fixo, só envia o que mudou, horário desabilitado em janela iniciada; o 409 mantém o modal aberto com o horário travado.
+- "Editar" no card de manutenção do detalhe, com o mesmo modal e o mesmo diálogo de cancelar/desligar da página.
+- D10/D11 (no modal de criar: nome do fuso no rótulo; pausados e com janela viva desabilitados) foram commitados direto pelo autor do plano.
+
 ### Decisões
 
 D1–D9 do plano: teto de 7 dias; uma janela viva por monitor; pausa manual vence a janela; motivo opcional de até 200 caracteres; lote tudo ou nada; "em manutenção" derivado do relógio; uma instância só; uptime de 24 h sem mudança; `closed_manually` 0/1/2.
@@ -497,9 +506,16 @@ D1–D9 do plano: teto de 7 dias; uma janela viva por monitor; pausa manual venc
 5. **Cancelar no segundo exato do início** grava `ends_at = starts_at + 1 s` (o `CHECK (ends_at > starts_at)` recusaria igual).
 6. `MaintenanceModal` ficou em arquivo próprio (o plano o colocava em `MonitorModals.jsx`), e a validação do formulário em `lib/maintenance.js`, para ter teste.
 7. No desktop, o selo e o motivo do incidente fechado foram para a coluna "Motivo da queda": "Fechado por manutenção" não cabia na coluna de duração (100 px).
+8. **Etapa 3 no mesmo PR das etapas 1 e 2**, e não num PR empilhado (D16), por decisão do autor na hora de aplicar.
+9. O card do detalhe trocou "Encerrar agora" por **"Desligar"**, o mesmo nome da página, e as duas telas usam o mesmo diálogo (`CancelWindowDialog`).
+10. `PATCH` com `monitor_id` no corpo responde `400` (em vez de ignorar o campo), para o erro ficar visível.
+11. A listagem da página varre `monitors` (no máximo 100 linhas); o teste de plano de consulta registra essa exceção.
 
 ### Limitações conhecidas
 
+- Editar o motivo de uma janela em curso não muda o `close_note` dos incidentes que ela já fechou (cópia de propósito).
+- Duas abas editando a mesma janela: a última gravação vence, sem aviso.
+- D11 bloqueia monitores pausados só na tela: a API ainda aceita agendar janela para monitor pausado (a pausa vence a janela, D3).
 - Efeitos de início e fim atrasam até 10 s (tick). O bloqueio de checks começa na hora.
 - Logo depois do `ends_at`, até o tick rodar, criar outra janela para o mesmo monitor dá `409` (a antiga ainda está viva).
 - No celular, agendar fica no menu ⋮ do detalhe; o botão "Agendar manutenção" do topo é só do desktop.
@@ -511,7 +527,7 @@ Flag `is_in_maintenance` em `monitors`; um timer por janela (`time.AfterFunc`); 
 
 ### Validação
 
-`go vet`, `go test -race ./...` (scheduler 5× seguidas, sem falha intermitente) e `npm run lint`/`format:check`/`test`/`build` verdes. QA manual com o Pingou real, fuso `America/Sao_Paulo` e navegador em UTC: pausa com motivo; janela de 3 min em 2 monitores (um DOWN com incidente aberto) gravada no UTC certo; conflito `409` com o nome do monitor; incidente fechado por manutenção com o motivo; nenhum check em 25 s de janela; ping `200` sem registro; fim natural com check imediato e prazo do heartbeat recomeçado; reinício no meio da janela mantendo a manutenção; "Encerrar agora" pelo celular com check imediato.
+`go vet`, `go test -race ./...` (scheduler 5× seguidas, sem falha intermitente) e `npm run lint`/`format:check`/`test`/`build` verdes. QA manual com o Pingou real, fuso `America/Sao_Paulo` e navegador em UTC: pausa com motivo; janela de 3 min em 2 monitores (um DOWN com incidente aberto) gravada no UTC certo; conflito `409` com o nome do monitor; incidente fechado por manutenção com o motivo; nenhum check em 25 s de janela; ping `200` sem registro; fim natural com check imediato e prazo do heartbeat recomeçado; reinício no meio da janela mantendo a manutenção; "Encerrar agora" pelo celular com check imediato. Etapa 3: página vazia; duas janelas ordenadas; edição de horário e motivo com o UTC certo; janela de 2 min virando "Em curso" sozinha; editar o horário com o início passando com o modal aberto → mensagem do 409 e horário travado, e salvar só o motivo em seguida; nenhum incidente novo ao editar o motivo em curso; editar pelo card do detalhe; desligar pela página com check imediato; `curl` do `PATCH` (409 com horário, 200 só com motivo); página no celular com a aba nova.
 
 ---
 

@@ -1,35 +1,18 @@
 import { useState } from "react";
-import { Wrench } from "lucide-react";
-import { toast } from "react-toastify";
-import { maintenanceApi } from "../../api/maintenance";
+import { Pencil, Wrench } from "lucide-react";
 import { Button } from "../ui/Button";
-import { Modal } from "../ui/Modal";
+import { MaintenanceModal } from "../monitors/MaintenanceModal";
+import { CancelWindowDialog } from "../maintenance/CancelWindowDialog";
 import { fullDate } from "../../lib/format";
-import { zoneOffsetLabel } from "../../lib/timezone";
+import { getTimeZone } from "../../lib/timezone";
 
-// Janela viva do monitor (agendada ou em curso): motivo, início, fim e cancelar.
-// O estado vem do servidor (maintenance.active), não do relógio do navegador.
-export function MaintenanceCard({ maintenance, onChanged }) {
-  const [confirming, setConfirming] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
+// Janela viva do monitor (agendada ou em curso): motivo, início, fim, editar e
+// cancelar/desligar (D17). O estado vem do servidor (maintenance.active).
+export function MaintenanceCard({ maintenance, monitorName, onChanged }) {
+  const [open, setOpen] = useState(null); // "edit" | "cancel"
   const running = maintenance.active;
-  const zone = zoneOffsetLabel(new Date(maintenance.starts_at));
-
-  const cancel = async () => {
-    setSaving(true);
-    setError(null);
-    try {
-      await maintenanceApi.cancel(maintenance.id);
-      toast.success(running ? "Manutenção encerrada" : "Manutenção cancelada");
-      setConfirming(false);
-      await onChanged?.();
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setSaving(false);
-    }
-  };
+  const w = { ...maintenance, monitor_name: monitorName };
+  const close = () => setOpen(null);
 
   return (
     <section
@@ -51,7 +34,7 @@ export function MaintenanceCard({ maintenance, onChanged }) {
             <p className="mt-0.5 mb-0 text-pg-caption text-pg-ardosia tabular-nums">
               {fullDate(maintenance.starts_at)} →{" "}
               {fullDate(maintenance.ends_at)}{" "}
-              <span className="text-pg-neblina">({zone})</span>
+              <span className="text-pg-neblina">({getTimeZone()})</span>
             </p>
             {maintenance.reason && (
               <p className="mt-1 mb-0 text-pg-ui text-pg-ardosia break-words">
@@ -66,52 +49,41 @@ export function MaintenanceCard({ maintenance, onChanged }) {
             </p>
           </div>
         </div>
-        <Button
-          variant="ghost"
-          onClick={() => setConfirming(true)}
-          className="flex-shrink-0 bg-pg-branco"
-        >
-          {running ? "Encerrar agora" : "Cancelar"}
-        </Button>
+        <div className="flex flex-shrink-0 gap-2">
+          <Button
+            variant="ghost"
+            onClick={() => setOpen("edit")}
+            aria-label="Editar manutenção"
+            className="flex-1 sm:flex-none gap-1.5 bg-pg-branco"
+          >
+            <Pencil size={16} aria-hidden="true" />
+            Editar
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => setOpen("cancel")}
+            className="flex-1 sm:flex-none bg-pg-branco"
+          >
+            {running ? "Desligar" : "Cancelar"}
+          </Button>
+        </div>
       </div>
-      {error && !confirming && (
-        <p role="alert" className="mt-3 mb-0 text-pg-caption text-pg-down">
-          {error}
-        </p>
-      )}
 
-      {confirming && (
-        <Modal
-          title={running ? "Encerrar manutenção" : "Cancelar manutenção"}
-          onClose={() => setConfirming(false)}
-        >
-          <p className="mb-5 text-pg-neblina">
-            {running
-              ? "O monitor volta a ser conferido agora, com o primeiro check na hora."
-              : "A janela agendada é apagada. Esta ação não pode ser desfeita."}
-          </p>
-          {error && (
-            <p role="alert" className="-mt-2 mb-4 text-pg-caption text-pg-down">
-              {error}
-            </p>
-          )}
-          <div className="flex gap-2.5 justify-end">
-            <Button
-              variant="ghost"
-              onClick={() => setConfirming(false)}
-              data-autofocus
-            >
-              Voltar
-            </Button>
-            <Button variant="danger" onClick={cancel} disabled={saving}>
-              {saving
-                ? "Aguarde..."
-                : running
-                  ? "Encerrar agora"
-                  : "Cancelar manutenção"}
-            </Button>
-          </div>
-        </Modal>
+      {open === "edit" && (
+        <MaintenanceModal
+          window={w}
+          onClose={close}
+          onSaved={onChanged}
+          onStale={onChanged}
+        />
+      )}
+      {open === "cancel" && (
+        <CancelWindowDialog
+          window={w}
+          active={running}
+          onClose={close}
+          onDone={onChanged}
+        />
       )}
     </section>
   );
