@@ -5,6 +5,7 @@ import (
 	"net/mail"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/Bradrickcruz/pingou/internal/domain"
 )
@@ -212,4 +213,23 @@ func parseRecipients(s string) ([]string, error) {
 		return nil, fmt.Errorf("%w: email_recipients accepts at most %d addresses", ErrValidation, maxEmailRecipients)
 	}
 	return out, nil
+}
+
+// maxReasonRunes é o limite do motivo da pausa e da janela de manutenção.
+const maxReasonRunes = 200
+
+// normalizeReason apara espaços do motivo; vazio vira nil. Mais de 200
+// caracteres (runes, não bytes) é recusado.
+func normalizeReason(field string, reason *string) (*string, error) {
+	if reason == nil {
+		return nil, nil
+	}
+	r := strings.TrimSpace(*reason)
+	if r == "" {
+		return nil, nil
+	}
+	if utf8.RuneCountInString(r) > maxReasonRunes {
+		return nil, fmt.Errorf("%w: %s must be at most %d characters", ErrValidation, field, maxReasonRunes)
+	}
+	return &r, nil
 }

@@ -30,6 +30,15 @@ export function MonitorRow({ monitor, now, onEdit, onToggle, onDelete }) {
     <tr className="border-t border-pg-borda">
       <td className={cell}>
         <Badge state={status} />
+        {paused && monitor.pause_reason && (
+          <div
+            className="mt-1 max-w-[160px] truncate text-pg-caption text-pg-neblina"
+            title={monitor.pause_reason}
+          >
+            <span className="sr-only">Motivo: </span>
+            {monitor.pause_reason}
+          </div>
+        )}
       </td>
       <td className={`${cell} max-w-0 w-full`}>
         <Link

@@ -66,7 +66,12 @@ export function MonitorCard({ monitor, now }) {
         <HistoryBar history={monitor.history} dimmed={paused} fluid />
       </div>
 
-      <p className="mt-2 text-pg-caption text-pg-neblina">
+      <p
+        className="mt-2 truncate text-pg-caption text-pg-neblina"
+        title={
+          paused && monitor.pause_reason ? monitor.pause_reason : undefined
+        }
+      >
         {cardFooter(monitor, now)}
       </p>
     </li>

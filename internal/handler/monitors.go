@@ -42,6 +42,7 @@ type updateMonitorRequest struct {
 	FailureThreshold *int                 `json:"failure_threshold"`
 	Enabled          *bool                `json:"enabled"`
 	CertAlertEnabled *bool                `json:"cert_alert_enabled"`
+	PauseReason      *string              `json:"pause_reason"`
 }
 
 type monitorResponse struct {
@@ -61,8 +62,12 @@ type monitorResponse struct {
 	// Certificado SSL: as marcas internas de aviso não saem na API.
 	CertAlertEnabled bool    `json:"cert_alert_enabled"`
 	CertExpiresAt    *string `json:"cert_expires_at"` // null se ainda não visto
-	CreatedAt        string  `json:"created_at"`
-	UpdatedAt        string  `json:"updated_at"`
+	// Pausa: motivo (só com o monitor pausado) e instantes da última pausa e retomada.
+	PauseReason *string `json:"pause_reason"`
+	PausedAt    *string `json:"paused_at"`
+	ResumedAt   *string `json:"resumed_at"`
+	CreatedAt   string  `json:"created_at"`
+	UpdatedAt   string  `json:"updated_at"`
 }
 
 // monitorListItem acrescenta o resumo do painel na listagem.
@@ -204,6 +209,7 @@ func (s *Server) handleUpdateMonitor(w http.ResponseWriter, r *http.Request) {
 		FailureThreshold: req.FailureThreshold,
 		Enabled:          req.Enabled,
 		CertAlertEnabled: req.CertAlertEnabled,
+		PauseReason:      req.PauseReason,
 	})
 	if err != nil {
 		writeServiceError(w, err)
@@ -262,6 +268,9 @@ func toMonitorResponse(m *domain.Monitor) monitorResponse {
 		LastPingAt:       formatTime(m.LastPingAt),
 		CertAlertEnabled: m.CertAlertEnabled,
 		CertExpiresAt:    formatTime(m.CertExpiresAt),
+		PauseReason:      m.PauseReason,
+		PausedAt:         formatTime(m.PausedAt),
+		ResumedAt:        formatTime(m.ResumedAt),
 		CreatedAt:        m.CreatedAt.Format("2006-01-02T15:04:05Z"),
 		UpdatedAt:        m.UpdatedAt.Format("2006-01-02T15:04:05Z"),
 	}

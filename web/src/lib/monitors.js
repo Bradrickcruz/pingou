@@ -81,11 +81,12 @@ export function heartbeatExpectation(seconds) {
 
 // cardFooter → linha de rodapé do card do painel (mobile), por estado:
 // DOWN "Fora há 1 dia e 4 h · 90,0% em 24 h"; UP "99,2% em 24 h · 214 ms · há 41 s";
-// UNKNOWN "Aguardando o primeiro check"; PAUSED "Pausado".
+// UNKNOWN "Aguardando o primeiro check"; PAUSED "Pausado" ou "Pausado · motivo".
 export function cardFooter(m, now = Date.now()) {
   const status = statusOf(m);
   const heartbeat = m.type === "heartbeat";
-  if (status === "PAUSED") return "Pausado";
+  if (status === "PAUSED")
+    return m.pause_reason ? `Pausado · ${m.pause_reason}` : "Pausado";
   if (status === "UNKNOWN")
     return heartbeat
       ? "Aguardando o primeiro ping"

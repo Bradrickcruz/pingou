@@ -42,6 +42,7 @@ func hotQueries(monitorID string, all []string, now time.Time) []hotQuery {
 		{"lista: uptime 24h", sqlSummariesUptime(len(ids)), append(append([]any{}, ids...), ts(now.Add(-24*time.Hour)))},
 		{"lista: down_since", sqlIncidentsOpenByMonitors(len(ids)), ids},
 		{"checks: página", sqlChecksPage, []any{monitorID, 50, 0}},
+		{"state machine: falhas desde", sqlChecksLatestSince, []any{monitorID, ts(now.Add(-time.Hour)), 4}},
 		{"checks: total", sqlChecksCount, []any{monitorID}},
 		{"retenção: delete", sqlChecksDeleteOlderBatch, []any{ts(now.Add(-29 * 24 * time.Hour)), 5000}},
 		{"state machine: aberto", sqlIncidentOpenByMonitor, []any{monitorID}},
@@ -151,16 +152,17 @@ func TestHotQueriesUseIndexes(t *testing.T) {
 	ids := []string{"m1", "m2", "m3"}
 	now := time.Date(2026, 1, 10, 0, 0, 0, 0, time.UTC)
 	want := map[string]string{
-		"stats: buckets 30d":    "COVERING INDEX idx_checks_monitor_time",
-		"lista: history":        "COVERING INDEX idx_checks_monitor_time",
-		"lista: uptime 24h":     "COVERING INDEX idx_checks_monitor_time",
-		"checks: página":        "INDEX idx_checks_monitor_time",
-		"checks: total":         "COVERING INDEX idx_checks_monitor_time",
-		"retenção: delete":      "INDEX idx_checks_checked_at",
-		"stats: down window":    "INDEX idx_incidents_monitor_ended",
-		"lista: down_since":     "INDEX idx_incidents_monitor_ended",
-		"state machine: aberto": "INDEX idx_incidents_monitor_ended",
-		"state machine: +falha": "INDEX idx_incidents_monitor_ended",
+		"stats: buckets 30d":          "COVERING INDEX idx_checks_monitor_time",
+		"lista: history":              "COVERING INDEX idx_checks_monitor_time",
+		"lista: uptime 24h":           "COVERING INDEX idx_checks_monitor_time",
+		"checks: página":              "INDEX idx_checks_monitor_time",
+		"checks: total":               "COVERING INDEX idx_checks_monitor_time",
+		"state machine: falhas desde": "INDEX idx_checks_monitor_time",
+		"retenção: delete":            "INDEX idx_checks_checked_at",
+		"stats: down window":          "INDEX idx_incidents_monitor_ended",
+		"lista: down_since":           "INDEX idx_incidents_monitor_ended",
+		"state machine: aberto":       "INDEX idx_incidents_monitor_ended",
+		"state machine: +falha":       "INDEX idx_incidents_monitor_ended",
 	}
 	for _, q := range hotQueries(ids[0], ids, now) {
 		plan, err := explain(ctx, db, q.sql, q.args...)

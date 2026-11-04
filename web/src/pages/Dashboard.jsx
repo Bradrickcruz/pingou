@@ -112,11 +112,17 @@ export function Dashboard() {
       toast.success("Monitor criado");
     });
 
+  // pausar abre o modal do motivo; retomar é direto
   const handleToggle = async (m) => {
     setActionError(null);
+    if (m.enabled) {
+      setSelected(m);
+      setModal("pause");
+      return;
+    }
     try {
-      await monitorsApi.update(m.id, { enabled: !m.enabled });
-      toast.success(m.enabled ? "Monitor pausado" : "Monitor retomado");
+      await monitorsApi.update(m.id, { enabled: true });
+      toast.success("Monitor retomado");
       await refetch();
     } catch (e) {
       setActionError(e.message);

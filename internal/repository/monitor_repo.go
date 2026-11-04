@@ -105,6 +105,7 @@ func (r *MonitorRepo) Update(ctx context.Context, m *domain.Monitor) error {
 		UPDATE monitors SET
 			name=?, url=?, config=?, ping_token=?, interval_seconds=?, timeout_seconds=?,
 			failure_threshold=?, enabled=?, last_ping_at=?, cert_alert_enabled=?, updated_at=?,
+			pause_reason=?, paused_at=?, resumed_at=?,
 			current_state = CASE WHEN ? = 0 THEN 'UNKNOWN' ELSE current_state END,
 			cert_expires_at = CASE WHEN url IS ? THEN cert_expires_at END,
 			cert_alerted_30_for = CASE WHEN url IS ? THEN cert_alerted_30_for END,
@@ -112,7 +113,9 @@ func (r *MonitorRepo) Update(ctx context.Context, m *domain.Monitor) error {
 		WHERE id=?`,
 		m.Name, newURL, encodeConfig(m), m.PingToken, m.IntervalSeconds, m.TimeoutSeconds,
 		m.FailureThreshold, boolToInt(m.Enabled), nullableTime(m.LastPingAt), boolToInt(m.CertAlertEnabled),
-		m.UpdatedAt.UTC().Format(time.RFC3339), boolToInt(m.Enabled),
+		m.UpdatedAt.UTC().Format(time.RFC3339),
+		m.PauseReason, nullableTime(m.PausedAt), nullableTime(m.ResumedAt),
+		boolToInt(m.Enabled),
 		newURL, newURL, newURL,
 		m.ID,
 	)
@@ -138,7 +141,8 @@ type scanner interface {
 
 const monitorColumns = `id, name, type, url, config, ping_token, interval_seconds, timeout_seconds,
 	failure_threshold, enabled, current_state, last_checked_at, last_ping_at, created_at, updated_at,
-	cert_alert_enabled, cert_expires_at, cert_alerted_30_for, cert_alerted_7_for`
+	cert_alert_enabled, cert_expires_at, cert_alerted_30_for, cert_alerted_7_for,
+	pause_reason, paused_at, resumed_at`
 
 func scanMonitor(s scanner) (*domain.Monitor, error) {
 	var m domain.Monitor
@@ -146,12 +150,14 @@ func scanMonitor(s scanner) (*domain.Monitor, error) {
 	var typ, state, config string
 	var url, lastChecked, lastPing sql.NullString
 	var certExpires, certAlerted30, certAlerted7 sql.NullString
+	var pauseReason, pausedAt, resumedAt sql.NullString
 	var createdAt, updatedAt string
 
 	err := s.Scan(
 		&m.ID, &m.Name, &typ, &url, &config, &m.PingToken, &m.IntervalSeconds, &m.TimeoutSeconds,
 		&m.FailureThreshold, &enabled, &state, &lastChecked, &lastPing, &createdAt, &updatedAt,
 		&certAlert, &certExpires, &certAlerted30, &certAlerted7,
+		&pauseReason, &pausedAt, &resumedAt,
 	)
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -177,6 +183,11 @@ func scanMonitor(s scanner) (*domain.Monitor, error) {
 	m.CertExpiresAt = parseNullTime(certExpires)
 	m.CertAlerted30For = parseNullTime(certAlerted30)
 	m.CertAlerted7For = parseNullTime(certAlerted7)
+	if pauseReason.Valid {
+		m.PauseReason = &pauseReason.String
+	}
+	m.PausedAt = parseNullTime(pausedAt)
+	m.ResumedAt = parseNullTime(resumedAt)
 
 	return &m, nil
 }

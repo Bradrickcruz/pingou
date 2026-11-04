@@ -379,11 +379,16 @@ export function MonitorDetail() {
     setSelected(null);
   };
 
+  // pausar abre o modal do motivo; retomar é direto
   const handleToggle = async (m) => {
     setActionError(null);
+    if (m.enabled) {
+      openModal("pause")(m);
+      return;
+    }
     try {
-      await monitorsApi.update(m.id, { enabled: !m.enabled });
-      toast.success(m.enabled ? "Monitor pausado" : "Monitor retomado");
+      await monitorsApi.update(m.id, { enabled: true });
+      toast.success("Monitor retomado");
       await reload();
     } catch (e) {
       setActionError(e.message);
@@ -535,6 +540,13 @@ export function MonitorDetail() {
           </div>
         </div>
       </header>
+
+      {paused && monitor.pause_reason && (
+        <p className="mb-4 md:-mt-4 md:mb-6 p-3 rounded-pg-control border border-pg-borda bg-pg-branco text-pg-ui text-pg-ardosia break-words">
+          <span className="font-medium">Motivo da pausa:</span>{" "}
+          {monitor.pause_reason}
+        </p>
+      )}
 
       {openIncident && <DownAlert incident={openIncident} now={now} />}
 

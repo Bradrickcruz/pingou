@@ -20,6 +20,14 @@ const (
 		FROM checks WHERE monitor_id = ?
 		ORDER BY checked_at DESC, id DESC LIMIT ? OFFSET ?`
 
+	// sqlChecksLatestSince: falhas seguidas da state machine contando só checks
+	// a partir da última retomada (pausa ou fim de manutenção). ">=" porque a
+	// precisão é de segundos e o primeiro check roda no mesmo segundo da retomada.
+	sqlChecksLatestSince = `
+		SELECT ` + checkColumns + `
+		FROM checks WHERE monitor_id = ? AND checked_at >= ?
+		ORDER BY checked_at DESC, id DESC LIMIT ?`
+
 	sqlChecksCount = `SELECT COUNT(*) FROM checks WHERE monitor_id = ?`
 
 	// sqlChecksDeleteOlderBatch: retenção (a cada hora), um lote por vez.
@@ -46,6 +54,13 @@ const (
 	sqlIncidentOpenByMonitor = `
 		SELECT ` + incidentColumns + `
 		FROM incidents WHERE monitor_id = ? AND ended_at IS NULL`
+
+	// sqlIncidentCloseManually: pausa e início de manutenção. Args: (ended_at,
+	// motivo 1|2, close_note, ended_at, monitor_id).
+	sqlIncidentCloseManually = `
+		UPDATE incidents SET ended_at = ?, closed_manually = ?, close_note = ?,
+			duration_seconds = MAX(0, CAST(strftime('%s', ?) - strftime('%s', started_at) AS INTEGER))
+		WHERE monitor_id = ? AND ended_at IS NULL`
 
 	// sqlIncidentIncrementFailures: a cada falha com o monitor DOWN.
 	sqlIncidentIncrementFailures = `UPDATE incidents SET failure_count = failure_count + 1 WHERE monitor_id = ? AND ended_at IS NULL`
@@ -111,7 +126,7 @@ func incidentsListSQL(f domain.IncidentFilter) (count, list string, args []any) 
 	count = `SELECT COUNT(*) FROM incidents i` + where
 	list = `
 		SELECT i.id, i.monitor_id, i.started_at, i.ended_at, i.last_error, i.notification_sent,
-			i.duration_seconds, i.failure_count, i.closed_manually, m.name, m.type, m.url, m.config
+			i.duration_seconds, i.failure_count, i.closed_manually, i.close_note, m.name, m.type, m.url, m.config
 		FROM incidents i LEFT JOIN monitors m ON m.id = i.monitor_id` + where + order + ` LIMIT ? OFFSET ?`
 	return count, list, args
 }

@@ -72,6 +72,16 @@ test("cardFooter PAUSED", () => {
   );
 });
 
+test("cardFooter PAUSED com motivo", () => {
+  assert.equal(
+    cardFooter(
+      { ...base, enabled: false, pause_reason: "troca de disco" },
+      now,
+    ),
+    "Pausado · troca de disco",
+  );
+});
+
 const http = {
   type: "http",
   name: "Serviço de Pagamentos",

@@ -355,3 +355,28 @@ func TestMonitorStatsEndpoint(t *testing.T) {
 		t.Fatalf("inexistente: %d", rec.Code)
 	}
 }
+
+func TestPauseReasonInMonitorAPI(t *testing.T) {
+	_, h, _ := newTestServer(t)
+	rec := do(t, h, "POST", "/api/monitors", `{"name":"API","url":"https://x.test","interval_seconds":60,"timeout_seconds":5,"failure_threshold":3}`)
+	m := decode[monitorResponse](t, rec)
+
+	rec = do(t, h, "PATCH", "/api/monitors/"+m.ID, `{"enabled":false,"pause_reason":"`+strings.Repeat("a", 201)+`"}`)
+	if rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), "VALIDATION_ERROR") {
+		t.Fatalf("201 caracteres: %d %s, want 400 VALIDATION_ERROR", rec.Code, rec.Body)
+	}
+
+	rec = do(t, h, "PATCH", "/api/monitors/"+m.ID, `{"enabled":false,"pause_reason":"deploy"}`)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("pausar: %d %s", rec.Code, rec.Body)
+	}
+	got := decode[monitorResponse](t, do(t, h, "GET", "/api/monitors/"+m.ID, ""))
+	if got.Enabled || got.PauseReason == nil || *got.PauseReason != "deploy" || got.PausedAt == nil {
+		t.Fatalf("pausado: %+v", got)
+	}
+
+	got = decode[monitorResponse](t, do(t, h, "PATCH", "/api/monitors/"+m.ID, `{"enabled":true}`))
+	if !got.Enabled || got.PauseReason != nil || got.PausedAt != nil || got.ResumedAt == nil {
+		t.Fatalf("retomado: %+v", got)
+	}
+}
