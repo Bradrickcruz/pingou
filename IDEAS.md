@@ -10,6 +10,8 @@
 | 1   | Backup sem configurações + importar | Aguardando decisão     | medium     |
 | 2   | Status HTTP esperado                | Esperando um caso real | low        |
 | 3   | Páginas públicas de status          | Para detalhar          | medium     |
+| 4   | Modo escuro (dark mode)             | Para detalhar          | medium     |
+| 5   | Suporte a inglês (e outros idiomas) | Para detalhar          | medium     |
 
 Mais abaixo: ideias [candidatas](#-candidatas-ainda-não-decididas), [adiadas](#-adiadas) e [descartadas](#-descartadas).
 
@@ -195,6 +197,113 @@ feature (segurança)
 ## ⏱️ Priority
 
 medium
+
+---
+
+# 🧩 Task: Modo escuro (dark mode)
+
+## 💡 Idea
+
+Oferecer um tema escuro no painel, além do tema claro atual.
+
+## 🎯 Goal
+
+Quem usa o painel à noite, ou prefere tema escuro, consegue trocar sem perder legibilidade nem a identidade visual do Pingou.
+
+## 📦 Initial Scope
+
+- Três opções: **Claro**, **Escuro** e **Automático** (segue o sistema, via `prefers-color-scheme`). Padrão: Automático.
+- A escolha vale **por navegador** (guardada no `localStorage`), não por instalação. Diferente do fuso, que é global: aqui cada pessoa escolhe o seu.
+- Seletor de tema nas Configurações e, se couber, um atalho discreto no cabeçalho.
+- Aplicar o tema **antes** da primeira pintura, para não piscar o claro e depois virar escuro.
+- Todas as telas: Painel, Incidentes, Detalhe, Manutenções, Configurações, login e modais, no desktop e no celular.
+- Gráficos SVG (resposta, pings, faixas "fora do ar") e selos de estado (UP, DOWN, UNKNOWN, MAINTENANCE) com cores próprias do escuro.
+- Registrar a paleta escura e as regras de uso no `DESIGN.md`.
+
+## 🚧 Out of Scope
+
+- Temas personalizados ou escolha de cor
+- Tema diferente por monitor ou por página
+- Mudar o tema claro atual
+
+## 🔍 Context
+
+O painel foi redesenhado em tema claro (v1.1). As cores já devem sair de tokens do `DESIGN.md`. O `DESIGN.md` §3.4 diz que cor nova precisa de aprovação, então a paleta escura é uma decisão de design, não só de código.
+
+## ⚠️ Notes
+
+- **Primeiro passo:** levantar quantas cores estão fixas no código (hexadecimais soltos, classes de cor do Tailwind fora dos tokens). Cada uma vira token antes de criar o tema, senão o escuro fica "furado".
+- **Contraste:** conferir o mínimo de legibilidade (WCAG AA) nos dois temas, principalmente em texto cinza, selos e linhas de gráfico.
+- Vermelho (DOWN) e verde (UP) precisam continuar distinguíveis no escuro, também para quem tem daltonismo; não depender só da cor (o texto do selo já ajuda).
+- **Páginas públicas de status** (ideia 3) devem herdar o mesmo sistema de temas. Quem fizer uma antes da outra deve criar as telas novas já com tokens.
+- **Decisões tomadas (2026-11-04):**
+  1. **A paleta escura é aprovada pelo dono do projeto** (Bryan). O código só começa a usar o escuro depois da aprovação.
+  2. **Sem atalho no cabeçalho do painel.** Para trocar o tema, vai em Configurações.
+  3. **A página pública tem botão de tema no cabeçalho**, para o visitante escolher como quiser (Claro, Escuro, Automático). A escolha fica no navegador do visitante e não afeta o painel nem os outros visitantes.
+- **Ajuste no escopo:** o "atalho no cabeçalho" do Initial Scope vale **só para a página pública**. No painel, o seletor fica apenas em Configurações.
+
+## 🏷️ Type
+
+improvement
+
+## ⏱️ Priority
+
+medium
+
+---
+
+# 🧩 Task: Suporte a inglês (e outros idiomas)
+
+## 💡 Idea
+
+Hoje o painel e as mensagens estão em português. A ideia é suportar **inglês**, já com a estrutura pronta para adicionar outros idiomas sem mexer em código de tela.
+
+## 🎯 Goal
+
+Quem não lê português consegue usar o Pingou, e adicionar um idioma novo vira só adicionar um arquivo de traduções.
+
+## 📦 Initial Scope
+
+- Idiomas iniciais: `pt-BR` (atual) e `en`.
+- **Textos fora do código das telas:** um arquivo de traduções por idioma (por exemplo, `web/src/locales/pt-BR.json` e `en.json`), com chaves estáveis. Adicionar um idioma = criar um arquivo novo e registrá-lo numa lista.
+- **Idioma padrão:** o do navegador na primeira abertura (como foi feito com o fuso), com fallback para `en` (ou `pt-BR`, a decidir).
+- **Seletor de idioma** nas Configurações.
+- **Datas, horas e números** pelo idioma escolhido (`Intl`), respeitando o fuso das Configurações. Rever as datas formatadas à mão, que foram feitas assim porque o `Intl` em pt-BR gerava "28 de out.".
+- **Plurais e textos com variáveis** ("Fora do ar há 1 dia e 4 h", "3 monitores", "Expira em 12 dias") com regra de plural por idioma, sem juntar frases no código.
+- **Notificações** (e-mail e ntfy) no idioma configurado. O JSON do webhook **não muda** (continua `event`, `monitor`, `timestamp`...).
+- **Mensagens de erro da API:** hoje misturam inglês (validação) e português. Caminho sugerido: a API devolve **código estável** (`VALIDATION_ERROR` etc., já existe) e o painel traduz a mensagem pelo código.
+
+## 🚧 Out of Scope
+
+- Traduzir a documentação (README, `DESIGN.md`)
+- Idiomas que escrevem da direita para a esquerda (árabe, hebraico)
+- Tradução automática ou serviço externo de traduções
+- Idioma por usuário na API (só uma API Key)
+
+## 🔍 Context
+
+Frontend React + Vite, backend Go. O Pingou segue a regra "sem dependência externa obrigatória", então a escolha entre uma biblioteca (como `react-i18next`) e uma solução mínima própria é uma decisão de projeto.
+
+## ⚠️ Notes
+
+- **Pesa mais no backend do que parece:** notificações (e-mail e ntfy), mensagens de erro da API, selos de motivo ("Fechado por manutenção") e motivos de erro do checker (`context deadline exceeded...`) chegam ao usuário. Decidir o que traduz e o que fica como está (erro técnico do checker, em inglês, é aceitável).
+- **Onde guardar o idioma das notificações:** uma configuração global em `settings` (chave-valor, sem migration), como o fuso. O idioma do painel, por outro lado, pode ser por navegador. Isso significa duas coisas: **idioma do painel** (por navegador) e **idioma das notificações** (global). Decidir se são a mesma configuração ou duas.
+- **Estratégia para não ficar para trás:** teste que compara as chaves de todos os idiomas e falha se faltar alguma. Fallback para o idioma padrão quando uma chave não existe.
+- **Fazer cedo é mais barato:** cada tela nova (páginas públicas, importar etc.) escrita em português fixo precisa ser refeita. Se a ideia 3 for feita antes, nascerá com textos soltos. Recomendo planejar o i18n **antes** das páginas públicas, ou garantir que as telas novas já usem o arquivo de traduções.
+- **Páginas públicas:** o idioma da página deve seguir o navegador do visitante, não a configuração do dono.
+- **Decisões tomadas (2026-11-04):**
+  1. **Biblioteca pronta** (como `react-i18next`). É uma dependência de frontend nova e aceita. Escolher a biblioteca no plano, olhando tamanho do bundle.
+  2. **Uma configuração só de idioma**, não duas. Assumi que é **global** (uma por instalação, em `settings`, como o fuso), valendo para o painel e para as notificações. Assim painel e e-mail ficam no mesmo idioma. _(Confirmar essa leitura.)_
+  3. **Fallback: `en`.** Chave que falta num idioma cai para o inglês. Idioma do navegador que não existe no Pingou também cai para `en`.
+- **Consequência da decisão 2:** com idioma global, a primeira pessoa a abrir o painel define o idioma de todos (mesma limitação já conhecida do fuso). Mantém a regra "idioma do navegador na primeira abertura, uma vez" e depois fica salvo.
+
+## 🏷️ Type
+
+feature
+
+## ⏱️ Priority
+
+medium (fazer antes das páginas públicas)
 
 ---
 
