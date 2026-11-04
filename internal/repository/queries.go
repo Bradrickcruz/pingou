@@ -79,6 +79,23 @@ const (
 		FROM maintenance_windows WHERE monitor_id = ? AND finalized_at IS NULL`
 )
 
+// sqlMaintenanceListLive: página de manutenções (no máximo uma janela viva por
+// monitor, então até 100 linhas).
+var sqlMaintenanceListLive = `
+		SELECT ` + qualified("w.", maintenanceColumns) + `, m.name
+		FROM maintenance_windows w JOIN monitors m ON m.id = w.monitor_id
+		WHERE w.finalized_at IS NULL
+		ORDER BY w.starts_at, w.id`
+
+// qualified prefixa cada coluna de uma lista "a, b, c".
+func qualified(prefix, columns string) string {
+	parts := strings.Split(columns, ",")
+	for i, p := range parts {
+		parts[i] = prefix + strings.TrimSpace(p)
+	}
+	return strings.Join(parts, ", ")
+}
+
 // sqlMaintenanceLiveByMonitors: janela viva de cada monitor da lista do painel.
 func sqlMaintenanceLiveByMonitors(monitors int) string {
 	return `

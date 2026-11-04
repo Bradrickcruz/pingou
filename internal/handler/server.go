@@ -102,7 +102,9 @@ func (s *Server) registerRoutes() {
 
 	// janelas de manutenção
 	if s.maintenanceService != nil {
+		api.HandleFunc("GET /maintenance-windows", s.handleListMaintenance)
 		api.HandleFunc("POST /maintenance-windows", s.handleCreateMaintenance)
+		api.HandleFunc("PATCH /maintenance-windows/{id}", s.handleUpdateMaintenance)
 		api.HandleFunc("DELETE /maintenance-windows/{id}", s.handleCancelMaintenance)
 	}
 

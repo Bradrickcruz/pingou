@@ -57,6 +57,7 @@ func hotQueries(monitorID string, all []string, now time.Time) []hotQuery {
 		{"manutenção: ativa", sqlMaintenanceActive, []any{monitorID, ts(now)}},
 		{"manutenção: viva do monitor", sqlMaintenanceLiveByMonitor, []any{monitorID}},
 		{"manutenção: vivas da lista", sqlMaintenanceLiveByMonitors(len(ids)), ids},
+		{"manutenção: página", sqlMaintenanceListLive, nil},
 	}
 }
 
@@ -164,11 +165,18 @@ func TestHotQueriesUseIndexes(t *testing.T) {
 		"manutenção: ativa":           "INDEX idx_maintenance_",
 		"manutenção: viva do monitor": "INDEX idx_maintenance_",
 		"manutenção: vivas da lista":  "INDEX idx_maintenance_",
-		"retenção: delete":            "INDEX idx_checks_checked_at",
-		"stats: down window":          "INDEX idx_incidents_monitor_ended",
-		"lista: down_since":           "INDEX idx_incidents_monitor_ended",
-		"state machine: aberto":       "INDEX idx_incidents_monitor_ended",
-		"state machine: +falha":       "INDEX idx_incidents_monitor_ended",
+		// a página lê só as vivas (índice parcial) e ordena à parte: no máximo
+		// 100 linhas, uma por monitor
+		"manutenção: página":    "idx_maintenance_live_monitor",
+		"retenção: delete":      "INDEX idx_checks_checked_at",
+		"stats: down window":    "INDEX idx_incidents_monitor_ended",
+		"lista: down_since":     "INDEX idx_incidents_monitor_ended",
+		"state machine: aberto": "INDEX idx_incidents_monitor_ended",
+		"state machine: +falha": "INDEX idx_incidents_monitor_ended",
+	}
+	// varredura aceita: a tabela é pequena por construção
+	smallScanOK := map[string]bool{
+		"manutenção: página": true, // monitors tem no máximo 100 linhas
 	}
 	for _, q := range hotQueries(ids[0], ids, now) {
 		plan, err := explain(ctx, db, q.sql, q.args...)
@@ -178,7 +186,7 @@ func TestHotQueriesUseIndexes(t *testing.T) {
 		joined := strings.Join(plan, " · ")
 		for _, line := range plan {
 			// varredura de tabela sem índice (SCAN de subconsulta é só leitura do resultado)
-			if strings.HasPrefix(line, "SCAN ") && !strings.Contains(line, "USING") && !strings.HasPrefix(line, "SCAN (subquery") {
+			if strings.HasPrefix(line, "SCAN ") && !strings.Contains(line, "USING") && !strings.HasPrefix(line, "SCAN (subquery") && !smallScanOK[q.name] {
 				t.Errorf("%s: varredura completa: %s", q.name, joined)
 			}
 			// ordenação à parte das linhas do monitor: o índice não está servindo para o ORDER BY

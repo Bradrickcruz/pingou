@@ -17,6 +17,9 @@ const maxMaintenanceDuration = 7 * 24 * time.Hour
 // ErrMaintenanceConflict: algum monitor do lote já tem janela viva (D2, D5).
 var ErrMaintenanceConflict = errors.New("maintenance window conflict")
 
+// ErrMaintenanceLocked: a janela já começou e o horário não pode mudar (D12).
+var ErrMaintenanceLocked = errors.New("maintenance window already started: only the reason can change")
+
 // MaintenanceConflictError lista os monitores que já têm janela viva.
 type MaintenanceConflictError struct{ MonitorIDs []string }
 
@@ -68,16 +71,9 @@ func (s *MaintenanceService) CreateBatch(ctx context.Context, in CreateMaintenan
 	if len(ids) > maxMonitors {
 		return nil, fmt.Errorf("%w: at most %d monitors per request", ErrValidation, maxMonitors)
 	}
-	// o banco guarda segundos: compara já com a precisão gravada
-	starts, ends := in.StartsAt.UTC().Truncate(time.Second), in.EndsAt.UTC().Truncate(time.Second)
-	if !starts.After(now) {
-		return nil, fmt.Errorf("%w: starts_at must be in the future", ErrValidation)
-	}
-	if !ends.After(starts) {
-		return nil, fmt.Errorf("%w: ends_at must be after starts_at", ErrValidation)
-	}
-	if ends.Sub(starts) > maxMaintenanceDuration {
-		return nil, fmt.Errorf("%w: a maintenance window can last at most 7 days", ErrValidation)
+	starts, ends, err := validateWindowTimes(in.StartsAt, in.EndsAt, now)
+	if err != nil {
+		return nil, err
 	}
 	reason, err := normalizeReason("reason", in.Reason)
 	if err != nil {
@@ -117,6 +113,108 @@ func (s *MaintenanceService) CreateBatch(ctx context.Context, in CreateMaintenan
 		return nil, err
 	}
 	return windows, nil
+}
+
+// validateWindowTimes aplica D1 (início no futuro, fim depois do início, até 7
+// dias) e devolve as datas na precisão do banco (segundos, UTC). Regra única
+// para criar e editar.
+func validateWindowTimes(startsAt, endsAt, now time.Time) (time.Time, time.Time, error) {
+	starts, ends := startsAt.UTC().Truncate(time.Second), endsAt.UTC().Truncate(time.Second)
+	if !starts.After(now) {
+		return starts, ends, fmt.Errorf("%w: starts_at must be in the future", ErrValidation)
+	}
+	if !ends.After(starts) {
+		return starts, ends, fmt.Errorf("%w: ends_at must be after starts_at", ErrValidation)
+	}
+	if ends.Sub(starts) > maxMaintenanceDuration {
+		return starts, ends, fmt.Errorf("%w: a maintenance window can last at most 7 days", ErrValidation)
+	}
+	return starts, ends, nil
+}
+
+// List devolve as janelas vivas (agendadas e em curso) com o nome do monitor,
+// por início (D14).
+func (s *MaintenanceService) List(ctx context.Context) ([]*domain.MaintenanceWindowView, error) {
+	return s.windows.ListLive(ctx)
+}
+
+// UpdateMaintenanceInput: campo nil não muda. ReasonSet com Reason nil ou ""
+// apaga o motivo.
+type UpdateMaintenanceInput struct {
+	StartsAt  *time.Time
+	EndsAt    *time.Time
+	Reason    *string
+	ReasonSet bool
+}
+
+// Update edita uma janela viva (D12, D13). Agendada: início, fim e motivo.
+// Iniciada (pelo relógio): só o motivo; horário → ErrMaintenanceLocked. Trocar
+// o motivo não reaplica nenhum efeito de início ou fim (isso é do tick).
+func (s *MaintenanceService) Update(ctx context.Context, id string, in UpdateMaintenanceInput) (*domain.MaintenanceWindow, error) {
+	timesSet := in.StartsAt != nil || in.EndsAt != nil
+	if !timesSet && !in.ReasonSet {
+		return nil, fmt.Errorf("%w: nothing to update", ErrValidation)
+	}
+	reason, err := normalizeReason("reason", in.Reason)
+	if err != nil {
+		return nil, err
+	}
+
+	w, err := s.windows.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if w == nil || w.FinalizedAt != nil {
+		return nil, ErrNotFound
+	}
+	if !in.ReasonSet {
+		reason = w.Reason // mantém
+	}
+	now := s.clock().UTC().Truncate(time.Second)
+
+	if !timesSet {
+		ok, err := s.windows.UpdateReason(ctx, id, reason)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return nil, ErrNotFound
+		}
+		w.Reason = reason
+		return w, nil
+	}
+
+	if w.Started(now) {
+		return nil, ErrMaintenanceLocked
+	}
+	starts, ends := w.StartsAt, w.EndsAt
+	if in.StartsAt != nil {
+		starts = *in.StartsAt
+	}
+	if in.EndsAt != nil {
+		ends = *in.EndsAt
+	}
+	starts, ends, err = validateWindowTimes(starts, ends, now)
+	if err != nil {
+		return nil, err
+	}
+	ok, err := s.windows.UpdateTimes(ctx, id, starts, ends, reason, now)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		// a janela começou (ou sumiu) entre a leitura e o UPDATE
+		cur, err := s.windows.FindByID(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		if cur == nil || cur.FinalizedAt != nil {
+			return nil, ErrNotFound
+		}
+		return nil, ErrMaintenanceLocked
+	}
+	w.StartsAt, w.EndsAt, w.Reason = starts, ends, reason
+	return w, nil
 }
 
 func (s *MaintenanceService) checkConflicts(ctx context.Context, ids []string) error {

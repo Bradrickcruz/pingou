@@ -70,6 +70,54 @@ func (r *MaintenanceRepo) ActiveForMonitor(ctx context.Context, monitorID string
 	return err == nil, err
 }
 
+func (r *MaintenanceRepo) ListLive(ctx context.Context) ([]*domain.MaintenanceWindowView, error) {
+	rows, err := r.db.QueryContext(ctx, sqlMaintenanceListLive)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := []*domain.MaintenanceWindowView{}
+	for rows.Next() {
+		var v domain.MaintenanceWindowView
+		w, err := scanMaintenance(nameScanner{rows, &v.MonitorName})
+		if err != nil {
+			return nil, err
+		}
+		v.MaintenanceWindow = *w
+		out = append(out, &v)
+	}
+	return out, rows.Err()
+}
+
+// nameScanner lê as colunas da janela e, por último, o nome do monitor.
+type nameScanner struct {
+	s    scanner
+	name *string
+}
+
+func (n nameScanner) Scan(dest ...any) error { return n.s.Scan(append(dest, n.name)...) }
+
+func (r *MaintenanceRepo) UpdateTimes(ctx context.Context, id string, startsAt, endsAt time.Time, reason *string, now time.Time) (bool, error) {
+	res, err := r.db.ExecContext(ctx, `UPDATE maintenance_windows SET starts_at = ?, ends_at = ?, reason = ?
+		WHERE id = ? AND finalized_at IS NULL AND starts_at > ?`,
+		fmtTime(startsAt), fmtTime(endsAt), reason, id, fmtTime(now))
+	return affected(res, err)
+}
+
+func (r *MaintenanceRepo) UpdateReason(ctx context.Context, id string, reason *string) (bool, error) {
+	res, err := r.db.ExecContext(ctx, `UPDATE maintenance_windows SET reason = ?
+		WHERE id = ? AND finalized_at IS NULL`, reason, id)
+	return affected(res, err)
+}
+
+func affected(res sql.Result, err error) (bool, error) {
+	if err != nil {
+		return false, err
+	}
+	n, err := res.RowsAffected()
+	return n > 0, err
+}
+
 func (r *MaintenanceRepo) Delete(ctx context.Context, id string) error {
 	_, err := r.db.ExecContext(ctx, `DELETE FROM maintenance_windows WHERE id = ?`, id)
 	return err

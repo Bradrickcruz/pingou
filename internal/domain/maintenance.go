@@ -22,3 +22,15 @@ type MaintenanceWindow struct {
 func (w *MaintenanceWindow) Active(now time.Time) bool {
 	return w.FinalizedAt == nil && !now.Before(w.StartsAt)
 }
+
+// Started diz se a janela já começou pelo relógio (starts_at <= now). Janela
+// iniciada tem o horário travado: só o motivo pode mudar (D12).
+func (w *MaintenanceWindow) Started(now time.Time) bool {
+	return !now.Before(w.StartsAt)
+}
+
+// MaintenanceWindowView é uma janela viva com o nome do monitor (página de manutenções).
+type MaintenanceWindowView struct {
+	MaintenanceWindow
+	MonitorName string
+}

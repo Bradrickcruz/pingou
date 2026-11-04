@@ -46,6 +46,14 @@ type MaintenanceRepository interface {
 	FindLiveByMonitors(ctx context.Context, monitorIDs []string) (map[string]*MaintenanceWindow, error)
 	// ActiveForMonitor: consulta quente do gate (a cada check e ping).
 	ActiveForMonitor(ctx context.Context, monitorID string, now time.Time) (bool, error)
+	// ListLive lista as janelas vivas com o nome do monitor, por início.
+	ListLive(ctx context.Context) ([]*MaintenanceWindowView, error)
+	// UpdateTimes troca início, fim e motivo de uma janela que ainda não
+	// começou (starts_at > now, guardado no próprio UPDATE). false = nenhuma
+	// linha mudou (começou, foi finalizada ou não existe).
+	UpdateTimes(ctx context.Context, id string, startsAt, endsAt time.Time, reason *string, now time.Time) (bool, error)
+	// UpdateReason troca só o motivo de uma janela viva. false = nenhuma linha mudou.
+	UpdateReason(ctx context.Context, id string, reason *string) (bool, error)
 	// Delete apaga uma janela que ainda não começou.
 	Delete(ctx context.Context, id string) error
 	// DueStart: janelas cujo início chegou e cujos efeitos de início não rodaram.

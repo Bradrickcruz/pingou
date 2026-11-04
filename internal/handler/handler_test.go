@@ -476,12 +476,76 @@ func TestMaintenanceAPI(t *testing.T) {
 
 func TestMaintenanceRoutesNeedAPIKey(t *testing.T) {
 	_, h, _ := newTestServer(t)
-	for _, r := range []struct{ method, path string }{{"POST", "/api/maintenance-windows"}, {"DELETE", "/api/maintenance-windows/x"}} {
+	for _, r := range []struct{ method, path string }{
+		{"GET", "/api/maintenance-windows"},
+		{"POST", "/api/maintenance-windows"},
+		{"PATCH", "/api/maintenance-windows/x"},
+		{"DELETE", "/api/maintenance-windows/x"},
+	} {
 		req := httptest.NewRequest(r.method, r.path, strings.NewReader("{}"))
 		rec := httptest.NewRecorder()
 		h.ServeHTTP(rec, req)
 		if rec.Code != http.StatusUnauthorized {
 			t.Errorf("%s %s sem chave: %d, want 401", r.method, r.path, rec.Code)
 		}
+	}
+}
+
+func TestMaintenanceListAndUpdateAPI(t *testing.T) {
+	s, h, _ := newTestServer(t)
+	m := decode[monitorResponse](t, do(t, h, "POST", "/api/monitors", `{"name":"Banco","url":"https://a.test","interval_seconds":60,"timeout_seconds":5,"failure_threshold":3}`))
+	now := time.Now().UTC().Truncate(time.Second)
+	ts := func(d time.Duration) string { return now.Add(d).Format(time.RFC3339) }
+	for _, w := range []struct {
+		id, mon      string
+		starts, ends time.Duration
+	}{{"sched", m.ID, time.Hour, 2 * time.Hour}} {
+		if _, err := s.db.Exec(`INSERT INTO maintenance_windows (id, monitor_id, starts_at, ends_at, created_at) VALUES (?,?,?,?,?)`,
+			w.id, w.mon, ts(w.starts), ts(w.ends), ts(0)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	hb := createHeartbeat(t, h)
+	if _, err := s.db.Exec(`INSERT INTO maintenance_windows (id, monitor_id, starts_at, ends_at, reason, created_at) VALUES ('run',?,?,?,'x',?)`,
+		hb.ID, ts(-time.Minute), ts(time.Hour), ts(0)); err != nil {
+		t.Fatal(err)
+	}
+
+	list := decode[struct {
+		Windows []struct {
+			ID          string  `json:"id"`
+			MonitorName string  `json:"monitor_name"`
+			State       string  `json:"state"`
+			Reason      *string `json:"reason"`
+		} `json:"windows"`
+	}](t, do(t, h, "GET", "/api/maintenance-windows", ""))
+	if len(list.Windows) != 2 || list.Windows[0].ID != "run" || list.Windows[0].State != "active" ||
+		list.Windows[1].State != "scheduled" || list.Windows[1].MonitorName != "Banco" {
+		t.Fatalf("lista: %+v", list.Windows)
+	}
+
+	for _, c := range []struct {
+		id, body string
+		want     int
+		code     string
+	}{
+		{"sched", `{"starts_at":"` + ts(3*time.Hour) + `","ends_at":"` + ts(4*time.Hour) + `","reason":"novo"}`, 200, ""},
+		{"sched", `{"reason":null}`, 200, ""},
+		{"sched", `{}`, 400, "VALIDATION_ERROR"},
+		{"sched", `{"starts_at":"` + ts(-time.Hour) + `"}`, 400, "VALIDATION_ERROR"},
+		{"sched", `{"monitor_id":"` + hb.ID + `"}`, 400, "VALIDATION_ERROR"},
+		{"sched", `{"reason":5}`, 400, "VALIDATION_ERROR"},
+		{"run", `{"ends_at":"` + ts(2*time.Hour) + `"}`, 409, "MAINTENANCE_LOCKED"},
+		{"run", `{"reason":"só o motivo"}`, 200, ""},
+		{"nope", `{"reason":"x"}`, 404, "NOT_FOUND"},
+	} {
+		rec := do(t, h, "PATCH", "/api/maintenance-windows/"+c.id, c.body)
+		if rec.Code != c.want || !strings.Contains(rec.Body.String(), c.code) {
+			t.Errorf("PATCH %s %s: %d %s, want %d %s", c.id, c.body, rec.Code, rec.Body, c.want, c.code)
+		}
+	}
+	got := decode[monitorResponse](t, do(t, h, "GET", "/api/monitors/"+m.ID, ""))
+	if got.Maintenance == nil || got.Maintenance.StartsAt != ts(3*time.Hour) || got.Maintenance.Reason != nil {
+		t.Fatalf("depois de editar: %+v", got.Maintenance)
 	}
 }
