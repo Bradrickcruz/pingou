@@ -9,6 +9,7 @@
 | --- | ----------------------------------- | ---------------------- | ---------- |
 | 1   | Backup sem configurações + importar | Aguardando decisão     | medium     |
 | 2   | Status HTTP esperado                | Esperando um caso real | low        |
+| 3   | Páginas públicas de status          | Para detalhar          | medium     |
 
 Mais abaixo: ideias [candidatas](#-candidatas-ainda-não-decididas), [adiadas](#-adiadas) e [descartadas](#-descartadas).
 
@@ -121,6 +122,79 @@ feature
 ## ⏱️ Priority
 
 low
+
+---
+
+# 🧩 Task: Páginas públicas de status
+
+## 💡 Idea
+
+Criar páginas públicas, sem login, em que o dono escolhe **quais monitores** aparecem. Quem abre a página só **lê**: não altera nada.
+
+## 🎯 Goal
+
+Mostrar a clientes e usuários se os serviços estão no ar, sem dar acesso ao painel nem à API Key.
+
+## 📦 Initial Scope
+
+**Dados exibidos por monitor** (todos somente leitura):
+
+- Status atual (no ar, fora do ar, desconhecido, em manutenção)
+- Uptime (%) por período
+- Incidentes (início, fim e duração)
+- Tempo fora do ar
+- Validação do SSL (só para HTTP com `https://`)
+- Checks recentes: **só o status**, sem tempo de resposta
+- Tipo do monitor (http, tcp, heartbeat)
+- "Verifica a cada" (intervalo)
+
+**Configuração (no painel, atrás do login):**
+
+- Criar várias páginas, cada uma com nome, endereço próprio e a lista de monitores escolhidos.
+- Ligar e desligar cada página sem apagar.
+- Mostrar o link público para copiar.
+
+**Páginas públicas:**
+
+- Rota própria fora do login (ex.: `/status/<endereço>`), servida pelo mesmo binário.
+- Endpoints públicos próprios (ex.: `/api/public/status/<endereço>`), separados da API protegida, e só de leitura (`GET`).
+- Mobile e desktop, seguindo o `DESIGN.md`.
+
+## 🚧 Out of Scope
+
+- Assinar atualizações por e-mail ou SMS
+- Domínio próprio e marca personalizada
+- Comentários nos incidentes ou histórico escrito pelo dono
+- Qualquer escrita feita por quem visita a página
+- Gráfico de tempo de resposta (fica de fora de propósito)
+
+## 🔍 Context
+
+O README já lista "status page pública" em Pós-MVP. Hoje toda a API fica atrás da API Key. A página pública precisa de rotas que **não passem** pelo middleware de login, e é o primeiro dado do Pingou exposto a quem não está autenticado.
+
+## ⚠️ Notes
+
+- **Exposição é a parte delicada.** Montar a resposta pública com uma lista fixa de campos permitidos (lista de permissão), nunca reaproveitando os objetos da API protegida. Assim um campo novo no futuro não vaza sozinho.
+- **Nunca expor:** URL ou alvo do monitor, token de ping do heartbeat, mensagem de erro (`last_error` costuma ter nome de host e detalhe interno) e as configurações.
+- **Nome do monitor** é público. Avisar na tela de configuração, ou permitir um "nome público" separado.
+- **Endereço da página:** decidir entre endereço legível (`/status/clientes`) ou aleatório (não adivinhável). Página "pública" com endereço aleatório não é privada, só é difícil de achar.
+- **Carga:** a página pública é aberta por qualquer um, e o SQLite tem uma conexão só. Precisa de cache curto (por exemplo 30 a 60 s) e limite de requisições por IP, para uma onda de acessos não atrasar a gravação dos checks. O `/stats` de 30 dias é a consulta mais cara.
+- **Validação do SSL:** decidir o que mostrar: só "válido" ou a data de expiração.
+- **Manutenção:** decidir se uma janela aparece como "Em manutenção" na página pública (sugiro que sim, com o motivo oculto).
+- **Decisões tomadas (2026-11-04):**
+  1. **Várias páginas**, cada uma com seus monitores. Um monitor pode estar em mais de uma página.
+  2. **Endereço legível**, digitado por quem cria a página, e **único**. Regras sugeridas: letras minúsculas, números e hífen, de 3 a 40 caracteres; recusar palavras reservadas (`api`, `admin`, `login`, `assets` etc.) e endereço repetido (`409`). Depois de criado, mudar o endereço quebra o link antigo, então avisar na tela.
+  3. **Uptime em 24 h, 7 d e 30 d.** Respeitar a retenção: período acima de `retention_days` aparece desabilitado, como no detalhe do monitor.
+  4. **Mostrar o motivo da manutenção.**
+- **Cuidado com o motivo público:** o motivo é texto livre (até 200 caracteres) e pode conter detalhe interno ("migrando o servidor X"). Quando o monitor estiver numa página pública, o modal de pausa e o de agendar manutenção devem avisar: "este motivo aparece na página pública". O mesmo vale para o motivo de fechamento de incidente, se for exibido. 5. **SSL: só "Válido" e "Expira em breve".** A data exata não aparece na página pública. "Expira em breve" vale quando faltam 30 dias ou menos, o mesmo limite do aviso de SSL do painel. Só para monitor HTTP com `https://` e com data de certificado já conhecida; sem data, a linha não aparece.
+
+## 🏷️ Type
+
+feature (segurança)
+
+## ⏱️ Priority
+
+medium
 
 ---
 
