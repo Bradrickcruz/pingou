@@ -81,6 +81,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 	checkRepository := repository.NewCheckRepo(db)
 	incidentRepository := repository.NewIncidentRepo(db)
 	settingsRepository := repository.NewSettingsRepo(db)
+	maintenanceRepository := repository.NewMaintenanceRepo(db)
 
 	// repositories com suporte a transação
 	checkRepoTx := repository.NewCheckRepoTx(db)
@@ -124,10 +125,13 @@ func runServe(cmd *cobra.Command, args []string) error {
 	monitorService := service.NewMonitorService(monitorRepository, checkRepository, incidentRepository)
 	incidentService := service.NewIncidentService(incidentRepository)
 	settingsService := service.NewSettingsService(settingsRepository, loadedConfig.SMTP, loadedConfig.Ntfy)
+	maintenanceService := service.NewMaintenanceService(maintenanceRepository, monitorRepository)
 
 	// scheduler
-	monitorScheduler := scheduler.NewScheduler(monitorRepository, monitorChecker, db, checkRepoTx, monitorRepoTx, incidentRepoTx, notifier)
+	monitorScheduler := scheduler.NewScheduler(monitorRepository, monitorChecker, db, checkRepoTx, monitorRepoTx, incidentRepoTx, notifier).
+		WithMaintenance(maintenanceRepository)
 	monitorService.SetReloader(monitorScheduler)
+	maintenanceService.SetEnder(monitorScheduler)
 	monitorService.SetRecorder(monitorScheduler)
 
 	// Context com signal
@@ -144,7 +148,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 	retention.Start(ctx)
 
 	// Inicia server
-	server := handler.NewServer(loadedConfig, db, monitorService, incidentService, settingsService)
+	server := handler.NewServer(loadedConfig, db, monitorService, incidentService, settingsService, maintenanceService)
 
 	serverErr := make(chan error, 1)
 	go func() {

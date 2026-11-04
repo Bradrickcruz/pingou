@@ -120,6 +120,7 @@ Um novo tipo de check só entra no Pingou se passar nas quatro perguntas:
 - Página de detalhe por monitor (`/monitors/:id`): uptime, resposta média, incidentes e tempo fora do ar em 24h / 7 / 14 / 30 dias, gráfico de tempo de resposta, últimos checks e configuração
 - Login com API Key
 - Notificações de queda e recuperação por webhook, por e-mail (SMTP) e pelo [ntfy](https://ntfy.sh), ligados ao mesmo tempo se quiser
+- [Manutenção](#manutenção): pausa com motivo e janela agendada (início e fim) para um ou vários monitores. Na janela, nada é conferido, nenhum incidente abre e ninguém é avisado
 - [Aviso de expiração do certificado SSL](#aviso-de-expiração-do-certificado-ssl) em monitores HTTP com `https://`: um aviso 30 dias e outro 7 dias antes, por todos os canais
 - Retenção configurável: checks expiram após `retention_days`; incidentes são mantidos. A limpeza roda na subida e a cada 1 h
 - Fuso horário configurável (padrão UTC) para o painel, o e-mail e o ntfy
@@ -509,31 +510,35 @@ Como `/ping/{token}` é pública, ela limita **60 tokens inválidos por minuto p
 
 Sobre `/ping/{token}`:
 
-- Responde `200` quando o token é válido (mesmo com o monitor pausado).
+- Responde `200` quando o token é válido (mesmo com o monitor pausado ou em manutenção; nesses casos nada é registrado).
 - Responde `404` quando o token não existe, sem revelar detalhes.
 - O corpo da requisição é ignorado.
 
 ### Protegidos
 
-| Método   | Rota                          | Descrição                                                                             |
-| -------- | ----------------------------- | ------------------------------------------------------------------------------------- |
-| `GET`    | `/api/monitors`               | Lista os monitores                                                                    |
-| `POST`   | `/api/monitors`               | Cria um monitor                                                                       |
-| `GET`    | `/api/monitors/:id`           | Busca um monitor                                                                      |
-| `PATCH`  | `/api/monitors/:id`           | Atualiza um monitor                                                                   |
-| `DELETE` | `/api/monitors/:id`           | Remove um monitor                                                                     |
-| `POST`   | `/api/monitors/:id/token`     | Gera um novo token de ping (Heartbeat)                                                |
-| `GET`    | `/api/monitors/:id/checks`    | Histórico de checks, paginado (`limit`, `offset`)                                     |
-| `GET`    | `/api/monitors/:id/incidents` | Incidentes do monitor (mesmos filtros de `/api/incidents`)                            |
-| `GET`    | `/api/monitors/:id/stats`     | Estatísticas numa janela (`range=24h\|7d\|14d\|30d`)                                  |
-| `GET`    | `/api/incidents`              | Lista incidentes (`status`, `monitor_id`, `limit`, `offset`)                          |
-| `GET`    | `/api/settings`               | Busca as configurações globais                                                        |
-| `PATCH`  | `/api/settings`               | Atualiza as configurações globais (`webhook_url` só http/https; `timezone` nome IANA) |
-| `POST`   | `/api/settings/webhook/test`  | Envia um evento `test` ao webhook (5 por minuto por IP)                               |
-| `POST`   | `/api/settings/email/test`    | Envia um e-mail de teste (5 por minuto por IP)                                        |
-| `POST`   | `/api/settings/ntfy/test`     | Publica uma notificação de teste no ntfy (5 por minuto por IP)                        |
-| `GET`    | `/api/info`                   | Versão, commit, data do build e tamanho do banco                                      |
-| `GET`    | `/api/export`                 | Baixa um dump do SQLite (`pingou-AAAA-MM-DD.db`, `VACUUM INTO`)                       |
+| Método   | Rota                           | Descrição                                                                             |
+| -------- | ------------------------------ | ------------------------------------------------------------------------------------- |
+| `GET`    | `/api/monitors`                | Lista os monitores                                                                    |
+| `POST`   | `/api/monitors`                | Cria um monitor                                                                       |
+| `GET`    | `/api/monitors/:id`            | Busca um monitor                                                                      |
+| `PATCH`  | `/api/monitors/:id`            | Atualiza um monitor                                                                   |
+| `DELETE` | `/api/monitors/:id`            | Remove um monitor                                                                     |
+| `POST`   | `/api/monitors/:id/token`      | Gera um novo token de ping (Heartbeat)                                                |
+| `GET`    | `/api/monitors/:id/checks`     | Histórico de checks, paginado (`limit`, `offset`)                                     |
+| `GET`    | `/api/monitors/:id/incidents`  | Incidentes do monitor (mesmos filtros de `/api/incidents`)                            |
+| `GET`    | `/api/monitors/:id/stats`      | Estatísticas numa janela (`range=24h\|7d\|14d\|30d`)                                  |
+| `GET`    | `/api/incidents`               | Lista incidentes (`status`, `monitor_id`, `limit`, `offset`)                          |
+| `GET`    | `/api/maintenance-windows`     | Lista as janelas agendadas e em curso, com o nome do monitor                          |
+| `POST`   | `/api/maintenance-windows`     | Agenda uma janela de manutenção para um ou mais monitores (tudo ou nada)              |
+| `PATCH`  | `/api/maintenance-windows/:id` | Edita uma janela (em curso: só o motivo)                                              |
+| `DELETE` | `/api/maintenance-windows/:id` | Cancela uma janela agendada ou encerra a que está em curso                            |
+| `GET`    | `/api/settings`                | Busca as configurações globais                                                        |
+| `PATCH`  | `/api/settings`                | Atualiza as configurações globais (`webhook_url` só http/https; `timezone` nome IANA) |
+| `POST`   | `/api/settings/webhook/test`   | Envia um evento `test` ao webhook (5 por minuto por IP)                               |
+| `POST`   | `/api/settings/email/test`     | Envia um e-mail de teste (5 por minuto por IP)                                        |
+| `POST`   | `/api/settings/ntfy/test`      | Publica uma notificação de teste no ntfy (5 por minuto por IP)                        |
+| `GET`    | `/api/info`                    | Versão, commit, data do build e tamanho do banco                                      |
+| `GET`    | `/api/export`                  | Baixa um dump do SQLite (`pingou-AAAA-MM-DD.db`, `VACUUM INTO`)                       |
 
 ### Info
 
@@ -676,6 +681,109 @@ curl -X POST http://localhost:8956/api/monitors \
 Limites de `interval_seconds`: 10 a 86400 para `http` e `tcp`; 60 a 604800 (1 semana) para `heartbeat`.
 
 `GET /api/monitors` também traz, por monitor, o resumo usado pelo painel: `history` (últimos 30 checks, `true` = sucesso, mais recente por último), `uptime_24h` (percentual, `null` sem checks), `last_latency_ms` e, só para monitores `DOWN`, `last_error` e `down_since` (erro e início do incidente aberto; `null` nos outros estados).
+
+---
+
+## Manutenção
+
+Duas formas de tirar um monitor do ar de propósito, sem alarme falso.
+
+### 1. Pausar com motivo
+
+Ao pausar, o painel pede um **motivo opcional** (até 200 caracteres). Ele aparece na lista, no card e no detalhe. Na API: `PATCH /api/monitors/:id` com `{"enabled": false, "pause_reason": "troca do servidor"}`.
+
+- Um incidente aberto fecha **sem aviso**, com o selo "Fechado manualmente" e o motivo.
+- Ao retomar, o motivo é apagado e só contam as falhas **depois da retomada**. Antes, falhas de antes da pausa somavam com as de depois.
+
+### 2. Janela agendada
+
+Uma janela tem **início**, **fim** e **motivo opcional**. Pode ser criada para vários monitores de uma vez.
+
+Enquanto a janela está em curso:
+
+- Nenhum check roda (HTTP e TCP nem fazem a requisição).
+- Nenhum incidente abre e ninguém é avisado (webhook, e-mail, ntfy e aviso de certificado).
+- O ping de heartbeat responde `200`, mas não é registrado.
+- Um incidente aberto no início fecha **sem aviso**, com o selo "Fechado por manutenção" e o motivo.
+
+Quando a janela termina:
+
+- O monitor volta como `UNKNOWN` e o primeiro check roda na hora.
+- A contagem de falhas recomeça (falhas de antes da janela não contam).
+- O prazo do heartbeat recomeça a contar do fim da janela.
+- Um monitor **pausado** durante a janela continua pausado: a pausa manual vence.
+
+Regras:
+
+| Regra               | Valor                                                                   |
+| ------------------- | ----------------------------------------------------------------------- |
+| Duração máxima      | 7 dias                                                                  |
+| Início              | no futuro                                                               |
+| Janelas por monitor | uma viva (agendada ou em curso). Para mudar, cancele e crie outra       |
+| Recorrência         | não tem (janela única)                                                  |
+| Fuso no painel      | as datas digitadas valem no fuso das Configurações, não no do navegador |
+
+"Em manutenção" vem do relógio do servidor, não de uma flag: reiniciar o Pingou no meio da janela mantém o monitor em manutenção, e uma janela que terminou com o Pingou desligado é encerrada na subida. Fechar o incidente no início e reativar o monitor no fim rodam num ciclo de 10 s, então podem atrasar até 10 s.
+
+#### Criando uma janela
+
+```bash
+curl -X POST http://localhost:8956/api/maintenance-windows \
+  -H "X-API-Key: dev-api-key" -H "Content-Type: application/json" \
+  -d '{
+    "monitor_ids": ["<id-1>", "<id-2>"],
+    "starts_at": "2026-11-10T05:00:00Z",
+    "ends_at": "2026-11-10T07:00:00Z",
+    "reason": "atualização do banco"
+  }'
+```
+
+| Status | Quando                                                                                                                       |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `201`  | `{"windows": [...]}`, uma janela por monitor                                                                                 |
+| `400`  | `VALIDATION_ERROR`: início no passado, fim antes do início, mais de 7 dias, motivo longo, lista vazia, data fora do RFC 3339 |
+| `404`  | algum monitor não existe                                                                                                     |
+| `409`  | `MAINTENANCE_CONFLICT`: algum monitor já tem janela viva; `monitor_ids` diz quais. Nada é criado                             |
+
+`DELETE /api/maintenance-windows/:id` responde `204`. Antes do início, apaga a janela. Durante, encerra na hora e o monitor volta. Janela já encerrada: `404`.
+
+#### Página de manutenções
+
+O menu **Manutenções** (`/maintenance`) lista as janelas agendadas e em curso de todos os monitores, pelo início. Cada uma tem:
+
+- **Editar**: abre o mesmo modal de agendar, com o monitor fixo.
+- **Cancelar** (agendada): apaga a janela.
+- **Desligar** (em curso): encerra agora e o monitor volta a ser checado.
+
+O card de manutenção no detalhe do monitor tem os mesmos botões.
+
+#### Listando e editando
+
+`GET /api/maintenance-windows` devolve `{"windows": [{id, monitor_id, monitor_name, starts_at, ends_at, reason, state}]}`. `state` é `"scheduled"` ou `"active"`, calculado com o relógio do servidor. Janelas encerradas não aparecem (não há histórico).
+
+`PATCH /api/maintenance-windows/:id` recebe `{starts_at?, ends_at?, reason?}`. Campo ausente não muda; `"reason": null` ou `""` apaga o motivo.
+
+| Janela   | O que pode mudar     |
+| -------- | -------------------- |
+| Agendada | início, fim e motivo |
+| Em curso | **só o motivo**      |
+
+Para parar uma janela em curso antes da hora, use o `DELETE`. Para trocar o monitor, cancele e agende outra.
+
+| Status | Quando                                                                                                                       |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `200`  | a janela atualizada                                                                                                          |
+| `400`  | `VALIDATION_ERROR`: corpo vazio, início no passado, fim antes do início, mais de 7 dias, motivo longo, `monitor_id` no corpo |
+| `404`  | a janela não existe ou já terminou                                                                                           |
+| `409`  | `MAINTENANCE_LOCKED`: a janela já começou e o corpo traz `starts_at` ou `ends_at`. Nada muda                                 |
+
+Editar o motivo de uma janela em curso não muda o motivo já gravado nos incidentes que ela fechou: o incidente guarda o texto do momento em que fechou.
+
+#### Campos nas respostas
+
+- `GET /api/monitors` e `GET /api/monitors/:id` trazem `maintenance`: `{id, monitor_id, starts_at, ends_at, reason, active}` ou `null`. `active` é calculado no servidor.
+- Monitor: `pause_reason`, `paused_at` e `resumed_at`.
+- Incidente: `close_reason` (`"pause"`, `"maintenance"` ou `null`) e `close_note` (o motivo no momento do fechamento). `closed_manually` continua, igual a `close_reason != null`.
 
 ---
 

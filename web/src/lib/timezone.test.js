@@ -8,6 +8,8 @@ import {
   filterTimeZones,
   wallTicks,
   zoneOffsetLabel,
+  zonedToUtc,
+  utcToZonedInput,
 } from "./timezone.js";
 import {
   clock,
@@ -108,4 +110,40 @@ test("filtro: palavras em qualquer ordem, sem acento nem _ ou /", () => {
   assert.deepEqual(filterTimeZones(zones, "san"), ["America/Santiago"]);
   assert.deepEqual(filterTimeZones(zones, "  "), zones);
   assert.deepEqual(filterTimeZones(zones, "marte"), []);
+});
+
+test("zonedToUtc lê a hora no fuso das Configurações, não no do navegador", () => {
+  const iso = (v, tz) => zonedToUtc(v, tz).toISOString();
+  assert.equal(
+    iso("2026-11-10T02:00", "America/Sao_Paulo"),
+    "2026-11-10T05:00:00.000Z",
+  );
+  assert.equal(
+    iso("2026-11-10T02:00", "Asia/Kolkata"),
+    "2026-11-09T20:30:00.000Z",
+  );
+  assert.equal(iso("2026-11-10T02:00", "UTC"), "2026-11-10T02:00:00.000Z");
+  // usa o fuso atual quando não recebe um
+  setTimeZone("Asia/Kolkata");
+  assert.equal(
+    zonedToUtc("2026-11-10T02:00").toISOString(),
+    "2026-11-09T20:30:00.000Z",
+  );
+  assert.equal(zonedToUtc(""), null);
+  assert.equal(zonedToUtc("10/11/2026 02:00"), null);
+});
+
+test("zonedToUtc atravessa o horário de verão", () => {
+  // Nova York: 8 mar 2026, 02:00–03:00 não existe; 1 nov, 01:00–02:00 repete
+  const iso = (v) => zonedToUtc(v, "America/New_York").toISOString();
+  assert.equal(iso("2026-03-07T12:00"), "2026-03-07T17:00:00.000Z"); // EST
+  assert.equal(iso("2026-03-09T12:00"), "2026-03-09T16:00:00.000Z"); // EDT
+  assert.equal(iso("2026-11-02T12:00"), "2026-11-02T17:00:00.000Z"); // EST de novo
+});
+
+test("utcToZonedInput é o inverso de zonedToUtc", () => {
+  for (const tz of ["America/Sao_Paulo", "Asia/Kolkata", "UTC"]) {
+    const v = "2026-11-10T02:00";
+    assert.equal(utcToZonedInput(zonedToUtc(v, tz), tz), v);
+  }
 });

@@ -1,15 +1,18 @@
 // Regras de apresentação dos monitores no painel.
-import { formatDuration, formatUptime, timeAgo } from "./format.js";
+import { formatDuration, formatUptime, timeAgo, untilLabel } from "./format.js";
 
 export const typeLabel = { http: "HTTP", tcp: "TCP", heartbeat: "Heartbeat" };
 
-// Situação do monitor para o painel: pausado vence o estado do check.
+// Situação do monitor para o painel: pausado vence a manutenção, que vence o
+// estado do check. "active" vem do servidor (relógio dele, não do navegador).
 export function statusOf(m) {
-  return m.enabled ? m.current_state : "PAUSED";
+  if (!m.enabled) return "PAUSED";
+  if (m.maintenance?.active) return "MAINTENANCE";
+  return m.current_state;
 }
 
-// Ordem por gravidade: fora do ar, desconhecido, no ar, pausado.
-const severity = { DOWN: 0, UNKNOWN: 1, UP: 2, PAUSED: 3 };
+// Ordem por gravidade: fora do ar, desconhecido, no ar, manutenção, pausado.
+const severity = { DOWN: 0, UNKNOWN: 1, UP: 2, MAINTENANCE: 3, PAUSED: 4 };
 
 export function bySeverity(a, b) {
   return (
@@ -19,9 +22,22 @@ export function bySeverity(a, b) {
 }
 
 export function countByStatus(monitors) {
-  const counts = { UP: 0, DOWN: 0, UNKNOWN: 0, PAUSED: 0 };
+  const counts = { UP: 0, DOWN: 0, UNKNOWN: 0, MAINTENANCE: 0, PAUSED: 0 };
   for (const m of monitors) counts[statusOf(m)]++;
   return counts;
+}
+
+// maintenanceLabel → "Em manutenção até 14:00" (hoje) ou "… até 12 nov, 14:00",
+// no fuso das Configurações. null sem janela em curso.
+export function maintenanceLabel(m, now = Date.now()) {
+  const until = maintenanceUntil(m, now);
+  return until && `Em manutenção ${until}`;
+}
+
+// maintenanceUntil → "até 14:00" (vai junto do selo MANUTENÇÃO na tabela).
+export function maintenanceUntil(m, now = Date.now()) {
+  if (!m.maintenance?.active) return null;
+  return `até ${untilLabel(m.maintenance.ends_at, now)}`;
 }
 
 // Texto do alvo: URL (http), host:porta (tcp) ou a expectativa do heartbeat.
@@ -81,11 +97,17 @@ export function heartbeatExpectation(seconds) {
 
 // cardFooter → linha de rodapé do card do painel (mobile), por estado:
 // DOWN "Fora há 1 dia e 4 h · 90,0% em 24 h"; UP "99,2% em 24 h · 214 ms · há 41 s";
-// UNKNOWN "Aguardando o primeiro check"; PAUSED "Pausado".
+// UNKNOWN "Aguardando o primeiro check"; PAUSED "Pausado" ou "Pausado · motivo";
+// MAINTENANCE "Em manutenção até 14:00" (· motivo).
 export function cardFooter(m, now = Date.now()) {
   const status = statusOf(m);
   const heartbeat = m.type === "heartbeat";
-  if (status === "PAUSED") return "Pausado";
+  if (status === "PAUSED")
+    return m.pause_reason ? `Pausado · ${m.pause_reason}` : "Pausado";
+  if (status === "MAINTENANCE") {
+    const label = maintenanceLabel(m, now);
+    return m.maintenance.reason ? `${label} · ${m.maintenance.reason}` : label;
+  }
   if (status === "UNKNOWN")
     return heartbeat
       ? "Aguardando o primeiro ping"

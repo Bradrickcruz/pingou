@@ -190,3 +190,25 @@ export function zoneOffsetLabel(date = new Date(), tz = current) {
   const m = abs % 60;
   return `${sign}${h}${m ? `:${String(m).padStart(2, "0")}` : ""}`;
 }
+
+// "2026-11-10T02:00" (valor de <input type="datetime-local">) → instante UTC,
+// lendo a hora no fuso das Configurações, e não no do navegador. Valor
+// inválido → null. Hora que não existe (início do horário de verão) avança
+// junto com o relógio.
+export function zonedToUtc(value, tz = current) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(
+    value ?? "",
+  );
+  if (!m) return null;
+  const [, y, mo, d, h, mi, sec = "0"] = m;
+  const wall = Date.UTC(+y, +mo - 1, +d, +h, +mi, +sec);
+  return instantOf(wall, tz);
+}
+
+// Inverso de zonedToUtc: instante → "2026-11-10T02:00" no fuso, para preencher
+// um <input type="datetime-local">.
+export function utcToZonedInput(date, tz = current) {
+  const p = zonedParts(date, tz);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${p.year}-${pad(p.month + 1)}-${pad(p.day)}T${pad(p.hour)}:${pad(p.minute)}`;
+}

@@ -2,21 +2,22 @@
 
 Consolida o que os planos `plan-*.md` (já removidos; ficam no `git log`) entregaram. Datas vêm do `git log` (commits e merges de PR). O comportamento atual de API e CLI está no [README.md](../README.md); aqui fica o **o quê, quando e por quê**.
 
-| Data (commits)     | Plano                                                                                           | Branch / PR                     |
-| ------------------ | ----------------------------------------------------------------------------------------------- | ------------------------------- |
-| 2026-10-27 → 10-28 | [Tipos de check + redesign do painel](#1-tipos-de-check-http-tcp-heartbeat--redesign-do-painel) | `feat/check-types` (#2)         |
-| 2026-10-28 → 10-29 | [Página de Incidentes](#2-página-de-incidentes)                                                 | `feat/incidents-page` (#3)      |
-| 2026-10-29         | [Página de Configurações](#3-página-de-configurações)                                           | `feat/settings-page` (#4)       |
-| 2026-10-29 → 10-30 | [Detalhe do monitor](#4-detalhe-do-monitor)                                                     | `feat/monitor-details` (#5)     |
-| 2026-10-30         | [Remodelagem mobile](#5-remodelagem-mobile)                                                     | `feat/mobile-redesign` (#6)     |
-| 2026-11-01         | [E-mail (SMTP) e envio fora do lock](#6-e-mail-smtp-e-envio-fora-do-lock)                       | `feat/email-notifications` (#9) |
-| 2026-11-01         | [Largura no desktop + busca parcial](#7-largura-no-desktop--busca-parcial)                      | `feature/largura-busca` (#10)   |
-| 2026-11-01         | [Notificação via ntfy](#8-notificação-via-ntfy)                                                 | `feat/ntfy-notifications` (#11) |
-| 2026-11-01         | [Eixo Y dinâmico + gráfico de pings](#9-eixo-y-dinâmico--gráfico-de-pings)                      | `develop` (sem PR)              |
-| 2026-11-01 → 11-02 | [Pausar monitor fecha o incidente](#10-pausar-monitor-fecha-o-incidente)                        | `develop` (sem PR)              |
-| 2026-11-02         | [Fuso horário + desligamento ordenado](#11-fuso-horário--desligamento-ordenado)                 | `develop` (sem PR)              |
-| 2026-11-02         | [Índices e desempenho do banco](#12-índices-e-desempenho-do-banco)                              | `ccr-dd100985-raj41c` (#15)     |
-| 2026-11-02         | [Aviso de expiração do certificado SSL](#13-aviso-de-expiração-do-certificado-ssl)              | `feature/ssl-expiry` (#16)      |
+| Data (commits)     | Plano                                                                                               | Branch / PR                     |
+| ------------------ | --------------------------------------------------------------------------------------------------- | ------------------------------- |
+| 2026-10-27 → 10-28 | [Tipos de check + redesign do painel](#1-tipos-de-check-http-tcp-heartbeat--redesign-do-painel)     | `feat/check-types` (#2)         |
+| 2026-10-28 → 10-29 | [Página de Incidentes](#2-página-de-incidentes)                                                     | `feat/incidents-page` (#3)      |
+| 2026-10-29         | [Página de Configurações](#3-página-de-configurações)                                               | `feat/settings-page` (#4)       |
+| 2026-10-29 → 10-30 | [Detalhe do monitor](#4-detalhe-do-monitor)                                                         | `feat/monitor-details` (#5)     |
+| 2026-10-30         | [Remodelagem mobile](#5-remodelagem-mobile)                                                         | `feat/mobile-redesign` (#6)     |
+| 2026-11-01         | [E-mail (SMTP) e envio fora do lock](#6-e-mail-smtp-e-envio-fora-do-lock)                           | `feat/email-notifications` (#9) |
+| 2026-11-01         | [Largura no desktop + busca parcial](#7-largura-no-desktop--busca-parcial)                          | `feature/largura-busca` (#10)   |
+| 2026-11-01         | [Notificação via ntfy](#8-notificação-via-ntfy)                                                     | `feat/ntfy-notifications` (#11) |
+| 2026-11-01         | [Eixo Y dinâmico + gráfico de pings](#9-eixo-y-dinâmico--gráfico-de-pings)                          | `develop` (sem PR)              |
+| 2026-11-01 → 11-02 | [Pausar monitor fecha o incidente](#10-pausar-monitor-fecha-o-incidente)                            | `develop` (sem PR)              |
+| 2026-11-02         | [Fuso horário + desligamento ordenado](#11-fuso-horário--desligamento-ordenado)                     | `develop` (sem PR)              |
+| 2026-11-02         | [Índices e desempenho do banco](#12-índices-e-desempenho-do-banco)                                  | `ccr-dd100985-raj41c` (#15)     |
+| 2026-11-02         | [Aviso de expiração do certificado SSL](#13-aviso-de-expiração-do-certificado-ssl)                  | `feature/ssl-expiry` (#16)      |
+| 2026-11-04         | [Manutenção: pausa com motivo e janela agendada](#14-manutenção-pausa-com-motivo-e-janela-agendada) | `feature/maintenance-windows`   |
 
 Pendências de validação manual ainda abertas estão no [fim do documento](#pendências-abertas).
 
@@ -462,6 +463,74 @@ Conexão TLS separada só para ler o certificado; gravar "enviado sim/não" por 
 
 ---
 
+## 14. Manutenção: pausa com motivo e janela agendada
+
+Plano `plan-maintenance-windows.md`, em duas etapas num PR só.
+
+### Entregue
+
+**Etapa 1: pausa com motivo**
+
+- Migração 0008: `monitors.pause_reason`, `paused_at`, `resumed_at` e `incidents.close_note`. `closed_manually` passa a guardar 0/1/2 (nenhum/pausa/manutenção), sem mudar o esquema.
+- `domain.Incident.ClosedManually bool` virou `CloseReason` (enum) + `CloseNote`. A API ganhou `close_reason`/`close_note` e manteve `closed_manually`.
+- Modal de pausa com motivo opcional (contador, Enter confirma). Motivo na linha, no card e no detalhe; incidente fechado mostra o selo certo e o motivo.
+- **Bug corrigido:** a state machine contava falhas de antes da pausa junto com as de depois. Agora só conta checks a partir de `resumed_at` (consulta nova `sqlChecksLatestSince`, coberta pelo teste de plano).
+
+**Etapa 2: janela agendada**
+
+- Migração 0009: tabela `maintenance_windows` com índice parcial único (uma janela viva por monitor) e índice `(monitor_id, starts_at)`. `ON DELETE CASCADE` com o monitor.
+- `MaintenanceService`: criação em lote tudo ou nada, validação (início futuro, fim depois, até 7 dias, motivo até 200), conflito `409` com os monitores, cancelamento.
+- Gate único em `Scheduler.withMonitor`: cobre check HTTP/TCP, heartbeat vencido e ping, e por consequência incidente e todos os avisos (inclusive o de certificado). `runCheck` e o avaliador de heartbeat pulam antes, para não fazer requisição à toa.
+- Tick de 10 s (`runMaintenance`, no molde do `runHeartbeats`): aplica início (fecha incidente como manutenção, estado `UNKNOWN`) e fim (`resumed_at`, `UNKNOWN`, prazo do heartbeat, `Reload` com check imediato). Roda uma vez no `Start`.
+- Web: status `MAINTENANCE` (selo próprio, filtro, contagem na faixa), "Em manutenção até HH:MM" no fuso das Configurações, modal de agendar com multi-seleção, card no detalhe com cancelar/encerrar, `zonedToUtc` para ler o `datetime-local` no fuso das Configurações.
+
+**Etapa 3: página de manutenções e edição**
+
+- `GET /api/maintenance-windows` (janelas vivas com o nome do monitor e `state` = `scheduled` | `active`) e `PATCH /api/maintenance-windows/{id}`.
+- Agendada: edita início, fim e motivo. Iniciada (pelo relógio do servidor): só o motivo; horário vira `409 MAINTENANCE_LOCKED`. A guarda `starts_at > now` no próprio `UPDATE` fecha a corrida com o início.
+- Página `/maintenance` (menu lateral e aba do celular): lista, editar, cancelar/desligar, vira "Em curso" sozinha e recarrega nas viradas de início e fim.
+- `MaintenanceModal` em modo editar: monitor fixo, só envia o que mudou, horário desabilitado em janela iniciada; o 409 mantém o modal aberto com o horário travado.
+- "Editar" no card de manutenção do detalhe, com o mesmo modal e o mesmo diálogo de cancelar/desligar da página.
+- D10/D11 (no modal de criar: nome do fuso no rótulo; pausados e com janela viva desabilitados) foram commitados direto pelo autor do plano.
+
+### Decisões
+
+D1–D9 do plano: teto de 7 dias; uma janela viva por monitor; pausa manual vence a janela; motivo opcional de até 200 caracteres; lote tudo ou nada; "em manutenção" derivado do relógio; uma instância só; uptime de 24 h sem mudança; `closed_manually` 0/1/2.
+
+### Desvios do plano
+
+1. **O bloqueio vai até o fim ser aplicado, não até `ends_at`.** O plano previa bloqueio exato em `ends_at`. Mas o fim (estado `UNKNOWN`, `resumed_at`) só roda no tick, até 10 s depois. Nesse intervalo um check com falha abriria um incidente, e o fim, ao zerar o estado para `UNKNOWN`, deixaria esse incidente órfão. Custo: até 1 tick a mais de manutenção.
+2. **`MonitorService.Ping` não consulta a janela.** O ping passa por `Record` → `withMonitor`, que já tem o gate e devolve `nil` (200 sem registrar). Uma segunda checagem no service seria a mesma regra duas vezes.
+3. **`Start`/`Finalize` são métodos transacionais do repositório**, no lugar de `MarkStarted`/`MarkFinalized` soltos. Assim fechar o incidente, zerar o estado e marcar a janela ficam na mesma transação. `Finalize` aplica o início antes se ele não rodou (janela que começou e terminou com o Pingou fora).
+4. **Contagem desde a retomada usa `>=`**, não `>`: a precisão é de segundos e o primeiro check após retomar roda no mesmo segundo.
+5. **Cancelar no segundo exato do início** grava `ends_at = starts_at + 1 s` (o `CHECK (ends_at > starts_at)` recusaria igual).
+6. `MaintenanceModal` ficou em arquivo próprio (o plano o colocava em `MonitorModals.jsx`), e a validação do formulário em `lib/maintenance.js`, para ter teste.
+7. No desktop, o selo e o motivo do incidente fechado foram para a coluna "Motivo da queda": "Fechado por manutenção" não cabia na coluna de duração (100 px).
+8. **Etapa 3 no mesmo PR das etapas 1 e 2**, e não num PR empilhado (D16), por decisão do autor na hora de aplicar.
+9. O card do detalhe trocou "Encerrar agora" por **"Desligar"**, o mesmo nome da página, e as duas telas usam o mesmo diálogo (`CancelWindowDialog`).
+10. `PATCH` com `monitor_id` no corpo responde `400` (em vez de ignorar o campo), para o erro ficar visível.
+11. A listagem da página varre `monitors` (no máximo 100 linhas); o teste de plano de consulta registra essa exceção.
+
+### Limitações conhecidas
+
+- Editar o motivo de uma janela em curso não muda o `close_note` dos incidentes que ela já fechou (cópia de propósito).
+- Duas abas editando a mesma janela: a última gravação vence, sem aviso.
+- D11 bloqueia monitores pausados só na tela: a API ainda aceita agendar janela para monitor pausado (a pausa vence a janela, D3).
+- Efeitos de início e fim atrasam até 10 s (tick). O bloqueio de checks começa na hora.
+- Logo depois do `ends_at`, até o tick rodar, criar outra janela para o mesmo monitor dá `409` (a antiga ainda está viva).
+- No celular, agendar fica no menu ⋮ do detalhe; o botão "Agendar manutenção" do topo é só do desktop.
+- Baldes do `/stats` em fusos de meia hora seguem pendentes (fora do escopo).
+
+### Descartado
+
+Flag `is_in_maintenance` em `monitors`; um timer por janela (`time.AfterFunc`); coluna `canceled_at`; biblioteca de date picker; lote parcial; coluna nova `close_reason TEXT`; janela recorrente; aviso de "começou/terminou"; edição de janela.
+
+### Validação
+
+`go vet`, `go test -race ./...` (scheduler 5× seguidas, sem falha intermitente) e `npm run lint`/`format:check`/`test`/`build` verdes. QA manual com o Pingou real, fuso `America/Sao_Paulo` e navegador em UTC: pausa com motivo; janela de 3 min em 2 monitores (um DOWN com incidente aberto) gravada no UTC certo; conflito `409` com o nome do monitor; incidente fechado por manutenção com o motivo; nenhum check em 25 s de janela; ping `200` sem registro; fim natural com check imediato e prazo do heartbeat recomeçado; reinício no meio da janela mantendo a manutenção; "Encerrar agora" pelo celular com check imediato. Etapa 3: página vazia; duas janelas ordenadas; edição de horário e motivo com o UTC certo; janela de 2 min virando "Em curso" sozinha; editar o horário com o início passando com o modal aberto → mensagem do 409 e horário travado, e salvar só o motivo em seguida; nenhum incidente novo ao editar o motivo em curso; editar pelo card do detalhe; desligar pela página com check imediato; `curl` do `PATCH` (409 com horário, 200 só com motivo); página no celular com a aba nova.
+
+---
+
 ## Pendências abertas
 
 - **Migrations 0003 e 0004** foram testadas em bancos de teste e de QA, mas **não** rodadas no `pingou.db` real. Fazer backup antes e conferir `failure_count` / `last_error`.
@@ -471,3 +540,4 @@ Conexão TLS separada só para ler o certificado; gravar "enviado sim/não" por 
 - **E-mail (T14)**: QA manual com Mailpit e provedor real (587/465); o ambiente de desenvolvimento não tinha Docker nem SMTP real.
 - **Eixo Y**: verificação manual (T5) dos 4 ranges nos 3 tipos, tema claro/escuro e mobile; conferir em um `/stats` real que `checks`/`failures` do heartbeat batem com pings e prazos perdidos.
 - **Pausar fecha o incidente**: QA manual (T7) no navegador (HTTP/TCP e heartbeat: incidente sai de "Abertos", aparece em "Resolvidos" com selo, sem e-mail/ntfy; retomar reabre) e `npm run lint`/`build` do frontend. Decidir se vale limpar incidentes órfãos antigos de monitores já pausados.
+- **Manutenção**: QA em dispositivo real e com leitor de tela no modal de agendar (multi-seleção, erros com foco); janela atravessando a troca de horário de verão num fuso que ainda a tem.

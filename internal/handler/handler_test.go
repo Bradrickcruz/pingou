@@ -55,13 +55,17 @@ func newTestServerEnv(t *testing.T, smtp config.SMTPConfig, ntfy config.NtfyConf
 	incidents := repository.NewIncidentRepo(db)
 	svc := service.NewMonitorService(monitors, checks, incidents)
 	// scheduler sem Start: só grava os pings (Record), sem jobs de check
+	windows := repository.NewMaintenanceRepo(db)
 	sched := scheduler.NewScheduler(monitors, nil, db,
 		repository.NewCheckRepoTx(db), repository.NewMonitorRepoTx(db), repository.NewIncidentRepoTx(db),
-		noopNotifier{})
+		noopNotifier{}).WithMaintenance(windows)
 	svc.SetRecorder(sched)
+	maintenance := service.NewMaintenanceService(windows, monitors)
+	maintenance.SetEnder(sched)
 
 	s := NewServer(&config.Config{APIKey: testKey, DatabaseURL: dbPath, Version: "v1.2.3", Commit: "abc1234", BuildDate: "2026-10-29"}, db, svc,
-		service.NewIncidentService(incidents), service.NewSettingsService(repository.NewSettingsRepo(db), smtp, ntfy))
+		service.NewIncidentService(incidents), service.NewSettingsService(repository.NewSettingsRepo(db), smtp, ntfy),
+		maintenance)
 
 	countChecks := func(id string) int {
 		var n int
@@ -353,5 +357,195 @@ func TestMonitorStatsEndpoint(t *testing.T) {
 	}
 	if rec := do(t, h, "GET", "/api/monitors/nope/stats", ""); rec.Code != http.StatusNotFound {
 		t.Fatalf("inexistente: %d", rec.Code)
+	}
+}
+
+func TestPauseReasonInMonitorAPI(t *testing.T) {
+	_, h, _ := newTestServer(t)
+	rec := do(t, h, "POST", "/api/monitors", `{"name":"API","url":"https://x.test","interval_seconds":60,"timeout_seconds":5,"failure_threshold":3}`)
+	m := decode[monitorResponse](t, rec)
+
+	rec = do(t, h, "PATCH", "/api/monitors/"+m.ID, `{"enabled":false,"pause_reason":"`+strings.Repeat("a", 201)+`"}`)
+	if rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), "VALIDATION_ERROR") {
+		t.Fatalf("201 caracteres: %d %s, want 400 VALIDATION_ERROR", rec.Code, rec.Body)
+	}
+
+	rec = do(t, h, "PATCH", "/api/monitors/"+m.ID, `{"enabled":false,"pause_reason":"deploy"}`)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("pausar: %d %s", rec.Code, rec.Body)
+	}
+	got := decode[monitorResponse](t, do(t, h, "GET", "/api/monitors/"+m.ID, ""))
+	if got.Enabled || got.PauseReason == nil || *got.PauseReason != "deploy" || got.PausedAt == nil {
+		t.Fatalf("pausado: %+v", got)
+	}
+
+	got = decode[monitorResponse](t, do(t, h, "PATCH", "/api/monitors/"+m.ID, `{"enabled":true}`))
+	if !got.Enabled || got.PauseReason != nil || got.PausedAt != nil || got.ResumedAt == nil {
+		t.Fatalf("retomado: %+v", got)
+	}
+}
+
+func TestMaintenanceAPI(t *testing.T) {
+	s, h, countChecks := newTestServer(t)
+	a := decode[monitorResponse](t, do(t, h, "POST", "/api/monitors", `{"name":"A","url":"https://a.test","interval_seconds":60,"timeout_seconds":5,"failure_threshold":3}`))
+	b := decode[monitorResponse](t, do(t, h, "POST", "/api/monitors", `{"name":"B","url":"https://b.test","interval_seconds":60,"timeout_seconds":5,"failure_threshold":3}`))
+	starts := time.Now().UTC().Add(time.Hour).Format(time.RFC3339)
+	ends := time.Now().UTC().Add(2 * time.Hour).Format(time.RFC3339)
+	body := func(ids string) string {
+		return `{"monitor_ids":` + ids + `,"starts_at":"` + starts + `","ends_at":"` + ends + `","reason":"deploy"}`
+	}
+
+	rec := do(t, h, "POST", "/api/maintenance-windows", body(`["`+a.ID+`"]`))
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("criar: %d %s", rec.Code, rec.Body)
+	}
+	created := decode[struct {
+		Windows []maintenanceResponse `json:"windows"`
+	}](t, rec)
+	if len(created.Windows) != 1 || created.Windows[0].Active || *created.Windows[0].Reason != "deploy" {
+		t.Fatalf("criada: %+v", created.Windows)
+	}
+
+	// conflito: 409 com os monitores em conflito, nada criado para B
+	rec = do(t, h, "POST", "/api/maintenance-windows", body(`["`+b.ID+`","`+a.ID+`"]`))
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("conflito: %d %s", rec.Code, rec.Body)
+	}
+	conflict := decode[struct {
+		Code       string   `json:"code"`
+		MonitorIDs []string `json:"monitor_ids"`
+	}](t, rec)
+	if conflict.Code != "MAINTENANCE_CONFLICT" || len(conflict.MonitorIDs) != 1 || conflict.MonitorIDs[0] != a.ID {
+		t.Fatalf("conflito: %+v", conflict)
+	}
+
+	for _, c := range []struct {
+		body string
+		want int
+	}{
+		{body(`["nope"]`), http.StatusNotFound},
+		{body(`[]`), http.StatusBadRequest},
+		{`{"monitor_ids":["` + b.ID + `"],"starts_at":"amanhã","ends_at":"` + ends + `"}`, http.StatusBadRequest},
+		{`{`, http.StatusBadRequest},
+	} {
+		if rec := do(t, h, "POST", "/api/maintenance-windows", c.body); rec.Code != c.want {
+			t.Errorf("%s: %d, want %d", c.body, rec.Code, c.want)
+		}
+	}
+
+	// GET lista e detalhe trazem o bloco maintenance
+	list := decode[paginatedResponse](t, do(t, h, "GET", "/api/monitors", ""))
+	raw, _ := json.Marshal(list.Data)
+	var items []monitorListItem
+	json.Unmarshal(raw, &items)
+	for _, it := range items {
+		if (it.ID == a.ID) != (it.Maintenance != nil) {
+			t.Errorf("%s: maintenance=%+v", it.Name, it.Maintenance)
+		}
+	}
+	got := decode[monitorResponse](t, do(t, h, "GET", "/api/monitors/"+a.ID, ""))
+	if got.Maintenance == nil || got.Maintenance.ID != created.Windows[0].ID {
+		t.Fatalf("detalhe: %+v", got.Maintenance)
+	}
+
+	// janela em curso: active=true e ping de heartbeat aceito sem registrar
+	hb := createHeartbeat(t, h)
+	now := time.Now().UTC()
+	if _, err := s.db.Exec(`INSERT INTO maintenance_windows (id, monitor_id, starts_at, ends_at, created_at) VALUES ('w-hb',?,?,?,?)`,
+		hb.ID, now.Add(-time.Minute).Format(time.RFC3339), now.Add(time.Hour).Format(time.RFC3339), now.Format(time.RFC3339)); err != nil {
+		t.Fatal(err)
+	}
+	if got := decode[monitorResponse](t, do(t, h, "GET", "/api/monitors/"+hb.ID, "")); got.Maintenance == nil || !got.Maintenance.Active {
+		t.Fatalf("em curso: %+v", got.Maintenance)
+	}
+	if rec := do(t, h, "POST", "/ping/"+*hb.PingToken, ""); rec.Code != http.StatusOK {
+		t.Fatalf("ping: %d", rec.Code)
+	}
+	if n := countChecks(hb.ID); n != 0 {
+		t.Fatalf("ping na janela gravou %d checks", n)
+	}
+
+	// cancelar: 204; de novo: 404
+	if rec := do(t, h, "DELETE", "/api/maintenance-windows/"+created.Windows[0].ID, ""); rec.Code != http.StatusNoContent {
+		t.Fatalf("cancelar: %d %s", rec.Code, rec.Body)
+	}
+	if rec := do(t, h, "DELETE", "/api/maintenance-windows/"+created.Windows[0].ID, ""); rec.Code != http.StatusNotFound {
+		t.Fatalf("cancelar de novo: %d", rec.Code)
+	}
+}
+
+func TestMaintenanceRoutesNeedAPIKey(t *testing.T) {
+	_, h, _ := newTestServer(t)
+	for _, r := range []struct{ method, path string }{
+		{"GET", "/api/maintenance-windows"},
+		{"POST", "/api/maintenance-windows"},
+		{"PATCH", "/api/maintenance-windows/x"},
+		{"DELETE", "/api/maintenance-windows/x"},
+	} {
+		req := httptest.NewRequest(r.method, r.path, strings.NewReader("{}"))
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+		if rec.Code != http.StatusUnauthorized {
+			t.Errorf("%s %s sem chave: %d, want 401", r.method, r.path, rec.Code)
+		}
+	}
+}
+
+func TestMaintenanceListAndUpdateAPI(t *testing.T) {
+	s, h, _ := newTestServer(t)
+	m := decode[monitorResponse](t, do(t, h, "POST", "/api/monitors", `{"name":"Banco","url":"https://a.test","interval_seconds":60,"timeout_seconds":5,"failure_threshold":3}`))
+	now := time.Now().UTC().Truncate(time.Second)
+	ts := func(d time.Duration) string { return now.Add(d).Format(time.RFC3339) }
+	for _, w := range []struct {
+		id, mon      string
+		starts, ends time.Duration
+	}{{"sched", m.ID, time.Hour, 2 * time.Hour}} {
+		if _, err := s.db.Exec(`INSERT INTO maintenance_windows (id, monitor_id, starts_at, ends_at, created_at) VALUES (?,?,?,?,?)`,
+			w.id, w.mon, ts(w.starts), ts(w.ends), ts(0)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	hb := createHeartbeat(t, h)
+	if _, err := s.db.Exec(`INSERT INTO maintenance_windows (id, monitor_id, starts_at, ends_at, reason, created_at) VALUES ('run',?,?,?,'x',?)`,
+		hb.ID, ts(-time.Minute), ts(time.Hour), ts(0)); err != nil {
+		t.Fatal(err)
+	}
+
+	list := decode[struct {
+		Windows []struct {
+			ID          string  `json:"id"`
+			MonitorName string  `json:"monitor_name"`
+			State       string  `json:"state"`
+			Reason      *string `json:"reason"`
+		} `json:"windows"`
+	}](t, do(t, h, "GET", "/api/maintenance-windows", ""))
+	if len(list.Windows) != 2 || list.Windows[0].ID != "run" || list.Windows[0].State != "active" ||
+		list.Windows[1].State != "scheduled" || list.Windows[1].MonitorName != "Banco" {
+		t.Fatalf("lista: %+v", list.Windows)
+	}
+
+	for _, c := range []struct {
+		id, body string
+		want     int
+		code     string
+	}{
+		{"sched", `{"starts_at":"` + ts(3*time.Hour) + `","ends_at":"` + ts(4*time.Hour) + `","reason":"novo"}`, 200, ""},
+		{"sched", `{"reason":null}`, 200, ""},
+		{"sched", `{}`, 400, "VALIDATION_ERROR"},
+		{"sched", `{"starts_at":"` + ts(-time.Hour) + `"}`, 400, "VALIDATION_ERROR"},
+		{"sched", `{"monitor_id":"` + hb.ID + `"}`, 400, "VALIDATION_ERROR"},
+		{"sched", `{"reason":5}`, 400, "VALIDATION_ERROR"},
+		{"run", `{"ends_at":"` + ts(2*time.Hour) + `"}`, 409, "MAINTENANCE_LOCKED"},
+		{"run", `{"reason":"só o motivo"}`, 200, ""},
+		{"nope", `{"reason":"x"}`, 404, "NOT_FOUND"},
+	} {
+		rec := do(t, h, "PATCH", "/api/maintenance-windows/"+c.id, c.body)
+		if rec.Code != c.want || !strings.Contains(rec.Body.String(), c.code) {
+			t.Errorf("PATCH %s %s: %d %s, want %d %s", c.id, c.body, rec.Code, rec.Body, c.want, c.code)
+		}
+	}
+	got := decode[monitorResponse](t, do(t, h, "GET", "/api/monitors/"+m.ID, ""))
+	if got.Maintenance == nil || got.Maintenance.StartsAt != ts(3*time.Hour) || got.Maintenance.Reason != nil {
+		t.Fatalf("depois de editar: %+v", got.Maintenance)
 	}
 }

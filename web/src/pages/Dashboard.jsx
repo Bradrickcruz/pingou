@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, RefreshCw, Search } from "lucide-react";
+import { Plus, RefreshCw, Search, Wrench } from "lucide-react";
 import { toast } from "react-toastify";
 import { useMonitors } from "../hooks/useMonitors";
 import { useNow } from "../hooks/useNow";
@@ -10,6 +10,7 @@ import { MonitorCard } from "../components/monitors/MonitorCard";
 import { MobileHeader } from "../components/layout/MobileHeader";
 import { MonitorForm } from "../components/monitors/MonitorForm";
 import { MonitorModals } from "../components/monitors/MonitorModals";
+import { MaintenanceModal } from "../components/monitors/MaintenanceModal";
 import { StatusBanner } from "../components/monitors/StatusBanner";
 import { Modal } from "../components/ui/Modal";
 import { Button } from "../components/ui/Button";
@@ -27,6 +28,11 @@ const FILTERS = [
   { key: "all", label: "Todos", match: () => true },
   { key: "down", label: "Fora do ar", match: (s) => s === "DOWN" },
   { key: "up", label: "No ar", match: (s) => s === "UP" },
+  {
+    key: "maintenance",
+    label: "Em manutenção",
+    match: (s) => s === "MAINTENANCE",
+  },
   { key: "paused", label: "Pausados", match: (s) => s === "PAUSED" },
 ];
 
@@ -90,6 +96,11 @@ export function Dashboard() {
     setSelected(m);
     setModal("delete");
   };
+  // manutenção: do topo (nenhum marcado) ou do menu da linha (o monitor marcado)
+  const openSchedule = (m) => {
+    setSelected(m ?? null);
+    setModal("maintenance");
+  };
   const closeModal = () => {
     setModal(null);
     setSelected(null);
@@ -112,11 +123,17 @@ export function Dashboard() {
       toast.success("Monitor criado");
     });
 
+  // pausar abre o modal do motivo; retomar é direto
   const handleToggle = async (m) => {
     setActionError(null);
+    if (m.enabled) {
+      setSelected(m);
+      setModal("pause");
+      return;
+    }
     try {
-      await monitorsApi.update(m.id, { enabled: !m.enabled });
-      toast.success(m.enabled ? "Monitor pausado" : "Monitor retomado");
+      await monitorsApi.update(m.id, { enabled: true });
+      toast.success("Monitor retomado");
       await refetch();
     } catch (e) {
       setActionError(e.message);
@@ -175,6 +192,16 @@ export function Dashboard() {
             </span>
           )}
           {refreshButton}
+          {monitors.length > 0 && (
+            <Button
+              variant="ghost"
+              onClick={() => openSchedule()}
+              className="inline-flex items-center gap-1.5 h-11 bg-pg-branco"
+            >
+              <Wrench size={16} aria-hidden="true" />
+              Agendar manutenção
+            </Button>
+          )}
           <Button
             onClick={() => setModal("create")}
             className="inline-flex items-center gap-1.5 h-11"
@@ -338,6 +365,7 @@ export function Dashboard() {
                     onEdit={openEdit}
                     onToggle={handleToggle}
                     onDelete={openDelete}
+                    onSchedule={openSchedule}
                   />
                 ))}
                 {visible.length === 0 && (
@@ -380,6 +408,15 @@ export function Dashboard() {
             loading={saving}
           />
         </Modal>
+      )}
+
+      {modal === "maintenance" && (
+        <MaintenanceModal
+          monitors={monitors}
+          initialIds={selected ? [selected.id] : []}
+          onClose={closeModal}
+          onCreated={refetch}
+        />
       )}
 
       <MonitorModals

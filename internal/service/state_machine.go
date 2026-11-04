@@ -246,11 +246,13 @@ func (sm *StateMachine) handleFailure(ctx context.Context, m *domain.Monitor, pr
 	return nil, sm.uow.IncidentRepo().IncrementFailureCount(ctx, m.ID)
 }
 
-// countConsecutiveFails conta checks recentes até encontrar um sucesso
+// countConsecutiveFails conta checks recentes até encontrar um sucesso.
+// Só olha checks feitos depois da última retomada (pausa ou fim de janela de
+// manutenção): falhas de antes não somam com as de depois.
 // Lê dentro da transação (SQLite tem 1 conexão; ler fora dela trava)
 func (sm *StateMachine) countConsecutiveFails(ctx context.Context, m *domain.Monitor) (int, error) {
 	// busca os últimos N checks (N = failure_threshold + 1 para ter margem)
-	checks, err := sm.uow.CheckRepo().Latest(ctx, m.ID, effectiveThreshold(m)+1)
+	checks, err := sm.uow.CheckRepo().Latest(ctx, m.ID, effectiveThreshold(m)+1, m.ResumedAt)
 	if err != nil {
 		return 0, err
 	}

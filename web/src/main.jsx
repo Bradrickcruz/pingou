@@ -12,6 +12,7 @@ import { Shell } from "./components/layout/Shell";
 import { Dashboard } from "./pages/Dashboard";
 import { Incidents } from "./pages/Incidents";
 import { Settings } from "./pages/Settings";
+import { Maintenance } from "./pages/Maintenance";
 import { MonitorDetail } from "./pages/MonitorDetail";
 import { Login } from "./pages/Login";
 
@@ -44,6 +45,7 @@ function App() {
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/monitors/:id" element={<MonitorDetail />} />
                 <Route path="/incidents" element={<Incidents />} />
+                <Route path="/maintenance" element={<Maintenance />} />
                 <Route
                   path="/settings"
                   element={<Settings onLogout={handleLogout} />}

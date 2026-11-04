@@ -94,7 +94,7 @@ This roadmap outlines the planned development phases for Pingou, from the curren
   - [ ] Notification rate limiting
   - [ ] Custom notification templates
   - [ ] Escalation rules
-  - [ ] Maintenance window support
+  - [x] Maintenance window support
 
 **Target Completion**: June 2024
 

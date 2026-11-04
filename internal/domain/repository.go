@@ -29,9 +29,46 @@ type IncidentRepository interface {
 	FindOpenByMonitors(ctx context.Context, monitorIDs []string) (map[string]*Incident, error)
 	FindAll(ctx context.Context, filter IncidentFilter) ([]*Incident, int, error)
 	Close(ctx context.Context, id string, endedAt string, durationSeconds int) error
-	// CloseManually fecha o incidente aberto do monitor, se houver (sem notificar).
-	CloseManually(ctx context.Context, monitorID string, endedAt time.Time) error
+	// CloseManually fecha o incidente aberto do monitor, se houver (sem notificar),
+	// gravando o motivo do fechamento e uma cópia do texto do motivo.
+	CloseManually(ctx context.Context, monitorID string, endedAt time.Time, reason CloseReason, note *string) error
 	FindInWindow(ctx context.Context, monitorID string, since time.Time) ([]*Incident, error)
+}
+
+// MaintenanceRepository guarda as janelas de manutenção. "Viva" = ainda não
+// finalizada (agendada ou em curso); há no máximo uma por monitor.
+type MaintenanceRepository interface {
+	// CreateBatch insere todas as janelas numa transação (tudo ou nada).
+	CreateBatch(ctx context.Context, windows []*MaintenanceWindow) error
+	FindByID(ctx context.Context, id string) (*MaintenanceWindow, error)
+	FindLiveByMonitor(ctx context.Context, monitorID string) (*MaintenanceWindow, error)
+	// FindLiveByMonitors devolve a janela viva de cada monitor, indexada pelo id.
+	FindLiveByMonitors(ctx context.Context, monitorIDs []string) (map[string]*MaintenanceWindow, error)
+	// ActiveForMonitor: consulta quente do gate (a cada check e ping).
+	ActiveForMonitor(ctx context.Context, monitorID string, now time.Time) (bool, error)
+	// ListLive lista as janelas vivas com o nome do monitor, por início.
+	ListLive(ctx context.Context) ([]*MaintenanceWindowView, error)
+	// UpdateTimes troca início, fim e motivo de uma janela que ainda não
+	// começou (starts_at > now, guardado no próprio UPDATE). false = nenhuma
+	// linha mudou (começou, foi finalizada ou não existe).
+	UpdateTimes(ctx context.Context, id string, startsAt, endsAt time.Time, reason *string, now time.Time) (bool, error)
+	// UpdateReason troca só o motivo de uma janela viva. false = nenhuma linha mudou.
+	UpdateReason(ctx context.Context, id string, reason *string) (bool, error)
+	// Delete apaga uma janela que ainda não começou.
+	Delete(ctx context.Context, id string) error
+	// DueStart: janelas cujo início chegou e cujos efeitos de início não rodaram.
+	DueStart(ctx context.Context, now time.Time) ([]*MaintenanceWindow, error)
+	// DueEnd: janelas cujo fim chegou e que ainda não foram finalizadas.
+	DueEnd(ctx context.Context, now time.Time) ([]*MaintenanceWindow, error)
+	// Start aplica o início numa transação: fecha o incidente aberto do monitor
+	// (motivo manutenção), põe o estado em UNKNOWN e marca started_at.
+	// Devolve false se já tinha sido aplicado.
+	Start(ctx context.Context, w *MaintenanceWindow, now time.Time) (bool, error)
+	// Finalize aplica o fim numa transação (e o início antes, se não rodou):
+	// marca finalized_at, grava resumed_at = now, estado UNKNOWN e recomeça o
+	// prazo do heartbeat. endsAt != nil encurta a janela (cancelamento).
+	// Devolve false se já estava finalizada.
+	Finalize(ctx context.Context, w *MaintenanceWindow, now time.Time, endsAt *time.Time) (bool, error)
 }
 
 type MonitorFilter struct {

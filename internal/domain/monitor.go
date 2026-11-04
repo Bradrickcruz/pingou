@@ -54,8 +54,14 @@ type Monitor struct {
 	CertExpiresAt    *time.Time
 	CertAlerted30For *time.Time
 	CertAlerted7For  *time.Time
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
+	// Pausa: motivo opcional (limpo ao retomar) e instantes da última pausa e
+	// da última retomada. ResumedAt também marca o fim de uma janela de
+	// manutenção: só checks feitos depois dele contam para o threshold.
+	PauseReason *string
+	PausedAt    *time.Time
+	ResumedAt   *time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 // Target é o alvo do check: URL (http), host:porta (tcp) ou nil (heartbeat,

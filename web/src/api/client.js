@@ -11,13 +11,15 @@ export function createClient() {
     },
   });
   // mensagem de erro da API (ex.: validação) no lugar do texto genérico do axios;
-  // status fica no erro para a tela tratar casos como 429
+  // status e o corpo (data) ficam no erro para a tela tratar casos como 429 e
+  // os monitores em conflito de um 409
   instance.interceptors.response.use(
     (res) => res,
     (err) =>
       Promise.reject(
         Object.assign(new Error(err.response?.data?.error || err.message), {
           status: err.response?.status,
+          data: err.response?.data,
         }),
       ),
   );

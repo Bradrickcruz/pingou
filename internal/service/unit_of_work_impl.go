@@ -81,8 +81,8 @@ func (r *checkRepoWithTx) CreateWithTx(ctx context.Context, c *domain.Check) err
 	return r.repo.CreateWithTx(ctx, r.tx, c)
 }
 
-func (r *checkRepoWithTx) Latest(ctx context.Context, monitorID string, n int) ([]*domain.Check, error) {
-	return r.repo.Latest(ctx, r.tx, monitorID, n)
+func (r *checkRepoWithTx) Latest(ctx context.Context, monitorID string, n int, since *time.Time) ([]*domain.Check, error) {
+	return r.repo.Latest(ctx, r.tx, monitorID, n, since)
 }
 
 // monitorRepoWithTx envolve MonitorRepoTx com uma transação ativa

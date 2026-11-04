@@ -51,14 +51,37 @@ function MonitorCell({ incident }) {
 
 const cell = "px-5 py-3 align-middle";
 
-// Neutro de propósito: não foi recuperação (verde), o monitor foi pausado.
-function ManualBadge({ className = "" }) {
+const closeLabel = {
+  pause: "Fechado manualmente",
+  maintenance: "Fechado por manutenção",
+};
+
+// Neutro de propósito: não foi recuperação (verde), o monitor foi pausado ou
+// entrou em manutenção. close_reason ausente (API antiga): só closed_manually.
+function ManualBadge({ incident, className = "" }) {
+  const label =
+    closeLabel[incident.close_reason] ??
+    (incident.closed_manually ? closeLabel.pause : null);
+  if (!label) return null;
   return (
     <span
       className={`block w-fit mt-0.5 rounded-full border border-pg-borda px-2 py-0.5 text-pg-caption font-normal text-pg-neblina whitespace-nowrap ${className}`}
     >
-      Fechado manualmente
+      {label}
     </span>
+  );
+}
+
+// Motivo da pausa ou da manutenção, guardado no fechamento.
+function CloseNote({ incident, className = "line-clamp-2" }) {
+  if (!incident.close_note) return null;
+  return (
+    <p
+      className={`mt-0.5 mb-0 text-pg-caption text-pg-neblina break-words ${className}`}
+      title={incident.close_note}
+    >
+      {incident.close_note}
+    </p>
   );
 }
 
@@ -119,14 +142,18 @@ export function ResolvedTable({ incidents, total, onLoadMore, loadingMore }) {
                   className={`${cell} text-right text-pg-ui font-medium text-pg-ardosia whitespace-nowrap`}
                 >
                   {formatDuration(i.duration_seconds)}
-                  {i.closed_manually && <ManualBadge className="ml-auto" />}
                 </td>
-                <td
-                  className={`${cell} font-pg-mono text-pg-caption text-pg-neblina`}
-                >
-                  <div className="truncate" title={i.last_error ?? undefined}>
+                <td className={`${cell} text-pg-caption text-pg-neblina`}>
+                  <div
+                    className="truncate font-pg-mono"
+                    title={i.last_error ?? undefined}
+                  >
                     {i.last_error ?? "—"}
                   </div>
+                  {/* pausa ou manutenção: selo e motivo abaixo do erro, sem
+                      apertar a coluna de duração */}
+                  <ManualBadge incident={i} />
+                  <CloseNote incident={i} className="line-clamp-1" />
                 </td>
               </tr>
             ))}
@@ -171,7 +198,8 @@ export function ResolvedTable({ incidents, total, onLoadMore, loadingMore }) {
                     <div className="text-pg-caption text-pg-neblina tabular-nums">
                       {timeRange(i.started_at, i.ended_at)}
                     </div>
-                    {i.closed_manually && <ManualBadge />}
+                    <ManualBadge incident={i} />
+                    <CloseNote incident={i} />
                     {i.last_error && (
                       <p className="mt-0.5 mb-0 font-pg-mono text-pg-caption text-pg-neblina break-words line-clamp-2">
                         {i.last_error}

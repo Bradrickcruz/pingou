@@ -42,6 +42,7 @@ func hotQueries(monitorID string, all []string, now time.Time) []hotQuery {
 		{"lista: uptime 24h", sqlSummariesUptime(len(ids)), append(append([]any{}, ids...), ts(now.Add(-24*time.Hour)))},
 		{"lista: down_since", sqlIncidentsOpenByMonitors(len(ids)), ids},
 		{"checks: página", sqlChecksPage, []any{monitorID, 50, 0}},
+		{"state machine: falhas desde", sqlChecksLatestSince, []any{monitorID, ts(now.Add(-time.Hour)), 4}},
 		{"checks: total", sqlChecksCount, []any{monitorID}},
 		{"retenção: delete", sqlChecksDeleteOlderBatch, []any{ts(now.Add(-29 * 24 * time.Hour)), 5000}},
 		{"state machine: aberto", sqlIncidentOpenByMonitor, []any{monitorID}},
@@ -53,6 +54,10 @@ func hotQueries(monitorID string, all []string, now time.Time) []hotQuery {
 		{"incidentes: resolvidos total", countRes, argsRes},
 		{"incidentes: resolvidos", listRes, append(argsRes, 20, 0)},
 		{"incidentes: do monitor", listMon, append(argsMon, 20, 0)},
+		{"manutenção: ativa", sqlMaintenanceActive, []any{monitorID, ts(now)}},
+		{"manutenção: viva do monitor", sqlMaintenanceLiveByMonitor, []any{monitorID}},
+		{"manutenção: vivas da lista", sqlMaintenanceLiveByMonitors(len(ids)), ids},
+		{"manutenção: página", sqlMaintenanceListLive, nil},
 	}
 }
 
@@ -151,16 +156,27 @@ func TestHotQueriesUseIndexes(t *testing.T) {
 	ids := []string{"m1", "m2", "m3"}
 	now := time.Date(2026, 1, 10, 0, 0, 0, 0, time.UTC)
 	want := map[string]string{
-		"stats: buckets 30d":    "COVERING INDEX idx_checks_monitor_time",
-		"lista: history":        "COVERING INDEX idx_checks_monitor_time",
-		"lista: uptime 24h":     "COVERING INDEX idx_checks_monitor_time",
-		"checks: página":        "INDEX idx_checks_monitor_time",
-		"checks: total":         "COVERING INDEX idx_checks_monitor_time",
+		"stats: buckets 30d":          "COVERING INDEX idx_checks_monitor_time",
+		"lista: history":              "COVERING INDEX idx_checks_monitor_time",
+		"lista: uptime 24h":           "COVERING INDEX idx_checks_monitor_time",
+		"checks: página":              "INDEX idx_checks_monitor_time",
+		"checks: total":               "COVERING INDEX idx_checks_monitor_time",
+		"state machine: falhas desde": "INDEX idx_checks_monitor_time",
+		"manutenção: ativa":           "INDEX idx_maintenance_",
+		"manutenção: viva do monitor": "INDEX idx_maintenance_",
+		"manutenção: vivas da lista":  "INDEX idx_maintenance_",
+		// a página lê só as vivas (índice parcial) e ordena à parte: no máximo
+		// 100 linhas, uma por monitor
+		"manutenção: página":    "idx_maintenance_live_monitor",
 		"retenção: delete":      "INDEX idx_checks_checked_at",
 		"stats: down window":    "INDEX idx_incidents_monitor_ended",
 		"lista: down_since":     "INDEX idx_incidents_monitor_ended",
 		"state machine: aberto": "INDEX idx_incidents_monitor_ended",
 		"state machine: +falha": "INDEX idx_incidents_monitor_ended",
+	}
+	// varredura aceita: a tabela é pequena por construção
+	smallScanOK := map[string]bool{
+		"manutenção: página": true, // monitors tem no máximo 100 linhas
 	}
 	for _, q := range hotQueries(ids[0], ids, now) {
 		plan, err := explain(ctx, db, q.sql, q.args...)
@@ -170,7 +186,7 @@ func TestHotQueriesUseIndexes(t *testing.T) {
 		joined := strings.Join(plan, " · ")
 		for _, line := range plan {
 			// varredura de tabela sem índice (SCAN de subconsulta é só leitura do resultado)
-			if strings.HasPrefix(line, "SCAN ") && !strings.Contains(line, "USING") && !strings.HasPrefix(line, "SCAN (subquery") {
+			if strings.HasPrefix(line, "SCAN ") && !strings.Contains(line, "USING") && !strings.HasPrefix(line, "SCAN (subquery") && !smallScanOK[q.name] {
 				t.Errorf("%s: varredura completa: %s", q.name, joined)
 			}
 			// ordenação à parte das linhas do monitor: o índice não está servindo para o ORDER BY

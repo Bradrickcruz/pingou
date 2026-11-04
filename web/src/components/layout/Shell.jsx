@@ -5,6 +5,7 @@ import {
   TriangleAlert,
   Settings as SettingsIcon,
   LogOut,
+  Wrench,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { BottomNav } from "./BottomNav";
@@ -15,6 +16,7 @@ import marca from "../../assets/brand/pingou-marca-horizontal.svg";
 const nav = [
   { to: "/", label: "Painel", icon: LayoutDashboard },
   { to: "/incidents", label: "Incidentes", icon: TriangleAlert },
+  { to: "/maintenance", label: "Manutenções", icon: Wrench },
   {
     to: "/settings",
     label: "Configurações",
