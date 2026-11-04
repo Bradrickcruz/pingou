@@ -103,26 +103,26 @@
   },
   "internal/database/migrations/0001_init.sql": {
     "mtime": 1777012405.3893824,
-    "seen": 1793638609.5316563,
-    "ast_hash": "",
+    "seen": 1793820514.6102564,
+    "ast_hash": "cdf3d4043c780543a27d4cc148cf5555",
     "semantic_hash": ""
   },
   "internal/database/migrations/0002_add_duration_seconds_to_incidents.sql": {
     "mtime": 1777061129.9355462,
-    "seen": 1793638609.5316575,
-    "ast_hash": "",
+    "seen": 1793820514.6102571,
+    "ast_hash": "ab52761c5aed638df004b2cddba66e83",
     "semantic_hash": ""
   },
   "internal/database/migrations/0003_monitor_types.sql": {
     "mtime": 1793391650.2071128,
-    "seen": 1793638609.5316582,
-    "ast_hash": "",
+    "seen": 1793820514.6102579,
+    "ast_hash": "acc29bbbdeb940baaf9ab1e94647b53e",
     "semantic_hash": ""
   },
   "internal/database/migrations/0004_incidents_page.sql": {
     "mtime": 1793391650.2071128,
-    "seen": 1793638609.5316594,
-    "ast_hash": "",
+    "seen": 1793820514.6102586,
+    "ast_hash": "b6bac1548426042243e703bf72f471e7",
     "semantic_hash": ""
   },
   "internal/database/migrations_test.go": {
@@ -1351,8 +1351,8 @@
   },
   "internal/database/migrations/0005_incident_closed_manually.sql": {
     "mtime": 1793565155.0309525,
-    "seen": 1793638609.53166,
-    "ast_hash": "",
+    "seen": 1793820514.6102598,
+    "ast_hash": "657004d6f307a019e1515d89e7089ecc",
     "semantic_hash": ""
   },
   "cmd/pingou/commands/serve_test.go": {
@@ -1416,9 +1416,9 @@
     "semantic_hash": ""
   },
   "internal/database/migrations/0006_checks_indexes.sql": {
-    "mtime": 1793638501.6812758,
-    "seen": 1793638609.5316608,
-    "ast_hash": "",
+    "mtime": 1793638920.2396975,
+    "seen": 1793820514.6102605,
+    "ast_hash": "18af34f825ef9a8cb5e8b5efbef3d22a",
     "semantic_hash": ""
   },
   "internal/repository/dbbench_test.go": {
@@ -1524,9 +1524,15 @@
     "semantic_hash": ""
   },
   "internal/database/migrations/0007_monitor_cert_expiry.sql": {
-    "mtime": 1793638514.7723107,
-    "seen": 1793638609.531662,
-    "ast_hash": "",
+    "mtime": 1793638920.2396975,
+    "seen": 1793820514.6102614,
+    "ast_hash": "efe04d59cadeb14dc72cbf2c2303de92",
+    "semantic_hash": ""
+  },
+  "plan-maintenance-windows.md": {
+    "mtime": 1793820507.4042907,
+    "seen": 1793820514.610391,
+    "ast_hash": "a2e5d8840e288b11c91a5a344e0b03dd",
     "semantic_hash": ""
   }
 }
