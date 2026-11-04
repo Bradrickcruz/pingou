@@ -1254,9 +1254,9 @@
     "semantic_hash": ""
   },
   "IDEAS.md": {
-    "mtime": 1793564584.6110716,
-    "seen": 1793825855.971798,
-    "ast_hash": "5da061572a0f1046a0f15a519a87d561",
+    "mtime": 1793826431.049903,
+    "seen": 1793826446.5085025,
+    "ast_hash": "63a9f794176639860b0e50cec5906863",
     "semantic_hash": ""
   },
   "internal/service/ntfy_notifier.go": {
