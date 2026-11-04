@@ -22,6 +22,8 @@
 | D7  | Pingou roda com **uma instância** (`dbMu` + SQLite `MaxOpenConns=1`). Sem lock distribuído.                                   |
 | D8  | Uptime de 24 h não muda: sem checks na janela, não há o que contar.                                                           |
 | D9  | `closed_manually` (INTEGER sem CHECK) passa a guardar 0/1/2 = nenhum/pausa/manutenção. Sem migração de esquema para isso.     |
+| D10 | No modal de agendar, o rótulo de Início e Fim mostra o **nome do fuso** das Configurações (ex.: `America/Sao_Paulo`), não o offset (`-03`). |
+| D11 | No modal de agendar, monitores **pausados** ou com **janela viva** (agendada ou em curso) aparecem na lista **desabilitados** (selo "pausado" / "já agendada"), pois não podem entrar numa janela. |
 
 **Fora do escopo:** janela recorrente, aviso de "começou/terminou", página pública de status, limpeza de incidentes órfãos, edição de janela (cancela e cria outra), revisão dos baldes do `/stats` em UTC.
 
@@ -63,6 +65,8 @@ Este plano está concluído quando:
 - [x] Reiniciar o Pingou no meio da janela mantém o monitor em manutenção e aplica início/fim pendentes
 - [x] Lista mostra "Em manutenção até HH:MM" (fuso das Configurações); detalhes mostram motivo, início, fim e botão de cancelar
 - [x] Datas digitadas são interpretadas no fuso das Configurações, não no do navegador (teste cobre fuso diferente de UTC)
+- [x] Rótulos de Início/Fim do modal mostram o nome do fuso das Configurações (D10)
+- [x] Monitores pausados ou com janela viva aparecem desabilitados na lista do modal (D11)
 
 ## Tech Stack
 
@@ -511,8 +515,8 @@ docs/implementacoes.md, README.md (API)
 - **INPUT**: `Modal`, `Combobox`, `MonitorForm` (padrão de erros)
 - **OUTPUT**:
   1. `MaintenanceModal`:
-     - multi-seleção de monitores (pré-selecionado quando aberto do detalhe)
-     - início e fim com `datetime-local`, com o fuso visível no rótulo (`zoneOffsetLabel`)
+     - multi-seleção de monitores (pré-selecionado quando aberto do detalhe); pausados (`!enabled`) e com janela viva (`maintenance`) ficam desabilitados com selo "pausado" / "já agendada" (D11)
+     - início e fim com `datetime-local`, com o nome do fuso das Configurações no rótulo (`getTimeZone()`, ex.: `America/Sao_Paulo`) (D10)
      - motivo opcional com contador
   2. Validação no cliente espelhando o servidor (início futuro, fim depois, 7 dias); erro 409 lista os monitores em conflito pelo nome
   3. Entradas: botão "Agendar manutenção" no Dashboard e no detalhe (menu)

@@ -9,7 +9,7 @@ import { Spinner } from "../ui/Spinner";
 import { ReasonField } from "./MonitorModals";
 import { matchesQuery } from "../../lib/monitors";
 import { defaultRange, toApiDate, validateWindow } from "../../lib/maintenance";
-import { zoneOffsetLabel, zonedToUtc } from "../../lib/timezone";
+import { getTimeZone } from "../../lib/timezone";
 
 // Agendar uma janela para um ou mais monitores. `monitors` é a lista para
 // escolher (sem ela, o modal busca); `initialIds` vem marcado (detalhe).
@@ -33,7 +33,7 @@ export function MaintenanceModal({
   const uid = useId();
   const fieldId = (name) => `${uid}-${name}`;
   const errorId = (name) => `${uid}-${name}-error`;
-  const offset = zoneOffsetLabel(zonedToUtc(starts) ?? new Date());
+  const zone = getTimeZone();
 
   useEffect(() => {
     if (monitors) return;
@@ -127,7 +127,7 @@ export function MaintenanceModal({
         htmlFor={fieldId(name)}
         className="block mb-2 text-pg-ui font-medium text-pg-ardosia"
       >
-        {label} <span className="font-normal text-pg-neblina">({offset})</span>
+        {label} <span className="font-normal text-pg-neblina">({zone})</span>
       </label>
       <input
         id={fieldId(name)}
@@ -189,26 +189,37 @@ export function MaintenanceModal({
                   errors.monitors ? "border-pg-down" : "border-pg-borda"
                 }`}
               >
-                {visible.map((m) => (
-                  <li key={m.id}>
-                    <label className="flex items-center gap-2.5 px-2 py-2 rounded-pg-control cursor-pointer hover:bg-pg-nuvem">
-                      <input
-                        type="checkbox"
-                        checked={ids.includes(m.id)}
-                        onChange={() => toggle(m.id)}
-                        className="w-4 h-4 flex-shrink-0 accent-pg-ciano-fundo"
-                      />
-                      <span className="truncate text-pg-ui text-pg-ardosia">
-                        {m.name}
-                      </span>
-                      {m.maintenance && (
-                        <span className="ml-auto flex-shrink-0 text-pg-caption text-pg-neblina">
-                          já agendada
+                {visible.map((m) => {
+                  // ponytail: espelha a regra do backend (pausado ou com janela viva não entra)
+                  const blocked = !m.enabled || !!m.maintenance;
+                  return (
+                    <li key={m.id}>
+                      <label
+                        className={`flex items-center gap-2.5 px-2 py-2 rounded-pg-control ${
+                          blocked
+                            ? "cursor-not-allowed opacity-60"
+                            : "cursor-pointer hover:bg-pg-nuvem"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={ids.includes(m.id)}
+                          disabled={blocked}
+                          onChange={() => toggle(m.id)}
+                          className="w-4 h-4 flex-shrink-0 accent-pg-ciano-fundo"
+                        />
+                        <span className="truncate text-pg-ui text-pg-ardosia">
+                          {m.name}
                         </span>
-                      )}
-                    </label>
-                  </li>
-                ))}
+                        {blocked && (
+                          <span className="ml-auto flex-shrink-0 text-pg-caption text-pg-neblina">
+                            {!m.enabled ? "pausado" : "já agendada"}
+                          </span>
+                        )}
+                      </label>
+                    </li>
+                  );
+                })}
                 {visible.length === 0 && (
                   <li className="px-2 py-3 text-pg-caption text-pg-neblina">
                     Nenhum monitor encontrado.
