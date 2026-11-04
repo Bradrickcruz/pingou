@@ -54,7 +54,7 @@ export function MonitorRow({
         )}
         {maintenance && (
           <div
-            className="mt-1 max-w-[180px] text-pg-caption text-pg-neblina"
+            className="mt-1 mx-auto max-w-[180px] text-center text-pg-caption text-pg-neblina"
             title={monitor.maintenance.reason ?? undefined}
           >
             {maintenanceUntil(monitor, now)}
