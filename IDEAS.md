@@ -1,52 +1,118 @@
 # 💡 Ideias de evolução
 
+> Só o que ainda **não foi implementado**. O que já entrou está em `docs/` no histórico de implementações.
+> Atualizado em 2026-11-04.
+
+**Resumo**
+
+| #   | Ideia                               | Estado                 | Prioridade |
+| --- | ----------------------------------- | ---------------------- | ---------- |
+| 1   | Backup sem configurações + importar | Aguardando decisão     | medium     |
+| 2   | Status HTTP esperado                | Esperando um caso real | low        |
+
+Mais abaixo: ideias [candidatas](#-candidatas-ainda-não-decididas), [adiadas](#-adiadas) e [descartadas](#-descartadas).
+
 ---
 
-# 🧩 Task: Notificações via ntfy
+# 🧩 Task: Backup sem configurações + importar
 
 ## 💡 Idea
 
-Receber os alertas de queda e recuperação num servidor ntfy, como mais um canal além do webhook e do e-mail.
+Hoje o export (`GET /api/export`, `pingou export-db`) é uma cópia inteira do banco. Isso leva junto o `webhook_url` (que é segredo em Slack/Discord), o tópico do ntfy (que funciona como senha no ntfy.sh), os destinatários de e-mail e os tokens de ping dos heartbeats.
+
+A ideia é o backup levar **só os dados** (monitores, incidentes e, opcionalmente, checks) e **não** as configurações. Para o backup servir de algo, entra junto o caminho de volta: **importar**.
 
 ## 🎯 Goal
 
-Alertas em tempo real no celular/desktop via ntfy, com mensagem legível (não o JSON cru).
+Um arquivo de backup que possa ser guardado ou compartilhado sem vazar segredos de notificação, e que dê para restaurar numa instância nova.
 
 ## 📦 Initial Scope
 
-**Etapa 1 — testar sem código (fazer primeiro):**
+**Exportação (o que sai no arquivo):**
 
-- O ntfy suporta templates para mensagens recebidas via webhook (procurar "message templating" na documentação do ntfy).
-- Montar uma URL de ntfy com template que leia os campos do payload do Pingou (`event`, `monitor.name`, `monitor.target`, `last_error`, `downtime_duration_seconds`, `dashboard_url`).
-- Configurar essa URL como `webhook_url` e validar com **Enviar teste** (`POST /api/settings/webhook/test`).
-- Testar também com servidor ntfy protegido por token.
+- Monitores, incidentes e checks. **Fora:** `settings` inteira (webhook, destinatários, tópico do ntfy, fuso, retenção).
+- Checks **opcionais**, desmarcados por padrão. Eles são quase todo o tamanho do arquivo (6 GB no perfil limite) e expiram pela retenção. Para migrar de servidor, monitores e incidentes bastam.
+- **Token de ping dos heartbeats:** não vai no arquivo. É gerado de novo na importação. Custo: os cron jobs precisarão da URL nova depois de restaurar.
+- Janelas de manutenção (`maintenance_windows`): não exportar (têm hora marcada e perdem o sentido num backup).
+- A tela de Configurações avisa claramente: "Não inclui configurações de notificação".
+- `pingou export-db` segue o mesmo formato.
 
-**Se funcionar:** a task vira documentação. Adicionar uma seção "ntfy" no README com a URL de exemplo pronta.
+**Importação:**
 
-**Se não funcionar (etapa 2):** canal próprio, seguindo o padrão do e-mail:
-
-- Servidor, tópico e token **só no ambiente** (`PINGOU_NTFY_*`). Nada no banco nem no export.
-- Qualquer servidor ntfy (próprio ou ntfy.sh).
-- Autenticação por token.
-- Configuração global (como webhook e e-mail).
-- Envia na queda e na recuperação.
-- Mesma entrega dos outros canais: assíncrona, uma vez por transição, sem retry.
-- Botão **Enviar teste** em Configurações, com rate limit igual aos outros (5 por minuto por IP).
-- Token de ping do Heartbeat **nunca** vai na mensagem.
+- Primeiro um comando `pingou import <arquivo>` no terminal, que **restaura numa instância vazia**. Não passa pelo navegador, então não tem limite de upload, e o scheduler não está rodando.
+- Confere a versão das migrations do arquivo antes de importar e recusa arquivo de versão incompatível.
+- Importa tudo numa transação só (tudo ou nada).
+- Tela de importar em Configurações: **só depois**, e só se fizer falta.
 
 ## 🚧 Out of Scope
 
-- Outros canais (Telegram, Slack, Discord)
-- Regras avançadas de prioridade ou ações do ntfy
-- Configuração por monitor
+- Cifrar o arquivo (ver Notes).
+- Mesclar com dados já existentes (importar em cima de uma instância com monitores).
+- Importar pela tela, no primeiro momento.
+- Agendar backups automáticos.
 
 ## 🔍 Context
 
-Sistema de notificações existente (webhook + e-mail). Roadmap "Depois" já prevê templates para Discord e Slack.
+Configurações → Backup. O `VACUUM INTO` copia o banco todo, então para tirar as configurações é preciso gerar um banco novo só com as tabelas certas (ou apagar e rodar `VACUUM` de novo, porque dado apagado continua no arquivo até o `VACUUM`). Em banco grande isso custa tempo e disco, e precisa ser medido.
 
 ## ⚠️ Notes
 
-- Se a etapa 1 falhar por limitação do template, avaliar se vale resolver de forma genérica (templates de webhook) em vez de um canal só para o ntfy. Isso adiantaria o item de Discord/Slack do roadmap.
+- **O que ainda vaza sem cifrar:** URLs de monitor com token na query (`?token=...`). O plano deve avisar isso na tela e no README. Só cifrar resolve de verdade.
+- **Cifrar o arquivo (se um dia fizer falta):**
+  - A chave tem de ser uma **senha digitada na hora**, nunca a API Key (trocar a API Key tornaria os backups antigos ilegíveis).
+  - Cifrar protege o arquivo parado. **Não** protege contra vazamento da API Key: o atacante chama o export e escolhe a própria senha. Quem protege esse caso é tirar as configurações.
+  - Senha perdida significa backup perdido.
+  - Arquivo de vários GB exige criptografia em blocos. Escrever à mão é arriscado. O caminho seguro é uma biblioteca pronta (como a `age`), que é dependência nova.
+- **Decisões que faltam** (por isso a ideia está "Aguardando decisão"):
+  1. O uso principal é recuperar de um desastre ou migrar de servidor?
+  2. Aceita regerar os tokens dos heartbeats ao importar? Manter os tokens exige cifrar.
+- **Registrar na limitação conhecida** do ntfy e do e-mail que o export deixa de levar esses dados quando esta ideia entrar.
+
+## 🏷️ Type
+
+feature (segurança)
+
+## ⏱️ Priority
+
+medium (começar pela exportação sem configurações, que é pequena)
+
+---
+
+# 🧩 Task: Status HTTP esperado
+
+## 💡 Idea
+
+Hoje o monitor HTTP decide "no ar" ou "fora do ar" por uma regra fixa de status. Em alguns casos o resultado correto é outro: uma rota protegida que devolve `401` quando está saudável, um endpoint que devolve `204`, um redirect `301` que não deve ser seguido.
+
+A ideia é cada monitor HTTP poder declarar **quais status contam como sucesso**.
+
+## 🎯 Goal
+
+Monitorar corretamente endpoints cujo "saudável" não é um `2xx` comum, sem criar falso alarme.
+
+## 📦 Initial Scope
+
+- Campo opcional "Status esperados" no formulário HTTP (seção avançada). Aceita lista e faixas, por exemplo `200-299,401`.
+- Sem o campo preenchido, o comportamento atual não muda.
+- Validar na API: só números de 100 a 599, tamanho máximo, faixa com início menor que o fim (`400` com `VALIDATION_ERROR`).
+- A mensagem de erro (`unexpected status code: X`) passa a falar do esperado.
+- Mostrar o esperado na página de detalhes do monitor.
+
+## 🚧 Out of Scope
+
+- Palavra-chave no corpo da resposta.
+- Cabeçalhos e autenticação customizados.
+- Qualquer coisa fora de monitores HTTP.
+
+## 🔍 Context
+
+Checker HTTP e formulário de monitor. Na migration `0003`, a coluna `config` em `monitors` guarda JSON por tipo. Verificar se o campo cabe lá, para **evitar uma migration nova**.
+
+## ⚠️ Notes
+
+- **Esperar um caso real antes de fazer.** Sem um caso concreto, a lista de faixas corre o risco de ficar mais complexa do que o necessário.
+- Se aparecer o caso real, avaliar junto a **palavra-chave no corpo**: normalmente os dois pedidos nascem do mesmo problema ("o site responde 200 mas está quebrado").
+- Verificar no checker o que é considerado sucesso hoje (o redirect segue até `PINGOU_MAX_REDIRECTS`), para a regra nova não mudar monitores existentes.
 
 ## 🏷️ Type
 
@@ -54,139 +120,27 @@ feature
 
 ## ⏱️ Priority
 
-medium (etapa 1 é rápida, fazer antes das outras)
+low
 
 ---
 
-# 🧩 Task: Eixo Y dinâmico no gráfico de tempo de resposta
+# 🌱 Candidatas (ainda não decididas)
 
-## 💡 Idea
+Surgiram no histórico de implementações. Ninguém decidiu fazer. Estão aqui para não se perder.
 
-Na página de detalhe do monitor, o eixo Y do gráfico de tempo de resposta se ajusta aos dados do período exibido, em vez de usar uma escala fixa.
+- **RAM acima da meta no cenário grande.** No perfil limite (100 monitores × 10 s, 25 milhões de checks), a primeira subida depois da migration usa 47 a 51 MB, e picos de 50 a 60 MB já foram vistos; a meta do README é menos de 50 MB. Opções: investigar e baixar, ou ajustar o texto do README para dizer em que cenário a meta vale. O `memtest` de 1 hora também não foi rodado inteiro.
+- **Retry de notificações (`notification_outbox`).** Hoje um aviso perdido (e-mail, webhook ou ntfy falhou, ou o processo caiu) não é reenviado. Pesa mais agora, porque o aviso de SSL sai só duas vezes por certificado. Caminho: tabela gravada na transação do `Process` + um worker.
+- **Baldes do `/stats` em fusos de meia hora** (ex.: `Asia/Kolkata`). Hoje alinhados em UTC, então os rótulos de 1 h não caem em hora cheia.
+- **Janela de manutenção recorrente** ("todo domingo às 2h"). Ficou fora da v1.
+- **Aviso de "a manutenção começou/terminou"** nos canais. Também ficou fora da v1.
 
-## 🎯 Goal
+# ⏸️ Adiadas
 
-Gráfico legível e proporcional aos dados reais de cada monitor.
+- **Proxies confiáveis** (`PINGOU_TRUSTED_PROXIES`): rate limit por IP real quando o Pingou roda atrás de proxy.
+- **Importar e exportar só monitores** em formato legível (JSON), para compartilhar configuração entre instâncias. Parte disso deve cair na ideia 1; avaliar depois dela.
 
-## 📦 Initial Scope
+# 🗑️ Descartadas
 
-**HTTP e TCP:**
-
-- Máximo do eixo Y = maior `avg_latency_ms` da `series` retornada por `/api/monitors/:id/stats` no `range` selecionado (24h / 7d / 14d / 30d).
-- Ignorar baldes com `avg_latency_ms: null`.
-- Arredondar para cima com "números bonitos" (passos 1, 2, 5 × 10ⁿ). Ex.: 70 → 100, 350 → 400, 2300 → 2500.
-- Máximo do eixo nunca abaixo de 100ms.
-- Recalcular ao trocar o `range`.
-
-**Heartbeat:**
-
-- Não mostra tempo de resposta. O gráfico mostra **só os pings recebidos** por balde (campo `checks` da `series`).
-- Balde com zero pings é **normal** (ex.: tarefa diária). Não pintar como erro.
-- Vermelho / indicação de problema vem **só** dos períodos em `down`.
-
-## 🚧 Out of Scope
-
-- Zoom ou seleção de intervalo no gráfico
-- Alterar outros gráficos
-- Mudanças no endpoint `/stats`
-
-## 🔍 Context
-
-Página de detalhe do monitor (`/monitors/:id`), gráfico de tempo de resposta.
-
-## ⚠️ Notes
-
-- Outliers já chegam suavizados: cada ponto é média de balde e timeouts não entram em `avg_latency_ms`. Por isso o máximo da série é suficiente (não precisa de p95).
-- Verificar se a lib de gráfico já tem domínio automático e se o eixo fixo atual foi definido manualmente.
-- Se todos os baldes forem `null` (sem checks com sucesso), usar o eixo mínimo de 100ms.
-
-## 🏷️ Type
-
-improvement
-
-## ⏱️ Priority
-
-medium
-
----
-
-# 🧩 Task: Aproveitar melhor a largura no desktop
-
-## 💡 Idea
-
-No desktop, as páginas têm um limite de largura baixo e sobra espaço vazio à direita.
-
-## 🎯 Goal
-
-Páginas usando bem o espaço horizontal, sem aparência desbalanceada e sem perder legibilidade.
-
-## 📦 Initial Scope
-
-- **Aumentar** o limite de largura das páginas (faixa entre ~1600px e ~1920px, definir validando visualmente). Não remover o limite.
-- Ajustar proporções dos elementos de cada página quando necessário.
-- Validar principalmente o dashboard (lista de monitores): linhas muito largas dificultam a leitura.
-
-## 🚧 Out of Scope
-
-- Redesign das páginas
-- Mudanças no layout mobile
-
-## 🔍 Context
-
-Todas as páginas do frontend, em telas desktop. Seguir `DESIGN.md`.
-
-## ⚠️ Notes
-
-- Testar em 1366px, 1920px e ultrawide (2560px+).
-- Registrar o novo limite no `DESIGN.md`.
-
-## 🏷️ Type
-
-improvement
-
-## ⏱️ Priority
-
-medium
-
----
-
-# 🧩 Task: Busca parcial por nome no dashboard
-
-## 💡 Idea
-
-Campo de busca no dashboard para filtrar monitores por parte do nome. Substitui a ideia de tags.
-
-## 🎯 Goal
-
-Encontrar monitores rápido conforme a lista cresce, com o mínimo de complexidade.
-
-## 📦 Initial Scope
-
-- Campo de busca no topo do dashboard.
-- Filtro **só no frontend**: `GET /api/monitors` já traz todos (limite de 100 monitores).
-- Busca parcial (contém), ignorando maiúsculas/minúsculas e acentos ("servico" encontra "Serviço").
-- Buscar também no alvo: URL (http) e `host:porta` (tcp).
-- Guardar o termo na URL (`?q=...`) para sobreviver ao recarregar e ao voltar da página de detalhe.
-- Estado vazio claro quando nada for encontrado, com opção de limpar a busca.
-
-## 🚧 Out of Scope
-
-- Tags
-- Busca no backend
-- Filtros por estado, tipo ou outros campos
-
-## 🔍 Context
-
-Dashboard (lista de monitores).
-
-## ⚠️ Notes
-
-- Tags foram descartadas por enquanto: com no máximo 100 monitores, a busca resolve o problema com muito menos esforço. Reavaliar só se surgir necessidade real de agrupar.
-
-## 🏷️ Type
-
-improvement
-
-## ⏱️ Priority
-
-medium
+- **Bloquear IPs privados no webhook e no teste** (descartada em 2026-11-04). Já tinha sido recusada antes, porque quebraria webhooks para o n8n em rede local.
+- **Tags nos monitores.** A busca parcial resolveu.
+- **Chave de API com rotação.**
