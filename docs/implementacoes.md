@@ -465,7 +465,7 @@ Conexão TLS separada só para ler o certificado; gravar "enviado sim/não" por 
 
 ## 14. Manutenção: pausa com motivo e janela agendada
 
-Plano `plan-maintenance-windows.md`, em duas etapas num PR só.
+Plano `plan-maintenance-windows.md` (removido; fica no `git log`), em três etapas: pausa com motivo, janela agendada e página de manutenções com edição.
 
 ### Entregue
 
@@ -497,6 +497,17 @@ Plano `plan-maintenance-windows.md`, em duas etapas num PR só.
 
 D1–D9 do plano: teto de 7 dias; uma janela viva por monitor; pausa manual vence a janela; motivo opcional de até 200 caracteres; lote tudo ou nada; "em manutenção" derivado do relógio; uma instância só; uptime de 24 h sem mudança; `closed_manually` 0/1/2.
 
+D10–D17 (ajustes e Etapa 3):
+
+- **D10:** no modal de agendar, o rótulo de Início e Fim mostra o nome do fuso das Configurações (`America/Sao_Paulo`), não o offset (`-03`).
+- **D11:** no modal de criar, monitores pausados ou com janela viva aparecem desabilitados ("pausado" / "já agendada"), pois não entram numa janela.
+- **D12:** janela iniciada tem o horário travado e só o motivo muda. "Iniciada" vale pelo relógio do servidor (`starts_at <= agora`), não pelo tick. Para parar antes, desligar.
+- **D13:** editar não troca o monitor; muda só `starts_at`, `ends_at` e `reason`, revalidando D1 e D4. Para outro monitor: desligar e agendar de novo.
+- **D14:** a página lista só janelas vivas (agendadas e em curso), por início. Sem histórico: cancelar antes do início apaga a linha.
+- **D15:** o modal serve a criar e a editar (monitor fixo; horário desabilitado em janela iniciada). Se a janela começar com o modal aberto e o horário alterado, o servidor responde `409 MAINTENANCE_LOCKED`.
+- **D16:** o plano previa a Etapa 3 em branch e PR empilhado; foi aplicada no mesmo PR (desvio 8).
+- **D17:** "Editar" também no card de manutenção do detalhe do monitor, com o mesmo modal.
+
 ### Desvios do plano
 
 1. **O bloqueio vai até o fim ser aplicado, não até `ends_at`.** O plano previa bloqueio exato em `ends_at`. Mas o fim (estado `UNKNOWN`, `resumed_at`) só roda no tick, até 10 s depois. Nesse intervalo um check com falha abriria um incidente, e o fim, ao zerar o estado para `UNKNOWN`, deixaria esse incidente órfão. Custo: até 1 tick a mais de manutenção.
@@ -523,7 +534,7 @@ D1–D9 do plano: teto de 7 dias; uma janela viva por monitor; pausa manual venc
 
 ### Descartado
 
-Flag `is_in_maintenance` em `monitors`; um timer por janela (`time.AfterFunc`); coluna `canceled_at`; biblioteca de date picker; lote parcial; coluna nova `close_reason TEXT`; janela recorrente; aviso de "começou/terminou"; edição de janela.
+Flag `is_in_maintenance` em `monitors`; um timer por janela (`time.AfterFunc`); coluna `canceled_at`; biblioteca de date picker; lote parcial; coluna nova `close_reason TEXT`; janela recorrente; aviso de "começou/terminou"; histórico de janelas encerradas (exigiria migração); estender ou encurtar o horário de janela em curso (reaplicaria os efeitos do tick); "editar" como cancelar e criar outra (perde o ID e pode falhar no meio); montar a página com `GET /monitors` e filtrar `maintenance` (payload grande, sem ordem por início).
 
 ### Validação
 
