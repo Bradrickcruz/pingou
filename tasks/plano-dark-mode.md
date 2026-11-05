@@ -425,7 +425,7 @@ cd web && npm run lint && npm run format:check && npm test && npm run check:toke
 
 | Fase   | Tarefas        | Complexity | Esforço    | Target                                  | Status      |
 | ------ | -------------- | ---------- | ---------- | --------------------------------------- | ----------- |
-| Fase 0 | T0, T1         | S          | 0,5–1 dia  | Design fechado e aprovado               | ⬜ Pendente |
+| Fase 0 | T0, T1         | S          | 0,5–1 dia  | Design fechado e aprovado               | 🟨 T0 feito |
 | Fase 1 | T2, T3         | S          | 1 dia      | Infra de tema pronta (ainda desligada)  | ⬜ Pendente |
 | Fase 2 | T4, T5, T6, T7 | L          | 3–4 dias   | Todas as telas em tokens de papel       | ⬜ Pendente |
 | Fase 3 | T8, T9         | S          | 0,5–1 dia  | Seletor em Configurações + trava        | ⬜ Pendente |
@@ -437,7 +437,7 @@ Total estimado: **6 a 8,5 dias** de trabalho.
 
 ### Concluído
 
--
+- T0 (2026-11-05): removida a v1.0 duplicada do `DESIGN.md`. Nada da v1.0 faltava na v1.1.
 
 ### Em andamento
 
@@ -445,7 +445,7 @@ Total estimado: **6 a 8,5 dias** de trabalho.
 
 ### Pendente
 
-- T0 a T11
+- T1 a T11
 
 ## Notes
 
