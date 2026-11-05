@@ -5,12 +5,15 @@
 
 **Resumo**
 
-| #   | Ideia                               | Estado                 | Prioridade |
-| --- | ----------------------------------- | ---------------------- | ---------- |
-| 1   | Backup sem configurações + importar | Aguardando decisão     | medium     |
-| 2   | Status HTTP esperado                | Esperando um caso real | low        |
-| 3   | Páginas públicas de status          | Para detalhar          | medium     |
-| 4   | Suporte a inglês (e outros idiomas) | Para detalhar          | medium     |
+| #   | Ideia                                | Estado                 | Prioridade |
+| --- | ------------------------------------ | ---------------------- | ---------- |
+| 1   | Backup sem configurações + importar  | Aguardando decisão     | medium     |
+| 2   | Status HTTP esperado                 | Esperando um caso real | low        |
+| 3   | Páginas públicas de status           | Para detalhar          | medium     |
+| 4   | Suporte a inglês (e outros idiomas)  | Para detalhar          | medium     |
+| 5   | Retry de notificações                | Para detalhar          | medium     |
+| 6   | Aviso de manutenção começou/terminou | Para detalhar          | low        |
+| 7   | Nomes claros nos eventos do webhook  | Para detalhar          | medium     |
 
 Mais abaixo: ideias [candidatas](#-candidatas-ainda-não-decididas), [adiadas](#-adiadas) e [descartadas](#-descartadas).
 
@@ -218,7 +221,7 @@ Quem não lê português consegue usar o Pingou, e adicionar um idioma novo vira
 - **Seletor de idioma** nas Configurações.
 - **Datas, horas e números** pelo idioma escolhido (`Intl`), respeitando o fuso das Configurações. Rever as datas formatadas à mão, que foram feitas assim porque o `Intl` em pt-BR gerava "28 de out.".
 - **Plurais e textos com variáveis** ("Fora do ar há 1 dia e 4 h", "3 monitores", "Expira em 12 dias") com regra de plural por idioma, sem juntar frases no código.
-- **Notificações** (e-mail e ntfy) no idioma configurado. O JSON do webhook **não muda** (continua `event`, `monitor`, `timestamp`...).
+- **Notificações** (e-mail e ntfy) no idioma configurado. O JSON do webhook **não muda** (continua `event`, `monitor`, `timestamp`...), exceto pelo campo novo `id` da ideia 5, pelos eventos novos da ideia 6 e pela renomeação dos eventos da ideia 7.
 - **Mensagens de erro da API:** hoje misturam inglês (validação) e português. Caminho sugerido: a API devolve **código estável** (`VALIDATION_ERROR` etc., já existe) e o painel traduz a mensagem pelo código.
 
 ## 🚧 Out of Scope
@@ -255,15 +258,179 @@ medium (fazer antes das páginas públicas)
 
 ---
 
+# 🧩 Task: Retry de notificações
+
+## 💡 Idea
+
+Hoje, se um aviso falha (e-mail, webhook ou ntfy fora do ar) ou o processo cai logo depois de gravar a mudança de estado, o aviso **se perde**. Ninguém tenta de novo.
+
+A ideia é gravar o aviso num **outbox** (uma fila no próprio SQLite) e ter um **worker** que envia e repete até dar certo, ou até desistir.
+
+## 🎯 Goal
+
+Aviso de queda, recuperação e SSL que **não se perde** por falha passageira de um canal ou por reinício do Pingou.
+
+## 📦 Initial Scope
+
+- Tabela `notification_outbox`, gravada **na mesma transação** do `StateMachine.Process`. Se o estado mudou, o aviso está na fila. Se a transação desfez, o aviso não existe.
+- Um worker que lê a fila, envia e marca como enviado.
+- **Uma linha por canal** (webhook, e-mail, ntfy). Se só o e-mail falhou, só ele repete.
+- Tentativas com espera crescente (ex.: 30 s, 2 min, 10 min, 30 min).
+- **Queda e recuperação expiram em 60 min**, contados a partir do evento. **Aviso de SSL expira em 24 h.** Passou do prazo, marca como "expirado" e registra no log. Isso já limita o número de tentativas.
+- Campo `id` do evento no JSON do webhook, para quem recebe ignorar repetição. É campo novo, não quebra quem já lê o JSON.
+- Ao subir, o worker retoma o que ficou pendente (cobre o caso do processo que caiu).
+- Limpeza das linhas antigas (enviadas e desistidas), junto com a rotina de retenção.
+- Mesma regra para o aviso de SSL, que hoje sai só duas vezes por certificado.
+
+## 🚧 Out of Scope
+
+- Canais novos (Discord e Slack dedicados, SMS etc.).
+- Tela para ver e reenviar avisos manualmente (no começo, só log).
+- Fila externa (Redis, RabbitMQ). Continua tudo no SQLite.
+- O botão de **teste** de notificação continua envio direto, sem fila.
+
+## 🔍 Context
+
+Hoje o README diz que o webhook é enviado **depois** do commit. Isso protege o estado do banco, mas deixa uma brecha: se o processo cair entre o commit e o envio, o aviso some. O outbox fecha essa brecha. Precisa de **migration nova**. O `Process` já usa Unit of Work, então a gravação na fila entra nessa mesma transação (verificar se o `UnitOfWork` já deixa gravar uma tabela a mais sem mexer em tudo).
+
+## ⚠️ Notes
+
+- **Entrega "pelo menos uma vez".** Com retry, o mesmo aviso pode chegar duplicado (o envio deu certo, mas o Pingou caiu antes de marcar como enviado). Quem recebe precisa aguentar isso. O `id` do evento no JSON do webhook ajuda nisso. A ideia 4 diz que o JSON "não muda"; esta é a exceção (já anotada lá).
+- **Aviso velho demais.** Decidido: queda e recuperação expiram em 60 min. Sem isso, mandar "monitor caiu" 2 horas depois, quando ele já voltou, confunde.
+- **SSL tem prazo próprio (24 h).** O aviso de SSL ("expira em 12 dias") não fica velho em 1 hora, e sai só duas vezes por certificado. Por isso não usa os 60 min.
+- **Não guardar segredo na fila.** Gravar só os dados do evento (monitor, tipo, horário, erro). O destino (URL do webhook, e-mail, tópico) é lido das `settings` **na hora de enviar**. Assim o outbox não vira outra cópia de segredo, e a troca da URL vale para os avisos pendentes.
+- **Carga no SQLite.** Conexão única: o worker disputa com a gravação dos checks. Ler e gravar em lotes pequenos, e **nunca segurar a conexão durante o envio de rede** (só ao ler e ao marcar).
+- **Export (ideia 1):** a tabela `notification_outbox` não deve sair no backup, e o `pingou import` não deve esperar por ela.
+- **Idioma (ideia 4):** o texto do e-mail e do ntfy deve ser montado **na hora de enviar**, no idioma configurado nesse momento, e não gravado pronto na fila.
+- **Decisões tomadas (2026-11-05):**
+  1. **Queda e recuperação expiram em 60 min.** As esperas entre tentativas cabem dentro desse prazo.
+  2. **Aviso de SSL expira em 24 h**, porque a informação continua verdadeira por mais tempo.
+  3. **Campo `id` no JSON do webhook:** aceito.
+- **Assumido (corrigir se discordar):** "expirado" aparece só no log, não no painel (como já está em Out of Scope).
+
+## 🏷️ Type
+
+feature (confiabilidade)
+
+## ⏱️ Priority
+
+medium (pesa mais agora que o aviso de SSL sai só duas vezes por certificado)
+
+---
+
+# 🧩 Task: Aviso de manutenção começou/terminou
+
+## 💡 Idea
+
+Hoje o Pingou **pausa os avisos** durante uma janela de manutenção, mas **não avisa ninguém** que ela começou nem que terminou. Quem recebe os alertas só percebe pelo silêncio.
+
+A ideia é mandar um aviso nos canais quando a janela **começa** e quando **termina**.
+
+## 🎯 Goal
+
+Quem recebe os alertas sabe que a manutenção começou, que o silêncio é de propósito, e quando ela acabou.
+
+## 📦 Initial Scope
+
+- Aviso de **início** e de **fim** da janela de manutenção, nos mesmos canais dos outros avisos (webhook, e-mail, ntfy).
+- **Só janela agendada** gera aviso. Pausa manual não avisa.
+- Um **interruptor em Configurações** liga e desliga o aviso, valendo para todas as janelas. Não há escolha por janela.
+- Eventos novos no webhook: `maintenance_started` e `maintenance_ended` (nomes no padrão da ideia 7). O webhook **sempre envia** quando o interruptor está ligado, sem opção própria.
+- Conteúdo: nome do monitor, horário e motivo da janela.
+- Uma janela com vários monitores gera **um aviso só**, listando os monitores (e não um por monitor).
+- Cada aviso sai **uma vez só**, mesmo se o Pingou reiniciar no meio da janela.
+- Textos já nascem nos arquivos de tradução (ideia 4), se ela já tiver entrado.
+
+## 🚧 Out of Scope
+
+- Janela recorrente ("todo domingo às 2h"). É outra ideia.
+- Aviso de pausa manual (decidido em 2026-11-05: não avisa).
+- Aviso de "faltam X minutos para começar".
+- Canal só para manutenção.
+
+## 🔍 Context
+
+O Pingou já tem janelas de manutenção e já mostra o motivo (modais de pausa e de agendar manutenção). O que falta é o **gatilho**: algo que perceba a hora de início e de fim e dispare o aviso. Verificar se o scheduler atual já tem um ponto natural para isso, ou se precisa de uma checagem própria a cada minuto.
+
+## ⚠️ Notes
+
+- **Webhook sempre envia (decidido em 2026-11-05).** O risco: quem usa o webhook (por exemplo, fluxo no n8n) pode tratar "qualquer coisa que não seja `down`" como `up`, e `maintenance_started` viraria um falso "voltou". A resposta é a **ideia 7**: com os nomes `monitor_down` e `monitor_up`, quem atualiza é obrigado a rever o fluxo, e o evento novo não cai no "senão" sem ninguém ter olhado. **Por isso a ideia 7 sai antes desta, ou junto.** Sem ela, "sempre envia" é arriscado. O README também deve dizer a quem integra: evento que não conhece, **ignore**.
+- **Não repetir aviso.** Precisa guardar que o aviso daquela janela já saiu. Pode ser uma coluna nova (migration) ou o outbox da ideia 5. **Se a ideia 5 entrar antes, esta fica mais simples**: o aviso vira só mais uma linha na fila, com a mesma garantia de entrega.
+- **Motivo é texto livre.** Já existe o cuidado de avisar que o motivo aparece na página pública (ideia 3). Aqui é parecido: o motivo vai para **e-mail e webhook**. Avisar no modal quando houver aviso ligado.
+- **Janela que termina e o monitor está fora do ar.** O aviso de fim deve dizer só "a manutenção terminou". Se o monitor ainda estiver caído, o aviso normal de queda cuida disso. Não misturar os dois no mesmo texto.
+- **Janela cancelada ou editada antes de começar.** Não deve gerar aviso de início. Se o horário mudou, vale o novo.
+- **Decisão tomada (2026-11-05):** o aviso sai **só para janela agendada**. Pausa manual é ação de quem está com o painel aberto e já sabe.
+- **Decisão tomada (2026-11-05):** o interruptor fica **só em Configurações**, valendo para todas as janelas. Sem escolha por janela.
+- **Decisão tomada (2026-11-05):** o webhook **sempre envia**, junto com os outros canais. Depende da ideia 7.
+
+## 🏷️ Type
+
+feature
+
+## ⏱️ Priority
+
+low (depois da ideia 7, e de preferência depois da 5)
+
+---
+
+# 🧩 Task: Nomes claros nos eventos do webhook
+
+## 💡 Idea
+
+Hoje o campo `event` do webhook vale `down` ou `up`. São nomes vagos: não dizem **o que** caiu. E deixam pouco espaço para eventos novos.
+
+A ideia é renomear para `monitor_down` e `monitor_up`, num padrão `<objeto>_<o que aconteceu>`. Assim entram depois, sem confusão, eventos como `maintenance_started` e `maintenance_ended`.
+
+## 🎯 Goal
+
+Nomes de evento que se explicam sozinhos e que aguentam eventos novos no futuro.
+
+## 📦 Initial Scope
+
+- Trocar `down` por `monitor_down` e `up` por `monitor_up` no campo `event` do JSON do webhook.
+- Documentar o padrão de nomes: `<objeto>_<acontecimento>`, minúsculas, separado por `_`.
+- Atualizar os exemplos do README (seção Webhook), os testes e qualquer exemplo de JSON mostrado no painel.
+- O botão de **teste** do webhook usa os nomes novos (verificar o que ele envia hoje).
+- Aviso claro no README e na nota da versão: **mudança que quebra compatibilidade**.
+- Regra escrita no README para quem integra: **evento desconhecido deve ser ignorado**, nunca tratado como `up`.
+- Se o aviso de SSL também sair por webhook, ele ganha nome no mesmo padrão (ex.: `ssl_expiring`). Verificar.
+
+## 🚧 Out of Scope
+
+- Aceitar os nomes antigos e novos ao mesmo tempo (decidido em 2026-11-05: quebra limpa).
+- Versionar o formato do JSON.
+- Mudar os outros campos (`monitor`, `timestamp`, `last_error`, `downtime_duration_seconds`).
+
+## 🔍 Context
+
+Seção Webhook do README e o notificador que monta o JSON (`NotifyDown` e `NotifyRecovery`). O README já mostra os exemplos com `"event": "down"` e `"event": "up"`.
+
+## ⚠️ Notes
+
+- **A quebra é silenciosa.** Quem testa `event == "down"` deixa de casar, e não aparece erro nenhum. Num fluxo do tipo "se `down`, alerta; senão, voltou", **todo aviso de queda vira "voltou"**. Por isso o README e a nota da versão precisam destacar isso.
+- **Ordem.** Esta ideia sai **antes ou junto** das ideias 5 e 6. Assim quem atualiza ajusta o fluxo **uma vez só**: nomes novos, `id` novo e eventos de manutenção na mesma versão.
+- **O que a renomeação resolve e o que não resolve.** Ela obriga a rever o fluxo. Mas quem reescrever como "se `monitor_down`, alerta; senão, voltou" cai no mesmo problema. A regra "ignore o que não conhece" é a que protege de verdade.
+- **Decisões tomadas (2026-11-05):**
+  1. **Quebra limpa.** Sem período de transição e sem enviar o nome antigo.
+  2. Hoje **só o dono usa o webhook**, então o único fluxo a ajustar é o dele (n8n). O aviso no README e na nota da versão continua valendo, para quem usar o Pingou no futuro.
+
+## 🏷️ Type
+
+melhoria (quebra compatibilidade)
+
+## ⏱️ Priority
+
+medium (antes da ideia 6)
+
+---
+
 # 🌱 Candidatas (ainda não decididas)
 
 Surgiram no histórico de implementações. Ninguém decidiu fazer. Estão aqui para não se perder.
 
 - **RAM acima da meta no cenário grande.** No perfil limite (100 monitores × 10 s, 25 milhões de checks), a primeira subida depois da migration usa 47 a 51 MB, e picos de 50 a 60 MB já foram vistos; a meta do README é menos de 50 MB. Opções: investigar e baixar, ou ajustar o texto do README para dizer em que cenário a meta vale. O `memtest` de 1 hora também não foi rodado inteiro.
-- **Retry de notificações (`notification_outbox`).** Hoje um aviso perdido (e-mail, webhook ou ntfy falhou, ou o processo caiu) não é reenviado. Pesa mais agora, porque o aviso de SSL sai só duas vezes por certificado. Caminho: tabela gravada na transação do `Process` + um worker.
 - **Baldes do `/stats` em fusos de meia hora** (ex.: `Asia/Kolkata`). Hoje alinhados em UTC, então os rótulos de 1 h não caem em hora cheia.
 - **Janela de manutenção recorrente** ("todo domingo às 2h"). Ficou fora da v1.
-- **Aviso de "a manutenção começou/terminou"** nos canais. Também ficou fora da v1.
 
 # ⏸️ Adiadas
 
