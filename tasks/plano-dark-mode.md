@@ -437,6 +437,7 @@ Total estimado: **6 a 8,5 dias** de trabalho.
 
 ### Concluído
 
+- T3 (2026-11-05): `web/src/lib/theme.js` (+ testes), `web/src/hooks/useTheme.js` e script inline no `web/index.html`. **Trava de segurança desligada**: `THEME_ENABLED = false` em `theme.js` e `var ON = false;` no `index.html` (teste confere os dois). Com ela desligada o painel fica sempre claro. **Ligar junto com a T8** (virar os dois para `true` no mesmo commit). Sem `<meta name="color-scheme">`: o script já define `color-scheme` no `<html>`, e a meta deixaria o fundo escuro piscar enquanto a trava está desligada. Verificado no navegador (8 + 8 combinações), testes 49 ok.
 - T2 (2026-11-05): tokens de papel criados em `web/src/index.css` (`--pg-cor-*`, claro e escuro) e mapeados em `tailwind.config.js` (`bg-pg-fundo`, `text-pg-texto`, `border-pg-linha`, `shadow-pg-flutuante`...). `darkMode` por `[data-theme="dark"]`. Conferidos 31 papéis × 3 estados (sem `data-theme`, claro, escuro) no navegador. Nenhum componente alterado. Build, lint, format e testes passam.
 - T1 (2026-11-05): lacunas de design aprovadas pelo Bryan e registradas no `DESIGN.md` §3.6.1, 3.6.4 e 3.6.6. Nome da 3ª opção: **Sistema**. Cor nova aprovada: `--pg-down-borda-escuro` (#684953); `--pg-down-borda` (#EDC4C8) vira token no claro.
 - T0 (2026-11-05): removida a v1.0 duplicada do `DESIGN.md`. Nada da v1.0 faltava na v1.1.
@@ -447,7 +448,7 @@ Total estimado: **6 a 8,5 dias** de trabalho.
 
 ### Pendente
 
-- T3 a T11
+- T4 a T11
 
 ## Notes
 

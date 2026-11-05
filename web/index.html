@@ -4,6 +4,28 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon-16.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      // Tema antes da primeira pintura (sem piscar claro e virar escuro).
+      // Mesma regra de src/lib/theme.js, que tem a explicação da trava `ON`.
+      // O teste src/lib/theme.test.js garante que os dois concordam.
+      (function () {
+        var ON = false;
+        var theme = "light";
+        try {
+          if (ON) {
+            var pref = window.localStorage.getItem("pingou_theme");
+            var dark = window.matchMedia(
+              "(prefers-color-scheme: dark)",
+            ).matches;
+            theme =
+              pref === "dark" || (pref !== "light" && dark) ? "dark" : "light";
+          }
+        } catch (e) {}
+        var root = document.documentElement;
+        root.setAttribute("data-theme", theme);
+        root.style.colorScheme = theme;
+      })();
+    </script>
     <title>Pingou</title>
   </head>
   <body>
