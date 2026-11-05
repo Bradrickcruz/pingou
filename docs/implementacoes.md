@@ -18,6 +18,7 @@ Consolida o que os planos `plan-*.md` (já removidos; ficam no `git log`) entreg
 | 2026-11-02         | [Índices e desempenho do banco](#12-índices-e-desempenho-do-banco)                                  | `ccr-dd100985-raj41c` (#15)     |
 | 2026-11-02         | [Aviso de expiração do certificado SSL](#13-aviso-de-expiração-do-certificado-ssl)                  | `feature/ssl-expiry` (#16)      |
 | 2026-11-04         | [Manutenção: pausa com motivo e janela agendada](#14-manutenção-pausa-com-motivo-e-janela-agendada) | `feature/maintenance-windows`   |
+| 2026-11-05         | [Modo escuro (Claro, Escuro, Sistema)](#15-modo-escuro-claro-escuro-sistema)                        | `ccr-f77fa1bb-9acipc`           |
 
 Pendências de validação manual ainda abertas estão no [fim do documento](#pendências-abertas).
 
@@ -540,6 +541,48 @@ Flag `is_in_maintenance` em `monitors`; um timer por janela (`time.AfterFunc`); 
 
 `go vet`, `go test -race ./...` (scheduler 5× seguidas, sem falha intermitente) e `npm run lint`/`format:check`/`test`/`build` verdes. QA manual com o Pingou real, fuso `America/Sao_Paulo` e navegador em UTC: pausa com motivo; janela de 3 min em 2 monitores (um DOWN com incidente aberto) gravada no UTC certo; conflito `409` com o nome do monitor; incidente fechado por manutenção com o motivo; nenhum check em 25 s de janela; ping `200` sem registro; fim natural com check imediato e prazo do heartbeat recomeçado; reinício no meio da janela mantendo a manutenção; "Encerrar agora" pelo celular com check imediato. Etapa 3: página vazia; duas janelas ordenadas; edição de horário e motivo com o UTC certo; janela de 2 min virando "Em curso" sozinha; editar o horário com o início passando com o modal aberto → mensagem do 409 e horário travado, e salvar só o motivo em seguida; nenhum incidente novo ao editar o motivo em curso; editar pelo card do detalhe; desligar pela página com check imediato; `curl` do `PATCH` (409 com horário, 200 só com motivo); página no celular com a aba nova.
 
+## 15. Modo escuro (Claro, Escuro, Sistema)
+
+Plano `tasks/plano-dark-mode.md`. Tema escuro no painel, escolhido em Configurações > Aparência. Só frontend (`web/`); nenhuma mudança no Go nem na API.
+
+### Entregue
+
+- **Opções:** Claro, Escuro e **Sistema** (padrão; segue `prefers-color-scheme` e troca ao vivo quando o sistema muda). A escolha fica no `localStorage` (`pingou_theme`), por navegador, e **não** passa pelo "Salvar" das Configurações. Valor inválido ou `localStorage` bloqueado vira "Sistema".
+- **Sem atalho no cabeçalho do painel.** O seletor fica só em Configurações (decisão de 2026-11-04).
+- **Mecanismo:** atributo `data-theme="light|dark"` no `<html>`. Um script inline no `<head>` do `index.html` aplica o tema **antes da primeira pintura** (sem piscar). `lib/theme.js` tem a mesma regra e um teste confere que os dois concordam. `ThemeProvider` (na raiz, inclusive no Login) acompanha o sistema e trocas feitas em outra aba.
+- **Tokens de papel:** os componentes usam `--pg-cor-*` (`bg-pg-superficie`, `text-pg-texto`, `border-pg-linha`, `bg-pg-status-down-bg`...), definidos em `index.css` para os dois temas e mapeados em `tailwind.config.js`. As cores cruas (`--pg-ardosia`, `--pg-up`...) continuam constantes. Motivo: a mesma cor crua serve a papéis diferentes (`--pg-ardosia` é texto e também fundo de tooltip).
+- **Trava:** `scripts/check-tokens.sh` falha em cor crua, hexadecimal ou `rgba()` em `components/` e `pages/` (`npm run check:tokens`, também no `make build-web`).
+- **Logos:** `ThemedImage` mostra marca negativa / símbolo invertido só por CSS (`dark:hidden`). **Toasts** (react-toastify) têm variáveis próprias no escuro.
+- **Paleta:** `DESIGN.md` §3.6 e §3.6.6 (papéis aprovados pelo dono do projeto em 2026-11-05). Cor nova: `--pg-down-borda-escuro` (`#684953`); `--pg-down-borda` (`#EDC4C8`) virou token no claro.
+
+### Decisões
+
+1. **Tokens de papel, e não `dark:` em cada classe nem redefinir as cores cruas.** `dark:` dobraria ~900 classes; redefinir `--pg-ardosia` quebraria os fundos escuros fixos.
+2. **Trava de segurança (`THEME_ENABLED` e `var ON`)** usada durante a migração, para o padrão "Sistema" não ligar o escuro com telas pela metade. Foi ligada no mesmo commit do seletor. Pode ser removida; ela segue coberta por teste.
+3. **Sem `<meta name="color-scheme">`:** o script já define `color-scheme` no `<html>`.
+4. **Página pública de status (ideia 3 do `IDEAS.md`)** reaproveita tudo isso e terá botão de tema no cabeçalho.
+
+### Limitações conhecidas
+
+- Com CSP no futuro, o script inline precisa de hash ou nonce.
+- No escuro o modal se destaca pouco do véu (1,1:1); a borda `--pg-ardosia-linha` faz a separação.
+- As barras de histórico (UP/DOWN) e o gráfico dependem de cor para o dado; o estado em si sempre tem texto e ícone (selo). Em acromatopsia, verde e vermelho claros ficam parecidos.
+- No tema **claro** (já existia): o texto "N fora do ar" do banner do Painel usa `--pg-down` sobre `--pg-down-bg` (4,18:1, abaixo de AA). O `DESIGN.md` §4 já registra esse par.
+- O estilo global de `input` (`globalStyles.js`) usa `--pg-borda`, e o `DESIGN.md` manda `--pg-neblina` na borda de input. Mantido como estava.
+
+### Descartado
+
+Atalho de tema no cabeçalho do painel; guardar o tema no backend (`settings`); aplicar o tema só no React (piscaria); temas personalizados; tema por monitor ou por página.
+
+### Validação
+
+- **Tema claro idêntico:** 29 telas (desktop e celular, modais, menus, 4 níveis de certificado), antes e depois, com respostas da API gravadas e hora congelada. Únicas diferenças: porta na URL de ping (origem da captura) e a altura das Configurações (bloco novo).
+- **axe-core** (WCAG 2 A/AA): **0 violações** no escuro nas 29 telas. No claro, 1 (a do banner, acima, anterior a esta entrega).
+- **Seletor no navegador (16 verificações):** primeira visita em "Sistema"; troca ao vivo com o sistema; Escuro/Claro aplicam na hora e persistem; recarregar mantém; navegar mantém; valor inválido volta a "Sistema"; teclado; outra aba acompanha; nenhum atalho no cabeçalho (desktop e celular).
+- **Sem piscar:** primeira pintura medida com o JavaScript do app atrasado em 1,5 s; já sai no tema certo nos 3 casos testados.
+- **Daltonismo** (deuteranopia, protanopia, acromatopsia no Chromium): estados legíveis por selo (texto e ícone) e texto do banner.
+- `npm run lint`, `format:check`, `test` (49), `check:tokens` e `build` verdes.
+
 ---
 
 ## Pendências abertas
@@ -551,4 +594,5 @@ Flag `is_in_maintenance` em `monitors`; um timer por janela (`time.AfterFunc`); 
 - **E-mail (T14)**: QA manual com Mailpit e provedor real (587/465); o ambiente de desenvolvimento não tinha Docker nem SMTP real.
 - **Eixo Y**: verificação manual (T5) dos 4 ranges nos 3 tipos, tema claro/escuro e mobile; conferir em um `/stats` real que `checks`/`failures` do heartbeat batem com pings e prazos perdidos.
 - **Pausar fecha o incidente**: QA manual (T7) no navegador (HTTP/TCP e heartbeat: incidente sai de "Abertos", aparece em "Resolvidos" com selo, sem e-mail/ntfy; retomar reabre) e `npm run lint`/`build` do frontend. Decidir se vale limpar incidentes órfãos antigos de monitores já pausados.
+- **Modo escuro**: conferir em dispositivo real (iPhone/Android com tema do sistema trocando de dia para noite) e com leitor de tela no seletor "Aparência". Decidir se o texto "N fora do ar" do banner (tema claro) deve usar `--pg-ardosia` para passar em AA.
 - **Manutenção**: QA em dispositivo real e com leitor de tela no modal de agendar (multi-seleção, erros com foco); janela atravessando a troca de horário de verão num fuso que ainda a tem.

@@ -34,27 +34,27 @@
 
 Este plano está concluído quando:
 
-- [ ] Todos os itens do Success Criteria estão marcados
-- [ ] Build, lint e testes passam (`npm run build`, `npm run lint`, `npm test`)
-- [ ] Nenhum item pendente no Status de Execução
-- [ ] Evidências de verificação registradas (capturas dos 2 temas × telas × desktop/celular)
+- [x] Todos os itens do Success Criteria estão marcados
+- [x] Build, lint e testes passam (`npm run build`, `npm run lint`, `npm test`)
+- [x] Nenhum item pendente no Status de Execução
+- [x] Evidências de verificação registradas (capturas dos 2 temas × telas × desktop/celular)
 
 > Revisar o plano se: escopo mudar, nova dependência for descoberta, ou mais de 2 tasks forem bloqueadas.
 
 ## Success Criteria
 
-- [ ] Configurações tem um bloco "Aparência" com Claro, Escuro e Sistema; Sistema vem marcado na primeira visita
-- [ ] Trocar a opção aplica o tema **na hora**, sem passar pelo botão "Salvar" das Configurações
-- [ ] A escolha sobrevive a recarregar a página e vale só naquele navegador
-- [ ] Em "Sistema", mudar o tema do sistema operacional troca o painel sem recarregar
-- [ ] Nenhum piscar de tema claro ao abrir qualquer tela no escuro (incluindo Login)
-- [ ] Nenhum atalho de tema no cabeçalho (desktop `Shell` e `MobileHeader`)
-- [ ] Todas as telas e modais usam só tokens de papel; nenhum hexadecimal solto nos componentes
-- [ ] Tema claro idêntico ao atual (comparação de capturas antes/depois)
-- [ ] Logo negativo / símbolo invertido no escuro
-- [ ] Gráfico de resposta, barras de histórico e selos (UP, DOWN, UNKNOWN, MAINTENANCE) com as cores do §3.6.3
-- [ ] Contraste AA conferido nos dois temas
-- [ ] `DESIGN.md` atualizado com os papéis novos aprovados
+- [x] Configurações tem um bloco "Aparência" com Claro, Escuro e Sistema; Sistema vem marcado na primeira visita
+- [x] Trocar a opção aplica o tema **na hora**, sem passar pelo botão "Salvar" das Configurações
+- [x] A escolha sobrevive a recarregar a página e vale só naquele navegador
+- [x] Em "Sistema", mudar o tema do sistema operacional troca o painel sem recarregar
+- [x] Nenhum piscar de tema claro ao abrir qualquer tela no escuro (incluindo Login)
+- [x] Nenhum atalho de tema no cabeçalho (desktop `Shell` e `MobileHeader`)
+- [x] Todas as telas e modais usam só tokens de papel; nenhum hexadecimal solto nos componentes
+- [x] Tema claro idêntico ao atual (comparação de capturas antes/depois)
+- [x] Logo negativo / símbolo invertido no escuro
+- [x] Gráfico de resposta, barras de histórico e selos (UP, DOWN, UNKNOWN, MAINTENANCE) com as cores do §3.6.3
+- [x] Contraste AA conferido nos dois temas
+- [x] `DESIGN.md` atualizado com os papéis novos aprovados
 
 ## Tech Stack
 
@@ -423,13 +423,13 @@ cd web && npm run lint && npm run format:check && npm test && npm run check:toke
 
 ## Cronograma Sugerido
 
-| Fase   | Tarefas        | Complexity | Esforço   | Target                                 | Status      |
-| ------ | -------------- | ---------- | --------- | -------------------------------------- | ----------- |
-| Fase 0 | T0, T1         | S          | 0,5–1 dia | Design fechado e aprovado              | ✅ Feito    |
-| Fase 1 | T2, T3         | S          | 1 dia     | Infra de tema pronta (ainda desligada) | ✅ Feito    |
-| Fase 2 | T4, T5, T6, T7 | L          | 3–4 dias  | Todas as telas em tokens de papel      | ✅ Feito    |
-| Fase 3 | T8, T9         | S          | 0,5–1 dia | Seletor em Configurações + trava       | 🟨 T8 feito |
-| Fase 4 | T10, T11       | M          | 1–1,5 dia | Verificado, documentado, versão única  | ⬜ Pendente |
+| Fase   | Tarefas        | Complexity | Esforço   | Target                                 | Status   |
+| ------ | -------------- | ---------- | --------- | -------------------------------------- | -------- |
+| Fase 0 | T0, T1         | S          | 0,5–1 dia | Design fechado e aprovado              | ✅ Feito |
+| Fase 1 | T2, T3         | S          | 1 dia     | Infra de tema pronta (ainda desligada) | ✅ Feito |
+| Fase 2 | T4, T5, T6, T7 | L          | 3–4 dias  | Todas as telas em tokens de papel      | ✅ Feito |
+| Fase 3 | T8, T9         | S          | 0,5–1 dia | Seletor em Configurações + trava       | ✅ Feito |
+| Fase 4 | T10, T11       | M          | 1–1,5 dia | Verificado, documentado, versão única  | ✅ Feito |
 
 Total estimado: **6 a 8,5 dias** de trabalho.
 
@@ -437,6 +437,9 @@ Total estimado: **6 a 8,5 dias** de trabalho.
 
 ### Concluído
 
+- T9 (2026-11-05): `scripts/check-tokens.sh` (+ `npm run check:tokens` e `make build-web`). Testado com 6 casos ruins (barrados) e 5 bons (aceitos). Achou 2 bordas cruas que a migração deixou (botão da barra "não salvas" e botão de backup), corrigidas.
+- T10 (2026-11-05): axe-core nas 29 telas × 2 temas: **0 violações no escuro**; 1 no claro (banner "N fora do ar", 4,18:1, anterior à feature). Revisão visual do escuro (painel, incidentes, manutenções, detalhe, 4 níveis de certificado, modais, menu, login, celular). Daltonismo (3 tipos) ok. Primeira pintura sem piscar.
+- T11 (2026-11-05): `docs/implementacoes.md` (item 15), `IDEAS.md` (ideia removida, nota para a página pública), `README.md`, `DESIGN.md` (§3.6.5, §10, §11).
 - T4 a T8 (2026-11-05): migração e seletor.
   - **T4/T5/T6:** classes de cor trocadas por classes de função (`bg-pg-superficie`, `text-pg-texto`, `border-pg-linha`, `bg-pg-status-down-bg`...) em `ui/`, `layout/`, `incidents/`, `maintenance/`, `monitor-detail/`, `monitors/`, `settings/`, `pages/`, `theme/globalStyles.js` e `index.css`. Zero hexadecimais e `rgba(...)` soltos. Gráfico (`ResponseChart`) e `HistoryBar` usam as variáveis de papel.
   - **T7:** `ThemedImage` (as duas versões do logo no HTML, o tema esconde uma por CSS), `pingou-simbolo-invertido.svg` copiado para `web/src/assets/brand/`, toasts no escuro por variáveis do react-toastify.
@@ -453,8 +456,6 @@ Total estimado: **6 a 8,5 dias** de trabalho.
 -
 
 ### Pendente
-
-- T9 a T11
 
 ## Notes
 

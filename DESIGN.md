@@ -234,6 +234,7 @@ Combinações da seção 3.6.6:
 - **NUNCA** use `--pg-ciano` para texto menor que 24 px, também no escuro (4,4:1, reprova AA).
 - Sem sombras: a elevação vem do degrau `--pg-ardosia` → `--pg-ardosia-clara`.
 - Tokens novos de tema escuro só derivam das cores desta seção. Cores fora dela só com aprovação.
+- **SEMPRE** use no código o token de **papel** (`bg-pg-superficie`, `text-pg-texto`, `border-pg-linha`...), nunca a cor crua (`bg-pg-branco`, `text-pg-ardosia`...). Cor crua não troca no escuro. `scripts/check-tokens.sh` (rodado em `make build` e `npm run check:tokens`) barra cor crua, hexadecimal e `rgba()` em `components/` e `pages/`. Exceções: `pg-ciano` e o `text-pg-nuvem` da coluna lateral do login, iguais nos dois temas.
 
 #### 3.6.6 Papéis adicionais (aprovados em 2026-11-05)
 
@@ -371,7 +372,7 @@ No tema escuro, troque pelos equivalentes da seção 3.6.3: `--pg-up-bg` → `--
 
 ## 10. Pendências (não definidas na v1.1)
 
-- **Tema escuro**: tokens definidos na seção 3.6 (papéis adicionais aprovados em 3.6.6). Como o tema é trocado (mecanismo, onde fica o controle) é decisão de produto e não faz parte deste arquivo. Cores novas para o escuro **só com aprovação**.
+- **Tema escuro**: definido na seção 3.6 (papéis adicionais em 3.6.6). Mecanismo e controle (Configurações > Aparência, `data-theme`, `pingou_theme`) estão em `docs/implementacoes.md`, item 15. Cores novas para o escuro **só com aprovação**.
 - Ilustrações ainda não definidas (claro e escuro).
 
 ## 11. Checklist antes de entregar
@@ -385,3 +386,4 @@ No tema escuro, troque pelos equivalentes da seção 3.6.3: `--pg-up-bg` → `--
 - [ ] No máximo 2 grafismos, e sem ondas + arco juntos?
 - [ ] Contraste de texto ≥ 4,5:1?
 - [ ] No tema escuro, só tokens da seção 3.6, botão primário em `--pg-ciano-luz` com texto `--pg-ardosia` e marca negativa?
+- [ ] No código, usei token de **papel** (e `npm run check:tokens` passa)?

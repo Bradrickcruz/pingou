@@ -119,6 +119,7 @@ Um novo tipo de check só entra no Pingou se passar nas quatro perguntas:
 - Dashboard web embutido no binário
 - Página de detalhe por monitor (`/monitors/:id`): uptime, resposta média, incidentes e tempo fora do ar em 24h / 7 / 14 / 30 dias, gráfico de tempo de resposta, últimos checks e configuração
 - Login com API Key
+- Tema claro, escuro ou do sistema (padrão), em Configurações > Aparência. A escolha vale só para o navegador onde foi feita
 - Notificações de queda e recuperação por webhook, por e-mail (SMTP) e pelo [ntfy](https://ntfy.sh), ligados ao mesmo tempo se quiser
 - [Manutenção](#manutenção): pausa com motivo e janela agendada (início e fim) para um ou vários monitores. Na janela, nada é conferido, nenhum incidente abre e ninguém é avisado
 - [Aviso de expiração do certificado SSL](#aviso-de-expiração-do-certificado-ssl) em monitores HTTP com `https://`: um aviso 30 dias e outro 7 dias antes, por todos os canais
@@ -1406,7 +1407,6 @@ A ideia não é competir com ferramentas enterprise nem com plataformas completa
 
 - Monitor DNS
 - Ping ICMP (depende de resolver as permissões sem complicar a instalação)
-- Tema escuro
 - Status page pública
 - Integração com Prometheus
 - Webhook por monitor
