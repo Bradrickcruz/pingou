@@ -4,9 +4,11 @@ export function UnsavedBar({ formId, onDiscard, saving, error }) {
   return (
     <div
       role="status"
-      className="md:hidden fixed inset-x-0 bottom-[calc(57px+env(safe-area-inset-bottom))] z-40 px-4 py-3 bg-pg-ardosia text-pg-branco"
+      className="md:hidden fixed inset-x-0 bottom-[calc(57px+env(safe-area-inset-bottom))] z-40 px-4 py-3 bg-pg-flutuante text-pg-sobre-escuro shadow-[inset_0_1px_0_var(--pg-cor-flutuante-borda)]"
     >
-      {error && <p className="mb-2 text-pg-caption text-[#F3B5BB]">{error}</p>}
+      {error && (
+        <p className="mb-2 text-pg-caption text-pg-flutuante-erro">{error}</p>
+      )}
       <div className="flex items-center gap-2">
         <span className="flex-1 min-w-0 text-pg-ui">Alterações não salvas</span>
         <button
@@ -21,7 +23,7 @@ export function UnsavedBar({ formId, onDiscard, saving, error }) {
           type="submit"
           form={formId}
           disabled={saving}
-          className="min-h-[44px] px-4 rounded-pg-control bg-pg-branco text-pg-ardosia text-pg-ui font-medium disabled:opacity-50 focus-visible:outline-2 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-pg-ciano"
+          className="min-h-[44px] px-4 rounded-pg-control bg-pg-superficie text-pg-texto text-pg-ui font-medium disabled:opacity-50 focus-visible:outline-2 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-pg-ciano"
         >
           {saving ? "Salvando…" : "Salvar"}
         </button>

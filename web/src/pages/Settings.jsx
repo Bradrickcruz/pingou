@@ -45,7 +45,7 @@ export function Settings({ onLogout }) {
       <div className="max-w-[760px]">
         <MobileHeader title="Configurações" />
         <h1 className="hidden md:block text-pg-h1 my-0">Configurações</h1>
-        <p role="alert" className="mt-4 text-pg-ui text-pg-down">
+        <p role="alert" className="mt-4 text-pg-ui text-pg-status-down">
           Não foi possível carregar as configurações
           {loadError ? `: ${loadError}` : "."}
         </p>
@@ -110,7 +110,7 @@ export function Settings({ onLogout }) {
     <div className={`max-w-[760px] ${dirty ? "pb-20 md:pb-0" : ""}`}>
       <MobileHeader title="Configurações" />
       <h1 className="hidden md:block text-pg-h1 my-0">Configurações</h1>
-      <p className="hidden md:block mt-1 mb-6 text-pg-ui text-pg-neblina">
+      <p className="hidden md:block mt-1 mb-6 text-pg-ui text-pg-texto-2">
         Valem para todos os monitores.
       </p>
 
@@ -120,10 +120,8 @@ export function Settings({ onLogout }) {
         className="flex flex-col gap-4 md:gap-6"
       >
         <div className="flex flex-col gap-3 md:gap-4">
-          <p className="m-0 text-pg-ui text-pg-neblina">
-            <strong className="font-medium text-pg-ardosia">
-              Notificações:
-            </strong>{" "}
+          <p className="m-0 text-pg-ui text-pg-texto-2">
+            <strong className="font-medium text-pg-texto">Notificações:</strong>{" "}
             os canais ligados recebem os mesmos eventos.
           </p>
           <WebhookCard
@@ -153,14 +151,14 @@ export function Settings({ onLogout }) {
           {error && (
             <p
               role="alert"
-              className="hidden md:block m-0 mr-auto text-pg-ui text-pg-down"
+              className="hidden md:block m-0 mr-auto text-pg-ui text-pg-status-down"
             >
               {error}
             </p>
           )}
           <span
             role="status"
-            className="text-pg-ui inline-flex items-center gap-1 text-pg-up"
+            className="text-pg-ui inline-flex items-center gap-1 text-pg-status-up"
           >
             {saved && (
               <>
@@ -186,18 +184,18 @@ export function Settings({ onLogout }) {
       <Button
         variant="ghost"
         onClick={onLogout}
-        className="md:hidden w-full min-h-[44px] mt-6 gap-2 bg-pg-branco"
+        className="md:hidden w-full min-h-[44px] mt-6 gap-2 bg-pg-superficie"
       >
         <LogOut size={16} aria-hidden="true" />
         Sair
       </Button>
-      <p className="md:hidden mt-3 text-center text-pg-caption text-pg-neblina">
+      <p className="md:hidden mt-3 text-center text-pg-caption text-pg-texto-2">
         pingou {info?.version ?? "v1.0"} ·{" "}
         <a
           href={REPO}
           target="_blank"
           rel="noreferrer"
-          className="text-pg-ciano-fundo underline"
+          className="text-pg-link underline"
         >
           GitHub
         </a>{" "}
@@ -206,13 +204,13 @@ export function Settings({ onLogout }) {
           href={`${REPO}/issues/new`}
           target="_blank"
           rel="noreferrer"
-          className="text-pg-ciano-fundo underline"
+          className="text-pg-link underline"
         >
           Relatar problema
         </a>
       </p>
 
-      <footer className="hidden md:flex mt-6 pt-3 border-t border-pg-borda flex-wrap justify-between gap-x-5 gap-y-2 text-pg-caption text-pg-neblina">
+      <footer className="hidden md:flex mt-6 pt-3 border-t border-pg-linha flex-wrap justify-between gap-x-5 gap-y-2 text-pg-caption text-pg-texto-2">
         <span>
           {info && `pingou ${info.version} · `}
           {info &&
@@ -226,7 +224,7 @@ export function Settings({ onLogout }) {
             href={REPO}
             target="_blank"
             rel="noreferrer"
-            className="text-pg-ciano-fundo underline"
+            className="text-pg-link underline"
           >
             Código no GitHub
           </a>
@@ -234,7 +232,7 @@ export function Settings({ onLogout }) {
             href={`${REPO}/issues/new`}
             target="_blank"
             rel="noreferrer"
-            className="text-pg-ciano-fundo underline"
+            className="text-pg-link underline"
           >
             Relatar um problema
           </a>

@@ -6,9 +6,9 @@ import { windowState } from "../../lib/maintenance";
 const stateBadge = {
   scheduled: {
     label: "Agendada",
-    cls: "bg-pg-branco border border-pg-borda text-pg-neblina",
+    cls: "bg-pg-superficie border border-pg-linha text-pg-texto-2",
   },
-  active: { label: "Em curso", cls: "bg-pg-ciano-nevoa text-pg-ciano-fundo" },
+  active: { label: "Em curso", cls: "bg-pg-destaque text-pg-link" },
 };
 
 function StateBadge({ state }) {
@@ -35,7 +35,7 @@ function Actions({ w, state, onEdit, onCancel, full = false }) {
         type="button"
         onClick={() => onEdit(w)}
         aria-label={`Editar manutenção de ${w.monitor_name}`}
-        className={`${actionCls} text-pg-ciano-fundo hover:bg-pg-ciano-nevoa ${full ? "flex-1 justify-center min-h-[44px] border border-pg-borda" : ""}`}
+        className={`${actionCls} text-pg-link hover:bg-pg-destaque ${full ? "flex-1 justify-center min-h-[44px] border border-pg-linha" : ""}`}
       >
         <Pencil size={16} aria-hidden="true" />
         Editar
@@ -44,7 +44,7 @@ function Actions({ w, state, onEdit, onCancel, full = false }) {
         type="button"
         onClick={() => onCancel(w)}
         aria-label={`${active ? "Desligar" : "Cancelar"} manutenção de ${w.monitor_name}`}
-        className={`${actionCls} text-pg-down hover:bg-pg-down-bg ${full ? "flex-1 justify-center min-h-[44px] border border-pg-borda" : ""}`}
+        className={`${actionCls} text-pg-status-down hover:bg-pg-status-down-bg ${full ? "flex-1 justify-center min-h-[44px] border border-pg-linha" : ""}`}
       >
         <CancelIcon size={16} aria-hidden="true" />
         {active ? "Desligar" : "Cancelar"}
@@ -59,7 +59,7 @@ const cell = "px-5 py-3 align-middle";
 // com o relógio local (now), para a linha virar "Em curso" sem recarregar.
 export function WindowsTable({ windows, now, onEdit, onCancel }) {
   return (
-    <div className="rounded-pg-card border border-pg-borda bg-pg-branco overflow-hidden">
+    <div className="rounded-pg-card border border-pg-linha bg-pg-superficie overflow-hidden">
       <table className="hidden md:table w-full table-fixed border-collapse text-left">
         <caption className="sr-only">
           Manutenções agendadas e em curso, ordenadas pelo início
@@ -73,7 +73,7 @@ export function WindowsTable({ windows, now, onEdit, onCancel }) {
           <col className="w-[230px]" />
         </colgroup>
         <thead>
-          <tr className="bg-pg-ciano-nevoa text-pg-caption text-pg-ciano-fundo">
+          <tr className="bg-pg-destaque text-pg-caption text-pg-link">
             <th scope="col" className="px-5 py-3 font-medium">
               Monitor
             </th>
@@ -98,11 +98,11 @@ export function WindowsTable({ windows, now, onEdit, onCancel }) {
           {windows.map((w) => {
             const state = windowState(w, now);
             return (
-              <tr key={w.id} className="border-t border-pg-borda">
+              <tr key={w.id} className="border-t border-pg-linha">
                 <td className={cell}>
                   <Link
                     to={`/monitors/${w.monitor_id}`}
-                    className="block text-pg-ui font-medium text-pg-ardosia truncate no-underline hover:underline"
+                    className="block text-pg-ui font-medium text-pg-texto truncate no-underline hover:underline"
                   >
                     {w.monitor_name}
                   </Link>
@@ -111,16 +111,16 @@ export function WindowsTable({ windows, now, onEdit, onCancel }) {
                   <StateBadge state={state} />
                 </td>
                 <td
-                  className={`${cell} text-pg-ui text-pg-ardosia whitespace-nowrap tabular-nums`}
+                  className={`${cell} text-pg-ui text-pg-texto whitespace-nowrap tabular-nums`}
                 >
                   {whenLabel(w.starts_at, now)}
                 </td>
                 <td
-                  className={`${cell} text-pg-ui text-pg-ardosia whitespace-nowrap tabular-nums`}
+                  className={`${cell} text-pg-ui text-pg-texto whitespace-nowrap tabular-nums`}
                 >
                   {whenLabel(w.ends_at, now)}
                 </td>
-                <td className={`${cell} text-pg-ui text-pg-neblina`}>
+                <td className={`${cell} text-pg-ui text-pg-texto-2`}>
                   <div className="truncate" title={w.reason ?? undefined}>
                     {w.reason ?? "—"}
                   </div>
@@ -145,22 +145,22 @@ export function WindowsTable({ windows, now, onEdit, onCancel }) {
           return (
             <li
               key={w.id}
-              className="px-4 py-4 border-b border-pg-borda last:border-b-0"
+              className="px-4 py-4 border-b border-pg-linha last:border-b-0"
             >
               <div className="flex items-center justify-between gap-3">
                 <Link
                   to={`/monitors/${w.monitor_id}`}
-                  className="text-pg-body font-medium text-pg-ardosia truncate no-underline"
+                  className="text-pg-body font-medium text-pg-texto truncate no-underline"
                 >
                   {w.monitor_name}
                 </Link>
                 <StateBadge state={state} />
               </div>
-              <p className="mt-1 mb-0 text-pg-caption text-pg-ardosia tabular-nums">
+              <p className="mt-1 mb-0 text-pg-caption text-pg-texto tabular-nums">
                 {whenLabel(w.starts_at, now)} → {whenLabel(w.ends_at, now)}
               </p>
               {w.reason && (
-                <p className="mt-1 mb-0 text-pg-caption text-pg-neblina break-words">
+                <p className="mt-1 mb-0 text-pg-caption text-pg-texto-2 break-words">
                   {w.reason}
                 </p>
               )}

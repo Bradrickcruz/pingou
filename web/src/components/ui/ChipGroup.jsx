@@ -19,8 +19,8 @@ function bestUnit(seconds) {
 const chip = (active) =>
   `px-4 py-2 rounded-full border text-pg-ui transition-colors duration-150 focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano ${
     active
-      ? "bg-pg-ciano-nevoa border-pg-ciano-fundo text-pg-ciano-fundo"
-      : "bg-pg-branco border-pg-borda text-pg-ardosia hover:bg-pg-nuvem"
+      ? "bg-pg-destaque border-pg-link text-pg-link"
+      : "bg-pg-superficie border-pg-linha text-pg-texto hover:bg-pg-hover"
   }`;
 
 // ChipGroup: valores prontos + "Outro…" com número e unidade.
@@ -44,7 +44,7 @@ export function ChipGroup({ label, options, value, onChange, min, max }) {
 
   return (
     <div className="mb-5">
-      <div id={labelId} className="mb-2 text-pg-ui font-medium text-pg-ardosia">
+      <div id={labelId} className="mb-2 text-pg-ui font-medium text-pg-texto">
         {label}
       </div>
       <div
@@ -88,7 +88,7 @@ export function ChipGroup({ label, options, value, onChange, min, max }) {
             onChange={(e) =>
               onChange(Math.max(0, Number(e.target.value)) * unit.factor)
             }
-            className="w-28 px-3 py-2 rounded-pg-control text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda"
+            className="w-28 px-3 py-2 rounded-pg-control text-pg-ui text-pg-texto bg-pg-superficie border border-pg-linha"
           />
           <select
             aria-label={`${label} (unidade)`}
@@ -100,7 +100,7 @@ export function ChipGroup({ label, options, value, onChange, min, max }) {
               onChange(Math.round(value / unit.factor) * next.factor);
               setUnit(next);
             }}
-            className="px-3 py-2 rounded-pg-control text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda"
+            className="px-3 py-2 rounded-pg-control text-pg-ui text-pg-texto bg-pg-superficie border border-pg-linha"
           >
             {UNITS.map((u) => (
               <option key={u.factor} value={u.factor}>

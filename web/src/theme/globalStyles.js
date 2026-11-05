@@ -4,8 +4,8 @@ export function injectGlobalStyles() {
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: var(--pg-nuvem);
-      color: var(--pg-ardosia);
+      background: var(--pg-cor-fundo);
+      color: var(--pg-cor-texto);
       font-family: Inter, system-ui, sans-serif;
       font-size: 14px;
       line-height: 1.6;
@@ -13,16 +13,16 @@ export function injectGlobalStyles() {
     }
 
     ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: var(--pg-nuvem); }
-    ::-webkit-scrollbar-thumb { background: var(--pg-borda); border-radius: 3px; }
+    ::-webkit-scrollbar-track { background: var(--pg-cor-fundo); }
+    ::-webkit-scrollbar-thumb { background: var(--pg-cor-linha); border-radius: 3px; }
 
     a { color: inherit; text-decoration: none; }
     button { cursor: pointer; font: inherit; }
     input, textarea, select {
       font: inherit;
-      background: var(--pg-branco);
-      color: var(--pg-ardosia);
-      border: 1px solid var(--pg-borda);
+      background: var(--pg-cor-superficie);
+      color: var(--pg-cor-texto);
+      border: 1px solid var(--pg-cor-linha);
       border-radius: 8px;
       padding: 8px 12px;
       width: 100%;

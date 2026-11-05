@@ -17,32 +17,32 @@ export function MaintenanceCard({ maintenance, monitorName, onChanged }) {
   return (
     <section
       aria-labelledby="manutencao"
-      className="mb-6 md:mb-8 p-4 sm:p-5 rounded-pg-card border border-pg-borda bg-pg-ciano-nevoa"
+      className="mb-6 md:mb-8 p-4 sm:p-5 rounded-pg-card border border-pg-linha bg-pg-destaque"
     >
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0">
-          <span className="flex-shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-full bg-pg-branco text-pg-ciano-fundo">
+          <span className="flex-shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-full bg-pg-superficie text-pg-link">
             <Wrench size={18} aria-hidden="true" />
           </span>
           <div className="min-w-0">
             <h2
               id="manutencao"
-              className="text-pg-ui font-medium text-pg-ardosia my-0"
+              className="text-pg-ui font-medium text-pg-texto my-0"
             >
               {running ? "Em manutenção" : "Manutenção agendada"}
             </h2>
-            <p className="mt-0.5 mb-0 text-pg-caption text-pg-ardosia tabular-nums">
+            <p className="mt-0.5 mb-0 text-pg-caption text-pg-texto tabular-nums">
               {fullDate(maintenance.starts_at)} →{" "}
               {fullDate(maintenance.ends_at)}{" "}
-              <span className="text-pg-neblina">({getTimeZone()})</span>
+              <span className="text-pg-texto-2">({getTimeZone()})</span>
             </p>
             {maintenance.reason && (
-              <p className="mt-1 mb-0 text-pg-ui text-pg-ardosia break-words">
+              <p className="mt-1 mb-0 text-pg-ui text-pg-texto break-words">
                 <span className="font-medium">Motivo:</span>{" "}
                 {maintenance.reason}
               </p>
             )}
-            <p className="mt-1 mb-0 text-pg-caption text-pg-neblina">
+            <p className="mt-1 mb-0 text-pg-caption text-pg-texto-2">
               {running
                 ? "Nenhum check roda e ninguém é avisado até o fim."
                 : "Quando começar, os checks param e um incidente aberto é fechado sem aviso."}
@@ -54,7 +54,7 @@ export function MaintenanceCard({ maintenance, monitorName, onChanged }) {
             variant="ghost"
             onClick={() => setOpen("edit")}
             aria-label="Editar manutenção"
-            className="flex-1 sm:flex-none gap-1.5 bg-pg-branco"
+            className="flex-1 sm:flex-none gap-1.5 bg-pg-superficie"
           >
             <Pencil size={16} aria-hidden="true" />
             Editar
@@ -62,7 +62,7 @@ export function MaintenanceCard({ maintenance, monitorName, onChanged }) {
           <Button
             variant="ghost"
             onClick={() => setOpen("cancel")}
-            className="flex-1 sm:flex-none bg-pg-branco"
+            className="flex-1 sm:flex-none bg-pg-superficie"
           >
             {running ? "Desligar" : "Cancelar"}
           </Button>

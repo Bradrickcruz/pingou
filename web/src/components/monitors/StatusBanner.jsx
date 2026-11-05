@@ -17,7 +17,10 @@ export function StatusBanner({ monitors, counts }) {
 
   let tone, Icon, title, detail;
   if (down.length > 0) {
-    tone = { box: "bg-pg-down-bg border-pg-down", icon: "bg-pg-down" };
+    tone = {
+      box: "bg-pg-status-down-bg border-pg-status-down",
+      icon: "bg-pg-status-down",
+    };
     Icon = X;
     title =
       down.length === 1
@@ -25,18 +28,24 @@ export function StatusBanner({ monitors, counts }) {
         : `${down.length} monitores fora do ar`;
     detail = `${joinNames(down.map((m) => m.name))} ${down.length === 1 ? "não está respondendo" : "não estão respondendo"}.`;
   } else if (active === 0 && counts.MAINTENANCE > 0) {
-    tone = { box: "bg-pg-branco border-pg-borda", icon: "bg-pg-ciano-fundo" };
+    tone = { box: "bg-pg-superficie border-pg-linha", icon: "bg-pg-primario" };
     Icon = Wrench;
     title = "Monitores em manutenção";
     detail = "Os checks voltam sozinhos quando a manutenção termina.";
   } else if (counts.UNKNOWN > 0 && counts.UP === 0) {
-    tone = { box: "bg-pg-branco border-pg-borda", icon: "bg-pg-unknown" };
+    tone = {
+      box: "bg-pg-superficie border-pg-linha",
+      icon: "bg-pg-status-unknown",
+    };
     Icon = CircleHelp;
     title = "Aguardando os primeiros checks";
     detail =
       "Os monitores aparecem como no ar ou fora do ar depois do primeiro resultado.";
   } else {
-    tone = { box: "bg-pg-up-bg border-pg-borda", icon: "bg-pg-up" };
+    tone = {
+      box: "bg-pg-status-up-bg border-pg-linha",
+      icon: "bg-pg-status-up",
+    };
     Icon = Check;
     title = active === 0 ? "Todos os monitores estão pausados" : "Tudo no ar";
     detail =
@@ -75,30 +84,31 @@ export function StatusBanner({ monitors, counts }) {
     >
       <div className="flex items-center gap-4 min-w-0">
         <span
-          className={`flex-shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-full text-pg-branco ${tone.icon}`}
+          className={`flex-shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-full text-pg-primario-texto ${tone.icon}`}
         >
           <Icon size={20} aria-hidden="true" />
         </span>
         <div className="min-w-0">
-          <h2 className="text-pg-h3 font-medium text-pg-ardosia my-0">
-            {title}
-          </h2>
-          <p className="hidden md:block text-pg-ui text-pg-ardosia">{detail}</p>
+          <h2 className="text-pg-h3 font-medium text-pg-texto my-0">{title}</h2>
+          <p className="hidden md:block text-pg-ui text-pg-texto">{detail}</p>
         </div>
       </div>
-      <p className="md:hidden text-pg-caption text-pg-ardosia">
+      <p className="md:hidden text-pg-caption text-pg-texto">
         {short.map((s, i) => (
           <span key={s.label}>
             {i > 0 && " · "}
-            <span className={s.strong ? "text-pg-down" : undefined}>
+            <span className={s.strong ? "text-pg-status-down" : undefined}>
               <span className="tabular-nums">{s.n}</span> {s.label}
             </span>
           </span>
         ))}
       </p>
-      <ul className="hidden md:flex flex-wrap gap-x-5 gap-y-1 text-pg-ui text-pg-ardosia list-none m-0 p-0">
+      <ul className="hidden md:flex flex-wrap gap-x-5 gap-y-1 text-pg-ui text-pg-texto list-none m-0 p-0">
         {stats.map((s) => (
-          <li key={s.label} className={s.strong ? "text-pg-down" : undefined}>
+          <li
+            key={s.label}
+            className={s.strong ? "text-pg-status-down" : undefined}
+          >
             <span className="tabular-nums">{s.n}</span> {s.label}
           </li>
         ))}

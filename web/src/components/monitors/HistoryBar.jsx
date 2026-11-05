@@ -21,12 +21,12 @@ export function HistoryBar({
       className={`flex items-stretch gap-[2px] h-6 ${fluid ? "w-full" : "w-[198px]"} ${dimmed ? "opacity-50" : ""}`}
     >
       {Array.from({ length: empty }, (_, i) => (
-        <span key={`e${i}`} className="flex-1 rounded-[1px] bg-pg-borda" />
+        <span key={`e${i}`} className="flex-1 rounded-[1px] bg-pg-linha" />
       ))}
       {bars.map((success, i) => (
         <span
           key={i}
-          className={`flex-1 rounded-[1px] ${success ? "bg-pg-up" : "bg-pg-down"}`}
+          className={`flex-1 rounded-[1px] ${success ? "bg-pg-status-up" : "bg-pg-status-down"}`}
         />
       ))}
     </div>

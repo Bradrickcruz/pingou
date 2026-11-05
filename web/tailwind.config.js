@@ -52,6 +52,7 @@ export default {
           ativo: "var(--pg-cor-ativo)",
           "ativo-texto": "var(--pg-cor-ativo-texto)",
           "sobre-escuro": "var(--pg-cor-sobre-escuro)",
+          "sobre-escuro-2": "var(--pg-cor-sobre-escuro-2)",
           tooltip: "var(--pg-cor-tooltip)",
           flutuante: "var(--pg-cor-flutuante)",
           "flutuante-borda": "var(--pg-cor-flutuante-borda)",

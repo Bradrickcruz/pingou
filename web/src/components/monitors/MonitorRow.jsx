@@ -25,7 +25,7 @@ export function MonitorRow({
   const dimmed = paused || maintenance;
   const Icon = typeIcon[monitor.type] ?? Globe;
   const isHeartbeat = monitor.type === "heartbeat";
-  const muted = dimmed ? "text-pg-neblina" : "text-pg-ardosia";
+  const muted = dimmed ? "text-pg-texto-2" : "text-pg-texto";
 
   const uptime = formatUptime(monitor.uptime_24h);
   // latência só faz sentido com o alvo respondendo; heartbeat não mede resposta
@@ -40,12 +40,12 @@ export function MonitorRow({
       : timeAgo(monitor.last_checked_at, now);
 
   return (
-    <tr className="border-t border-pg-borda">
+    <tr className="border-t border-pg-linha">
       <td className={cell}>
         <Badge state={status} />
         {paused && monitor.pause_reason && (
           <div
-            className="mt-1 max-w-[160px] truncate text-pg-caption text-pg-neblina"
+            className="mt-1 max-w-[160px] truncate text-pg-caption text-pg-texto-2"
             title={monitor.pause_reason}
           >
             <span className="sr-only">Motivo: </span>
@@ -54,7 +54,7 @@ export function MonitorRow({
         )}
         {maintenance && (
           <div
-            className="mt-1 mx-auto max-w-[180px] text-center text-pg-caption text-pg-neblina"
+            className="mt-1 mx-auto max-w-[180px] text-center text-pg-caption text-pg-texto-2"
             title={monitor.maintenance.reason ?? undefined}
           >
             {maintenanceUntil(monitor, now)}
@@ -74,7 +74,7 @@ export function MonitorRow({
         >
           {monitor.name}
         </Link>
-        <div className="flex items-center gap-1.5 mt-0.5 text-pg-neblina min-w-0">
+        <div className="flex items-center gap-1.5 mt-0.5 text-pg-texto-2 min-w-0">
           <Icon size={14} aria-hidden="true" className="flex-shrink-0" />
           <span className="sr-only">{monitor.type.toUpperCase()}:</span>
           <span
@@ -90,7 +90,7 @@ export function MonitorRow({
       </td>
       <td
         className={`${cell} hidden md:table-cell text-right tabular-nums text-pg-ui ${
-          status === "DOWN" ? "text-pg-down" : muted
+          status === "DOWN" ? "text-pg-status-down" : muted
         }`}
       >
         {uptime ?? <span aria-label="sem dados">—</span>}
@@ -101,7 +101,7 @@ export function MonitorRow({
         {latency ?? <span aria-label="sem dados">—</span>}
       </td>
       <td
-        className={`${cell} hidden sm:table-cell text-pg-caption text-pg-neblina whitespace-nowrap`}
+        className={`${cell} hidden sm:table-cell text-pg-caption text-pg-texto-2 whitespace-nowrap`}
       >
         {lastCheck ?? "—"}
       </td>

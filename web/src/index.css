@@ -115,6 +115,7 @@
 
   /* superfícies escuras sobre o tema claro (tooltip, barra, aviso, código) */
   --pg-cor-sobre-escuro: var(--pg-branco);
+  --pg-cor-sobre-escuro-2: var(--pg-borda);
   --pg-cor-tooltip: var(--pg-ardosia);
   --pg-cor-flutuante: var(--pg-ardosia);
   --pg-cor-flutuante-borda: var(--pg-ardosia);
@@ -162,6 +163,7 @@
   --pg-cor-ativo-texto: var(--pg-ardosia);
 
   --pg-cor-sobre-escuro: var(--pg-nuvem);
+  --pg-cor-sobre-escuro-2: var(--pg-neblina-clara);
   --pg-cor-tooltip: var(--pg-ardosia-linha);
   --pg-cor-flutuante: var(--pg-ardosia-clara);
   --pg-cor-flutuante-borda: var(--pg-ardosia-linha);
@@ -202,7 +204,7 @@
 
   h1,
   h2 {
-    @apply font-[var(--heading)] font-medium text-pg-ardosia;
+    @apply font-[var(--heading)] font-medium text-pg-texto;
   }
 
   h1 {
@@ -218,7 +220,7 @@
   }
 
   code {
-    @apply font-mono inline-flex rounded text-pg-ciano-fundo text-pg-ui leading-[135%] py-1 px-2 bg-pg-ciano-nevoa;
+    @apply font-mono inline-flex rounded text-pg-link text-pg-ui leading-[135%] py-1 px-2 bg-pg-destaque;
   }
 }
 @layer utilities {
@@ -229,4 +231,25 @@
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+}
+
+/*
+  Toasts (react-toastify) no tema escuro. No claro ficam como o toastify
+  entrega. Só tokens do DESIGN.md 3.6: superfície, texto, borda e status
+  claros. Sem sombra, como no resto do escuro.
+*/
+[data-theme="dark"] {
+  --toastify-color-light: var(--pg-cor-superficie);
+  --toastify-text-color-light: var(--pg-cor-texto);
+  --toastify-icon-color-success: var(--pg-cor-status-up);
+  --toastify-icon-color-error: var(--pg-cor-status-down);
+  --toastify-icon-color-info: var(--pg-cor-link);
+  --toastify-color-progress-success: var(--pg-cor-status-up);
+  --toastify-color-progress-error: var(--pg-cor-status-down);
+  --toastify-color-progress-info: var(--pg-cor-link);
+  --toastify-color-progress-light: var(--pg-cor-link);
+}
+[data-theme="dark"] .Toastify__toast {
+  border: 1px solid var(--pg-cor-linha);
+  box-shadow: none;
 }

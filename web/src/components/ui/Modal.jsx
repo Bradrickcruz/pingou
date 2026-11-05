@@ -43,7 +43,7 @@ export function Modal({ title, subtitle, onClose, children }) {
 
   return (
     <div
-      className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-[rgba(30,43,51,0.5)]"
+      className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-pg-veu"
       onClick={onClose}
     >
       <div
@@ -51,19 +51,19 @@ export function Modal({ title, subtitle, onClose, children }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="w-full max-w-[560px] max-h-[90vh] overflow-y-auto p-6 sm:p-7 rounded-pg-card border border-pg-borda bg-pg-branco"
+        className="w-full max-w-[560px] max-h-[90vh] overflow-y-auto p-6 sm:p-7 rounded-pg-card border border-pg-linha bg-pg-superficie"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-start mb-5">
           <div>
             <h2
               id={titleId}
-              className="text-pg-h3 font-medium text-pg-ardosia my-0"
+              className="text-pg-h3 font-medium text-pg-texto my-0"
             >
               {title}
             </h2>
             {subtitle && (
-              <div className="mt-1 text-pg-caption text-pg-neblina">
+              <div className="mt-1 text-pg-caption text-pg-texto-2">
                 {subtitle}
               </div>
             )}
@@ -72,7 +72,7 @@ export function Modal({ title, subtitle, onClose, children }) {
             type="button"
             onClick={onClose}
             aria-label="Fechar"
-            className="inline-flex items-center justify-center p-2 -mr-2 rounded-pg-control text-pg-neblina hover:text-pg-ardosia hover:bg-pg-nuvem focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano"
+            className="inline-flex items-center justify-center p-2 -mr-2 rounded-pg-control text-pg-texto-2 hover:text-pg-texto hover:bg-pg-hover focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano"
           >
             <X size={20} aria-hidden="true" />
           </button>

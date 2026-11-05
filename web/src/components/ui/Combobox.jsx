@@ -88,16 +88,16 @@ export function Combobox({
         }}
         onKeyDown={onKeyDown}
         onBlur={close}
-        className="w-full px-3 py-2.5 rounded-pg-control font-pg-mono text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-neblina focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano"
+        className="w-full px-3 py-2.5 rounded-pg-control font-pg-mono text-pg-ui text-pg-texto bg-pg-superficie border border-pg-borda-input focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano"
       />
       {open && (
         <ul
           id={listId}
           role="listbox"
-          className="absolute z-10 left-0 right-0 mt-1 max-h-60 overflow-auto m-0 p-1 list-none rounded-pg-control bg-pg-branco border border-pg-borda"
+          className="absolute z-10 left-0 right-0 mt-1 max-h-60 overflow-auto m-0 p-1 list-none rounded-pg-control bg-pg-superficie border border-pg-linha"
         >
           {shown.length === 0 && (
-            <li role="status" className="px-3 py-2 text-pg-ui text-pg-neblina">
+            <li role="status" className="px-3 py-2 text-pg-ui text-pg-texto-2">
               {emptyText}
             </li>
           )}
@@ -113,8 +113,8 @@ export function Combobox({
                 choose(opt);
               }}
               onMouseEnter={() => setActive(i)}
-              className={`px-3 py-2 rounded font-pg-mono text-pg-ui text-pg-ardosia cursor-pointer ${
-                i === active ? "bg-pg-ciano-nevoa" : ""
+              className={`px-3 py-2 rounded font-pg-mono text-pg-ui text-pg-texto cursor-pointer ${
+                i === active ? "bg-pg-destaque" : ""
               } ${opt === value ? "font-semibold" : ""}`}
             >
               {opt}

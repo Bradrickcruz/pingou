@@ -29,9 +29,9 @@ export function ReasonField({ value, onChange, label, placeholder }) {
     <div className="mb-5">
       <label
         htmlFor={id}
-        className="block mb-2 text-pg-ui font-medium text-pg-ardosia"
+        className="block mb-2 text-pg-ui font-medium text-pg-texto"
       >
-        {label} <span className="font-normal text-pg-neblina">(opcional)</span>
+        {label} <span className="font-normal text-pg-texto-2">(opcional)</span>
       </label>
       <textarea
         id={id}
@@ -41,11 +41,11 @@ export function ReasonField({ value, onChange, label, placeholder }) {
         rows={2}
         placeholder={placeholder}
         aria-describedby={counterId}
-        className="w-full px-3 py-2.5 rounded-pg-control text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda placeholder:text-pg-neblina resize-y"
+        className="w-full px-3 py-2.5 rounded-pg-control text-pg-ui text-pg-texto bg-pg-superficie border border-pg-linha placeholder:text-pg-texto-2 resize-y"
       />
       <p
         id={counterId}
-        className="mt-1 mb-0 text-right text-pg-caption text-pg-neblina tabular-nums"
+        className="mt-1 mb-0 text-right text-pg-caption text-pg-texto-2 tabular-nums"
       >
         {value.length}/{REASON_MAX}
       </p>
@@ -76,11 +76,9 @@ function PauseModal({ monitor, onConfirm, onClose, saving }) {
             submit(e);
         }}
       >
-        <p className="mb-4 text-pg-ui text-pg-neblina">
+        <p className="mb-4 text-pg-ui text-pg-texto-2">
           Enquanto{" "}
-          <strong className="font-medium text-pg-ardosia">
-            {monitor.name}
-          </strong>{" "}
+          <strong className="font-medium text-pg-texto">{monitor.name}</strong>{" "}
           estiver pausado, nenhum check roda e ninguém é avisado. Um incidente
           aberto é fechado sem aviso.
         </p>
@@ -91,7 +89,10 @@ function PauseModal({ monitor, onConfirm, onClose, saving }) {
           placeholder="Ex.: troca do servidor"
         />
         {error && (
-          <p role="alert" className="-mt-2 mb-4 text-pg-caption text-pg-down">
+          <p
+            role="alert"
+            className="-mt-2 mb-4 text-pg-caption text-pg-status-down"
+          >
             {error}
           </p>
         )}
@@ -187,11 +188,9 @@ export function MonitorModals({
   if (modal === "delete") {
     return (
       <Modal title="Excluir monitor" onClose={onClose}>
-        <p className="mb-5 text-pg-neblina">
+        <p className="mb-5 text-pg-texto-2">
           Excluir{" "}
-          <strong className="font-medium text-pg-ardosia">
-            {selected.name}
-          </strong>
+          <strong className="font-medium text-pg-texto">{selected.name}</strong>
           ? O histórico de checks e incidentes também é apagado. Esta ação não
           pode ser desfeita.
         </p>
