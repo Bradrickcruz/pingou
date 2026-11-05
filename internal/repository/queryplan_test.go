@@ -58,6 +58,8 @@ func hotQueries(monitorID string, all []string, now time.Time) []hotQuery {
 		{"manutenção: viva do monitor", sqlMaintenanceLiveByMonitor, []any{monitorID}},
 		{"manutenção: vivas da lista", sqlMaintenanceLiveByMonitors(len(ids)), ids},
 		{"manutenção: página", sqlMaintenanceListLive, nil},
+		{"outbox: vencidos", sqlOutboxDue, []any{ts(now), 20}},
+		{"outbox: purge", sqlOutboxPurge, []any{ts(now.Add(-7 * 24 * time.Hour))}},
 	}
 }
 
@@ -173,6 +175,8 @@ func TestHotQueriesUseIndexes(t *testing.T) {
 		"lista: down_since":     "INDEX idx_incidents_monitor_ended",
 		"state machine: aberto": "INDEX idx_incidents_monitor_ended",
 		"state machine: +falha": "INDEX idx_incidents_monitor_ended",
+		"outbox: vencidos":      "INDEX idx_outbox_due",
+		"outbox: purge":         "INDEX idx_outbox_done",
 	}
 	// varredura aceita: a tabela é pequena por construção
 	smallScanOK := map[string]bool{

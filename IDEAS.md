@@ -11,7 +11,6 @@
 | 2   | Status HTTP esperado                 | Esperando um caso real | low        |
 | 3   | Páginas públicas de status           | Para detalhar          | medium     |
 | 4   | Suporte a inglês (e outros idiomas)  | Para detalhar          | medium     |
-| 5   | Retry de notificações                | Para detalhar          | medium     |
 | 6   | Aviso de manutenção começou/terminou | Para detalhar          | low        |
 | 7   | Nomes claros nos eventos do webhook  | Para detalhar          | medium     |
 
@@ -72,6 +71,7 @@ Configurações → Backup. O `VACUUM INTO` copia o banco todo, então para tira
   1. O uso principal é recuperar de um desastre ou migrar de servidor?
   2. Aceita regerar os tokens dos heartbeats ao importar? Manter os tokens exige cifrar.
 - **Registrar na limitação conhecida** do ntfy e do e-mail que o export deixa de levar esses dados quando esta ideia entrar.
+- **Fila de avisos fora do export:** o export atual (`VACUUM INTO`) já leva a tabela `notification_outbox` (retry de notificações, entregue). Quando esta ideia entrar, ela deve ficar **de fora** do backup, e o `pingou import` não deve esperá-la: os avisos pendentes são descartáveis.
 
 ## 🏷️ Type
 
@@ -221,7 +221,7 @@ Quem não lê português consegue usar o Pingou, e adicionar um idioma novo vira
 - **Seletor de idioma** nas Configurações.
 - **Datas, horas e números** pelo idioma escolhido (`Intl`), respeitando o fuso das Configurações. Rever as datas formatadas à mão, que foram feitas assim porque o `Intl` em pt-BR gerava "28 de out.".
 - **Plurais e textos com variáveis** ("Fora do ar há 1 dia e 4 h", "3 monitores", "Expira em 12 dias") com regra de plural por idioma, sem juntar frases no código.
-- **Notificações** (e-mail e ntfy) no idioma configurado. O JSON do webhook **não muda** (continua `event`, `monitor`, `timestamp`...), exceto pelo campo novo `id` da ideia 5, pelos eventos novos da ideia 6 e pela renomeação dos eventos da ideia 7.
+- **Notificações** (e-mail e ntfy) no idioma configurado. O JSON do webhook **não muda** (continua `event`, `monitor`, `timestamp`...), exceto pelo campo novo `id` (já entregue com o retry de notificações), pelos eventos novos da ideia 6 e pela renomeação dos eventos da ideia 7.
 - **Mensagens de erro da API:** hoje misturam inglês (validação) e português. Caminho sugerido: a API devolve **código estável** (`VALIDATION_ERROR` etc., já existe) e o painel traduz a mensagem pelo código.
 
 ## 🚧 Out of Scope
@@ -255,66 +255,6 @@ feature
 ## ⏱️ Priority
 
 medium (fazer antes das páginas públicas)
-
----
-
-# 🧩 Task: Retry de notificações
-
-## 💡 Idea
-
-Hoje, se um aviso falha (e-mail, webhook ou ntfy fora do ar) ou o processo cai logo depois de gravar a mudança de estado, o aviso **se perde**. Ninguém tenta de novo.
-
-A ideia é gravar o aviso num **outbox** (uma fila no próprio SQLite) e ter um **worker** que envia e repete até dar certo, ou até desistir.
-
-## 🎯 Goal
-
-Aviso de queda, recuperação e SSL que **não se perde** por falha passageira de um canal ou por reinício do Pingou.
-
-## 📦 Initial Scope
-
-- Tabela `notification_outbox`, gravada **na mesma transação** do `StateMachine.Process`. Se o estado mudou, o aviso está na fila. Se a transação desfez, o aviso não existe.
-- Um worker que lê a fila, envia e marca como enviado.
-- **Uma linha por canal** (webhook, e-mail, ntfy). Se só o e-mail falhou, só ele repete.
-- Tentativas com espera crescente (ex.: 30 s, 2 min, 10 min, 30 min).
-- **Queda e recuperação expiram em 60 min**, contados a partir do evento. **Aviso de SSL expira em 24 h.** Passou do prazo, marca como "expirado" e registra no log. Isso já limita o número de tentativas.
-- Campo `id` do evento no JSON do webhook, para quem recebe ignorar repetição. É campo novo, não quebra quem já lê o JSON.
-- Ao subir, o worker retoma o que ficou pendente (cobre o caso do processo que caiu).
-- Limpeza das linhas antigas (enviadas e desistidas), junto com a rotina de retenção.
-- Mesma regra para o aviso de SSL, que hoje sai só duas vezes por certificado.
-
-## 🚧 Out of Scope
-
-- Canais novos (Discord e Slack dedicados, SMS etc.).
-- Tela para ver e reenviar avisos manualmente (no começo, só log).
-- Fila externa (Redis, RabbitMQ). Continua tudo no SQLite.
-- O botão de **teste** de notificação continua envio direto, sem fila.
-
-## 🔍 Context
-
-Hoje o README diz que o webhook é enviado **depois** do commit. Isso protege o estado do banco, mas deixa uma brecha: se o processo cair entre o commit e o envio, o aviso some. O outbox fecha essa brecha. Precisa de **migration nova**. O `Process` já usa Unit of Work, então a gravação na fila entra nessa mesma transação (verificar se o `UnitOfWork` já deixa gravar uma tabela a mais sem mexer em tudo).
-
-## ⚠️ Notes
-
-- **Entrega "pelo menos uma vez".** Com retry, o mesmo aviso pode chegar duplicado (o envio deu certo, mas o Pingou caiu antes de marcar como enviado). Quem recebe precisa aguentar isso. O `id` do evento no JSON do webhook ajuda nisso. A ideia 4 diz que o JSON "não muda"; esta é a exceção (já anotada lá).
-- **Aviso velho demais.** Decidido: queda e recuperação expiram em 60 min. Sem isso, mandar "monitor caiu" 2 horas depois, quando ele já voltou, confunde.
-- **SSL tem prazo próprio (24 h).** O aviso de SSL ("expira em 12 dias") não fica velho em 1 hora, e sai só duas vezes por certificado. Por isso não usa os 60 min.
-- **Não guardar segredo na fila.** Gravar só os dados do evento (monitor, tipo, horário, erro). O destino (URL do webhook, e-mail, tópico) é lido das `settings` **na hora de enviar**. Assim o outbox não vira outra cópia de segredo, e a troca da URL vale para os avisos pendentes.
-- **Carga no SQLite.** Conexão única: o worker disputa com a gravação dos checks. Ler e gravar em lotes pequenos, e **nunca segurar a conexão durante o envio de rede** (só ao ler e ao marcar).
-- **Export (ideia 1):** a tabela `notification_outbox` não deve sair no backup, e o `pingou import` não deve esperar por ela.
-- **Idioma (ideia 4):** o texto do e-mail e do ntfy deve ser montado **na hora de enviar**, no idioma configurado nesse momento, e não gravado pronto na fila.
-- **Decisões tomadas (2026-11-05):**
-  1. **Queda e recuperação expiram em 60 min.** As esperas entre tentativas cabem dentro desse prazo.
-  2. **Aviso de SSL expira em 24 h**, porque a informação continua verdadeira por mais tempo.
-  3. **Campo `id` no JSON do webhook:** aceito.
-- **Assumido (corrigir se discordar):** "expirado" aparece só no log, não no painel (como já está em Out of Scope).
-
-## 🏷️ Type
-
-feature (confiabilidade)
-
-## ⏱️ Priority
-
-medium (pesa mais agora que o aviso de SSL sai só duas vezes por certificado)
 
 ---
 
@@ -355,7 +295,7 @@ O Pingou já tem janelas de manutenção e já mostra o motivo (modais de pausa 
 ## ⚠️ Notes
 
 - **Webhook sempre envia (decidido em 2026-11-05).** O risco: quem usa o webhook (por exemplo, fluxo no n8n) pode tratar "qualquer coisa que não seja `down`" como `up`, e `maintenance_started` viraria um falso "voltou". A resposta é a **ideia 7**: com os nomes `monitor_down` e `monitor_up`, quem atualiza é obrigado a rever o fluxo, e o evento novo não cai no "senão" sem ninguém ter olhado. **Por isso a ideia 7 sai antes desta, ou junto.** Sem ela, "sempre envia" é arriscado. O README também deve dizer a quem integra: evento que não conhece, **ignore**.
-- **Não repetir aviso.** Precisa guardar que o aviso daquela janela já saiu. Pode ser uma coluna nova (migration) ou o outbox da ideia 5. **Se a ideia 5 entrar antes, esta fica mais simples**: o aviso vira só mais uma linha na fila, com a mesma garantia de entrega.
+- **Não repetir aviso.** Precisa guardar que o aviso daquela janela já saiu. Use o outbox (`notification_outbox`, já entregue): o aviso vira só mais uma linha na fila, com a mesma garantia de entrega.
 - **Motivo é texto livre.** Já existe o cuidado de avisar que o motivo aparece na página pública (ideia 3). Aqui é parecido: o motivo vai para **e-mail e webhook**. Avisar no modal quando houver aviso ligado.
 - **Janela que termina e o monitor está fora do ar.** O aviso de fim deve dizer só "a manutenção terminou". Se o monitor ainda estiver caído, o aviso normal de queda cuida disso. Não misturar os dois no mesmo texto.
 - **Janela cancelada ou editada antes de começar.** Não deve gerar aviso de início. Se o horário mudou, vale o novo.

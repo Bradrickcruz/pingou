@@ -27,13 +27,7 @@ func NewOutboxRepo(db *sql.DB) *OutboxRepo { return &OutboxRepo{db: db} }
 // antigos primeiro. Linha com payload ilegível é marcada expired (senão
 // ocuparia o lote para sempre) e não é devolvida.
 func (r *OutboxRepo) Due(ctx context.Context, now time.Time, limit int) ([]domain.OutboxEvent, error) {
-	rows, err := r.db.QueryContext(ctx, `
-		SELECT id, event_id, event_type, channel, monitor_id, payload, status, attempts,
-		       created_at, expires_at, next_attempt_at, last_error, done_at
-		FROM notification_outbox
-		WHERE status = 'pending' AND next_attempt_at <= ?
-		ORDER BY next_attempt_at, id
-		LIMIT ?`, now.UTC().Format(time.RFC3339), limit)
+	rows, err := r.db.QueryContext(ctx, sqlOutboxDue, now.UTC().Format(time.RFC3339), limit)
 	if err != nil {
 		return nil, err
 	}
@@ -109,9 +103,7 @@ func (r *OutboxRepo) CountPending(ctx context.Context) (int, error) {
 
 // PurgeDoneBefore apaga linhas sent/expired encerradas antes de before.
 func (r *OutboxRepo) PurgeDoneBefore(ctx context.Context, before time.Time) (int64, error) {
-	res, err := r.db.ExecContext(ctx, `
-		DELETE FROM notification_outbox
-		WHERE status <> 'pending' AND done_at < ?`, before.UTC().Format(time.RFC3339))
+	res, err := r.db.ExecContext(ctx, sqlOutboxPurge, before.UTC().Format(time.RFC3339))
 	if err != nil {
 		return 0, err
 	}
