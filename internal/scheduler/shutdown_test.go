@@ -63,7 +63,7 @@ func TestStopDiscardsCheckCancelledByShutdown(t *testing.T) {
 	if incidents != 0 {
 		t.Fatalf("incidentes = %d, want 0", incidents)
 	}
-	if n := e.notifier.downs.Load(); n != 0 {
+	if n := e.countNotices(t, domain.EventDown); n != 0 {
 		t.Fatalf("notificações de down = %d, want 0", n)
 	}
 }

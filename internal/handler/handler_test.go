@@ -2,7 +2,6 @@ package handler
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -22,12 +21,6 @@ import (
 )
 
 const testKey = "test-key"
-
-type noopNotifier struct{}
-
-func (noopNotifier) NotifyDown(context.Context, *domain.Monitor, *domain.Incident)         {}
-func (noopNotifier) NotifyRecovery(context.Context, *domain.Monitor, *domain.Incident)     {}
-func (noopNotifier) NotifyCertExpiring(context.Context, *domain.Monitor, domain.CertAlert) {}
 
 func newTestServer(t *testing.T) (*Server, http.Handler, func(id string) int) {
 	t.Helper()
@@ -58,7 +51,7 @@ func newTestServerEnv(t *testing.T, smtp config.SMTPConfig, ntfy config.NtfyConf
 	windows := repository.NewMaintenanceRepo(db)
 	sched := scheduler.NewScheduler(monitors, nil, db,
 		repository.NewCheckRepoTx(db), repository.NewMonitorRepoTx(db), repository.NewIncidentRepoTx(db),
-		noopNotifier{}).WithMaintenance(windows)
+		repository.NewOutboxRepoTx(), []string{domain.ChannelWebhook}, nil).WithMaintenance(windows)
 	svc.SetRecorder(sched)
 	maintenance := service.NewMaintenanceService(windows, monitors)
 	maintenance.SetEnder(sched)

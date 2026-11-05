@@ -30,6 +30,9 @@ type UnitOfWork interface {
 
 	// IncidentRepo retorna o repositório de incidents para uso dentro da transação.
 	IncidentRepo() IncidentRepositoryTx
+
+	// OutboxRepo retorna o repositório do outbox de avisos para uso dentro da transação.
+	OutboxRepo() OutboxRepositoryTx
 }
 
 // CheckRepositoryTx define métodos de repositório que aceitam transação.
@@ -55,4 +58,9 @@ type IncidentRepositoryTx interface {
 	FindOpenByMonitor(ctx context.Context, monitorID string) (*domain.Incident, error)
 	Close(ctx context.Context, id string, endedAt string, durationSeconds int) error
 	IncrementFailureCount(ctx context.Context, monitorID string) error
+}
+
+// OutboxRepositoryTx grava avisos na mesma transação do check que os gerou.
+type OutboxRepositoryTx interface {
+	EnqueueWithTx(ctx context.Context, events []domain.OutboxEvent) error
 }

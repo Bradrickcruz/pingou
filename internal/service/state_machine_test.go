@@ -12,12 +12,6 @@ import (
 	"github.com/Bradrickcruz/pingou/internal/service"
 )
 
-type noopNotifier struct{}
-
-func (noopNotifier) NotifyDown(context.Context, *domain.Monitor, *domain.Incident)         {}
-func (noopNotifier) NotifyRecovery(context.Context, *domain.Monitor, *domain.Incident)     {}
-func (noopNotifier) NotifyCertExpiring(context.Context, *domain.Monitor, domain.CertAlert) {}
-
 // Regressão: com MaxOpenConns=1, ler fora da transação travava o caminho de falha
 // e o monitor nunca saía de UNKNOWN.
 func TestFailingMonitorGoesDown(t *testing.T) {
@@ -37,11 +31,11 @@ func TestFailingMonitorGoesDown(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	uow := service.NewUnitOfWork(db, repository.NewCheckRepoTx(db), repository.NewMonitorRepoTx(db), repository.NewIncidentRepoTx(db))
+	uow := newUoW(db)
 	msg := "boom"
 	cctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
-	if err := service.NewStateMachine(uow, noopNotifier{}).Process(cctx, m, domain.CheckResult{ErrorMessage: &msg}); err != nil {
+	if err := service.NewStateMachine(uow, testChannels, nil).Process(cctx, m, domain.CheckResult{ErrorMessage: &msg}); err != nil {
 		t.Fatal(err)
 	}
 	if m.CurrentState != domain.StateDown {
@@ -49,31 +43,9 @@ func TestFailingMonitorGoesDown(t *testing.T) {
 	}
 }
 
-// dbNotifier imita o WebhookNotifier real: lê a URL do webhook no banco.
-type dbNotifier struct {
-	settings         *repository.SettingsRepo
-	downs, recovered int
-	lastRecovery     *domain.Incident
-}
-
-func (n *dbNotifier) NotifyDown(ctx context.Context, _ *domain.Monitor, _ *domain.Incident) {
-	if _, err := n.settings.Get(ctx, "webhook_url"); err == nil {
-		n.downs++
-	}
-}
-
-func (n *dbNotifier) NotifyRecovery(ctx context.Context, _ *domain.Monitor, i *domain.Incident) {
-	if _, err := n.settings.Get(ctx, "webhook_url"); err == nil {
-		n.recovered++
-		n.lastRecovery = i
-	}
-}
-
-func (n *dbNotifier) NotifyCertExpiring(context.Context, *domain.Monitor, domain.CertAlert) {}
-
-// Regressão: o notifier rodava com a transação aberta e, ao ler o banco,
-// travava esperando a única conexão do SQLite.
-func TestNotifierRunsAfterCommit(t *testing.T) {
+// Cada mudança de estado grava um aviso no outbox (um por canal), na mesma
+// transação do check; check sem mudança não grava nada.
+func TestStateChangesGoToOutbox(t *testing.T) {
 	db, err := database.Open(filepath.Join(t.TempDir(), "t.db"))
 	if err != nil {
 		t.Fatal(err)
@@ -90,13 +62,13 @@ func TestNotifierRunsAfterCommit(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	n := &dbNotifier{settings: repository.NewSettingsRepo(db)}
+	downs := func() int { return len(pendingNotices(t, db, domain.EventDown)) }
 	process := func(res domain.CheckResult) {
 		t.Helper()
-		uow := service.NewUnitOfWork(db, repository.NewCheckRepoTx(db), repository.NewMonitorRepoTx(db), repository.NewIncidentRepoTx(db))
+		uow := newUoW(db)
 		cctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 		defer cancel()
-		if err := service.NewStateMachine(uow, n).Process(cctx, m, res); err != nil {
+		if err := service.NewStateMachine(uow, testChannels, nil).Process(cctx, m, res); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -107,14 +79,14 @@ func TestNotifierRunsAfterCommit(t *testing.T) {
 
 	// 1ª falha: abaixo do threshold, continua UNKNOWN
 	process(fail)
-	if m.CurrentState != domain.StateUnknown || n.downs != 0 {
-		t.Fatalf("após 1 falha: state=%s downs=%d", m.CurrentState, n.downs)
+	if m.CurrentState != domain.StateUnknown || downs() != 0 {
+		t.Fatalf("após 1 falha: state=%s downs=%d", m.CurrentState, downs())
 	}
 
 	// 2ª falha: atinge threshold → DOWN + 1 notificação + incidente aberto
 	process(fail)
-	if m.CurrentState != domain.StateDown || n.downs != 1 {
-		t.Fatalf("após 2 falhas: state=%s downs=%d", m.CurrentState, n.downs)
+	if m.CurrentState != domain.StateDown || downs() != 1 {
+		t.Fatalf("após 2 falhas: state=%s downs=%d", m.CurrentState, downs())
 	}
 	open, err := repository.NewIncidentRepo(db).FindOpenByMonitor(ctx, m.ID)
 	if err != nil || open == nil {
@@ -123,16 +95,16 @@ func TestNotifierRunsAfterCommit(t *testing.T) {
 
 	// 3ª falha: já DOWN, não notifica de novo
 	process(fail)
-	if n.downs != 1 {
-		t.Fatalf("notificou down repetido: downs=%d", n.downs)
+	if downs() != 1 {
+		t.Fatalf("notificou down repetido: downs=%d", downs())
 	}
 
 	// sucesso: DOWN → UP, fecha incidente e notifica recuperação
 	process(ok)
-	if m.CurrentState != domain.StateUp || n.recovered != 1 {
-		t.Fatalf("após sucesso: state=%s recovered=%d", m.CurrentState, n.recovered)
+	if m.CurrentState != domain.StateUp || len(pendingNotices(t, db, domain.EventUp)) != 1 {
+		t.Fatalf("após sucesso: state=%s recovered=%d", m.CurrentState, len(pendingNotices(t, db, domain.EventUp)))
 	}
-	if n.lastRecovery.EndedAt == nil || n.lastRecovery.DurationSeconds == nil {
+	if rec := pendingNotices(t, db, domain.EventUp)[0].Snapshot.AsIncident(); rec.EndedAt == nil || rec.DurationSeconds == nil {
 		t.Fatal("incidente de recuperação sem ended_at/duration")
 	}
 	open, _ = repository.NewIncidentRepo(db).FindOpenByMonitor(ctx, m.ID)
@@ -165,9 +137,9 @@ func TestHeartbeatGoesDownOnFirstFailure(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	uow := service.NewUnitOfWork(db, repository.NewCheckRepoTx(db), repository.NewMonitorRepoTx(db), repository.NewIncidentRepoTx(db))
+	uow := newUoW(db)
 	msg := "no ping"
-	if err := service.NewStateMachine(uow, noopNotifier{}).Process(ctx, m, domain.CheckResult{ErrorMessage: &msg}); err != nil {
+	if err := service.NewStateMachine(uow, testChannels, nil).Process(ctx, m, domain.CheckResult{ErrorMessage: &msg}); err != nil {
 		t.Fatal(err)
 	}
 	if m.CurrentState != domain.StateDown {
@@ -198,8 +170,8 @@ func TestFailureCountFollowsOpenIncident(t *testing.T) {
 	}
 	process := func(res domain.CheckResult) {
 		t.Helper()
-		uow := service.NewUnitOfWork(db, repository.NewCheckRepoTx(db), repository.NewMonitorRepoTx(db), repository.NewIncidentRepoTx(db))
-		if err := service.NewStateMachine(uow, noopNotifier{}).Process(ctx, m, res); err != nil {
+		uow := newUoW(db)
+		if err := service.NewStateMachine(uow, testChannels, nil).Process(ctx, m, res); err != nil {
 			t.Fatal(err)
 		}
 	}

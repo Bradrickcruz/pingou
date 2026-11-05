@@ -35,8 +35,8 @@ func TestWebhookPayloadByType(t *testing.T) {
 	}
 	for _, c := range cases {
 		for _, send := range []func(){
-			func() { n.NotifyDown(t.Context(), c.m, incident) },
-			func() { n.NotifyRecovery(t.Context(), c.m, incident) },
+			func() { notifyDown(t.Context(), n, c.m, incident) },
+			func() { notifyRecovery(t.Context(), n, c.m, incident) },
 		} {
 			send()
 			body := <-bodies
@@ -87,11 +87,11 @@ func TestWebhookDashboardURL(t *testing.T) {
 		"https://pingou.exemplo.com": str("https://pingou.exemplo.com/monitors/abc"),
 	} {
 		n := NewWebhookNotifier(func() string { return srv.URL }, publicURL)
-		n.NotifyDown(t.Context(), m, incident)
+		notifyDown(t.Context(), n, m, incident)
 		if got := dashboardURL(); !eqPtr(got, want) {
 			t.Fatalf("down, publicURL %q: dashboard_url = %v", publicURL, got)
 		}
-		n.NotifyRecovery(t.Context(), m, incident)
+		notifyRecovery(t.Context(), n, m, incident)
 		if got := dashboardURL(); !eqPtr(got, want) {
 			t.Fatalf("up, publicURL %q: dashboard_url = %v", publicURL, got)
 		}
