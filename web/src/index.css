@@ -41,9 +41,8 @@
 
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
-  color-scheme: light;
-  color: var(--pg-ardosia);
-  background: var(--pg-nuvem);
+  color: var(--pg-cor-texto);
+  background: var(--pg-cor-fundo);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -70,6 +69,120 @@
   --pg-down-bg: #f8e6e8;
   --pg-unknown: #5b6b75;
   --pg-unknown-bg: #edf1f3;
+
+  /* tema escuro (DESIGN.md 3.6.1): constantes, não mudam entre temas */
+  --pg-ardosia-clara: #273640;
+  --pg-ardosia-linha: #31424d;
+  --pg-neblina-clara: #9db0ba;
+  --pg-ciano-luz: #4fc1d9;
+  --pg-up-claro: #4cc38a;
+  --pg-up-bg-escuro: #1b3a33;
+  --pg-down-claro: #ff7480;
+  --pg-down-bg-escuro: #3d2a31;
+  --pg-unknown-bg-escuro: #2c3c47;
+  --pg-down-borda: #edc4c8;
+  --pg-down-borda-escuro: #684953;
+}
+
+/*
+  Tokens de PAPEL (DESIGN.md 3.6.2 e 3.6.6). Os componentes usam estes, não
+  as cores cruas acima: o mesmo token cru serve a papéis diferentes (ex.:
+  --pg-ardosia é texto e também fundo de tooltip), então só o papel sabe
+  o que trocar no escuro. O tema é escolhido por data-theme no <html>
+  (ver lib/theme.js, T3). Sem data-theme, vale o claro.
+*/
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  --pg-cor-fundo: var(--pg-nuvem);
+  --pg-cor-superficie: var(--pg-branco);
+  --pg-cor-linha: var(--pg-borda);
+  --pg-cor-texto: var(--pg-ardosia);
+  --pg-cor-texto-2: var(--pg-neblina);
+  --pg-cor-link: var(--pg-ciano-fundo);
+  --pg-cor-borda-input: var(--pg-neblina);
+  --pg-cor-primario: var(--pg-ciano-fundo);
+  --pg-cor-primario-texto: var(--pg-branco);
+  --pg-cor-tabela-cab: var(--pg-ciano-nevoa);
+  --pg-cor-tabela-cab-texto: var(--pg-ciano-fundo);
+  --pg-cor-destaque: var(--pg-ciano-nevoa);
+  --pg-cor-hover: var(--pg-nuvem);
+
+  /* aba/filtro ativo */
+  --pg-cor-ativo: var(--pg-ardosia);
+  --pg-cor-ativo-texto: var(--pg-branco);
+
+  /* superfícies escuras sobre o tema claro (tooltip, barra, aviso, código) */
+  --pg-cor-sobre-escuro: var(--pg-branco);
+  --pg-cor-tooltip: var(--pg-ardosia);
+  --pg-cor-flutuante: var(--pg-ardosia);
+  --pg-cor-flutuante-borda: var(--pg-ardosia);
+  --pg-cor-flutuante-erro: #f3b5bb; /* valor que já estava fixo na UnsavedBar */
+  --pg-cor-codigo: var(--pg-ardosia);
+  --pg-cor-login-lateral: var(--pg-ardosia);
+
+  /* modal e sombras */
+  --pg-cor-veu: rgba(30, 43, 51, 0.5);
+  --pg-sombra-flutuante: 0 4px 16px rgba(30, 43, 51, 0.08);
+  --pg-sombra-flutuante-forte: 0 4px 16px rgba(30, 43, 51, 0.16);
+
+  /* alerta e botão destrutivo */
+  --pg-cor-down-borda: var(--pg-down-borda);
+  --pg-cor-destrutivo: var(--pg-down);
+  --pg-cor-destrutivo-texto: var(--pg-branco);
+
+  /* status (cor forte e fundo) */
+  --pg-cor-status-up: var(--pg-up);
+  --pg-cor-status-up-bg: var(--pg-up-bg);
+  --pg-cor-status-down: var(--pg-down);
+  --pg-cor-status-down-bg: var(--pg-down-bg);
+  --pg-cor-status-unknown: var(--pg-unknown);
+  --pg-cor-status-unknown-bg: var(--pg-unknown-bg);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --pg-cor-fundo: var(--pg-ardosia);
+  --pg-cor-superficie: var(--pg-ardosia-clara);
+  --pg-cor-linha: var(--pg-ardosia-linha);
+  --pg-cor-texto: var(--pg-nuvem);
+  --pg-cor-texto-2: var(--pg-neblina-clara);
+  --pg-cor-link: var(--pg-ciano-luz);
+  --pg-cor-borda-input: var(--pg-neblina-clara);
+  --pg-cor-primario: var(--pg-ciano-luz);
+  --pg-cor-primario-texto: var(--pg-ardosia);
+  --pg-cor-tabela-cab: var(--pg-ardosia-linha);
+  --pg-cor-tabela-cab-texto: var(--pg-ciano-luz);
+  --pg-cor-destaque: var(--pg-ardosia-linha);
+  --pg-cor-hover: var(--pg-ardosia-linha);
+
+  --pg-cor-ativo: var(--pg-nuvem);
+  --pg-cor-ativo-texto: var(--pg-ardosia);
+
+  --pg-cor-sobre-escuro: var(--pg-nuvem);
+  --pg-cor-tooltip: var(--pg-ardosia-linha);
+  --pg-cor-flutuante: var(--pg-ardosia-clara);
+  --pg-cor-flutuante-borda: var(--pg-ardosia-linha);
+  --pg-cor-flutuante-erro: var(--pg-down-claro);
+  --pg-cor-codigo: var(--pg-ardosia);
+  --pg-cor-login-lateral: var(--pg-ardosia-clara);
+
+  --pg-cor-veu: rgba(30, 43, 51, 0.7);
+  --pg-sombra-flutuante: none;
+  --pg-sombra-flutuante-forte: none;
+
+  --pg-cor-down-borda: var(--pg-down-borda-escuro);
+  --pg-cor-destrutivo: var(--pg-down-claro);
+  --pg-cor-destrutivo-texto: var(--pg-ardosia);
+
+  --pg-cor-status-up: var(--pg-up-claro);
+  --pg-cor-status-up-bg: var(--pg-up-bg-escuro);
+  --pg-cor-status-down: var(--pg-down-claro);
+  --pg-cor-status-down-bg: var(--pg-down-bg-escuro);
+  --pg-cor-status-unknown: var(--pg-neblina-clara);
+  --pg-cor-status-unknown-bg: var(--pg-unknown-bg-escuro);
 }
 
 @media (max-width: 1024px) {
