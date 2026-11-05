@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "test": "node --test src/lib/*.test.js",
+    "check:tokens": "../scripts/check-tokens.sh",
     "preview": "vite preview",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

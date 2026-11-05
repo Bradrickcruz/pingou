@@ -15,7 +15,7 @@ export function UnsavedBar({ formId, onDiscard, saving, error }) {
           type="button"
           onClick={onDiscard}
           disabled={saving}
-          className="min-h-[44px] px-4 rounded-pg-control border border-pg-branco text-pg-ui font-medium disabled:opacity-50 focus-visible:outline-2 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-pg-ciano"
+          className="min-h-[44px] px-4 rounded-pg-control border border-pg-sobre-escuro text-pg-ui font-medium disabled:opacity-50 focus-visible:outline-2 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-pg-ciano"
         >
           Descartar
         </button>
