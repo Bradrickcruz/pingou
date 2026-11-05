@@ -161,6 +161,10 @@ Valores constantes (não mudam entre temas). `--pg-ardosia`, `--pg-nuvem` e `--p
   --pg-down-claro: #ff7480;
   --pg-down-bg-escuro: #3d2a31;
   --pg-unknown-bg-escuro: #2c3c47; /* UNKNOWN usa --pg-neblina-clara como cor forte */
+
+  /* borda de alerta (card DOWN) — aprovado em 2026-11-05 */
+  --pg-down-borda: #edc4c8; /* tema claro: o valor que já estava fixo no código */
+  --pg-down-borda-escuro: #684953; /* 30% de --pg-down-claro sobre --pg-ardosia-clara */
 }
 ```
 
@@ -207,16 +211,64 @@ Componentes trocam o token pelo equivalente da coluna "Escuro". Tudo que não ap
 
 Texto `--pg-ardosia` sobre `--pg-ciano-luz` (botão primário): 6,9:1.
 
+Combinações da seção 3.6.6:
+
+| Texto / elemento                 | Fundo                | Contraste                                                      |
+| -------------------------------- | -------------------- | -------------------------------------------------------------- |
+| `--pg-ardosia`                   | `--pg-nuvem`         | 13,4:1                                                         |
+| `--pg-nuvem`                     | `--pg-ardosia-linha` | 9,6:1                                                          |
+| `--pg-ciano-luz`                 | `--pg-ardosia-linha` | 4,9:1                                                          |
+| `--pg-neblina-clara`             | `--pg-ardosia-clara` | 5,5:1                                                          |
+| `--pg-down-claro`                | `--pg-ardosia-clara` | 4,8:1                                                          |
+| `--pg-down-claro`                | `--pg-ardosia-linha` | 4,0:1 (**reprova**: não usar texto aqui)                       |
+| `--pg-ardosia`                   | `--pg-down-claro`    | 5,6:1                                                          |
+| `--pg-down-borda-escuro` (borda) | `--pg-ardosia-clara` | 1,6:1 (igual ao claro; borda decorativa, o estado vem do selo) |
+
 #### 3.6.5 Regras do tema escuro
 
 - **SEMPRE** use `--pg-ardosia` como fundo. **NUNCA** `#000`.
 - **NUNCA** use no escuro `--pg-ciano-fundo`, `--pg-up`, `--pg-down` ou `--pg-neblina`: ficam entre 2,5:1 e 3,1:1 sobre a ardósia, baixo demais para texto.
 - **NUNCA** use as versões claras (`--pg-ciano-luz`, `--pg-up-claro`, `--pg-down-claro`, `--pg-neblina-clara`) no tema claro.
 - **SEMPRE** botão primário no escuro: fundo `--pg-ciano-luz` e texto `--pg-ardosia`. Continua no máximo um por tela.
-- **NUNCA** use `--pg-ardosia-linha` como cor de texto (só em hover de linha e header de tabela, onde o texto é `--pg-nuvem` ou `--pg-ciano-luz`).
+- **NUNCA** use `--pg-ardosia-linha` como cor de texto (só como fundo/borda: hover, header de tabela, tooltip, chip selecionado, selo MAINTENANCE; o texto sobre ele é `--pg-nuvem` ou `--pg-ciano-luz`, e `--pg-down-claro` sobre ele reprova).
 - **NUNCA** use `--pg-ciano` para texto menor que 24 px, também no escuro (4,4:1, reprova AA).
 - Sem sombras: a elevação vem do degrau `--pg-ardosia` → `--pg-ardosia-clara`.
 - Tokens novos de tema escuro só derivam das cores desta seção. Cores fora dela só com aprovação.
+
+#### 3.6.6 Papéis adicionais (aprovados em 2026-11-05)
+
+Casos que o código usa e que a tabela 3.6.2 não cobria. Todos usam só tokens desta seção, exceto `--pg-down-borda-escuro`.
+
+| Papel                                         | Claro                                                         | Escuro                                                                                                      |
+| --------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Aba/filtro ativo                              | fundo `--pg-ardosia`, texto `--pg-branco`                     | fundo `--pg-nuvem`, texto `--pg-ardosia`                                                                    |
+| Tooltip                                       | fundo `--pg-ardosia`, texto `--pg-branco`                     | fundo `--pg-ardosia-linha`, texto `--pg-nuvem`                                                              |
+| Barra "alterações não salvas" (celular)       | fundo `--pg-ardosia`, texto `--pg-branco`                     | fundo `--pg-ardosia-clara`, borda superior `--pg-ardosia-linha`, texto `--pg-nuvem`, erro `--pg-down-claro` |
+| Aviso de conexão perdida                      | fundo `--pg-ardosia`, texto `--pg-branco`                     | fundo `--pg-ardosia-clara`, borda `--pg-neblina-clara`, texto `--pg-nuvem`                                  |
+| Bloco de código (`<pre>`)                     | fundo `--pg-ardosia`, texto `--pg-branco`                     | fundo `--pg-ardosia`, texto `--pg-nuvem`                                                                    |
+| Borda de card DOWN                            | `--pg-down-borda`                                             | `--pg-down-borda-escuro`                                                                                    |
+| Véu atrás do modal                            | `--pg-ardosia` a 50%                                          | `--pg-ardosia` a 70%; modal com borda `--pg-ardosia-linha`                                                  |
+| Sombra (menu, tooltip, gráfico)               | sutil, só em flutuantes                                       | **nenhuma**; a separação vem da borda `--pg-ardosia-linha`                                                  |
+| Hover (linha, item de menu, botão secundário) | `--pg-nuvem`                                                  | `--pg-ardosia-linha`                                                                                        |
+| Selo MAINTENANCE                              | fundo `--pg-ciano-nevoa`, ícone/texto `--pg-ciano-fundo`      | fundo `--pg-ardosia-linha`, ícone/texto `--pg-ciano-luz`                                                    |
+| Selo neutro                                   | fundo `--pg-branco`, borda `--pg-borda`, texto `--pg-neblina` | fundo `--pg-ardosia-clara`, borda `--pg-ardosia-linha`, texto `--pg-neblina-clara`                          |
+| Chip selecionado                              | fundo `--pg-ciano-nevoa`, borda/texto `--pg-ciano-fundo`      | fundo `--pg-ardosia-linha`, borda/texto `--pg-ciano-luz`                                                    |
+| Botão destrutivo sólido (confirmação)         | fundo `--pg-down`, texto `--pg-branco`                        | fundo `--pg-down-claro`, texto `--pg-ardosia`                                                               |
+| Coluna lateral do login                       | fundo `--pg-ardosia`                                          | fundo `--pg-ardosia-clara`                                                                                  |
+
+Gráficos (resposta, histórico):
+
+| Parte                       | Claro                   | Escuro                                                                  |
+| --------------------------- | ----------------------- | ----------------------------------------------------------------------- |
+| Linhas de grade             | `--pg-borda`            | `--pg-ardosia-linha`                                                    |
+| Faixa "fora do ar"          | `--pg-down-bg`          | `--pg-down-bg-escuro`                                                   |
+| Linha da faixa "fora do ar" | `--pg-down`             | `--pg-down-claro`                                                       |
+| Faixa "sem dados"           | `--pg-unknown-bg`       | `--pg-unknown-bg-escuro`                                                |
+| Linha de resposta e pontos  | `--pg-ciano`            | `--pg-ciano` (igual; 3,8:1 sobre `--pg-ardosia-clara`, ok para gráfico) |
+| Barras de histórico UP/DOWN | `--pg-up` / `--pg-down` | `--pg-up-claro` / `--pg-down-claro`                                     |
+| Barra vazia                 | `--pg-borda`            | `--pg-ardosia-linha`                                                    |
+
+Nota: no escuro o modal se destaca pouco do véu (1,1:1). A borda faz a separação. Revisar nas capturas da verificação.
 
 ## 4. Status
 
@@ -317,8 +369,8 @@ No tema escuro, troque pelos equivalentes da seção 3.6.3: `--pg-up-bg` → `--
 
 ## 10. Pendências (não definidas na v1.1)
 
-- **Tema escuro**: tokens definidos na seção 3.6. Como o tema é trocado (mecanismo, onde fica o controle) é decisão de produto e não faz parte deste arquivo. Cores novas para o escuro **só com aprovação**.
-- Estados de gráfico/métricas e ilustrações ainda não definidos (claro e escuro).
+- **Tema escuro**: tokens definidos na seção 3.6 (papéis adicionais aprovados em 3.6.6). Como o tema é trocado (mecanismo, onde fica o controle) é decisão de produto e não faz parte deste arquivo. Cores novas para o escuro **só com aprovação**.
+- Ilustrações ainda não definidas (claro e escuro).
 
 ## 11. Checklist antes de entregar
 

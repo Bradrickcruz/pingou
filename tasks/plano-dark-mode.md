@@ -6,10 +6,10 @@
 
 **Objetivo.** A pessoa escolhe o tema do painel em **Configurações**, com três opções:
 
-| Opção   | O que faz                                          |
-| ------- | -------------------------------------------------- |
-| Claro   | Sempre claro                                       |
-| Escuro  | Sempre escuro                                      |
+| Opção   | O que faz                                            |
+| ------- | ---------------------------------------------------- |
+| Claro   | Sempre claro                                         |
+| Escuro  | Sempre escuro                                        |
 | Sistema | Segue o sistema (`prefers-color-scheme`). **Padrão** |
 
 **Limites (boundary).**
@@ -58,15 +58,15 @@ Este plano está concluído quando:
 
 ## Tech Stack
 
-| Technology                         | Choice Rationale                                                                                   |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------- |
-| CSS custom properties              | As classes `pg-*` do Tailwind já apontam para `var(--pg-*)`. Basta trocar o valor da variável por tema |
-| Atributo `data-theme` no `<html>`  | Um único ponto de troca. Funciona antes do React carregar (script inline)                          |
-| Tailwind `darkMode: ["selector", '[data-theme="dark"]']` | Só para exceções raras (ex.: trocar o logo). Não é o caminho principal       |
-| `localStorage` (`pingou_theme`)    | Escolha por navegador, como pede o `IDEAS.md`. Mesmo padrão do `pingou_api_key`                     |
-| `matchMedia("(prefers-color-scheme: dark)")` | Opção "Sistema" e troca ao vivo                                                          |
-| `node --test`                      | Já usado em `src/lib/*.test.js`. Testa a lógica pura do tema                                        |
-| Playwright (pré-instalado)         | Capturas para comparar tema claro antes/depois e revisar o escuro                                  |
+| Technology                                               | Choice Rationale                                                                                       |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| CSS custom properties                                    | As classes `pg-*` do Tailwind já apontam para `var(--pg-*)`. Basta trocar o valor da variável por tema |
+| Atributo `data-theme` no `<html>`                        | Um único ponto de troca. Funciona antes do React carregar (script inline)                              |
+| Tailwind `darkMode: ["selector", '[data-theme="dark"]']` | Só para exceções raras (ex.: trocar o logo). Não é o caminho principal                                 |
+| `localStorage` (`pingou_theme`)                          | Escolha por navegador, como pede o `IDEAS.md`. Mesmo padrão do `pingou_api_key`                        |
+| `matchMedia("(prefers-color-scheme: dark)")`             | Opção "Sistema" e troca ao vivo                                                                        |
+| `node --test`                                            | Já usado em `src/lib/*.test.js`. Testa a lógica pura do tema                                           |
+| Playwright (pré-instalado)                               | Capturas para comparar tema claro antes/depois e revisar o escuro                                      |
 
 ## Decisão de arquitetura (o ponto mais importante)
 
@@ -130,20 +130,20 @@ scripts/
 
 ## Task Breakdown
 
-| Task ID | Agent              | Name                                         | Priority | Complexity | Dependencies   |
-| ------- | ------------------ | -------------------------------------------- | -------- | ---------- | -------------- |
-| T0      | docs               | Corrigir `DESIGN.md` duplicado               | P0       | XS         | -              |
-| T1      | design (Bryan)     | Fechar lacunas de design do escuro           | P0       | S          | T0             |
-| T2      | frontend           | Camada de tokens de papel                    | P0       | S          | T1             |
-| T3      | frontend           | Núcleo do tema (lib, hook, script inline)    | P0       | S          | T2             |
-| T4      | frontend           | Migrar base: `ui/*`, layout, estilos globais | P0       | M          | T2             |
-| T5      | frontend           | Migrar telas, modais e cores soltas          | P0       | L          | T4             |
-| T6      | frontend           | Gráficos SVG e barras de histórico           | P1       | S          | T2             |
-| T7      | frontend           | Logos e toasts no escuro                     | P1       | XS         | T2             |
-| T8      | frontend           | Bloco "Aparência" em Configurações           | P0       | S          | T3             |
-| T9      | frontend           | Trava contra regressão de tokens             | P1       | XS         | T5             |
-| T10     | qa                 | Verificação visual, contraste e piscar       | P0       | M          | T5–T9          |
-| T11     | docs               | Documentação final                           | P2       | XS         | T10            |
+| Task ID | Agent          | Name                                         | Priority | Complexity | Dependencies |
+| ------- | -------------- | -------------------------------------------- | -------- | ---------- | ------------ |
+| T0      | docs           | Corrigir `DESIGN.md` duplicado               | P0       | XS         | -            |
+| T1      | design (Bryan) | Fechar lacunas de design do escuro           | P0       | S          | T0           |
+| T2      | frontend       | Camada de tokens de papel                    | P0       | S          | T1           |
+| T3      | frontend       | Núcleo do tema (lib, hook, script inline)    | P0       | S          | T2           |
+| T4      | frontend       | Migrar base: `ui/*`, layout, estilos globais | P0       | M          | T2           |
+| T5      | frontend       | Migrar telas, modais e cores soltas          | P0       | L          | T4           |
+| T6      | frontend       | Gráficos SVG e barras de histórico           | P1       | S          | T2           |
+| T7      | frontend       | Logos e toasts no escuro                     | P1       | XS         | T2           |
+| T8      | frontend       | Bloco "Aparência" em Configurações           | P0       | S          | T3           |
+| T9      | frontend       | Trava contra regressão de tokens             | P1       | XS         | T5           |
+| T10     | qa             | Verificação visual, contraste e piscar       | P0       | M          | T5–T9        |
+| T11     | docs           | Documentação final                           | P2       | XS         | T10          |
 
 ### Task T0: Corrigir `DESIGN.md` duplicado
 
@@ -170,17 +170,17 @@ scripts/
   - §3.6 do `DESIGN.md` lido
 - **INPUT**: O §3.6.2 cobre os papéis principais. Mas o código usa coisas que o §3.6 **não** define:
 
-  | Caso no código                                                                 | Onde                                                                 | Pergunta para o design                              |
-  | ------------------------------------------------------------------------------ | -------------------------------------------------------------------- | --------------------------------------------------- |
-  | Superfície invertida: `bg-pg-ardosia text-pg-branco`                           | Tooltip (`RangeTabs`), aba ativa (`SegmentedTabs`, `RangeTabs`, chips do `Dashboard`), `UnsavedBar` mobile, `ConnectionOverlay`, bloco `<pre>` do `MonitorForm` | No escuro, ardósia some no fundo ardósia. Qual cor? |
-  | Borda de card DOWN `#EDC4C8`                                                    | `OpenIncidentCard`, `DownAlert`, `MonitorCard`                       | Já é cor fora do token. Vira token? Qual no escuro? |
-  | Texto de erro `#F3B5BB` sobre ardósia                                           | `UnsavedBar`                                                         | Idem                                                |
-  | Véu de modal `rgba(30,43,51,0.5)`                                               | `Modal`, `ConnectionOverlay`                                         | Sobre fundo ardósia quase não aparece               |
-  | Sombras `rgba(30,43,51,…)`                                                      | `RowMenu`, `ResponseChart`, `RangeTabs`                              | §3.6.5 diz "sem sombras". Remover no escuro?        |
-  | Hover de linha/botão `hover:bg-pg-nuvem`                                        | vários                                                               | §3.6.5 indica `--pg-ardosia-linha`. Confirmar       |
-  | Selo MAINTENANCE (`ciano-nevoa` + `ciano-fundo`) e selo neutro (`branco`)      | `Badge`                                                              | §3.6.3 só cobre UP, DOWN, UNKNOWN                   |
-  | Faixas do gráfico (`down-bg`, `unknown-bg`) e linha ciano                       | `ResponseChart`                                                      | §10 diz "estados de gráfico ainda não definidos"    |
-  | Rótulo da opção                                                                 | `ThemeCard`                                                          | `IDEAS.md` diz "Automático"; o pedido diz "Sistema" |
+  | Caso no código                                                            | Onde                                                                                                                                                            | Pergunta para o design                              |
+  | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+  | Superfície invertida: `bg-pg-ardosia text-pg-branco`                      | Tooltip (`RangeTabs`), aba ativa (`SegmentedTabs`, `RangeTabs`, chips do `Dashboard`), `UnsavedBar` mobile, `ConnectionOverlay`, bloco `<pre>` do `MonitorForm` | No escuro, ardósia some no fundo ardósia. Qual cor? |
+  | Borda de card DOWN `#EDC4C8`                                              | `OpenIncidentCard`, `DownAlert`, `MonitorCard`                                                                                                                  | Já é cor fora do token. Vira token? Qual no escuro? |
+  | Texto de erro `#F3B5BB` sobre ardósia                                     | `UnsavedBar`                                                                                                                                                    | Idem                                                |
+  | Véu de modal `rgba(30,43,51,0.5)`                                         | `Modal`, `ConnectionOverlay`                                                                                                                                    | Sobre fundo ardósia quase não aparece               |
+  | Sombras `rgba(30,43,51,…)`                                                | `RowMenu`, `ResponseChart`, `RangeTabs`                                                                                                                         | §3.6.5 diz "sem sombras". Remover no escuro?        |
+  | Hover de linha/botão `hover:bg-pg-nuvem`                                  | vários                                                                                                                                                          | §3.6.5 indica `--pg-ardosia-linha`. Confirmar       |
+  | Selo MAINTENANCE (`ciano-nevoa` + `ciano-fundo`) e selo neutro (`branco`) | `Badge`                                                                                                                                                         | §3.6.3 só cobre UP, DOWN, UNKNOWN                   |
+  | Faixas do gráfico (`down-bg`, `unknown-bg`) e linha ciano                 | `ResponseChart`                                                                                                                                                 | §10 diz "estados de gráfico ainda não definidos"    |
+  | Rótulo da opção                                                           | `ThemeCard`                                                                                                                                                     | `IDEAS.md` diz "Automático"; o pedido diz "Sistema" |
 
 - **OUTPUT**:
   1. Uma resposta (aprovada) para cada linha da tabela.
@@ -381,16 +381,16 @@ scripts/
 
 ## Risk Areas
 
-| Risk                                                                                       | Impact                                                                                     | Mitigation                                                                                                     |
-| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| 1. **Padrão é "Sistema"**: se o T3 for publicado antes da migração, todo usuário com sistema escuro vê um painel quebrado sem ter escolhido nada | Alto                                                                                       | Publicar T3 a T8 **juntos**, numa única versão. Enquanto não terminar, o script inline fica sem efeito (ou atrás de uma constante desligada) |
-| 2. Migração por `sed` cego troca papel errado (`text-pg-branco` de botão × de tooltip)       | Médio: escuro ilegível em pontos isolados                                                  | Migrar por contexto, um commit por pasta, revisão com capturas                                                 |
-| 3. Tema claro muda sem querer                                                              | Alto (fora do escopo, `IDEAS.md` proíbe)                                                   | Capturas de referência antes do T4 e comparação após cada pasta                                                |
-| 4. Lacunas de design (T1) sem resposta travam o código                                     | Médio: atraso                                                                              | T0, T1 primeiro; T2 e T3 podem começar com papéis já definidos no §3.6.2 enquanto o resto é aprovado           |
-| 5. Cores fora do token já existentes (`#EDC4C8`, `#F3B5BB`) ganham "equivalente escuro" inventado | Médio: viola §3.4                                                                     | Só valores aprovados no T1                                                                                     |
-| 6. Script inline e `lib/theme.js` divergem com o tempo                                      | Baixo                                                                                      | Comentário cruzado nos dois; teste em `theme.test.js` cobre a mesma regra                                      |
-| 7. `localStorage` indisponível (aba anônima, bloqueio)                                      | Baixo                                                                                      | `try/catch` e cair em "system"                                                                                 |
-| 8. CSP futura bloqueia o script inline                                                     | Baixo (hoje não há CSP)                                                                    | Registrar no `docs/implementacoes.md`; usar hash do script se uma CSP entrar                                   |
+| Risk                                                                                                                                             | Impact                                    | Mitigation                                                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. **Padrão é "Sistema"**: se o T3 for publicado antes da migração, todo usuário com sistema escuro vê um painel quebrado sem ter escolhido nada | Alto                                      | Publicar T3 a T8 **juntos**, numa única versão. Enquanto não terminar, o script inline fica sem efeito (ou atrás de uma constante desligada) |
+| 2. Migração por `sed` cego troca papel errado (`text-pg-branco` de botão × de tooltip)                                                           | Médio: escuro ilegível em pontos isolados | Migrar por contexto, um commit por pasta, revisão com capturas                                                                               |
+| 3. Tema claro muda sem querer                                                                                                                    | Alto (fora do escopo, `IDEAS.md` proíbe)  | Capturas de referência antes do T4 e comparação após cada pasta                                                                              |
+| 4. Lacunas de design (T1) sem resposta travam o código                                                                                           | Médio: atraso                             | T0, T1 primeiro; T2 e T3 podem começar com papéis já definidos no §3.6.2 enquanto o resto é aprovado                                         |
+| 5. Cores fora do token já existentes (`#EDC4C8`, `#F3B5BB`) ganham "equivalente escuro" inventado                                                | Médio: viola §3.4                         | Só valores aprovados no T1                                                                                                                   |
+| 6. Script inline e `lib/theme.js` divergem com o tempo                                                                                           | Baixo                                     | Comentário cruzado nos dois; teste em `theme.test.js` cobre a mesma regra                                                                    |
+| 7. `localStorage` indisponível (aba anônima, bloqueio)                                                                                           | Baixo                                     | `try/catch` e cair em "system"                                                                                                               |
+| 8. CSP futura bloqueia o script inline                                                                                                           | Baixo (hoje não há CSP)                   | Registrar no `docs/implementacoes.md`; usar hash do script se uma CSP entrar                                                                 |
 
 ## Rollback Strategy
 
@@ -423,13 +423,13 @@ cd web && npm run lint && npm run format:check && npm test && npm run check:toke
 
 ## Cronograma Sugerido
 
-| Fase   | Tarefas        | Complexity | Esforço    | Target                                  | Status      |
-| ------ | -------------- | ---------- | ---------- | --------------------------------------- | ----------- |
-| Fase 0 | T0, T1         | S          | 0,5–1 dia  | Design fechado e aprovado               | 🟨 T0 feito |
-| Fase 1 | T2, T3         | S          | 1 dia      | Infra de tema pronta (ainda desligada)  | ⬜ Pendente |
-| Fase 2 | T4, T5, T6, T7 | L          | 3–4 dias   | Todas as telas em tokens de papel       | ⬜ Pendente |
-| Fase 3 | T8, T9         | S          | 0,5–1 dia  | Seletor em Configurações + trava        | ⬜ Pendente |
-| Fase 4 | T10, T11       | M          | 1–1,5 dia  | Verificado, documentado, versão única   | ⬜ Pendente |
+| Fase   | Tarefas        | Complexity | Esforço   | Target                                 | Status      |
+| ------ | -------------- | ---------- | --------- | -------------------------------------- | ----------- |
+| Fase 0 | T0, T1         | S          | 0,5–1 dia | Design fechado e aprovado              | ✅ Feito    |
+| Fase 1 | T2, T3         | S          | 1 dia     | Infra de tema pronta (ainda desligada) | ⬜ Pendente |
+| Fase 2 | T4, T5, T6, T7 | L          | 3–4 dias  | Todas as telas em tokens de papel      | ⬜ Pendente |
+| Fase 3 | T8, T9         | S          | 0,5–1 dia | Seletor em Configurações + trava       | ⬜ Pendente |
+| Fase 4 | T10, T11       | M          | 1–1,5 dia | Verificado, documentado, versão única  | ⬜ Pendente |
 
 Total estimado: **6 a 8,5 dias** de trabalho.
 
@@ -437,6 +437,7 @@ Total estimado: **6 a 8,5 dias** de trabalho.
 
 ### Concluído
 
+- T1 (2026-11-05): lacunas de design aprovadas pelo Bryan e registradas no `DESIGN.md` §3.6.1, 3.6.4 e 3.6.6. Nome da 3ª opção: **Sistema**. Cor nova aprovada: `--pg-down-borda-escuro` (#684953); `--pg-down-borda` (#EDC4C8) vira token no claro.
 - T0 (2026-11-05): removida a v1.0 duplicada do `DESIGN.md`. Nada da v1.0 faltava na v1.1.
 
 ### Em andamento
@@ -445,7 +446,7 @@ Total estimado: **6 a 8,5 dias** de trabalho.
 
 ### Pendente
 
-- T1 a T11
+- T2 a T11
 
 ## Notes
 
