@@ -31,26 +31,26 @@ export function ChecksTable({
 
   if (checks.length === 0) {
     return (
-      <p className="m-0 py-10 px-4 text-center text-pg-ui text-pg-neblina rounded-pg-card border border-dashed border-pg-borda">
+      <p className="m-0 py-10 px-4 text-center text-pg-ui text-pg-texto-2 rounded-pg-card border border-dashed border-pg-linha">
         Aguardando o primeiro check.
       </p>
     );
   }
 
   return (
-    <div className="rounded-pg-card border border-pg-borda bg-pg-branco overflow-hidden">
+    <div className="rounded-pg-card border border-pg-linha bg-pg-superficie overflow-hidden">
       <ul className="md:hidden list-none m-0 p-0">
         {mobile.map((c) => (
           <li
             key={c.id}
-            className="px-4 py-2.5 border-t border-pg-borda first:border-t-0"
+            className="px-4 py-2.5 border-t border-pg-linha first:border-t-0"
           >
             <div className="flex items-center gap-3">
-              <span className="text-pg-ui text-pg-ardosia tabular-nums">
+              <span className="text-pg-ui text-pg-texto tabular-nums">
                 {checkTime(c.checked_at, now)}
               </span>
               <span
-                className={`inline-flex items-center gap-1 text-pg-caption font-medium ${c.success ? "text-pg-up" : "text-pg-down"}`}
+                className={`inline-flex items-center gap-1 text-pg-caption font-medium ${c.success ? "text-pg-status-up" : "text-pg-status-down"}`}
               >
                 {c.success ? (
                   <Check size={12} aria-hidden="true" />
@@ -59,7 +59,7 @@ export function ChecksTable({
                 )}
                 {c.success ? "OK" : "Falha"}
               </span>
-              <span className="ml-auto text-pg-ui text-pg-ardosia tabular-nums whitespace-nowrap">
+              <span className="ml-auto text-pg-ui text-pg-texto tabular-nums whitespace-nowrap">
                 {heartbeat || !c.success ? (
                   <span aria-label="sem dados">—</span>
                 ) : (
@@ -69,7 +69,7 @@ export function ChecksTable({
             </div>
             {!c.success && (
               <div
-                className="font-pg-mono text-pg-caption text-pg-neblina truncate"
+                className="font-pg-mono text-pg-caption text-pg-texto-2 truncate"
                 title={detailOf(c, type)}
               >
                 {detailOf(c, type)}
@@ -83,7 +83,7 @@ export function ChecksTable({
           type="button"
           onClick={onMore}
           disabled={loadingMore}
-          className="md:hidden w-full min-h-[48px] border-t border-pg-borda text-pg-ui font-medium text-pg-ciano-fundo disabled:opacity-50 focus-visible:outline-2 focus-visible:outline focus-visible:-outline-offset-2 focus-visible:outline-pg-ciano"
+          className="md:hidden w-full min-h-[48px] border-t border-pg-linha text-pg-ui font-medium text-pg-link disabled:opacity-50 focus-visible:outline-2 focus-visible:outline focus-visible:-outline-offset-2 focus-visible:outline-pg-ciano"
         >
           {loadingMore ? "Carregando…" : "Ver mais checks"}
         </button>
@@ -100,7 +100,7 @@ export function ChecksTable({
           <col className="hidden sm:table-column" />
         </colgroup>
         <thead>
-          <tr className="bg-pg-ciano-nevoa text-pg-caption text-pg-ciano-fundo">
+          <tr className="bg-pg-destaque text-pg-caption text-pg-link">
             <th scope="col" className="px-4 py-3 font-medium">
               Horário
             </th>
@@ -122,15 +122,13 @@ export function ChecksTable({
           {checks.map((c) => {
             const detail = detailOf(c, type);
             return (
-              <tr key={c.id} className="border-t border-pg-borda">
-                <td
-                  className={`${cell} text-pg-ui text-pg-ardosia tabular-nums`}
-                >
+              <tr key={c.id} className="border-t border-pg-linha">
+                <td className={`${cell} text-pg-ui text-pg-texto tabular-nums`}>
                   {checkTime(c.checked_at, now)}
                 </td>
                 <td className={cell}>
                   <span
-                    className={`inline-flex items-center gap-1.5 text-pg-caption font-medium ${c.success ? "text-pg-up" : "text-pg-down"}`}
+                    className={`inline-flex items-center gap-1.5 text-pg-caption font-medium ${c.success ? "text-pg-status-up" : "text-pg-status-down"}`}
                   >
                     {c.success ? (
                       <Check size={14} aria-hidden="true" />
@@ -142,7 +140,7 @@ export function ChecksTable({
                   {/* mobile: sem a coluna Detalhe, o erro aparece sob o status */}
                   {!c.success && (
                     <div
-                      className="sm:hidden mt-0.5 font-pg-mono text-pg-caption text-pg-neblina truncate"
+                      className="sm:hidden mt-0.5 font-pg-mono text-pg-caption text-pg-texto-2 truncate"
                       title={detail}
                     >
                       {detail}
@@ -150,7 +148,7 @@ export function ChecksTable({
                   )}
                 </td>
                 <td
-                  className={`${cell} text-right text-pg-ui text-pg-ardosia tabular-nums whitespace-nowrap`}
+                  className={`${cell} text-right text-pg-ui text-pg-texto tabular-nums whitespace-nowrap`}
                 >
                   {heartbeat || !c.success ? (
                     <span aria-label="sem dados">—</span>
@@ -159,7 +157,7 @@ export function ChecksTable({
                   )}
                 </td>
                 <td
-                  className={`${cell} hidden sm:table-cell font-pg-mono text-pg-caption text-pg-neblina`}
+                  className={`${cell} hidden sm:table-cell font-pg-mono text-pg-caption text-pg-texto-2`}
                 >
                   <div className="truncate" title={detail}>
                     {detail}
@@ -171,7 +169,7 @@ export function ChecksTable({
         </tbody>
       </table>
       <div
-        className="hidden md:block px-4 py-3 border-t border-pg-borda text-pg-caption text-pg-neblina"
+        className="hidden md:block px-4 py-3 border-t border-pg-linha text-pg-caption text-pg-texto-2"
         aria-live="polite"
       >
         Mostrando{" "}
@@ -185,7 +183,7 @@ export function ChecksTable({
               type="button"
               onClick={onMore}
               disabled={loadingMore}
-              className="p-0 border-0 bg-transparent text-pg-caption text-pg-ciano-fundo underline cursor-pointer disabled:opacity-50 focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano"
+              className="p-0 border-0 bg-transparent text-pg-caption text-pg-link underline cursor-pointer disabled:opacity-50 focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano"
             >
               {loadingMore ? "carregando…" : "ver mais"}
             </button>

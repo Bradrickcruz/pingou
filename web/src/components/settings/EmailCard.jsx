@@ -44,7 +44,7 @@ export function EmailCard({ value, onChange, available }) {
     >
       <label
         htmlFor="email-recipients"
-        className="block mb-1.5 text-pg-ui font-medium text-pg-ardosia"
+        className="block mb-1.5 text-pg-ui font-medium text-pg-texto"
       >
         Destinatários
       </label>
@@ -59,7 +59,7 @@ export function EmailCard({ value, onChange, available }) {
           disabled={!available}
           placeholder="ops@exemplo.com, voce@exemplo.com"
           aria-describedby="email-help email-result"
-          className="flex-1 min-w-0 px-3 py-2.5 rounded-pg-control font-pg-mono text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda disabled:bg-pg-nuvem disabled:text-pg-neblina disabled:cursor-not-allowed"
+          className="flex-1 min-w-0 px-3 py-2.5 rounded-pg-control font-pg-mono text-pg-ui text-pg-texto bg-pg-superficie border border-pg-linha disabled:bg-pg-fundo disabled:text-pg-texto-2 disabled:cursor-not-allowed"
         />
         {available && (
           <TestButton
@@ -72,7 +72,7 @@ export function EmailCard({ value, onChange, available }) {
       {available ? (
         <p
           id="email-help"
-          className="mt-1.5 mb-0 text-pg-caption text-pg-neblina"
+          className="mt-1.5 mb-0 text-pg-caption text-pg-texto-2"
         >
           Separe por vírgula (máximo de 10 destinatários, limite do SMTP). Vazio
           desliga o e-mail.
@@ -80,7 +80,7 @@ export function EmailCard({ value, onChange, available }) {
       ) : (
         <p
           id="email-help"
-          className="mt-1.5 mb-0 text-pg-caption text-pg-neblina"
+          className="mt-1.5 mb-0 text-pg-caption text-pg-texto-2"
         >
           Para ativar, configure{" "}
           <code className="font-pg-mono">PINGOU_SMTP_HOST</code> e{" "}
@@ -89,7 +89,7 @@ export function EmailCard({ value, onChange, available }) {
             href={EMAIL_DOCS}
             target="_blank"
             rel="noreferrer"
-            className="text-pg-ciano-fundo underline"
+            className="text-pg-link underline"
           >
             Como configurar
           </a>

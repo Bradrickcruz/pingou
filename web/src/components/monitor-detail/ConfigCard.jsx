@@ -17,15 +17,15 @@ export function ConfigCard({ monitor: m }) {
   ].filter(Boolean);
 
   return (
-    <dl className="m-0 px-4 rounded-pg-card border border-pg-borda bg-pg-branco">
+    <dl className="m-0 px-4 rounded-pg-card border border-pg-linha bg-pg-superficie">
       {/* mobile: o tipo já está no cabeçalho ("HTTP · a cada 30 s") */}
       {rows.map(([k, v], i) => (
         <div
           key={k}
-          className={`${i === 0 ? "hidden md:flex" : "flex"} ${i === 1 ? "max-md:border-t-0" : ""} justify-between gap-4 py-2.5 border-t border-pg-borda first:border-t-0 text-pg-ui`}
+          className={`${i === 0 ? "hidden md:flex" : "flex"} ${i === 1 ? "max-md:border-t-0" : ""} justify-between gap-4 py-2.5 border-t border-pg-linha first:border-t-0 text-pg-ui`}
         >
-          <dt className="text-pg-neblina">{k}</dt>
-          <dd className="m-0 text-right text-pg-ardosia">{v}</dd>
+          <dt className="text-pg-texto-2">{k}</dt>
+          <dd className="m-0 text-right text-pg-texto">{v}</dd>
         </div>
       ))}
     </dl>

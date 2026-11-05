@@ -7,7 +7,7 @@ export function BottomNav({ items, openIncidents }) {
   return (
     <nav
       aria-label="Principal"
-      className="md:hidden fixed inset-x-0 bottom-0 z-40 bg-pg-branco border-t border-pg-borda pb-[env(safe-area-inset-bottom)]"
+      className="md:hidden fixed inset-x-0 bottom-0 z-40 bg-pg-superficie border-t border-pg-linha pb-[env(safe-area-inset-bottom)]"
     >
       <ul
         className="grid"
@@ -23,15 +23,15 @@ export function BottomNav({ items, openIncidents }) {
               className={({ isActive }) =>
                 `flex flex-col items-center justify-center gap-1 min-h-[56px] py-2 text-pg-caption focus-visible:outline-2 focus-visible:outline focus-visible:-outline-offset-2 focus-visible:outline-pg-ciano ${
                   isActive || (to === "/" && pathname.startsWith("/monitors/"))
-                    ? "text-pg-ciano-fundo font-medium"
-                    : "text-pg-neblina"
+                    ? "text-pg-link font-medium"
+                    : "text-pg-texto-2"
                 }`
               }
             >
               <span className="relative">
                 <Icon size={22} aria-hidden="true" />
                 {to === "/incidents" && openIncidents > 0 && (
-                  <span className="absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] px-1 rounded-full bg-pg-down text-pg-branco text-[11px] leading-[18px] font-medium text-center tabular-nums">
+                  <span className="absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] px-1 rounded-full bg-pg-destrutivo text-pg-destrutivo-texto text-[11px] leading-[18px] font-medium text-center tabular-nums">
                     {openIncidents}
                     <span className="sr-only">
                       {" "}

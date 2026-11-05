@@ -105,16 +105,16 @@ function CertAlertField({ id, checked, https, onChange }) {
           disabled={!https}
           onChange={(e) => onChange(e.target.checked)}
           aria-describedby={hintId}
-          className="mt-0.5 w-4 h-4 flex-shrink-0 accent-pg-ciano-fundo cursor-pointer disabled:cursor-not-allowed"
+          className="mt-0.5 w-4 h-4 flex-shrink-0 accent-pg-link cursor-pointer disabled:cursor-not-allowed"
         />
         <div className="min-w-0">
           <label
             htmlFor={id}
-            className={`text-pg-ui ${https ? "text-pg-ardosia cursor-pointer" : "text-pg-neblina cursor-not-allowed"}`}
+            className={`text-pg-ui ${https ? "text-pg-texto cursor-pointer" : "text-pg-texto-2 cursor-not-allowed"}`}
           >
             Avisar quando o certificado SSL estiver perto de expirar
           </label>
-          <p id={hintId} className="mt-0.5 text-pg-caption text-pg-neblina">
+          <p id={hintId} className="mt-0.5 text-pg-caption text-pg-texto-2">
             {https
               ? "Envia um aviso 30 dias e outro 7 dias antes de expirar, por todos os canais configurados."
               : "Disponível apenas para URLs https://"}
@@ -126,14 +126,14 @@ function CertAlertField({ id, checked, https, onChange }) {
 }
 
 const inputCls =
-  "w-full px-3 py-2.5 rounded-pg-control text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda placeholder:text-pg-neblina";
+  "w-full px-3 py-2.5 rounded-pg-control text-pg-ui text-pg-texto bg-pg-superficie border border-pg-linha placeholder:text-pg-texto-2";
 
 function Field({ label, children, id }) {
   return (
     <div className="mb-5 min-w-0">
       <label
         htmlFor={id}
-        className="block mb-2 text-pg-ui font-medium text-pg-ardosia"
+        className="block mb-2 text-pg-ui font-medium text-pg-texto"
       >
         {label}
       </label>
@@ -147,11 +147,11 @@ function NumberWithUnit({ id, label, unit, value, onChange, min, max }) {
     <div className="min-w-0">
       <label
         htmlFor={id}
-        className="block mb-2 text-pg-ui font-medium text-pg-ardosia"
+        className="block mb-2 text-pg-ui font-medium text-pg-texto"
       >
         {label}
       </label>
-      <div className="flex items-center rounded-pg-control border border-pg-borda bg-pg-branco pr-3 focus-within:outline-2 focus-within:outline focus-within:outline-pg-ciano">
+      <div className="flex items-center rounded-pg-control border border-pg-linha bg-pg-superficie pr-3 focus-within:outline-2 focus-within:outline focus-within:outline-pg-ciano">
         <input
           id={id}
           type="number"
@@ -160,9 +160,9 @@ function NumberWithUnit({ id, label, unit, value, onChange, min, max }) {
           max={max}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full min-w-0 px-3 py-2.5 border-0 rounded-pg-control text-pg-ui text-pg-ardosia bg-transparent focus:outline-none"
+          className="w-full min-w-0 px-3 py-2.5 border-0 rounded-pg-control text-pg-ui text-pg-texto bg-transparent focus:outline-none"
         />
-        <span className="text-pg-caption text-pg-neblina">{unit}</span>
+        <span className="text-pg-caption text-pg-texto-2">{unit}</span>
       </div>
     </div>
   );
@@ -202,11 +202,9 @@ export function PingBlock({ monitor, onRegenerate }) {
   };
 
   return (
-    <section className="mb-6 p-4 sm:p-5 rounded-pg-card border border-pg-borda bg-pg-nuvem">
-      <h3 className="text-pg-ui font-medium text-pg-ardosia my-0">
-        URL de ping
-      </h3>
-      <p className="mt-1 mb-3 text-pg-caption text-pg-neblina">
+    <section className="mb-6 p-4 sm:p-5 rounded-pg-card border border-pg-linha bg-pg-fundo">
+      <h3 className="text-pg-ui font-medium text-pg-texto my-0">URL de ping</h3>
+      <p className="mt-1 mb-3 text-pg-caption text-pg-texto-2">
         Chame esta URL sempre que o job terminar com sucesso.
       </p>
       <div className="flex gap-2">
@@ -218,12 +216,12 @@ export function PingBlock({ monitor, onRegenerate }) {
           readOnly
           value={url}
           onFocus={(e) => e.target.select()}
-          className="flex-1 min-w-0 px-3 py-2.5 rounded-pg-control font-pg-mono text-pg-caption text-pg-ciano-fundo bg-pg-branco border border-pg-borda"
+          className="flex-1 min-w-0 px-3 py-2.5 rounded-pg-control font-pg-mono text-pg-caption text-pg-link bg-pg-superficie border border-pg-linha"
         />
         <Button
           variant="ghost"
           onClick={copy}
-          className="gap-1.5 bg-pg-branco flex-shrink-0"
+          className="gap-1.5 bg-pg-superficie flex-shrink-0"
         >
           {copied ? (
             <Check size={16} aria-hidden="true" />
@@ -237,10 +235,10 @@ export function PingBlock({ monitor, onRegenerate }) {
         {copied ? "URL copiada" : ""}
       </span>
 
-      <div className="mt-4 mb-1.5 text-pg-caption text-pg-neblina">
+      <div className="mt-4 mb-1.5 text-pg-caption text-pg-texto-2">
         Exemplo com cron
       </div>
-      <pre className="m-0 p-3 rounded-pg-control bg-pg-ardosia text-pg-branco font-pg-mono text-pg-caption whitespace-pre-wrap break-all">
+      <pre className="m-0 p-3 rounded-pg-control bg-pg-codigo text-pg-sobre-escuro font-pg-mono text-pg-caption whitespace-pre-wrap break-all">
         {cron}
       </pre>
 
@@ -248,9 +246,9 @@ export function PingBlock({ monitor, onRegenerate }) {
         <div
           role="alertdialog"
           aria-label="Gerar nova URL"
-          className="mt-4 p-3 rounded-pg-control border border-pg-borda bg-pg-branco"
+          className="mt-4 p-3 rounded-pg-control border border-pg-linha bg-pg-superficie"
         >
-          <p className="text-pg-ui text-pg-ardosia mb-3">
+          <p className="text-pg-ui text-pg-texto mb-3">
             Gerar uma nova URL? A atual para de funcionar na hora, e o cron
             precisa ser atualizado.
           </p>
@@ -269,7 +267,7 @@ export function PingBlock({ monitor, onRegenerate }) {
         </div>
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
-          <span className="text-pg-caption text-pg-neblina">
+          <span className="text-pg-caption text-pg-texto-2">
             {monitor.last_ping_at
               ? `Último ping recebido ${timeAgo(monitor.last_ping_at)}`
               : "Nenhum ping recebido ainda"}
@@ -277,7 +275,7 @@ export function PingBlock({ monitor, onRegenerate }) {
           <button
             type="button"
             onClick={() => setConfirming(true)}
-            className="inline-flex items-center gap-1.5 px-2 py-1 -mr-2 rounded-pg-control text-pg-ui font-medium text-pg-ciano-fundo hover:bg-pg-ciano-nevoa focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano"
+            className="inline-flex items-center gap-1.5 px-2 py-1 -mr-2 rounded-pg-control text-pg-ui font-medium text-pg-link hover:bg-pg-destaque focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano"
           >
             <RefreshCw size={16} aria-hidden="true" />
             Gerar nova URL
@@ -285,7 +283,7 @@ export function PingBlock({ monitor, onRegenerate }) {
         </div>
       )}
       {error && (
-        <p role="alert" className="mt-2 text-pg-caption text-pg-down">
+        <p role="alert" className="mt-2 text-pg-caption text-pg-status-down">
           {error}
         </p>
       )}
@@ -394,7 +392,7 @@ export function MonitorForm({
     <form onSubmit={handleSubmit}>
       {!editing && (
         <fieldset className="mb-5 border-0 p-0 m-0">
-          <legend className="mb-2 text-pg-ui font-medium text-pg-ardosia">
+          <legend className="mb-2 text-pg-ui font-medium text-pg-texto">
             O que você quer monitorar?
           </legend>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -405,8 +403,8 @@ export function MonitorForm({
                   key={value}
                   className={`relative flex flex-col gap-1 p-3 rounded-pg-control border cursor-pointer transition-colors focus-within:outline-2 focus-within:outline focus-within:outline-pg-ciano ${
                     active
-                      ? "bg-pg-ciano-nevoa border-pg-ciano-fundo"
-                      : "bg-pg-branco border-pg-borda hover:bg-pg-nuvem"
+                      ? "bg-pg-destaque border-pg-link"
+                      : "bg-pg-superficie border-pg-linha hover:bg-pg-hover"
                   }`}
                 >
                   <input
@@ -417,15 +415,15 @@ export function MonitorForm({
                     onChange={() => chooseType(value)}
                     className="sr-only"
                   />
-                  <span className="flex items-center gap-2 text-pg-ui font-medium text-pg-ardosia">
+                  <span className="flex items-center gap-2 text-pg-ui font-medium text-pg-texto">
                     <Icon
                       size={16}
                       aria-hidden="true"
-                      className="text-pg-ciano-fundo"
+                      className="text-pg-link"
                     />
                     {label}
                   </span>
-                  <span className="text-pg-caption text-pg-neblina">
+                  <span className="text-pg-caption text-pg-texto-2">
                     {hint}
                   </span>
                 </label>
@@ -523,7 +521,7 @@ export function MonitorForm({
             min={0}
             max={86400}
           />
-          <p className="-mt-2 mb-5 text-pg-caption text-pg-neblina">
+          <p className="-mt-2 mb-5 text-pg-caption text-pg-texto-2">
             Se nenhum ping chegar em {deadline}, o monitor fica fora do ar.
           </p>
         </>
@@ -538,8 +536,8 @@ export function MonitorForm({
             min={10}
             max={86400}
           />
-          <fieldset className="mb-5 px-4 pt-2 pb-4 rounded-pg-card border border-pg-borda">
-            <legend className="px-1.5 text-pg-caption text-pg-neblina">
+          <fieldset className="mb-5 px-4 pt-2 pb-4 rounded-pg-card border border-pg-linha">
+            <legend className="px-1.5 text-pg-caption text-pg-texto-2">
               Avançado
             </legend>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -563,7 +561,7 @@ export function MonitorForm({
               />
             </div>
             {threshold > 0 && (
-              <p className="mt-3 text-pg-caption text-pg-neblina">
+              <p className="mt-3 text-pg-caption text-pg-texto-2">
                 Fica fora do ar depois de{" "}
                 {plural(threshold, "falha", "falhas seguidas")}, ou seja, em
                 cerca de {downAfter}.
@@ -574,17 +572,17 @@ export function MonitorForm({
       )}
 
       {error && (
-        <p role="alert" className="text-pg-ui text-pg-down mb-4">
+        <p role="alert" className="text-pg-ui text-pg-status-down mb-4">
           {error}
         </p>
       )}
 
-      <div className="flex items-center gap-2.5 pt-5 -mx-6 sm:-mx-7 px-6 sm:px-7 border-t border-pg-borda">
+      <div className="flex items-center gap-2.5 pt-5 -mx-6 sm:-mx-7 px-6 sm:px-7 border-t border-pg-linha">
         {editing && onDelete && (
           <button
             type="button"
             onClick={onDelete}
-            className="inline-flex items-center gap-1.5 px-2 py-2 -ml-2 rounded-pg-control text-pg-ui font-medium text-pg-down hover:bg-pg-down-bg focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano"
+            className="inline-flex items-center gap-1.5 px-2 py-2 -ml-2 rounded-pg-control text-pg-ui font-medium text-pg-status-down hover:bg-pg-status-down-bg focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano"
           >
             <Trash2 size={16} aria-hidden="true" />
             Excluir

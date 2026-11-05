@@ -5,7 +5,7 @@ export function SegmentedTabs({ label, options, value, onChange }) {
     <div
       role="group"
       aria-label={label}
-      className="flex w-full gap-1 p-1 rounded-pg-control border border-pg-borda bg-pg-branco md:w-auto md:flex-wrap md:gap-2 md:p-0 md:border-0 md:bg-transparent"
+      className="flex w-full gap-1 p-1 rounded-pg-control border border-pg-linha bg-pg-superficie md:w-auto md:flex-wrap md:gap-2 md:p-0 md:border-0 md:bg-transparent"
     >
       {options.map((o) => {
         const on = value === o.key;
@@ -17,8 +17,8 @@ export function SegmentedTabs({ label, options, value, onChange }) {
             onClick={() => onChange(o.key)}
             className={`flex-1 md:flex-none min-h-[44px] md:min-h-0 px-2 md:px-4 py-2 rounded-[6px] md:rounded-full md:border text-pg-ui whitespace-nowrap transition-colors duration-150 focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano ${
               on
-                ? "bg-pg-ardosia md:border-pg-ardosia text-pg-branco"
-                : "text-pg-ardosia md:bg-pg-branco md:border-pg-borda hover:bg-pg-nuvem"
+                ? "bg-pg-ativo md:border-pg-ativo text-pg-ativo-texto"
+                : "text-pg-texto md:bg-pg-superficie md:border-pg-linha hover:bg-pg-hover"
             }`}
           >
             {o.label}

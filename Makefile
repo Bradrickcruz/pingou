@@ -31,7 +31,7 @@ clean:
 	rm -rf bin
 
 build-web:
-	cd web && npm install && npm run build
+	cd web && npm install && npm run check:tokens && npm run build
 
 # ── docker ─────────────────────────────────────────────────────
 docker-build:

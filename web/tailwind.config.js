@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: ["selector", '[data-theme="dark"]'],
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
@@ -32,6 +33,42 @@ export default {
           "down-bg": "var(--pg-down-bg)",
           unknown: "var(--pg-unknown)",
           "unknown-bg": "var(--pg-unknown-bg)",
+
+          // Tokens de papel (DESIGN.md 3.6.2 / 3.6.6): trocam com o tema.
+          // Componentes devem usar estes, não as cores cruas acima.
+          fundo: "var(--pg-cor-fundo)",
+          superficie: "var(--pg-cor-superficie)",
+          linha: "var(--pg-cor-linha)",
+          texto: "var(--pg-cor-texto)",
+          "texto-2": "var(--pg-cor-texto-2)",
+          link: "var(--pg-cor-link)",
+          "borda-input": "var(--pg-cor-borda-input)",
+          primario: "var(--pg-cor-primario)",
+          "primario-texto": "var(--pg-cor-primario-texto)",
+          "tabela-cab": "var(--pg-cor-tabela-cab)",
+          "tabela-cab-texto": "var(--pg-cor-tabela-cab-texto)",
+          destaque: "var(--pg-cor-destaque)",
+          hover: "var(--pg-cor-hover)",
+          ativo: "var(--pg-cor-ativo)",
+          "ativo-texto": "var(--pg-cor-ativo-texto)",
+          "sobre-escuro": "var(--pg-cor-sobre-escuro)",
+          "sobre-escuro-2": "var(--pg-cor-sobre-escuro-2)",
+          tooltip: "var(--pg-cor-tooltip)",
+          flutuante: "var(--pg-cor-flutuante)",
+          "flutuante-borda": "var(--pg-cor-flutuante-borda)",
+          "flutuante-erro": "var(--pg-cor-flutuante-erro)",
+          codigo: "var(--pg-cor-codigo)",
+          "login-lateral": "var(--pg-cor-login-lateral)",
+          veu: "var(--pg-cor-veu)",
+          "down-borda": "var(--pg-cor-down-borda)",
+          destrutivo: "var(--pg-cor-destrutivo)",
+          "destrutivo-texto": "var(--pg-cor-destrutivo-texto)",
+          "status-up": "var(--pg-cor-status-up)",
+          "status-up-bg": "var(--pg-cor-status-up-bg)",
+          "status-down": "var(--pg-cor-status-down)",
+          "status-down-bg": "var(--pg-cor-status-down-bg)",
+          "status-unknown": "var(--pg-cor-status-unknown)",
+          "status-unknown-bg": "var(--pg-cor-status-unknown-bg)",
         },
       },
       fontFamily: {
@@ -66,6 +103,8 @@ export default {
       },
       boxShadow: {
         custom: "var(--shadow)",
+        "pg-flutuante": "var(--pg-sombra-flutuante)",
+        "pg-flutuante-forte": "var(--pg-sombra-flutuante-forte)",
       },
       borderRadius: {
         sm: "4px",

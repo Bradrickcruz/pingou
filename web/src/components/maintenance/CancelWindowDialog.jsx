@@ -11,8 +11,7 @@ export function CancelWindowDialog({ window: w, active, onClose, onDone }) {
   const who = w.monitor_name ? (
     <>
       {" "}
-      de{" "}
-      <strong className="font-medium text-pg-ardosia">{w.monitor_name}</strong>
+      de <strong className="font-medium text-pg-texto">{w.monitor_name}</strong>
     </>
   ) : null;
 
@@ -37,7 +36,7 @@ export function CancelWindowDialog({ window: w, active, onClose, onDone }) {
       title={active ? "Desligar manutenção" : "Cancelar manutenção"}
       onClose={onClose}
     >
-      <p className="mb-5 text-pg-neblina">
+      <p className="mb-5 text-pg-texto-2">
         {active ? (
           <>
             A manutenção{who} termina agora. O monitor volta a ser checado na

@@ -14,7 +14,7 @@ export function RangeTabs({ value, onChange, retentionDays = MIN_RETENTION }) {
     <div
       role="group"
       aria-label="Período"
-      className="flex w-full md:inline-flex md:w-auto p-1 gap-1 rounded-pg-card border border-pg-borda bg-pg-branco"
+      className="flex w-full md:inline-flex md:w-auto p-1 gap-1 rounded-pg-card border border-pg-linha bg-pg-superficie"
     >
       {RANGES.map((r, i) => {
         const on = value === r.key;
@@ -36,10 +36,10 @@ export function RangeTabs({ value, onChange, retentionDays = MIN_RETENTION }) {
               onBlur={() => setTip(null)}
               className={`w-full md:w-auto min-h-[40px] md:min-h-0 px-2 md:px-4 py-1.5 rounded-pg-control text-pg-ui whitespace-nowrap transition-colors duration-150 focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano ${
                 on
-                  ? "bg-pg-ardosia text-pg-branco"
+                  ? "bg-pg-ativo text-pg-ativo-texto"
                   : off
-                    ? "text-pg-neblina opacity-60 cursor-not-allowed line-through md:no-underline"
-                    : "text-pg-ardosia hover:bg-pg-nuvem"
+                    ? "text-pg-texto-2 opacity-60 cursor-not-allowed line-through md:no-underline"
+                    : "text-pg-texto hover:bg-pg-hover"
               }`}
             >
               <span className="md:hidden">{r.short}</span>
@@ -49,7 +49,7 @@ export function RangeTabs({ value, onChange, retentionDays = MIN_RETENTION }) {
               <span
                 id={tipId}
                 role="tooltip"
-                className={`invisible opacity-0 group-hover:visible group-hover:opacity-100 group-has-[:focus-visible]:visible group-has-[:focus-visible]:opacity-100 transition-opacity absolute top-full mt-2 z-30 w-60 ${tip === r.key ? "!visible !opacity-100" : ""} px-3 py-2 rounded-pg-control bg-pg-ardosia text-pg-branco text-pg-caption text-left shadow-[0_4px_16px_rgba(30,43,51,0.16)] ${
+                className={`invisible opacity-0 group-hover:visible group-hover:opacity-100 group-has-[:focus-visible]:visible group-has-[:focus-visible]:opacity-100 transition-opacity absolute top-full mt-2 z-30 w-60 ${tip === r.key ? "!visible !opacity-100" : ""} px-3 py-2 rounded-pg-control bg-pg-tooltip text-pg-sobre-escuro text-pg-caption text-left shadow-pg-flutuante-forte ${
                   last ? "right-0" : "left-1/2 -translate-x-1/2"
                 }`}
               >

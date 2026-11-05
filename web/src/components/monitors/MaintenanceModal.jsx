@@ -188,12 +188,15 @@ export function MaintenanceModal({
   };
 
   const inputCls = (invalid) =>
-    `w-full px-3 py-2.5 rounded-pg-control text-pg-ui text-pg-ardosia bg-pg-branco border ${
-      invalid ? "border-pg-down" : "border-pg-borda"
+    `w-full px-3 py-2.5 rounded-pg-control text-pg-ui text-pg-texto bg-pg-superficie border ${
+      invalid ? "border-pg-status-down" : "border-pg-linha"
     }`;
   const fieldError = (name) =>
     errors[name] && (
-      <p id={errorId(name)} className="mt-1 mb-0 text-pg-caption text-pg-down">
+      <p
+        id={errorId(name)}
+        className="mt-1 mb-0 text-pg-caption text-pg-status-down"
+      >
         {errors[name]}
       </p>
     );
@@ -201,9 +204,9 @@ export function MaintenanceModal({
     <div className="min-w-0">
       <label
         htmlFor={fieldId(name)}
-        className="block mb-2 text-pg-ui font-medium text-pg-ardosia"
+        className="block mb-2 text-pg-ui font-medium text-pg-texto"
       >
-        {label} <span className="font-normal text-pg-neblina">({zone})</span>
+        {label} <span className="font-normal text-pg-texto-2">({zone})</span>
       </label>
       <input
         id={fieldId(name)}
@@ -217,7 +220,7 @@ export function MaintenanceModal({
             .filter(Boolean)
             .join(" ") || undefined
         }
-        className={`${inputCls(errors[name])} disabled:bg-pg-nuvem disabled:text-pg-neblina disabled:cursor-not-allowed`}
+        className={`${inputCls(errors[name])} disabled:bg-pg-fundo disabled:text-pg-texto-2 disabled:cursor-not-allowed`}
       />
       {fieldError(name)}
     </div>
@@ -231,8 +234,8 @@ export function MaintenanceModal({
     >
       <form ref={formRef} onSubmit={submit} noValidate>
         {edit ? (
-          <p className="mb-5 text-pg-ui text-pg-ardosia">
-            <span className="text-pg-neblina">Monitor:</span>{" "}
+          <p className="mb-5 text-pg-ui text-pg-texto">
+            <span className="text-pg-texto-2">Monitor:</span>{" "}
             <strong className="font-medium">
               {editing.monitor_name ?? "—"}
             </strong>
@@ -244,9 +247,9 @@ export function MaintenanceModal({
             aria-invalid={errors.monitors ? true : undefined}
             aria-describedby={errors.monitors ? errorId("monitors") : undefined}
           >
-            <legend className="mb-2 text-pg-ui font-medium text-pg-ardosia">
+            <legend className="mb-2 text-pg-ui font-medium text-pg-texto">
               Monitores{" "}
-              <span className="font-normal text-pg-neblina">
+              <span className="font-normal text-pg-texto-2">
                 ({ids.length} {ids.length === 1 ? "escolhido" : "escolhidos"})
               </span>
             </legend>
@@ -261,7 +264,7 @@ export function MaintenanceModal({
                     <Search
                       size={16}
                       aria-hidden="true"
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-pg-neblina"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-pg-texto-2"
                     />
                     <input
                       type="search"
@@ -269,13 +272,15 @@ export function MaintenanceModal({
                       placeholder="Filtrar por nome ou endereço"
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 rounded-pg-control text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda placeholder:text-pg-neblina"
+                      className="w-full pl-9 pr-3 py-2 rounded-pg-control text-pg-ui text-pg-texto bg-pg-superficie border border-pg-linha placeholder:text-pg-texto-2"
                     />
                   </div>
                 )}
                 <ul
                   className={`list-none m-0 p-1 max-h-52 overflow-y-auto rounded-pg-control border ${
-                    errors.monitors ? "border-pg-down" : "border-pg-borda"
+                    errors.monitors
+                      ? "border-pg-status-down"
+                      : "border-pg-linha"
                   }`}
                 >
                   {visible.map((m) => {
@@ -287,7 +292,7 @@ export function MaintenanceModal({
                           className={`flex items-center gap-2.5 px-2 py-2 rounded-pg-control ${
                             blocked
                               ? "cursor-not-allowed opacity-60"
-                              : "cursor-pointer hover:bg-pg-nuvem"
+                              : "cursor-pointer hover:bg-pg-hover"
                           }`}
                         >
                           <input
@@ -295,13 +300,13 @@ export function MaintenanceModal({
                             checked={ids.includes(m.id)}
                             disabled={blocked}
                             onChange={() => toggle(m.id)}
-                            className="w-4 h-4 flex-shrink-0 accent-pg-ciano-fundo"
+                            className="w-4 h-4 flex-shrink-0 accent-pg-link"
                           />
-                          <span className="truncate text-pg-ui text-pg-ardosia">
+                          <span className="truncate text-pg-ui text-pg-texto">
                             {m.name}
                           </span>
                           {blocked && (
-                            <span className="ml-auto flex-shrink-0 text-pg-caption text-pg-neblina">
+                            <span className="ml-auto flex-shrink-0 text-pg-caption text-pg-texto-2">
                               {!m.enabled ? "pausado" : "já agendada"}
                             </span>
                           )}
@@ -310,7 +315,7 @@ export function MaintenanceModal({
                     );
                   })}
                   {visible.length === 0 && (
-                    <li className="px-2 py-3 text-pg-caption text-pg-neblina">
+                    <li className="px-2 py-3 text-pg-caption text-pg-texto-2">
                       Nenhum monitor encontrado.
                     </li>
                   )}
@@ -328,7 +333,7 @@ export function MaintenanceModal({
           {dateField("ends", "Fim", ends, setEnds)}
         </div>
         {locked && (
-          <p id={lockedNoteId} className="mb-5 text-pg-caption text-pg-neblina">
+          <p id={lockedNoteId} className="mb-5 text-pg-caption text-pg-texto-2">
             {LOCKED_NOTE}
           </p>
         )}
@@ -341,7 +346,10 @@ export function MaintenanceModal({
         />
 
         {submitError && (
-          <p role="alert" className="-mt-2 mb-4 text-pg-caption text-pg-down">
+          <p
+            role="alert"
+            className="-mt-2 mb-4 text-pg-caption text-pg-status-down"
+          >
             {submitError}
           </p>
         )}

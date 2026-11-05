@@ -101,10 +101,10 @@ export function Maintenance() {
       />
       <div className="hidden md:flex md:items-start md:justify-between gap-4 mb-7">
         <div>
-          <h1 className="text-pg-h1 font-medium text-pg-ardosia my-0">
+          <h1 className="text-pg-h1 font-medium text-pg-texto my-0">
             Manutenções
           </h1>
-          <p className="mt-2 mb-0 text-pg-ui text-pg-neblina">
+          <p className="mt-2 mb-0 text-pg-ui text-pg-texto-2">
             Janelas agendadas e em curso. Horários em {getTimeZone()}.
           </p>
         </div>
@@ -118,7 +118,7 @@ export function Maintenance() {
       )}
 
       {error && (
-        <p className="text-pg-ui text-pg-down mb-4" role="alert">
+        <p className="text-pg-ui text-pg-status-down mb-4" role="alert">
           {error}{" "}
           <Button variant="ghost" onClick={() => reload()} className="ml-2">
             Tentar de novo
@@ -127,13 +127,13 @@ export function Maintenance() {
       )}
 
       {!loading && !error && visible.length === 0 && (
-        <div className="text-center py-16 px-4 rounded-pg-card border border-dashed border-pg-borda text-pg-neblina">
+        <div className="text-center py-16 px-4 rounded-pg-card border border-dashed border-pg-linha text-pg-texto-2">
           <Wrench
             size={32}
             aria-hidden="true"
-            className="mx-auto mb-3 text-pg-ciano-fundo"
+            className="mx-auto mb-3 text-pg-link"
           />
-          <p className="font-medium text-pg-ardosia mb-1.5">
+          <p className="font-medium text-pg-texto mb-1.5">
             Nenhuma manutenção agendada
           </p>
           <p className="text-pg-ui mb-5">

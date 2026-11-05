@@ -12,6 +12,8 @@ import { BottomNav } from "./BottomNav";
 import { incidentsApi } from "../../api/incidents";
 import { settingsApi } from "../../api/settings";
 import marca from "../../assets/brand/pingou-marca-horizontal.svg";
+import marcaNegativa from "../../assets/brand/pingou-marca-horizontal-negativa.svg";
+import { ThemedImage } from "../ui/ThemedImage";
 
 const nav = [
   { to: "/", label: "Painel", icon: LayoutDashboard },
@@ -63,10 +65,15 @@ export function Shell({ children, onLogout }) {
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
-      <aside className="hidden md:flex md:w-[220px] md:flex-shrink-0 flex-col py-6 bg-pg-branco border-r border-pg-borda">
-        <div className="px-5 pb-6 border-b border-pg-borda">
-          <img src={marca} alt="Pingou" className="h-7 w-auto" />
-          <div className="text-pg-caption text-pg-neblina mt-1">
+      <aside className="hidden md:flex md:w-[220px] md:flex-shrink-0 flex-col py-6 bg-pg-superficie border-r border-pg-linha">
+        <div className="px-5 pb-6 border-b border-pg-linha">
+          <ThemedImage
+            light={marca}
+            dark={marcaNegativa}
+            alt="Pingou"
+            className="h-7 w-auto"
+          />
+          <div className="text-pg-caption text-pg-texto-2 mt-1">
             monitor de saúde
           </div>
         </div>
@@ -80,15 +87,15 @@ export function Shell({ children, onLogout }) {
               className={({ isActive }) =>
                 `flex items-center gap-2 py-2 px-3 mb-1 rounded-pg-control text-pg-ui transition-colors duration-150 ${
                   isActive || (to === "/" && pathname.startsWith("/monitors/"))
-                    ? "bg-pg-ciano-nevoa text-pg-ciano-fundo font-medium"
-                    : "text-pg-neblina hover:bg-pg-nuvem hover:text-pg-ardosia"
+                    ? "bg-pg-destaque text-pg-link font-medium"
+                    : "text-pg-texto-2 hover:bg-pg-hover hover:text-pg-texto"
                 }`
               }
             >
               <Icon size={16} aria-hidden="true" />
               {label}
               {to === "/incidents" && openIncidents > 0 && (
-                <span className="ml-auto min-w-[22px] px-1.5 rounded-full bg-pg-down-bg text-pg-down text-pg-caption font-medium text-center tabular-nums">
+                <span className="ml-auto min-w-[22px] px-1.5 rounded-full bg-pg-status-down-bg text-pg-status-down text-pg-caption font-medium text-center tabular-nums">
                   {openIncidents}
                   <span className="sr-only">
                     {" "}
@@ -102,7 +109,7 @@ export function Shell({ children, onLogout }) {
           ))}
         </nav>
 
-        <div className="py-4 px-5 border-t border-pg-borda flex flex-col gap-2">
+        <div className="py-4 px-5 border-t border-pg-linha flex flex-col gap-2">
           <Button
             variant="ghost"
             onClick={onLogout}
@@ -111,7 +118,7 @@ export function Shell({ children, onLogout }) {
             <LogOut size={16} aria-hidden="true" />
             Sair
           </Button>
-          <span className="text-pg-caption text-pg-neblina">
+          <span className="text-pg-caption text-pg-texto-2">
             Pingou {version ?? "v1.0"}
           </span>
         </div>

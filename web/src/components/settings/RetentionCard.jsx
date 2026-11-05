@@ -22,8 +22,8 @@ export function RetentionCard({ value, savedValue, onChange, databaseSize }) {
                 key={days}
                 className={`flex-1 md:flex-none inline-flex items-center justify-center min-h-[44px] md:min-h-0 px-2 md:px-4 py-2 rounded-full border text-pg-ui cursor-pointer transition-colors duration-150 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline has-[:focus-visible]:outline-pg-ciano ${
                   selected
-                    ? "bg-pg-ciano-nevoa border-pg-ciano-fundo text-pg-ciano-fundo"
-                    : "bg-pg-branco border-pg-borda text-pg-ardosia hover:bg-pg-nuvem"
+                    ? "bg-pg-destaque border-pg-link text-pg-link"
+                    : "bg-pg-superficie border-pg-linha text-pg-texto hover:bg-pg-hover"
                 }`}
               >
                 <input
@@ -42,7 +42,7 @@ export function RetentionCard({ value, savedValue, onChange, databaseSize }) {
         </div>
         <p
           aria-hidden="true"
-          className="md:hidden mt-1.5 mb-0 text-pg-caption text-pg-neblina"
+          className="md:hidden mt-1.5 mb-0 text-pg-caption text-pg-texto-2"
         >
           dias
         </p>
@@ -50,7 +50,7 @@ export function RetentionCard({ value, savedValue, onChange, databaseSize }) {
       {savedValue != null && value < savedValue && (
         <p
           role="status"
-          className="flex gap-2.5 items-start mt-4 mb-0 px-4 py-3 rounded-pg-control border border-pg-neblina bg-pg-nuvem text-pg-caption text-pg-ardosia"
+          className="flex gap-2.5 items-start mt-4 mb-0 px-4 py-3 rounded-pg-control border border-pg-borda-input bg-pg-fundo text-pg-caption text-pg-texto"
         >
           <CircleAlert
             size={16}
@@ -65,7 +65,7 @@ export function RetentionCard({ value, savedValue, onChange, databaseSize }) {
         </p>
       )}
       {databaseSize != null && (
-        <p className="mt-4 mb-0 text-pg-caption text-pg-neblina">
+        <p className="mt-4 mb-0 text-pg-caption text-pg-texto-2">
           Tamanho atual do banco: {formatBytes(databaseSize)}
         </p>
       )}

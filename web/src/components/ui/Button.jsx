@@ -1,10 +1,10 @@
 const variants = {
-  primary: "bg-pg-ciano-fundo text-pg-branco hover:brightness-90",
+  primary: "bg-pg-primario text-pg-primario-texto hover:brightness-90",
   ghost:
-    "bg-transparent border border-pg-borda text-pg-ardosia hover:bg-pg-ciano-nevoa",
+    "bg-transparent border border-pg-linha text-pg-texto hover:bg-pg-destaque",
   destructive:
-    "bg-transparent border border-pg-down text-pg-down hover:bg-pg-down-bg",
-  danger: "bg-pg-down text-pg-branco hover:brightness-90",
+    "bg-transparent border border-pg-status-down text-pg-status-down hover:bg-pg-status-down-bg",
+  danger: "bg-pg-destrutivo text-pg-destrutivo-texto hover:brightness-90",
 };
 
 export function Button({

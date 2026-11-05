@@ -1,7 +1,7 @@
 # 💡 Ideias de evolução
 
 > Só o que ainda **não foi implementado**. O que já entrou está em `docs/` no histórico de implementações.
-> Atualizado em 2026-11-04.
+> Atualizado em 2026-11-05.
 
 **Resumo**
 
@@ -10,8 +10,7 @@
 | 1   | Backup sem configurações + importar | Aguardando decisão     | medium     |
 | 2   | Status HTTP esperado                | Esperando um caso real | low        |
 | 3   | Páginas públicas de status          | Para detalhar          | medium     |
-| 4   | Modo escuro (dark mode)             | Para detalhar          | medium     |
-| 5   | Suporte a inglês (e outros idiomas) | Para detalhar          | medium     |
+| 4   | Suporte a inglês (e outros idiomas) | Para detalhar          | medium     |
 
 Mais abaixo: ideias [candidatas](#-candidatas-ainda-não-decididas), [adiadas](#-adiadas) e [descartadas](#-descartadas).
 
@@ -183,6 +182,7 @@ O README já lista "status page pública" em Pós-MVP. Hoje toda a API fica atr�
 - **Carga:** a página pública é aberta por qualquer um, e o SQLite tem uma conexão só. Precisa de cache curto (por exemplo 30 a 60 s) e limite de requisições por IP, para uma onda de acessos não atrasar a gravação dos checks. O `/stats` de 30 dias é a consulta mais cara.
 - **Validação do SSL:** decidir o que mostrar: só "válido" ou a data de expiração.
 - **Manutenção:** decidir se uma janela aparece como "Em manutenção" na página pública (sugiro que sim, com o motivo oculto).
+- **Tema:** o modo escuro do painel já existe (ver `docs/implementacoes.md`, item 15). A página pública deve nascer com os **tokens de papel** (`bg-pg-superficie`, `text-pg-texto`...; o `scripts/check-tokens.sh` barra cor crua), usar `lib/theme.js` e `ThemedImage` para os logos, e ter um botão de tema no cabeçalho (Claro, Escuro, Sistema), decidido em 2026-11-04. A escolha do visitante fica no navegador dele e não afeta o painel. Se usar a mesma chave `pingou_theme`, painel e página pública no mesmo navegador compartilham a escolha; se for outro endereço (origem), são independentes.
 - **Decisões tomadas (2026-11-04):**
   1. **Várias páginas**, cada uma com seus monitores. Um monitor pode estar em mais de uma página.
   2. **Endereço legível**, digitado por quem cria a página, e **único**. Regras sugeridas: letras minúsculas, números e hífen, de 3 a 40 caracteres; recusar palavras reservadas (`api`, `admin`, `login`, `assets` etc.) e endereço repetido (`409`). Depois de criado, mudar o endereço quebra o link antigo, então avisar na tela.
@@ -193,58 +193,6 @@ O README já lista "status page pública" em Pós-MVP. Hoje toda a API fica atr�
 ## 🏷️ Type
 
 feature (segurança)
-
-## ⏱️ Priority
-
-medium
-
----
-
-# 🧩 Task: Modo escuro (dark mode)
-
-## 💡 Idea
-
-Oferecer um tema escuro no painel, além do tema claro atual.
-
-## 🎯 Goal
-
-Quem usa o painel à noite, ou prefere tema escuro, consegue trocar sem perder legibilidade nem a identidade visual do Pingou.
-
-## 📦 Initial Scope
-
-- Três opções: **Claro**, **Escuro** e **Automático** (segue o sistema, via `prefers-color-scheme`). Padrão: Automático.
-- A escolha vale **por navegador** (guardada no `localStorage`), não por instalação. Diferente do fuso, que é global: aqui cada pessoa escolhe o seu.
-- Seletor de tema nas Configurações e, se couber, um atalho discreto no cabeçalho.
-- Aplicar o tema **antes** da primeira pintura, para não piscar o claro e depois virar escuro.
-- Todas as telas: Painel, Incidentes, Detalhe, Manutenções, Configurações, login e modais, no desktop e no celular.
-- Gráficos SVG (resposta, pings, faixas "fora do ar") e selos de estado (UP, DOWN, UNKNOWN, MAINTENANCE) com cores próprias do escuro.
-- Registrar a paleta escura e as regras de uso no `DESIGN.md`.
-
-## 🚧 Out of Scope
-
-- Temas personalizados ou escolha de cor
-- Tema diferente por monitor ou por página
-- Mudar o tema claro atual
-
-## 🔍 Context
-
-O painel foi redesenhado em tema claro (v1.1). As cores já devem sair de tokens do `DESIGN.md`. O `DESIGN.md` §3.4 diz que cor nova precisa de aprovação, então a paleta escura é uma decisão de design, não só de código.
-
-## ⚠️ Notes
-
-- **Primeiro passo:** levantar quantas cores estão fixas no código (hexadecimais soltos, classes de cor do Tailwind fora dos tokens). Cada uma vira token antes de criar o tema, senão o escuro fica "furado".
-- **Contraste:** conferir o mínimo de legibilidade (WCAG AA) nos dois temas, principalmente em texto cinza, selos e linhas de gráfico.
-- Vermelho (DOWN) e verde (UP) precisam continuar distinguíveis no escuro, também para quem tem daltonismo; não depender só da cor (o texto do selo já ajuda).
-- **Páginas públicas de status** (ideia 3) devem herdar o mesmo sistema de temas. Quem fizer uma antes da outra deve criar as telas novas já com tokens.
-- **Decisões tomadas (2026-11-04):**
-  1. **A paleta escura é aprovada pelo dono do projeto** (Bryan). O código só começa a usar o escuro depois da aprovação.
-  2. **Sem atalho no cabeçalho do painel.** Para trocar o tema, vai em Configurações.
-  3. **A página pública tem botão de tema no cabeçalho**, para o visitante escolher como quiser (Claro, Escuro, Automático). A escolha fica no navegador do visitante e não afeta o painel nem os outros visitantes.
-- **Ajuste no escopo:** o "atalho no cabeçalho" do Initial Scope vale **só para a página pública**. No painel, o seletor fica apenas em Configurações.
-
-## 🏷️ Type
-
-improvement
 
 ## ⏱️ Priority
 
