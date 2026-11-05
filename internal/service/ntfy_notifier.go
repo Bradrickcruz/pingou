@@ -77,7 +77,7 @@ func (n *NtfyNotifier) loc() *time.Location {
 }
 
 func (n *NtfyNotifier) NotifyDown(ctx context.Context, m *domain.Monitor, i *domain.Incident) {
-	n.send(ctx, "down", ntfyMessage{
+	n.send(ctx, eventMonitorDown, ntfyMessage{
 		title:    ntfyTitle(subjectDown(m)),
 		body:     bodyFor(m, i, false, n.publicURL, n.loc()),
 		priority: "high",
@@ -87,7 +87,7 @@ func (n *NtfyNotifier) NotifyDown(ctx context.Context, m *domain.Monitor, i *dom
 }
 
 func (n *NtfyNotifier) NotifyRecovery(ctx context.Context, m *domain.Monitor, i *domain.Incident) {
-	n.send(ctx, "up", ntfyMessage{
+	n.send(ctx, eventMonitorUp, ntfyMessage{
 		title:    ntfyTitle(subjectUp(m, i)),
 		body:     bodyFor(m, i, true, n.publicURL, n.loc()),
 		priority: "default",
@@ -102,7 +102,7 @@ func (n *NtfyNotifier) NotifyCertExpiring(ctx context.Context, m *domain.Monitor
 	if a.ThresholdDays <= domain.CertAlertFinalDays {
 		priority = "high"
 	}
-	n.send(ctx, "cert_expiring", ntfyMessage{
+	n.send(ctx, eventCertExpiring, ntfyMessage{
 		title:    ntfyTitle(subjectCert(m, a)),
 		body:     certBody(m, a, n.publicURL, n.loc()),
 		priority: priority,

@@ -13,7 +13,6 @@
 | 4   | Suporte a inglês (e outros idiomas)  | Para detalhar          | medium     |
 | 5   | Retry de notificações                | Para detalhar          | medium     |
 | 6   | Aviso de manutenção começou/terminou | Para detalhar          | low        |
-| 7   | Nomes claros nos eventos do webhook  | Para detalhar          | medium     |
 
 Mais abaixo: ideias [candidatas](#-candidatas-ainda-não-decididas), [adiadas](#-adiadas) e [descartadas](#-descartadas).
 
@@ -221,7 +220,7 @@ Quem não lê português consegue usar o Pingou, e adicionar um idioma novo vira
 - **Seletor de idioma** nas Configurações.
 - **Datas, horas e números** pelo idioma escolhido (`Intl`), respeitando o fuso das Configurações. Rever as datas formatadas à mão, que foram feitas assim porque o `Intl` em pt-BR gerava "28 de out.".
 - **Plurais e textos com variáveis** ("Fora do ar há 1 dia e 4 h", "3 monitores", "Expira em 12 dias") com regra de plural por idioma, sem juntar frases no código.
-- **Notificações** (e-mail e ntfy) no idioma configurado. O JSON do webhook **não muda** (continua `event`, `monitor`, `timestamp`...), exceto pelo campo novo `id` da ideia 5, pelos eventos novos da ideia 6 e pela renomeação dos eventos da ideia 7.
+- **Notificações** (e-mail e ntfy) no idioma configurado. O JSON do webhook **não muda** (continua `event`, `monitor`, `timestamp`...), exceto pelo campo novo `id` da ideia 5, pelos eventos novos da ideia 6 e pela renomeação dos eventos do webhook (já entregue: `monitor_down` / `monitor_up`).
 - **Mensagens de erro da API:** hoje misturam inglês (validação) e português. Caminho sugerido: a API devolve **código estável** (`VALIDATION_ERROR` etc., já existe) e o painel traduz a mensagem pelo código.
 
 ## 🚧 Out of Scope
@@ -335,7 +334,7 @@ Quem recebe os alertas sabe que a manutenção começou, que o silêncio é de p
 - Aviso de **início** e de **fim** da janela de manutenção, nos mesmos canais dos outros avisos (webhook, e-mail, ntfy).
 - **Só janela agendada** gera aviso. Pausa manual não avisa.
 - Um **interruptor em Configurações** liga e desliga o aviso, valendo para todas as janelas. Não há escolha por janela.
-- Eventos novos no webhook: `maintenance_started` e `maintenance_ended` (nomes no padrão da ideia 7). O webhook **sempre envia** quando o interruptor está ligado, sem opção própria.
+- Eventos novos no webhook: `maintenance_started` e `maintenance_ended` (nomes no padrão `<objeto>_<acontecimento>`, já entregue). O webhook **sempre envia** quando o interruptor está ligado, sem opção própria.
 - Conteúdo: nome do monitor, horário e motivo da janela.
 - Uma janela com vários monitores gera **um aviso só**, listando os monitores (e não um por monitor).
 - Cada aviso sai **uma vez só**, mesmo se o Pingou reiniciar no meio da janela.
@@ -354,14 +353,14 @@ O Pingou já tem janelas de manutenção e já mostra o motivo (modais de pausa 
 
 ## ⚠️ Notes
 
-- **Webhook sempre envia (decidido em 2026-11-05).** O risco: quem usa o webhook (por exemplo, fluxo no n8n) pode tratar "qualquer coisa que não seja `down`" como `up`, e `maintenance_started` viraria um falso "voltou". A resposta é a **ideia 7**: com os nomes `monitor_down` e `monitor_up`, quem atualiza é obrigado a rever o fluxo, e o evento novo não cai no "senão" sem ninguém ter olhado. **Por isso a ideia 7 sai antes desta, ou junto.** Sem ela, "sempre envia" é arriscado. O README também deve dizer a quem integra: evento que não conhece, **ignore**.
+- **Webhook sempre envia (decidido em 2026-11-05).** O risco: quem usa o webhook (por exemplo, fluxo no n8n) pode tratar "qualquer coisa que não seja `down`" como `up`, e `maintenance_started` viraria um falso "voltou". A resposta foi a renomeação dos eventos (já entregue): com os nomes `monitor_down` e `monitor_up`, quem atualiza é obrigado a rever o fluxo, e o evento novo não cai no "senão" sem ninguém ter olhado. **Por isso a renomeação saiu antes desta.** O README também deve dizer a quem integra: evento que não conhece, **ignore**.
 - **Não repetir aviso.** Precisa guardar que o aviso daquela janela já saiu. Pode ser uma coluna nova (migration) ou o outbox da ideia 5. **Se a ideia 5 entrar antes, esta fica mais simples**: o aviso vira só mais uma linha na fila, com a mesma garantia de entrega.
 - **Motivo é texto livre.** Já existe o cuidado de avisar que o motivo aparece na página pública (ideia 3). Aqui é parecido: o motivo vai para **e-mail e webhook**. Avisar no modal quando houver aviso ligado.
 - **Janela que termina e o monitor está fora do ar.** O aviso de fim deve dizer só "a manutenção terminou". Se o monitor ainda estiver caído, o aviso normal de queda cuida disso. Não misturar os dois no mesmo texto.
 - **Janela cancelada ou editada antes de começar.** Não deve gerar aviso de início. Se o horário mudou, vale o novo.
 - **Decisão tomada (2026-11-05):** o aviso sai **só para janela agendada**. Pausa manual é ação de quem está com o painel aberto e já sabe.
 - **Decisão tomada (2026-11-05):** o interruptor fica **só em Configurações**, valendo para todas as janelas. Sem escolha por janela.
-- **Decisão tomada (2026-11-05):** o webhook **sempre envia**, junto com os outros canais. Depende da ideia 7.
+- **Decisão tomada (2026-11-05):** o webhook **sempre envia**, junto com os outros canais. A renomeação dos eventos já foi entregue.
 
 ## 🏷️ Type
 
@@ -369,58 +368,7 @@ feature
 
 ## ⏱️ Priority
 
-low (depois da ideia 7, e de preferência depois da 5)
-
----
-
-# 🧩 Task: Nomes claros nos eventos do webhook
-
-## 💡 Idea
-
-Hoje o campo `event` do webhook vale `down` ou `up`. São nomes vagos: não dizem **o que** caiu. E deixam pouco espaço para eventos novos.
-
-A ideia é renomear para `monitor_down` e `monitor_up`, num padrão `<objeto>_<o que aconteceu>`. Assim entram depois, sem confusão, eventos como `maintenance_started` e `maintenance_ended`.
-
-## 🎯 Goal
-
-Nomes de evento que se explicam sozinhos e que aguentam eventos novos no futuro.
-
-## 📦 Initial Scope
-
-- Trocar `down` por `monitor_down` e `up` por `monitor_up` no campo `event` do JSON do webhook.
-- Documentar o padrão de nomes: `<objeto>_<acontecimento>`, minúsculas, separado por `_`.
-- Atualizar os exemplos do README (seção Webhook), os testes e qualquer exemplo de JSON mostrado no painel.
-- O botão de **teste** do webhook usa os nomes novos (verificar o que ele envia hoje).
-- Aviso claro no README e na nota da versão: **mudança que quebra compatibilidade**.
-- Regra escrita no README para quem integra: **evento desconhecido deve ser ignorado**, nunca tratado como `up`.
-- Se o aviso de SSL também sair por webhook, ele ganha nome no mesmo padrão (ex.: `ssl_expiring`). Verificar.
-
-## 🚧 Out of Scope
-
-- Aceitar os nomes antigos e novos ao mesmo tempo (decidido em 2026-11-05: quebra limpa).
-- Versionar o formato do JSON.
-- Mudar os outros campos (`monitor`, `timestamp`, `last_error`, `downtime_duration_seconds`).
-
-## 🔍 Context
-
-Seção Webhook do README e o notificador que monta o JSON (`NotifyDown` e `NotifyRecovery`). O README já mostra os exemplos com `"event": "down"` e `"event": "up"`.
-
-## ⚠️ Notes
-
-- **A quebra é silenciosa.** Quem testa `event == "down"` deixa de casar, e não aparece erro nenhum. Num fluxo do tipo "se `down`, alerta; senão, voltou", **todo aviso de queda vira "voltou"**. Por isso o README e a nota da versão precisam destacar isso.
-- **Ordem.** Esta ideia sai **antes ou junto** das ideias 5 e 6. Assim quem atualiza ajusta o fluxo **uma vez só**: nomes novos, `id` novo e eventos de manutenção na mesma versão.
-- **O que a renomeação resolve e o que não resolve.** Ela obriga a rever o fluxo. Mas quem reescrever como "se `monitor_down`, alerta; senão, voltou" cai no mesmo problema. A regra "ignore o que não conhece" é a que protege de verdade.
-- **Decisões tomadas (2026-11-05):**
-  1. **Quebra limpa.** Sem período de transição e sem enviar o nome antigo.
-  2. Hoje **só o dono usa o webhook**, então o único fluxo a ajustar é o dele (n8n). O aviso no README e na nota da versão continua valendo, para quem usar o Pingou no futuro.
-
-## 🏷️ Type
-
-melhoria (quebra compatibilidade)
-
-## ⏱️ Priority
-
-medium (antes da ideia 6)
+low (de preferência depois da 5)
 
 ---
 

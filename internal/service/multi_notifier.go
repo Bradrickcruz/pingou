@@ -35,15 +35,15 @@ func (n *MultiNotifier) Add(notifier Notifier) {
 }
 
 func (n *MultiNotifier) NotifyDown(ctx context.Context, m *domain.Monitor, i *domain.Incident) {
-	n.fanOut(ctx, "down", func(ctx context.Context, c Notifier) { c.NotifyDown(ctx, m, i) })
+	n.fanOut(ctx, eventMonitorDown, func(ctx context.Context, c Notifier) { c.NotifyDown(ctx, m, i) })
 }
 
 func (n *MultiNotifier) NotifyRecovery(ctx context.Context, m *domain.Monitor, i *domain.Incident) {
-	n.fanOut(ctx, "up", func(ctx context.Context, c Notifier) { c.NotifyRecovery(ctx, m, i) })
+	n.fanOut(ctx, eventMonitorUp, func(ctx context.Context, c Notifier) { c.NotifyRecovery(ctx, m, i) })
 }
 
 func (n *MultiNotifier) NotifyCertExpiring(ctx context.Context, m *domain.Monitor, a domain.CertAlert) {
-	n.fanOut(ctx, "cert_expiring", func(ctx context.Context, c Notifier) { c.NotifyCertExpiring(ctx, m, a) })
+	n.fanOut(ctx, eventCertExpiring, func(ctx context.Context, c Notifier) { c.NotifyCertExpiring(ctx, m, a) })
 }
 
 func (n *MultiNotifier) fanOut(ctx context.Context, event string, send func(context.Context, Notifier)) {

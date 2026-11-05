@@ -69,6 +69,15 @@ func downtimeSeconds(i *domain.Incident, end time.Time) int64 {
 	return max(int64(end.Sub(i.StartedAt).Seconds()), 0)
 }
 
+// Nomes do campo "event" do webhook. Padrão: <objeto>_<acontecimento>, minúsculas,
+// separado por "_". Também servem de rótulo de log nos outros canais.
+const (
+	eventMonitorDown  = "monitor_down"
+	eventMonitorUp    = "monitor_up"
+	eventCertExpiring = "cert_expiring"
+	eventTest         = "test"
+)
+
 type webhookPayload struct {
 	Event                   string                `json:"event"`
 	Monitor                 webhookPayloadMonitor `json:"monitor"`
@@ -107,7 +116,7 @@ func (n *WebhookNotifier) NotifyDown(ctx context.Context, m *domain.Monitor, i *
 	}
 
 	payload := webhookPayload{
-		Event:                   "down",
+		Event:                   eventMonitorDown,
 		Monitor:                 toWebhookMonitor(m),
 		Timestamp:               i.StartedAt.UTC().Format(time.RFC3339),
 		LastError:               i.LastError,
@@ -128,7 +137,7 @@ func (n *WebhookNotifier) NotifyRecovery(ctx context.Context, m *domain.Monitor,
 	downtimeDurationSeconds := downtimeSeconds(i, timestamp)
 
 	payload := webhookPayload{
-		Event:                   "up",
+		Event:                   eventMonitorUp,
 		Monitor:                 toWebhookMonitor(m),
 		Timestamp:               timestamp.Format(time.RFC3339),
 		LastError:               nil,
@@ -150,7 +159,7 @@ func (n *WebhookNotifier) NotifyCertExpiring(ctx context.Context, m *domain.Moni
 	expiresAt := a.ExpiresAt.UTC().Format(time.RFC3339)
 	daysLeft, threshold := a.DaysLeft, a.ThresholdDays
 	payload := webhookPayload{
-		Event:         "cert_expiring",
+		Event:         eventCertExpiring,
 		Monitor:       toWebhookMonitor(m),
 		Timestamp:     time.Now().UTC().Format(time.RFC3339),
 		DashboardURL:  n.dashboardURL(m),
@@ -210,7 +219,7 @@ func newWebhookTestClient() *http.Client {
 func SendTestWebhook(ctx context.Context, rawURL string) WebhookTestResult {
 	target := "https://exemplo.com"
 	payload := webhookPayload{
-		Event: "test",
+		Event: eventTest,
 		Monitor: webhookPayloadMonitor{
 			ID:     "00000000-0000-0000-0000-000000000000",
 			Name:   "Teste do Pingou",

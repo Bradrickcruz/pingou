@@ -179,3 +179,41 @@ func TestSendTestWebhook(t *testing.T) {
 		t.Fatalf("conexão recusada: %+v %v", r, *r.Error)
 	}
 }
+
+func TestWebhookDownAndRecoveryEventNames(t *testing.T) {
+	bodies := make(chan string, 2)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		bodies <- string(b)
+	}))
+	defer srv.Close()
+	n := NewWebhookNotifier(func() string { return srv.URL }, "")
+
+	started := time.Now().Add(-90 * time.Second)
+	dur := int64(90)
+	m := &domain.Monitor{ID: "m1", Name: "API", Type: domain.TypeHTTP}
+
+	n.NotifyDown(t.Context(), m, &domain.Incident{ID: "i1", StartedAt: started})
+	var down map[string]any
+	if err := json.Unmarshal([]byte(<-bodies), &down); err != nil {
+		t.Fatal(err)
+	}
+	if down["event"] != "monitor_down" {
+		t.Fatalf("event da queda = %v, quer monitor_down", down["event"])
+	}
+	if v, ok := down["downtime_duration_seconds"]; !ok || v != nil {
+		t.Fatalf("queda deve ter downtime_duration_seconds null: %v", down)
+	}
+
+	n.NotifyRecovery(t.Context(), m, &domain.Incident{ID: "i1", StartedAt: started, DurationSeconds: &dur})
+	var up map[string]any
+	if err := json.Unmarshal([]byte(<-bodies), &up); err != nil {
+		t.Fatal(err)
+	}
+	if up["event"] != "monitor_up" {
+		t.Fatalf("event da recuperação = %v, quer monitor_up", up["event"])
+	}
+	if up["downtime_duration_seconds"] != float64(90) {
+		t.Fatalf("downtime_duration_seconds = %v, quer 90", up["downtime_duration_seconds"])
+	}
+}
