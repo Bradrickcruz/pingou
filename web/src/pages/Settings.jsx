@@ -10,6 +10,8 @@ import { RetentionCard } from "../components/settings/RetentionCard";
 import { TimezoneCard } from "../components/settings/TimezoneCard";
 import { useTimeZone } from "../hooks/timeZoneContext";
 import { BackupCard } from "../components/settings/BackupCard";
+import { ThemeCard } from "../components/settings/ThemeCard";
+import { useTheme } from "../hooks/themeContext";
 import { UnsavedBar } from "../components/settings/UnsavedBar";
 import { MobileHeader } from "../components/layout/MobileHeader";
 
@@ -25,6 +27,8 @@ export function Settings({ onLogout }) {
     reload,
   } = useSettings({ withInfo: true });
   const { setTimeZone } = useTimeZone();
+  const { preference: themePreference, setPreference: setThemePreference } =
+    useTheme();
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -176,6 +180,11 @@ export function Settings({ onLogout }) {
           </Button>
         </div>
       </form>
+
+      {/* fora do formulário: o tema é por navegador e aplica na hora */}
+      <div className="mt-4 md:mt-6">
+        <ThemeCard preference={themePreference} onChange={setThemePreference} />
+      </div>
 
       <div className="mt-4 md:mt-6">
         <BackupCard databaseSize={size} />

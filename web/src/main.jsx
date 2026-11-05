@@ -6,6 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 import "./index.css";
 import { injectGlobalStyles } from "./theme/globalStyles";
 import { ConnectionProvider } from "./hooks/useConnection";
+import { ThemeProvider } from "./hooks/ThemeProvider";
 import { TimeZoneProvider } from "./hooks/useTimeZone";
 import { ConnectionOverlay } from "./components/ui/ConnectionOverlay";
 import { Shell } from "./components/layout/Shell";
@@ -63,6 +64,8 @@ export { App };
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <App />
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
   </React.StrictMode>,
 );

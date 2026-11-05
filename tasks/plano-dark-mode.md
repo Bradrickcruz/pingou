@@ -426,9 +426,9 @@ cd web && npm run lint && npm run format:check && npm test && npm run check:toke
 | Fase   | Tarefas        | Complexity | Esforço   | Target                                 | Status      |
 | ------ | -------------- | ---------- | --------- | -------------------------------------- | ----------- |
 | Fase 0 | T0, T1         | S          | 0,5–1 dia | Design fechado e aprovado              | ✅ Feito    |
-| Fase 1 | T2, T3         | S          | 1 dia     | Infra de tema pronta (ainda desligada) | ⬜ Pendente |
-| Fase 2 | T4, T5, T6, T7 | L          | 3–4 dias  | Todas as telas em tokens de papel      | ⬜ Pendente |
-| Fase 3 | T8, T9         | S          | 0,5–1 dia | Seletor em Configurações + trava       | ⬜ Pendente |
+| Fase 1 | T2, T3         | S          | 1 dia     | Infra de tema pronta (ainda desligada) | ✅ Feito    |
+| Fase 2 | T4, T5, T6, T7 | L          | 3–4 dias  | Todas as telas em tokens de papel      | ✅ Feito    |
+| Fase 3 | T8, T9         | S          | 0,5–1 dia | Seletor em Configurações + trava       | 🟨 T8 feito |
 | Fase 4 | T10, T11       | M          | 1–1,5 dia | Verificado, documentado, versão única  | ⬜ Pendente |
 
 Total estimado: **6 a 8,5 dias** de trabalho.
@@ -437,6 +437,12 @@ Total estimado: **6 a 8,5 dias** de trabalho.
 
 ### Concluído
 
+- T4 a T8 (2026-11-05): migração e seletor.
+  - **T4/T5/T6:** classes de cor trocadas por classes de função (`bg-pg-superficie`, `text-pg-texto`, `border-pg-linha`, `bg-pg-status-down-bg`...) em `ui/`, `layout/`, `incidents/`, `maintenance/`, `monitor-detail/`, `monitors/`, `settings/`, `pages/`, `theme/globalStyles.js` e `index.css`. Zero hexadecimais e `rgba(...)` soltos. Gráfico (`ResponseChart`) e `HistoryBar` usam as variáveis de papel.
+  - **T7:** `ThemedImage` (as duas versões do logo no HTML, o tema esconde uma por CSS), `pingou-simbolo-invertido.svg` copiado para `web/src/assets/brand/`, toasts no escuro por variáveis do react-toastify.
+  - **T8:** `ThemeProvider` na raiz (acompanha o sistema em qualquer tela), `ThemeCard` ("Aparência": Claro, Escuro, Sistema) **fora** do formulário, depois dele e antes do Backup. **Trava ligada** (`THEME_ENABLED = true` e `var ON = true;`).
+  - Token novo, derivado de cores existentes: `--pg-cor-sobre-escuro-2` (claro `--pg-borda`, escuro `--pg-neblina-clara`), para o texto secundário do aviso de conexão perdida.
+  - **Verificação:** tema claro idêntico ao de antes em 29 telas (desktop e celular, modais, menus). Únicas diferenças: porta na URL de ping do heartbeat (origem da captura) e a altura das Configurações (bloco novo). Escuro revisado. Seletor testado de ponta a ponta (16 verificações) e primeira pintura já no tema certo, mesmo com o JS do app atrasado.
 - T3 (2026-11-05): `web/src/lib/theme.js` (+ testes), `web/src/hooks/useTheme.js` e script inline no `web/index.html`. **Trava de segurança desligada**: `THEME_ENABLED = false` em `theme.js` e `var ON = false;` no `index.html` (teste confere os dois). Com ela desligada o painel fica sempre claro. **Ligar junto com a T8** (virar os dois para `true` no mesmo commit). Sem `<meta name="color-scheme">`: o script já define `color-scheme` no `<html>`, e a meta deixaria o fundo escuro piscar enquanto a trava está desligada. Verificado no navegador (8 + 8 combinações), testes 49 ok.
 - T2 (2026-11-05): tokens de papel criados em `web/src/index.css` (`--pg-cor-*`, claro e escuro) e mapeados em `tailwind.config.js` (`bg-pg-fundo`, `text-pg-texto`, `border-pg-linha`, `shadow-pg-flutuante`...). `darkMode` por `[data-theme="dark"]`. Conferidos 31 papéis × 3 estados (sem `data-theme`, claro, escuro) no navegador. Nenhum componente alterado. Build, lint, format e testes passam.
 - T1 (2026-11-05): lacunas de design aprovadas pelo Bryan e registradas no `DESIGN.md` §3.6.1, 3.6.4 e 3.6.6. Nome da 3ª opção: **Sistema**. Cor nova aprovada: `--pg-down-borda-escuro` (#684953); `--pg-down-borda` (#EDC4C8) vira token no claro.
@@ -448,7 +454,7 @@ Total estimado: **6 a 8,5 dias** de trabalho.
 
 ### Pendente
 
-- T4 a T11
+- T9 a T11
 
 ## Notes
 

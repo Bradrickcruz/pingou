@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   THEME_KEY,
   apply,
@@ -7,11 +7,12 @@ import {
   savePreference,
   systemIsDark,
 } from "../lib/theme";
+import { ThemeContext } from "./themeContext";
 
-// Estado do tema para a tela de Configurações. Em "Sistema", acompanha o
-// sistema operacional ao vivo; e acompanha trocas feitas em outra aba do mesmo
-// navegador (evento `storage`).
-export function useTheme() {
+// Fica na raiz do app (inclusive no Login) para que, em "Sistema", o painel
+// acompanhe o sistema operacional ao vivo em qualquer tela. Também acompanha
+// trocas feitas em outra aba do mesmo navegador (evento `storage`).
+export function ThemeProvider({ children }) {
   const [preference, setPreferenceState] = useState(getPreference);
   const [isSystemDark, setIsSystemDark] = useState(() => systemIsDark());
 
@@ -43,5 +44,12 @@ export function useTheme() {
     setPreferenceState(savePreference(pref));
   }, []);
 
-  return { preference, resolved, setPreference };
+  const value = useMemo(
+    () => ({ preference, resolved, setPreference }),
+    [preference, resolved, setPreference],
+  );
+
+  return (
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+  );
 }

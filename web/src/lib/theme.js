@@ -13,9 +13,9 @@ export const DEFAULT_PREFERENCE = "system";
 // Trava de segurança. Com "Sistema" como padrão, ligar o escuro antes de todas
 // as telas estarem migradas (T4 a T8 do plano) quebraria o painel de quem usa
 // o sistema no escuro, sem a pessoa ter escolhido nada. Com false, o tema
-// efetivo é sempre o claro. Virar true junto com o bloco "Aparência", e trocar
-// o `ON` do script do index.html no mesmo commit.
-export const THEME_ENABLED = false;
+// efetivo é sempre o claro. Ligada junto com o bloco "Aparência" (ThemeCard);
+// o `ON` do script do index.html muda no mesmo commit.
+export const THEME_ENABLED = true;
 
 export function normalize(value) {
   return PREFERENCES.includes(value) ? value : DEFAULT_PREFERENCE;
