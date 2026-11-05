@@ -85,7 +85,8 @@ README.md, docs/implementacoes.md, IDEAS.md                 # docs
 
 | Task ID | Agent                   | Name                                                     | Priority | Complexity | Dependencies |
 | ------- | ----------------------- | -------------------------------------------------------- | -------- | ---------- | ------------ |
-| T1      | `design-db`             | Migration `notification_outbox`                          | P0       | S          | -            |
+| T0      | `devops`                | Criar a branch `feature/notification-retry`              | P0       | XS         | -            |
+| T1      | `design-db`             | Migration `notification_outbox`                          | P0       | S          | T0           |
 | T2      | `go-backend-specialist` | Domínio e repositórios do outbox                         | P0       | M          | T1           |
 | T3      | `go-backend-specialist` | Canais devolvem erro + campo `id`                        | P1       | L          | -            |
 | T4      | `go-backend-specialist` | StateMachine grava no outbox (UoW)                       | P1       | M          | T2           |
@@ -96,13 +97,32 @@ README.md, docs/implementacoes.md, IDEAS.md                 # docs
 | T9      | `performance`           | Carga com conexão única                                  | P3       | M          | T6           |
 | T10     | `qa-review`             | Verificação ponta a ponta (receptor instável, `kill -9`) | P3       | M          | T6, T7       |
 | T11     | `document`              | README, histórico e IDEAS                                | P3       | S          | T6           |
+| T12     | `devops`                | Abrir a Pull Request                                     | P3       | XS         | T8–T11       |
+
+### Task T0: Criar a branch `feature/notification-retry`
+
+- **Agent**: `devops`
+- **Priority**: P0
+- **Complexity**: XS
+- **Dependencies**: None
+- **PRE-CONDITIONS**:
+  - Estar em `develop`, atualizada (`git pull --ff-only`).
+  - `plan-notification-retry.md` (e `plan-webhook-event-names.md`, se ainda não commitado) decidido: vão para a branch ou ficam fora do commit, a escolher.
+- **INPUT**: branch atual `develop`.
+- **OUTPUT**:
+  1. `git switch -c feature/notification-retry` a partir de `develop` (tipo `feature/` + slug do plano).
+  2. Todo o trabalho das tasks seguintes é commitado **nesta branch**, em commits pequenos (um por task, ou por fase), no estilo `feat:`/`test:`/`docs:` do histórico, com a linha `Co-Authored-By` do projeto.
+- **VERIFY**:
+  - `git branch --show-current` mostra `feature/notification-retry`.
+  - `git status` sem alterações perdidas de `develop`.
+- **ROLLBACK**: `git switch develop && git branch -D feature/notification-retry` (se ainda sem push).
 
 ### Task T1: Migration `notification_outbox`
 
 - **Agent**: `design-db`
 - **Priority**: P0
 - **Complexity**: S
-- **Dependencies**: None
+- **Dependencies**: T0
 - **PRE-CONDITIONS**:
   - Última migration é `0009_maintenance_windows.sql`.
 - **INPUT**: banco sem tabela de fila.
@@ -155,9 +175,9 @@ README.md, docs/implementacoes.md, IDEAS.md                 # docs
 - **Agent**: `go-backend-specialist`
 - **Priority**: P1
 - **Complexity**: L
-- **Dependencies**: None
+- **Dependencies**: T0
 - **PRE-CONDITIONS**:
-  - Nenhuma (pode andar em paralelo com T1/T2).
+  - Branch criada (T0). Pode andar em paralelo com T1/T2.
 - **INPUT**: `WebhookNotifier`, `EmailNotifier`, `NtfyNotifier` com `NotifyX` sem retorno; `send` só loga.
 - **OUTPUT**:
   1. Interface `Channel { Name() string; Send(ctx, ev domain.OutboxEvent) error }` (substitui `Notifier`).
@@ -318,6 +338,26 @@ README.md, docs/implementacoes.md, IDEAS.md                 # docs
   - `grep -n 'ideia 5' IDEAS.md` só em contexto histórico; links do README válidos.
 - **ROLLBACK**: `git checkout README.md docs/implementacoes.md IDEAS.md`.
 
+### Task T12: Abrir a Pull Request
+
+- **Agent**: `devops`
+- **Priority**: P3
+- **Complexity**: XS
+- **Dependencies**: T8, T9, T10, T11
+- **PRE-CONDITIONS**:
+  - Phase X passa (build, vet, `go test -race ./...`, build do front).
+  - Evidências de T9 e T10 registradas no plano.
+  - Tudo commitado na `feature/notification-retry`; `git status` limpo.
+- **INPUT**: branch com os commits das tasks T0–T11.
+- **OUTPUT**:
+  1. `git push -u origin feature/notification-retry`.
+  2. `gh pr create --base develop` (base `develop`, a branch de trabalho; confirmar se o fluxo do repo pede `main`), título `feat: retry de notificações com outbox`.
+  3. Descrição da PR (em PT-BR, com a linha `🤖 Generated with [Claude Code](https://claude.com/claude-code)` no final): o problema, o desenho (outbox na transação + worker), prazos e esperas, mudança visível ao webhook (`id` novo, status não-2xx agora é falha), ordem com a ideia 7, como testar e as evidências de T9/T10.
+- **VERIFY**:
+  - `gh pr view --web` ou `gh pr view` mostra a PR aberta contra a base certa; checks de CI (se houver) rodando.
+  - Link da PR colado em Evidências.
+- **ROLLBACK**: `gh pr close <n> --delete-branch` (a branch local permanece).
+
 ## Risk Areas
 
 | Risk                                                        | Impact                                                 | Mitigação                                                                            |
@@ -358,12 +398,12 @@ sqlite3 pingou.db '.schema notification_outbox'
 
 ## Cronograma Sugerido
 
-| Fase   | Tarefas                     | Complexity | Esforço | Target                                 | Status      |
-| ------ | --------------------------- | ---------- | ------- | -------------------------------------- | ----------- |
-| Fase 0 | T1, T2, T3 (T3 em paralelo) | L          | ~2 h    | Tabela, repositórios e canais com erro | ⬜ Pendente |
-| Fase 1 | T4, T5                      | XL         | ~2 h    | Enfileira na transação e worker        | ⬜ Pendente |
-| Fase 2 | T6, T7                      | XL         | ~2 h    | Wiring, shutdown e testes              | ⬜ Pendente |
-| Fase 3 | T8, T9, T10, T11            | L          | ~1,5 h  | Segurança, carga, QA e docs            | ⬜ Pendente |
+| Fase   | Tarefas                         | Complexity | Esforço | Target                                | Status      |
+| ------ | ------------------------------- | ---------- | ------- | ------------------------------------- | ----------- |
+| Fase 0 | T0, T1, T2, T3 (T3 em paralelo) | L          | ~2 h    | Branch, tabela, repositórios e canais | ⬜ Pendente |
+| Fase 1 | T4, T5                          | XL         | ~2 h    | Enfileira na transação e worker       | ⬜ Pendente |
+| Fase 2 | T6, T7                          | XL         | ~2 h    | Wiring, shutdown e testes             | ⬜ Pendente |
+| Fase 3 | T8, T9, T10, T11, T12           | L          | ~1,5 h  | Segurança, carga, QA, docs e PR       | ⬜ Pendente |
 
 ## Status de Execução
 
@@ -377,7 +417,7 @@ sqlite3 pingou.db '.schema notification_outbox'
 
 ### Pendente
 
-- T1 a T11
+- T0 a T12
 
 ### Evidências
 

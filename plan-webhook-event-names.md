@@ -65,22 +65,40 @@ E-mail e ntfy **não** são tocados: o `event` neles é só rótulo de log (`ema
 
 ## Task Breakdown
 
-| Task ID | Agent                   | Name                                         | Priority | Complexity | Dependencies |
-| ------- | ----------------------- | -------------------------------------------- | -------- | ---------- | ------------ |
-| T1      | `go-backend-specialist` | Renomear eventos no notificador              | P1       | XS         | -            |
-| T2      | `code-test`             | Testes dos eventos novos                     | P1       | S          | T1           |
-| T3      | `go-backend-specialist` | Revisar rótulos de log (e-mail/ntfy/fanOut)  | P3       | XS         | T1           |
-| T4      | `document`              | README, histórico e IDEAS                    | P3       | S          | T1           |
-| T5      | `qa-review`             | Verificação ponta a ponta com receptor local | P3       | S          | T1, T2       |
+| Task ID | Agent                   | Name                                         | Priority | Complexity | Dependencies   |
+| ------- | ----------------------- | -------------------------------------------- | -------- | ---------- | -------------- |
+| T0      | `devops`                | Criar a branch `feature/webhook-event-names` | P0       | XS         | -              |
+| T1      | `go-backend-specialist` | Renomear eventos no notificador              | P1       | XS         | T0             |
+| T2      | `code-test`             | Testes dos eventos novos                     | P1       | S          | T1             |
+| T3      | `go-backend-specialist` | Revisar rótulos de log (e-mail/ntfy/fanOut)  | P3       | XS         | T1             |
+| T4      | `document`              | README, histórico e IDEAS                    | P3       | S          | T1             |
+| T5      | `qa-review`             | Verificação ponta a ponta com receptor local | P3       | S          | T1, T2         |
+| T6      | `devops`                | Abrir a Pull Request para `develop`          | P3       | XS         | T2, T3, T4, T5 |
+
+### Task T0: Criar a branch de feature
+
+- **Agent**: `devops`
+- **Priority**: P0
+- **Complexity**: XS
+- **Dependencies**: None
+- **PRE-CONDITIONS**:
+  - Estar em `develop`, com a árvore limpa e atualizada (`git status` limpo; `git pull --ff-only`).
+- **INPUT**: Branch `develop` (as features anteriores usaram o prefixo `feature/` ou `feat/`).
+- **OUTPUT**:
+  1. Branch `feature/webhook-event-names` criada a partir de `develop` e já ativa.
+  2. O arquivo do plano (`plan-webhook-event-names.md`) vai no primeiro commit da branch (ou fica fora dele, se preferir; o histórico diz que os planos são removidos depois).
+- **VERIFY**:
+  - `git branch --show-current` mostra `feature/webhook-event-names`.
+- **ROLLBACK**: `git switch develop && git branch -D feature/webhook-event-names` (ainda sem push).
 
 ### Task T1: Renomear eventos no notificador
 
 - **Agent**: `go-backend-specialist`
 - **Priority**: P1
 - **Complexity**: XS
-- **Dependencies**: None
+- **Dependencies**: T0
 - **PRE-CONDITIONS**:
-  - Branch `develop` limpa (confirmado no início da sessão).
+  - Na branch `feature/webhook-event-names` (T0).
 - **INPUT**: `notifier.go` com `Event: "down"` (L110) e `Event: "up"` (L131).
 - **OUTPUT**:
   1. Constantes `eventMonitorDown = "monitor_down"` e `eventMonitorUp = "monitor_up"` (e, por consistência, `eventCertExpiring`, `eventTest` com os valores atuais).
@@ -163,6 +181,25 @@ E-mail e ntfy **não** são tocados: o `event` neles é só rótulo de log (`ema
   - JSON capturado colado em "Evidências" no Status de Execução.
 - **ROLLBACK**: n/a (só leitura).
 
+### Task T6: Abrir a Pull Request
+
+- **Agent**: `devops`
+- **Priority**: P3
+- **Complexity**: XS
+- **Dependencies**: T2, T3, T4, T5
+- **PRE-CONDITIONS**:
+  - Phase X (verificação) passou na branch.
+  - Mudanças commitadas (mensagem começando com `BREAKING:`, ver Notes).
+  - **Confirmar com o dono antes do `push` e de abrir a PR**: são ações visíveis fora da máquina.
+- **INPUT**: Branch `feature/webhook-event-names` com os commits das tasks anteriores.
+- **OUTPUT**:
+  1. `git push -u origin feature/webhook-event-names`.
+  2. PR para `develop` via `gh pr create`, com título como "BREAKING: nomes claros nos eventos do webhook (`monitor_down`/`monitor_up`)".
+  3. Descrição da PR: o que mudou, tabela antigo → novo, **aviso de quebra** (fluxo "se `down`... senão `up`" falha em silêncio), regra "ignore evento desconhecido", como foi testado (evidências da T5) e checklist do n8n.
+- **VERIFY**:
+  - `gh pr view --web` ou `gh pr view` mostra a PR aberta, base `develop`, e os checks rodando.
+- **ROLLBACK**: `gh pr close <n>` e, se preciso, `git push origin --delete feature/webhook-event-names`.
+
 ## Risk Areas
 
 | Risk                                               | Impact                                     | Mitigação                                                                                             |
@@ -197,9 +234,11 @@ cd web && npm run build
 
 | Fase   | Tarefas | Complexity | Esforço | Target          | Status      |
 | ------ | ------- | ---------- | ------- | --------------- | ----------- |
+| Fase 0 | T0      | XS         | ~5 min  | Branch criada   | ⬜ Pendente |
 | Fase 1 | T1, T2  | S          | ~20 min | Código e testes | ⬜ Pendente |
 | Fase 2 | T3, T4  | S          | ~20 min | Docs e rótulos  | ⬜ Pendente |
 | Fase 3 | T5      | S          | ~15 min | Evidência       | ⬜ Pendente |
+| Fase 4 | T6      | XS         | ~10 min | PR aberta       | ⬜ Pendente |
 
 ## Status de Execução
 
@@ -213,7 +252,7 @@ cd web && npm run build
 
 ### Pendente
 
-- T1 a T5
+- T0 a T6
 
 ### Evidências
 
