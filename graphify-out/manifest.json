@@ -923,18 +923,6 @@
     "ast_hash": "8c8570b106e1a923463d4f25d9cdc6a2",
     "semantic_hash": ""
   },
-  "tasks/modelo-plano-dev-extended.md": {
-    "mtime": 1777763626.5935204,
-    "seen": 1793825855.971803,
-    "ast_hash": "4c4c5c317abdbf7bddf56748f41e62f3",
-    "semantic_hash": ""
-  },
-  "tasks/tarefa-sistema-websocket-tempo-real.md": {
-    "mtime": 1777661036.8745756,
-    "seen": 1793825855.9718049,
-    "ast_hash": "5c1f2190c980ffcf23ed0f02d8d72dae",
-    "semantic_hash": ""
-  },
   "web/README.md": {
     "mtime": 1777051783.794797,
     "seen": 1793825855.9718053,
@@ -1719,6 +1707,12 @@
     "mtime": 1793941067.8377986,
     "seen": 1793941218.1502144,
     "ast_hash": "100bd0d449229f297e8a40fbe8aa3af4",
+    "semantic_hash": ""
+  },
+  "docs/modelo-plano-dev-extended.md": {
+    "mtime": 1777763626.5935204,
+    "seen": 1793941526.6740348,
+    "ast_hash": "4c4c5c317abdbf7bddf56748f41e62f3",
     "semantic_hash": ""
   }
 }
