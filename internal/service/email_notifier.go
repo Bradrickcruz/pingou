@@ -54,15 +54,15 @@ func (n *EmailNotifier) loc() *time.Location {
 }
 
 func (n *EmailNotifier) NotifyDown(ctx context.Context, m *domain.Monitor, i *domain.Incident) {
-	n.send(ctx, "down", subjectDown(m), bodyFor(m, i, false, n.publicURL, n.loc()))
+	n.send(ctx, eventMonitorDown, subjectDown(m), bodyFor(m, i, false, n.publicURL, n.loc()))
 }
 
 func (n *EmailNotifier) NotifyRecovery(ctx context.Context, m *domain.Monitor, i *domain.Incident) {
-	n.send(ctx, "up", subjectUp(m, i), bodyFor(m, i, true, n.publicURL, n.loc()))
+	n.send(ctx, eventMonitorUp, subjectUp(m, i), bodyFor(m, i, true, n.publicURL, n.loc()))
 }
 
 func (n *EmailNotifier) NotifyCertExpiring(ctx context.Context, m *domain.Monitor, a domain.CertAlert) {
-	n.send(ctx, "cert_expiring", subjectCert(m, a), certBody(m, a, n.publicURL, n.loc()))
+	n.send(ctx, eventCertExpiring, subjectCert(m, a), certBody(m, a, n.publicURL, n.loc()))
 }
 
 func (n *EmailNotifier) send(ctx context.Context, event, subject, body string) {

@@ -19,6 +19,7 @@ Consolida o que os planos `plan-*.md` (já removidos; ficam no `git log`) entreg
 | 2026-11-02         | [Aviso de expiração do certificado SSL](#13-aviso-de-expiração-do-certificado-ssl)                  | `feature/ssl-expiry` (#16)      |
 | 2026-11-04         | [Manutenção: pausa com motivo e janela agendada](#14-manutenção-pausa-com-motivo-e-janela-agendada) | `feature/maintenance-windows`   |
 | 2026-11-05         | [Modo escuro (Claro, Escuro, Sistema)](#15-modo-escuro-claro-escuro-sistema)                        | `ccr-f77fa1bb-9acipc`           |
+| 2026-11-05         | [Nomes claros nos eventos do webhook](#16-nomes-claros-nos-eventos-do-webhook)                      | `feature/webhook-event-names`   |
 
 Pendências de validação manual ainda abertas estão no [fim do documento](#pendências-abertas).
 
@@ -582,6 +583,27 @@ Atalho de tema no cabeçalho do painel; guardar o tema no backend (`settings`); 
 - **Sem piscar:** primeira pintura medida com o JavaScript do app atrasado em 1,5 s; já sai no tema certo nos 3 casos testados.
 - **Daltonismo** (deuteranopia, protanopia, acromatopsia no Chromium): estados legíveis por selo (texto e ícone) e texto do banner.
 - `npm run lint`, `format:check`, `test` (49), `check:tokens` e `build` verdes.
+
+---
+
+## 16. Nomes claros nos eventos do webhook
+
+Plano `plan-webhook-event-names.md`. **BREAKING:** o campo `event` do webhook mudou de nome. Só backend (`internal/service`) e documentação.
+
+### Entregue
+
+- `down` → `monitor_down` e `up` → `monitor_up`, no padrão `<objeto>_<acontecimento>`. **Quebra limpa** (decidido em 2026-11-05): o nome antigo não é mais enviado e não há versionamento do JSON. Os outros campos não mudaram.
+- `cert_expiring` e `test` ficam como estão: `cert_expiring` já segue o padrão e renomear de novo seria uma segunda quebra sem ganho.
+- Nomes viraram constantes (`eventMonitorDown`, `eventMonitorUp`, `eventCertExpiring`, `eventTest`). Os rótulos de log do `MultiNotifier`, do e-mail e do ntfy usam as mesmas constantes, para o log bater com o webhook.
+- README: exemplos novos, tabela de nomes, aviso de quebra e a regra "evento desconhecido: ignore".
+
+### Risco
+
+A quebra é silenciosa: fluxo "se `down`, alerta; senão, voltou" passa a tratar toda queda como "voltou". Ajustar o fluxo (n8n) **antes** de subir a versão nova.
+
+### Validação
+
+`go vet` e `go test ./internal/service/...` verdes. Teste novo (`TestWebhookDownAndRecoveryEventNames`) confere `monitor_down` (com `downtime_duration_seconds` nulo) e `monitor_up` (com a duração); com a constante trocada de volta para `down`, ele falha.
 
 ---
 
