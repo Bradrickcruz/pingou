@@ -929,18 +929,6 @@
     "ast_hash": "4c4c5c317abdbf7bddf56748f41e62f3",
     "semantic_hash": ""
   },
-  "tasks/tarefa-Incidents-melhorias.md": {
-    "mtime": 1777843022.4426272,
-    "seen": 1793825855.9718034,
-    "ast_hash": "9ae8b331d70f5c9a76a6b05b233d648b",
-    "semantic_hash": ""
-  },
-  "tasks/tarefa-detalhe-monitor-checks-incidentes.md": {
-    "mtime": 1777757389.3464248,
-    "seen": 1793825855.9718041,
-    "ast_hash": "c9b08f278d63d2a51aa05a173bd940da",
-    "semantic_hash": ""
-  },
   "tasks/tarefa-sistema-websocket-tempo-real.md": {
     "mtime": 1777661036.8745756,
     "seen": 1793825855.9718049,
