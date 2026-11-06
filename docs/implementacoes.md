@@ -642,13 +642,17 @@ Reenvio com `time.AfterFunc` em memória; gravar o texto pronto do e-mail/ntfy; 
 
 ### Validação
 
-`go vet` e `go test -race ./...` verdes. Testes novos: migration (sobe/desce, índices parciais), plano de consulta usa `idx_outbox_due` e `idx_outbox_done`, repositório, worker com relógio falso (esperas, prazos de 60 min e 24 h, só o canal com falha repete, canal desconhecido, pânico, aviso vencido, reinício), webhook (2xx/não-2xx, erro sem URL, `id`, `timestamp`), state machine (uma linha por canal com o mesmo `event_id`, rollback, nada sem mudança de estado) e concorrência entre `Process` e worker. Mutação conferida: status não-2xx como sucesso e esperas diferentes derrubam os testes. **Não rodados:** carga com 1 000 linhas pendentes e QA manual com o binário real (`kill -9`, receptor instável); estão em "Pendências abertas".
+`go vet` e `go test -race ./...` verdes. Testes novos: migration (sobe/desce, índices parciais), plano de consulta usa `idx_outbox_due` e `idx_outbox_done`, repositório, worker com relógio falso (esperas, prazos de 60 min e 24 h, só o canal com falha repete, canal desconhecido, pânico, aviso vencido, reinício), webhook (2xx/não-2xx, erro sem URL, `id`, `timestamp`), state machine (uma linha por canal com o mesmo `event_id`, rollback, nada sem mudança de estado) e concorrência entre `Process` e worker. Mutação conferida: status não-2xx como sucesso e esperas diferentes derrubam os testes. Depois do merge da develop (PR #20), `go test -race` verde.
+
+**Carga (T9, 2026-11-06):** `Process` a cada ~10 ms por 8 s, worker real, conexão única. Outbox vazio: p50 213 µs, p95 322 µs, p99 463 µs. Com 1 000 `pending` não vencidas: 222 µs, 360 µs, 775 µs. Com 1 000 vencidas sendo drenadas (~3 s, 1 000 envios falhos): 202 µs, 310 µs, 2,1 ms (máx 8,7 ms). Sem atraso; lote e `outboxPoll` ficam. Heap 10 → 14 MB no teste (não é o RSS do binário). Um monitor, receptor falso de 2 ms; webhook lento não foi medido.
+
+**QA com o binário real (parcial, 2026-11-06):** queda com 500 na 1ª tentativa, retry de 30 s e entrega na 2ª com o mesmo `id`/`timestamp`; recuperação (`monitor_up`); `kill -9` com aviso pendente retoma ao subir (`pending:1`) e entrega os dois avisos. **Não feitos:** troca da URL durante as tentativas, botões de teste, e-mail/ntfy/`cert_expiring` ponta a ponta, receptor com 500 por ~3 min; estão em "Pendências abertas".
 
 ---
 
 ## Pendências abertas
 
-- **Retry de notificações (item 16):** medir a gravação de checks com 1 000 linhas `pending` (receptor fora do ar) e rodar o QA manual com o binário real: receptor com 500 por ~3 min, `kill -9` logo após a queda, troca da URL do webhook durante as tentativas.
+- **Retry de notificações (item 17):** QA manual que falta com o binário real: troca da URL do webhook durante as tentativas, botões de teste, e-mail/ntfy/`cert_expiring` ponta a ponta e receptor com 500 por ~3 min.
 
 - **Migrations 0003 e 0004** foram testadas em bancos de teste e de QA, mas **não** rodadas no `pingou.db` real. Fazer backup antes e conferir `failure_count` / `last_error`.
 - **Configurações (T12)**: webhook.site real, destino que não responde (5 s), navegação só por teclado, nome do arquivo baixado no navegador.

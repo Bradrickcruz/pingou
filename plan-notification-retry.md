@@ -427,13 +427,24 @@ sqlite3 pingou.db '.schema notification_outbox'
 
 ### Pendente
 
-- T9: medir gravação de checks com 1 000 linhas `pending`.
-- T10: QA manual com o binário real (receptor instável, `kill -9`, troca da URL durante as tentativas, botões de teste).
+- T10 (resto): troca da URL durante as tentativas, botões de teste, e-mail/ntfy/`cert_expiring` com o binário real, receptor com 500 por ~3 min.
 
 ### Evidências
 
 - `go vet ./...` e `go test -race ./...` verdes.
 - Mutação: tratar status não-2xx como sucesso derruba `TestWebhookSendStatusCodes` e `TestWorkerWebhookRetriesWithSameID`; mudar a última espera para 20 min derruba `TestWorkerBackoffAndExpiryForDown` e `TestWorkerCertNoticeLivesFor24Hours`.
+- **Depois do merge da develop (PR #20, 2026-11-06):** `go test -race ./internal/... ./cmd/...` verde.
+- **T9, carga (2026-11-06):** teste descartável, não commitado. `Process` a cada ~10 ms por 8 s, worker real, SQLite com conexão única, canal falso que falha após 2 ms. Um monitor, não o perfil de 100 × 10 s; memória é a do processo de teste, não o RSS do binário.
+
+  | Cenário                            | Checks | p50    | p95    | p99    | máx     | Envios | Heap / Sys |
+  | ---------------------------------- | ------ | ------ | ------ | ------ | ------- | ------ | ---------- |
+  | A) outbox vazio                    | 754    | 213 µs | 322 µs | 463 µs | 8,4 ms  | 0      | 10 / 17 MB |
+  | B) 1 000 pending, nenhuma vencida  | 752    | 222 µs | 360 µs | 775 µs | 13,5 ms | 0      | 10 / 25 MB |
+  | C) 1 000 vencidas, worker drenando | 749    | 202 µs | 310 µs | 2,1 ms | 8,7 ms  | 1 000  | 14 / 29 MB |
+
+  Sem atraso no `Process`: p50/p95 iguais nos três; drenar as 1 000 (lotes de 20, `MarkRetry`) levou ~3 s e o p99 foi a 2,1 ms. Lote e `outboxPoll` ficam como estão. Não medido: webhook lento (timeout de 10 s).
+
+- **T10, E2E parcial (2026-11-06):** binário real, banco e HOME isolados, monitor TCP em porta fechada (limite 1), receptor local. Queda com 500 na 1ª tentativa: `notice failed, will retry` (30 s), 2ª tentativa 200, mesmo `id` e `timestamp`, `event: monitor_down`. Recuperação: `monitor_up` com `downtime_duration_seconds: 76`. `kill -9` com aviso pendente e receptor fora do ar: ao subir, `outbox worker started pending:1`, o `monitor_down` pendente (mesmo `event_id`) e o `monitor_up` foram entregues e as duas linhas ficaram `sent`.
 
 ## Notes
 
