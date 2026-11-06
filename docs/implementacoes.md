@@ -646,13 +646,13 @@ Reenvio com `time.AfterFunc` em memória; gravar o texto pronto do e-mail/ntfy; 
 
 **Carga (T9, 2026-11-06):** `Process` a cada ~10 ms por 8 s, worker real, conexão única. Outbox vazio: p50 213 µs, p95 322 µs, p99 463 µs. Com 1 000 `pending` não vencidas: 222 µs, 360 µs, 775 µs. Com 1 000 vencidas sendo drenadas (~3 s, 1 000 envios falhos): 202 µs, 310 µs, 2,1 ms (máx 8,7 ms). Sem atraso; lote e `outboxPoll` ficam. Heap 10 → 14 MB no teste (não é o RSS do binário). Um monitor, receptor falso de 2 ms; webhook lento não foi medido.
 
-**QA com o binário real (parcial, 2026-11-06):** queda com 500 na 1ª tentativa, retry de 30 s e entrega na 2ª com o mesmo `id`/`timestamp`; recuperação (`monitor_up`); `kill -9` com aviso pendente retoma ao subir (`pending:1`) e entrega os dois avisos. **Não feitos:** troca da URL durante as tentativas, botões de teste, e-mail/ntfy/`cert_expiring` ponta a ponta, receptor com 500 por ~3 min; estão em "Pendências abertas".
+**QA com o binário real (parcial, 2026-11-06):** queda com 500 na 1ª tentativa, retry de 30 s e entrega na 2ª com o mesmo `id`/`timestamp`; recuperação (`monitor_up`); `kill -9` com aviso pendente retoma ao subir (`pending:1`) e entrega os dois avisos. Troca da URL do webhook durante as tentativas: a 1ª tentativa foi para a URL antiga (500) e, depois da troca nas settings, a 2ª foi para a nova com o mesmo `id`; a antiga não recebeu mais nada (o destino é lido na hora do envio). **Não feitos:** botões de teste, e-mail/ntfy/`cert_expiring` ponta a ponta, receptor com 500 por ~3 min; estão em "Pendências abertas".
 
 ---
 
 ## Pendências abertas
 
-- **Retry de notificações (item 17):** QA manual que falta com o binário real: troca da URL do webhook durante as tentativas, botões de teste, e-mail/ntfy/`cert_expiring` ponta a ponta e receptor com 500 por ~3 min.
+- **Retry de notificações (item 17):** QA manual que falta com o binário real: botões de teste, e-mail/ntfy/`cert_expiring` ponta a ponta e receptor com 500 por ~3 min.
 
 - **Migrations 0003 e 0004** foram testadas em bancos de teste e de QA, mas **não** rodadas no `pingou.db` real. Fazer backup antes e conferir `failure_count` / `last_error`.
 - **Configurações (T12)**: webhook.site real, destino que não responde (5 s), navegação só por teclado, nome do arquivo baixado no navegador.
