@@ -15,7 +15,7 @@ O projeto tem quatro objetivos:
 
 ## Baixo uso de memória
 
-Uma das características mais importantes do Pingou é consumir pouca RAM. Medido com **100 monitores** (o limite do projeto) checando a cada 10 s, sendo 50 deles `https://google.com`, mais o dashboard e as estatísticas sendo consultados a cada ciclo, durante **1 hora**:
+Uma das características mais importantes do Pingou é consumir pouca RAM. Medido com **100 monitores** (o limite do projeto) checando a cada 10 s, sendo 50 deles `https://google.com`, mais o dashboard e as estatísticas sendo consultados a cada ciclo, durante **1 hora**, com pouco histórico no banco:
 
 | Métrica                  | Resultado                 |
 | ------------------------ | ------------------------- |
@@ -31,6 +31,17 @@ HTTPS_N=50 scripts/memtest.sh 3600
 ```
 
 Detalhes do teste em [`scripts/README.md`](scripts/README.md). O resultado vale para o hardware e a rede em que foi medido; seu consumo pode variar um pouco.
+
+### Com banco grande
+
+A RAM cresce com o tamanho do banco. No **perfil limite** com 30 dias de dados (100 monitores a cada 10 s, ~25 milhões de checks, banco de ~6 GB):
+
+| Momento                             | RAM (RSS)  |
+| ----------------------------------- | ---------- |
+| Primeira subida depois da migration | 47 a 51 MB |
+| Picos já vistos                     | 50 a 60 MB |
+
+Nesse cenário o Pingou fica perto da meta de 50 MB e, em picos, passa dela. A meta vale para o teste de 1 hora acima.
 
 ---
 
@@ -358,9 +369,9 @@ docker buildx build --platform linux/amd64,linux/arm64 \
   -t bryanhcruz/pingou:1.3.1 -t bryanhcruz/pingou:latest --push .
 ```
 
-Para buildar localmente:
-
 O Dockerfile inclui um `HEALTHCHECK` que consulta o endpoint público `/healthz` a cada 30 segundos.
+
+Para buildar localmente:
 
 ```bash
 make docker-build   # build da imagem
@@ -541,6 +552,8 @@ Sobre `/ping/{token}`:
 | `POST`   | `/api/settings/ntfy/test`      | Publica uma notificação de teste no ntfy (5 por minuto por IP)                        |
 | `GET`    | `/api/info`                    | Versão, commit, data do build e tamanho do banco                                      |
 | `GET`    | `/api/export`                  | Baixa um dump do SQLite (`pingou-AAAA-MM-DD.db`, `VACUUM INTO`)                       |
+
+> `GET /api/export` entrega o banco inteiro, com os mesmos dados sensíveis descritos no [`export-db`](#export-db). Trate o arquivo como um segredo.
 
 ### Info
 
@@ -1352,7 +1365,7 @@ O monitor é sempre criado com `enabled: true`. Para `heartbeat`, o comando impr
 ./pingou export-db -o /tmp/backup.db --key <API_KEY>
 ```
 
-> O export inclui os tokens de ping dos monitores Heartbeat e a URL do webhook, que costuma conter um segredo (a do Slack, por exemplo). Guarde o arquivo com o mesmo cuidado que a API Key.
+> O export é uma cópia do banco inteiro. Inclui os tokens de ping dos monitores Heartbeat, a URL do webhook (que costuma conter um segredo, como a do Slack), o tópico do ntfy (num servidor aberto, como o `ntfy.sh`, o tópico funciona como senha) e os destinatários de e-mail. Guarde o arquivo com o mesmo cuidado que a API Key.
 
 ### version
 
@@ -1429,10 +1442,21 @@ A ideia não é competir com ferramentas enterprise nem com plataformas completa
 - [x] Monitor Heartbeat
 - [x] Redesign do dashboard com a nova identidade visual (tema claro)
 
+### Entregue desde a v1.1
+
+- [x] Tema escuro (além do claro e do sistema)
+- [x] Notificações por e-mail (SMTP) e ntfy, além do webhook
+- [x] Manutenção: pausa com motivo e janela agendada
+- [x] Aviso de expiração do certificado SSL
+- [x] Fila de avisos com retry (`notification_outbox`)
+- [x] Eventos do webhook com nomes claros (`monitor_down`, `monitor_up`)
+- [x] Fuso horário configurável
+- [x] Desligamento ordenado
+- [x] Desempenho com banco grande (migration `0006`)
+
 ### Próxima versão
 
 - [ ] Verificação de palavra-chave na resposta HTTP
-- [ ] Aviso de expiração de certificado SSL (via webhook, sem estado novo)
 
 ### Depois
 
