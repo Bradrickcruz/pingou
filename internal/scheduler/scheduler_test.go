@@ -29,23 +29,6 @@ func (c *fakeChecker) Check(context.Context, *domain.Monitor) domain.CheckResult
 	return domain.CheckResult{ErrorMessage: &msg}
 }
 
-// dbNotifier imita o WebhookNotifier real: lê a URL do webhook no banco.
-type dbNotifier struct {
-	settings *repository.SettingsRepo
-	downs    atomic.Int64
-}
-
-func (n *dbNotifier) NotifyDown(ctx context.Context, _ *domain.Monitor, _ *domain.Incident) {
-	n.settings.Get(ctx, "webhook_url")
-	n.downs.Add(1)
-}
-
-func (n *dbNotifier) NotifyRecovery(ctx context.Context, _ *domain.Monitor, _ *domain.Incident) {
-	n.settings.Get(ctx, "webhook_url")
-}
-
-func (n *dbNotifier) NotifyCertExpiring(context.Context, *domain.Monitor, domain.CertAlert) {}
-
 type env struct {
 	db       *sql.DB
 	monitors *repository.MonitorRepo
@@ -53,7 +36,6 @@ type env struct {
 	sched    *Scheduler
 	svc      *service.MonitorService
 	checker  *fakeChecker
-	notifier *dbNotifier
 }
 
 func newEnv(t *testing.T, success bool) *env {
@@ -69,11 +51,10 @@ func newEnv(t *testing.T, success bool) *env {
 		monitors: repository.NewMonitorRepo(db),
 		checks:   repository.NewCheckRepo(db),
 		checker:  &fakeChecker{success: success},
-		notifier: &dbNotifier{settings: repository.NewSettingsRepo(db)},
 	}
 	e.sched = NewScheduler(e.monitors, e.checker, db,
 		repository.NewCheckRepoTx(db), repository.NewMonitorRepoTx(db), repository.NewIncidentRepoTx(db),
-		e.notifier)
+		repository.NewOutboxRepoTx(), []string{domain.ChannelWebhook}, nil)
 	// 1 "segundo" de intervalo vira 1ms para o teste rodar rápido
 	e.sched.intervalUnit = time.Millisecond
 	t.Cleanup(e.sched.Stop)
@@ -81,6 +62,16 @@ func newEnv(t *testing.T, success bool) *env {
 	e.svc = service.NewMonitorService(e.monitors, e.checks, repository.NewIncidentRepo(db))
 	e.svc.SetReloader(e.sched)
 	return e
+}
+
+// countNotices conta os avisos gravados no outbox para o tipo de evento.
+func (e *env) countNotices(t *testing.T, eventType string) int {
+	t.Helper()
+	var n int
+	if err := e.db.QueryRow(`SELECT COUNT(*) FROM notification_outbox WHERE event_type = ?`, eventType).Scan(&n); err != nil {
+		t.Fatal(err)
+	}
+	return n
 }
 
 func (e *env) countChecks(t *testing.T, id string) int {
@@ -135,9 +126,8 @@ func TestMonitorCreatedViaRequestKeepsRunning(t *testing.T) {
 	}
 }
 
-// Regressão: o notifier era chamado com a transação aberta. Como o SQLite usa
-// 1 conexão só, o notifier (que lê o webhook no banco) travava para sempre e
-// bloqueava todos os outros monitores.
+// Regressão: ler o banco com a transação aberta trava (o SQLite usa 1 conexão
+// só) e bloqueava todos os outros monitores. A queda vira um aviso no outbox.
 func TestFailingMonitorDoesNotDeadlockScheduler(t *testing.T) {
 	e := newEnv(t, false)
 	if err := e.sched.Start(context.Background()); err != nil {
@@ -152,8 +142,8 @@ func TestFailingMonitorDoesNotDeadlockScheduler(t *testing.T) {
 	waitFor(t, "monitor ficar DOWN e continuar checando", func() bool {
 		return e.countChecks(t, m.ID) >= 3
 	})
-	if n := e.notifier.downs.Load(); n != 1 {
-		t.Fatalf("notificações de down = %d, want 1", n)
+	if n := e.countNotices(t, domain.EventDown); n != 1 {
+		t.Fatalf("avisos de down no outbox = %d, want 1", n)
 	}
 	got, _ := e.monitors.FindByID(context.Background(), m.ID)
 	if got.CurrentState != domain.StateDown {
@@ -221,35 +211,42 @@ func TestDisableAndDeleteStopJob(t *testing.T) {
 	}
 }
 
-// slowNotifier segura o envio até release fechar, como um webhook lento.
-type slowNotifier struct {
+// slowChannel segura o envio até release fechar, como um webhook lento.
+type slowChannel struct {
 	started chan struct{}
 	release chan struct{}
 }
 
-func (n *slowNotifier) NotifyDown(context.Context, *domain.Monitor, *domain.Incident) {
-	n.started <- struct{}{}
-	<-n.release
-}
-func (n *slowNotifier) NotifyRecovery(context.Context, *domain.Monitor, *domain.Incident)     {}
-func (n *slowNotifier) NotifyCertExpiring(context.Context, *domain.Monitor, domain.CertAlert) {}
+func (c *slowChannel) Name() string { return domain.ChannelWebhook }
 
-// Regressão: o notifier rodava dentro do lock dbMu. Um destino lento no monitor
-// A pausava a gravação de todos os outros monitores.
-func TestSlowNotifierDoesNotBlockOtherMonitors(t *testing.T) {
+func (c *slowChannel) Send(context.Context, domain.OutboxEvent) error {
+	c.started <- struct{}{}
+	<-c.release
+	return nil
+}
+
+// Regressão: o envio rodava dentro do lock dbMu. Um destino lento no monitor A
+// pausava a gravação de todos os outros monitores. Agora o envio é do worker do
+// outbox, fora do lock e sem segurar a conexão do banco.
+func TestSlowChannelDoesNotBlockOtherMonitors(t *testing.T) {
 	e := newEnv(t, true)
-	slow := &slowNotifier{started: make(chan struct{}, 1), release: make(chan struct{})}
-	multi := service.NewMultiNotifier(slow, e.notifier) // e.notifier lê o banco, como o webhook real
-	e.sched.notifier = multi
+	slow := &slowChannel{started: make(chan struct{}, 1), release: make(chan struct{})}
+	worker := service.NewOutboxWorker(repository.NewOutboxRepo(e.db), slow)
+	e.sched.wake = worker.Wake
+	ctx, cancel := context.WithCancel(context.Background())
+	worker.Start(ctx)
 	defer func() {
 		close(slow.release)
-		if !multi.Wait(time.Second) {
+		cancel()
+		waitCtx, stop := context.WithTimeout(context.Background(), time.Second)
+		defer stop()
+		if err := worker.Wait(waitCtx); err != nil {
 			t.Error("envios pendentes no fim do teste")
 		}
 	}()
 
 	// service sem reloader: sem jobs rodando, só os Record do teste gravam checks
-	ctx := context.Background()
+	ctx = context.Background()
 	svc := service.NewMonitorService(e.monitors, e.checks, repository.NewIncidentRepo(e.db))
 	a, err := svc.Create(ctx, validInput)
 	if err != nil {
@@ -277,7 +274,7 @@ func TestSlowNotifierDoesNotBlockOtherMonitors(t *testing.T) {
 			t.Fatal(err)
 		}
 	case <-time.After(time.Second):
-		t.Fatal("Record do monitor B esperou o notifier do monitor A")
+		t.Fatal("Record do monitor B esperou o envio do monitor A")
 	}
 	if e.countChecks(t, b.ID) != 1 {
 		t.Fatal("check de B não foi gravado")

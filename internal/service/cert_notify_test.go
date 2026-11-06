@@ -27,7 +27,7 @@ func TestWebhookCertExpiring(t *testing.T) {
 	defer srv.Close()
 	n := NewWebhookNotifier(func() string { return srv.URL }, "https://pingou.test")
 
-	n.NotifyCertExpiring(t.Context(), certMonitor, domain.CertAlert{ExpiresAt: certExpires, DaysLeft: 7, ThresholdDays: 7})
+	notifyCertExpiring(t.Context(), n, certMonitor, domain.CertAlert{ExpiresAt: certExpires, DaysLeft: 7, ThresholdDays: 7})
 	var p map[string]any
 	if err := json.Unmarshal([]byte(<-bodies), &p); err != nil {
 		t.Fatal(err)
@@ -44,7 +44,7 @@ func TestWebhookCertExpiring(t *testing.T) {
 	}
 
 	// eventos down e up não ganham os campos novos
-	n.NotifyDown(t.Context(), certMonitor, &domain.Incident{StartedAt: time.Now()})
+	notifyDown(t.Context(), n, certMonitor, &domain.Incident{StartedAt: time.Now()})
 	down := <-bodies
 	for _, k := range []string{"cert_expires_at", "days_left", "threshold_days"} {
 		if strings.Contains(down, k) {
@@ -87,7 +87,7 @@ func TestCertMessageText(t *testing.T) {
 func TestEmailNotifierSendsCertExpiring(t *testing.T) {
 	f := newFakeSMTP(t)
 	n := NewEmailNotifier(f.cfg(config.SMTPTLSNone), func() string { return "ops@exemplo.com" }, "")
-	n.NotifyCertExpiring(t.Context(), certMonitor, domain.CertAlert{ExpiresAt: certExpires, DaysLeft: 7, ThresholdDays: 7})
+	notifyCertExpiring(t.Context(), n, certMonitor, domain.CertAlert{ExpiresAt: certExpires, DaysLeft: 7, ThresholdDays: 7})
 	<-f.done
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -107,7 +107,7 @@ func TestNtfyNotifierCertExpiring(t *testing.T) {
 		{30, 25, "default", "Certificado SSL de API expira em 25 dias"},
 		{7, 7, "high", "Certificado SSL de API expira em 7 dias"},
 	} {
-		n.NotifyCertExpiring(t.Context(), certMonitor, domain.CertAlert{ExpiresAt: certExpires, DaysLeft: c.days, ThresholdDays: c.threshold})
+		notifyCertExpiring(t.Context(), n, certMonitor, domain.CertAlert{ExpiresAt: certExpires, DaysLeft: c.days, ThresholdDays: c.threshold})
 		<-f.got
 		r := f.last(t)
 		if got := decodedTitle(t, r.header); got != c.title {
@@ -120,21 +120,5 @@ func TestNtfyNotifierCertExpiring(t *testing.T) {
 		if !strings.Contains(r.body, "Expira em: 2026-11-08 09:00:00 UTC") {
 			t.Fatalf("corpo: %s", r.body)
 		}
-	}
-}
-
-// Falha de um canal não impede os outros.
-func TestMultiNotifierCertExpiringFanOut(t *testing.T) {
-	calls := make(chan struct{}, 2)
-	n := NewMultiNotifier(
-		funcNotifier{fn: func() { panic("canal quebrado") }},
-		funcNotifier{fn: func() { calls <- struct{}{} }},
-	)
-	n.NotifyCertExpiring(t.Context(), certMonitor, domain.CertAlert{ExpiresAt: certExpires, DaysLeft: 7, ThresholdDays: 7})
-	if !n.Wait(2 * time.Second) {
-		t.Fatal("envio não terminou")
-	}
-	if len(calls) != 1 {
-		t.Fatalf("%d entregas no canal bom, want 1", len(calls))
 	}
 }

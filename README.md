@@ -192,8 +192,9 @@ O processamento da state machine é **atômico**, usando o padrão Unit of Work.
 │  3. monitorRepo.UpdateWithTx()      → atualiza monitor      │
 │  4. incidentRepo.CreateWithTx()     → abre incidente        │
 │  5. incidentRepo.Close()            → fecha incidente       │
-│  6. uow.Commit()                    → confirma transação    │
-│  7. notifier.NotifyDown/Recovery()  → webhook (APÓS commit) │
+│  6. outboxRepo.EnqueueWithTx()      → grava os avisos       │
+│  7. uow.Commit()                    → confirma transação    │
+│  8. worker.Wake()                   → acorda o envio (APÓS) │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -201,7 +202,7 @@ Garantias:
 
 - **Atomicidade**: check, mudança de estado e incidente são gravados juntos.
 - **Rollback automático**: em caso de erro, nada é gravado.
-- **Webhook seguro**: as notificações só saem depois do commit.
+- **Aviso não se perde**: os avisos entram numa fila (`notification_outbox`) na mesma transação. Se a transação desfaz, não existe aviso; se confirma, o aviso está garantido na fila. O envio é de um worker, depois do commit. Veja [Entrega das notificações](#entrega-das-notificações).
 
 | Componente         | Arquivo                                   | Descrição                  |
 | ------------------ | ----------------------------------------- | -------------------------- |
@@ -849,6 +850,7 @@ Evento de queda:
 
 ```json
 {
+  "id": "018f2f7a-...",
   "event": "monitor_down",
   "monitor": {
     "id": "018f2f7a-...",
@@ -868,6 +870,7 @@ Evento de recuperação:
 
 ```json
 {
+  "id": "018f2f7a-...",
   "event": "monitor_up",
   "monitor": {
     "id": "018f2f7a-...",
@@ -882,6 +885,8 @@ Evento de recuperação:
   "dashboard_url": "https://pingou.exemplo.com/monitors/018f2f7a-..."
 }
 ```
+
+`id` identifica o evento. É o **mesmo `id` em todas as tentativas** do mesmo aviso (veja [Entrega das notificações](#entrega-das-notificações)): guarde os ids já tratados e ignore os repetidos. O `timestamp` é a hora do evento, não a do envio, e também não muda entre tentativas.
 
 Campos `type` e `target`:
 
@@ -1170,7 +1175,20 @@ curl -X POST http://localhost:8956/api/settings/ntfy/test \
 
 ## Entrega das notificações
 
-Webhook, e-mail e ntfy são enviados **fora** do processamento dos checks: um destino lento não atrasa os outros monitores. O Pingou avisa **uma vez por transição**, sem retry. No [desligamento](#desligamento), envios em andamento são esperados dentro do prazo de 15 s; um crash ou `kill -9` pode perder o aviso.
+Cada aviso (queda, recuperação, certificado) é gravado numa fila no próprio SQLite (`notification_outbox`), **na mesma transação** do check que o gerou. Um worker lê a fila, envia e **repete** o que falhou. Os envios acontecem fora do processamento dos checks: um destino lento não atrasa os outros monitores.
+
+- **Um canal por linha.** Webhook, e-mail e ntfy repetem cada um por si: se só o e-mail falhou, só ele tenta de novo.
+- **Falha** é erro de rede, timeout ou resposta fora de 2xx. Antes, o webhook contava como enviado mesmo com 500.
+- **Esperas:** 30 s, 2 min, 10 min e depois 30 min entre tentativas.
+- **Prazo:** queda e recuperação valem **60 minutos** a partir do evento; o aviso de certificado vale **24 horas**. Passou do prazo, o aviso é descartado e o log mostra `notice expired` com `event_id`, `channel` e `attempts`. Aviso de queda velho demais só confunde.
+- **Reinício:** ao subir, o Pingou retoma o que ficou pendente (inclusive depois de `kill -9`) e não reenvia o que já saiu.
+- **Pelo menos uma vez:** se o Pingou cair depois de enviar e antes de marcar como enviado, o aviso sai de novo. Por isso o JSON do webhook tem o campo `id`: quem recebe ignora o `id` repetido.
+- **Destino lido na hora.** A fila **não guarda** a URL do webhook, os destinatários, o tópico, o token do ntfy nem o `ping_token`. Trocar a URL do webhook vale para os avisos que ainda estão pendentes. O texto do e-mail e do ntfy é montado na hora do envio, com o fuso de agora.
+- **Canal desligado** (URL, destinatários ou tópico vazios) = nada a enviar: o aviso é encerrado sem tentar de novo. Canal que não existe mais no ambiente (ex.: `PINGOU_SMTP_HOST` removido) expira.
+- Os botões **Enviar teste** continuam enviando direto, sem passar pela fila.
+- Linhas enviadas ou expiradas são apagadas depois de 7 dias, pela rotina de retenção. Quem expira só aparece no log, não no painel.
+
+No [desligamento](#desligamento), o worker para de pegar avisos novos e o envio em andamento termina dentro do prazo de 15 s; o que sobrou continua pendente no banco para a próxima subida.
 
 ## Fuso horário
 
@@ -1204,7 +1222,7 @@ Ao receber **SIGTERM** ou **SIGINT** (Ctrl+C), o Pingou desliga em etapas, com p
 1. Para o agendador: nenhum check novo começa.
 2. Para de aceitar conexões e termina as requisições em andamento (incluindo pings `/ping/{token}`).
 3. Espera os checks em andamento. Um check cortado pelo desligamento é **descartado**: não conta como falha nem abre incidente.
-4. Espera as notificações em andamento.
+4. Para o worker de notificações: o envio em andamento termina, os avisos pendentes ficam no banco.
 5. Fecha o banco.
 6. Remove o lock `~/.pingou/pingou.lock`.
 

@@ -167,3 +167,19 @@ func incidentsListSQL(f domain.IncidentFilter) (count, list string, args []any) 
 		FROM incidents i LEFT JOIN monitors m ON m.id = i.monitor_id` + where + order + ` LIMIT ? OFFSET ?`
 	return count, list, args
 }
+
+const (
+	// sqlOutboxDue: avisos vencidos, a cada rodada do worker (índice parcial idx_outbox_due).
+	sqlOutboxDue = `
+		SELECT id, event_id, event_type, channel, monitor_id, payload, status, attempts,
+		       created_at, expires_at, next_attempt_at, last_error, done_at
+		FROM notification_outbox
+		WHERE status = 'pending' AND next_attempt_at <= ?
+		ORDER BY next_attempt_at, id
+		LIMIT ?`
+
+	// sqlOutboxPurge: limpeza dos avisos encerrados (índice parcial idx_outbox_done).
+	sqlOutboxPurge = `
+		DELETE FROM notification_outbox
+		WHERE status <> 'pending' AND done_at < ?`
+)

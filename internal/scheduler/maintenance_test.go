@@ -101,7 +101,7 @@ func TestMaintenanceBlocksChecksAndClosesIncident(t *testing.T) {
 	}
 	m := e.downMonitor(t, 1)
 	waitFor(t, "monitor DOWN", func() bool { return e.load(t, m.ID).CurrentState == domain.StateDown })
-	downs, checks := e.notifier.downs.Load(), e.countChecks(t, m.ID)
+	downs, checks := e.countNotices(t, domain.EventDown), e.countChecks(t, m.ID)
 
 	now := time.Now()
 	w := e.addWindow(t, m.ID, now.Add(-time.Second), now.Add(time.Hour))
@@ -130,7 +130,7 @@ func TestMaintenanceBlocksChecksAndClosesIncident(t *testing.T) {
 	if n := e.countChecks(t, m.ID); n != checks {
 		t.Fatalf("checks durante a janela: %d → %d, want nenhum novo", checks, n)
 	}
-	if n := e.notifier.downs.Load(); n != downs {
+	if n := e.countNotices(t, domain.EventDown); n != downs {
 		t.Fatalf("avisos durante a janela: %d → %d", downs, n)
 	}
 }

@@ -24,7 +24,9 @@ type Scheduler struct {
 	checkRepoTx     *repository.CheckRepoTx
 	monitorRepoTx   *repository.MonitorRepoTx
 	incidentRepoTx  *repository.IncidentRepoTx
-	notifier        service.Notifier
+	outboxRepoTx    *repository.OutboxRepoTx
+	channels        []string                     // canais ativos: uma linha do outbox por canal
+	wake            func()                       // acorda o worker depois do commit
 	maintenance     domain.MaintenanceRepository // nil = sem janelas de manutenção
 	now             func() time.Time             // relógio do gate e do tick de manutenção (testes trocam)
 	jobs            map[string]*job
@@ -47,7 +49,9 @@ func NewScheduler(
 	checkRepoTx *repository.CheckRepoTx,
 	monitorRepoTx *repository.MonitorRepoTx,
 	incidentRepoTx *repository.IncidentRepoTx,
-	notifier service.Notifier,
+	outboxRepoTx *repository.OutboxRepoTx,
+	channels []string,
+	wake func(),
 ) *Scheduler {
 	return &Scheduler{
 		monitors:        monitors,
@@ -56,7 +60,9 @@ func NewScheduler(
 		checkRepoTx:     checkRepoTx,
 		monitorRepoTx:   monitorRepoTx,
 		incidentRepoTx:  incidentRepoTx,
-		notifier:        notifier,
+		outboxRepoTx:    outboxRepoTx,
+		channels:        channels,
+		wake:            wake,
 		jobs:            make(map[string]*job),
 		intervalUnit:    time.Second,
 		heartbeatTick:   10 * time.Second,
@@ -273,8 +279,8 @@ func (s *Scheduler) withMonitor(ctx context.Context, monitorID string, decide fu
 	}
 
 	// Criar nova UnitOfWork para este check
-	uow := service.NewUnitOfWork(s.db, s.checkRepoTx, s.monitorRepoTx, s.incidentRepoTx)
-	sm := service.NewStateMachine(uow, s.notifier)
+	uow := service.NewUnitOfWork(s.db, s.checkRepoTx, s.monitorRepoTx, s.incidentRepoTx, s.outboxRepoTx)
+	sm := service.NewStateMachine(uow, s.channels, s.wake)
 	return sm.Process(ctx, m, *result)
 }
 

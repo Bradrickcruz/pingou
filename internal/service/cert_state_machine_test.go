@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"path/filepath"
-	"sync"
 	"testing"
 	"time"
 
@@ -17,39 +16,39 @@ import (
 
 const day = 24 * time.Hour
 
-// certRecorder guarda os avisos de certificado e conta quedas e voltas.
+// certRecorder lê os avisos gravados no outbox (os pendentes, na ordem de gravação).
 type certRecorder struct {
-	mu        sync.Mutex
-	alerts    []domain.CertAlert
-	at        []time.Time // relógio simulado no momento de cada aviso
-	downs, up int
-	clock     *time.Time
+	t  *testing.T
+	db *sql.DB
 }
 
-func (r *certRecorder) NotifyDown(context.Context, *domain.Monitor, *domain.Incident) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.downs++
+func (r *certRecorder) events(eventType string) []domain.OutboxEvent {
+	return pendingNotices(r.t, r.db, eventType)
 }
 
-func (r *certRecorder) NotifyRecovery(context.Context, *domain.Monitor, *domain.Incident) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.up++
+func (r *certRecorder) alerts() []domain.CertAlert {
+	out := []domain.CertAlert{}
+	for _, ev := range r.events(domain.EventCertExpiring) {
+		out = append(out, ev.Snapshot.AsCertAlert())
+	}
+	return out
 }
 
-func (r *certRecorder) NotifyCertExpiring(_ context.Context, _ *domain.Monitor, a domain.CertAlert) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.alerts = append(r.alerts, a)
-	r.at = append(r.at, *r.clock)
+// at é o relógio simulado no momento de cada aviso.
+func (r *certRecorder) at() []time.Time {
+	out := []time.Time{}
+	for _, ev := range r.events(domain.EventCertExpiring) {
+		out = append(out, ev.CreatedAt)
+	}
+	return out
 }
+
+func (r *certRecorder) downs() int { return len(r.events(domain.EventDown)) }
+func (r *certRecorder) up() int    { return len(r.events(domain.EventUp)) }
 
 func (r *certRecorder) thresholds() []int {
-	r.mu.Lock()
-	defer r.mu.Unlock()
 	out := []int{}
-	for _, a := range r.alerts {
+	for _, a := range r.alerts() {
 		out = append(out, a.ThresholdDays)
 	}
 	return out
@@ -75,9 +74,9 @@ func newCertEnv(t *testing.T, alertEnabled bool, threshold int) *certEnv {
 	}
 	t.Cleanup(func() { db.Close() })
 	e := &certEnv{t: t, db: db, repo: repository.NewMonitorRepo(db), now: t0}
-	e.rec = &certRecorder{clock: &e.now}
+	e.rec = &certRecorder{t: t, db: db}
 	e.uowFn = func() service.UnitOfWork {
-		return service.NewUnitOfWork(db, repository.NewCheckRepoTx(db), repository.NewMonitorRepoTx(db), repository.NewIncidentRepoTx(db))
+		return newUoW(db)
 	}
 	m := &domain.Monitor{
 		ID: "m1", Name: "API", Type: domain.TypeHTTP, URL: "https://api.test", IntervalSeconds: 3600, TimeoutSeconds: 5,
@@ -102,7 +101,7 @@ func (e *certEnv) monitor() *domain.Monitor {
 
 func (e *certEnv) process(res domain.CheckResult) error {
 	e.t.Helper()
-	sm := service.NewStateMachine(e.uowFn(), e.rec).WithClock(func() time.Time { return e.now })
+	sm := service.NewStateMachine(e.uowFn(), testChannels, nil).WithClock(func() time.Time { return e.now })
 	return sm.Process(context.Background(), e.monitor(), res)
 }
 
@@ -143,21 +142,21 @@ func TestCertAlertSimulation90Days(t *testing.T) {
 	if len(got) != 2 || got[0] != 30 || got[1] != 7 {
 		t.Fatalf("avisos %v, want [30 7]", got)
 	}
-	if want := expires.Add(-30 * day); !e.rec.at[0].Equal(want) {
-		t.Fatalf("aviso de 30 dias em %v, want %v", e.rec.at[0], want)
+	if want := expires.Add(-30 * day); !e.rec.at()[0].Equal(want) {
+		t.Fatalf("aviso de 30 dias em %v, want %v", e.rec.at()[0], want)
 	}
-	if want := expires.Add(-7 * day); !e.rec.at[1].Equal(want) {
-		t.Fatalf("aviso de 7 dias em %v, want %v", e.rec.at[1], want)
+	if want := expires.Add(-7 * day); !e.rec.at()[1].Equal(want) {
+		t.Fatalf("aviso de 7 dias em %v, want %v", e.rec.at()[1], want)
 	}
-	if a := e.rec.alerts[0]; a.DaysLeft != 30 || !a.ExpiresAt.Equal(expires) {
+	if a := e.rec.alerts()[0]; a.DaysLeft != 30 || !a.ExpiresAt.Equal(expires) {
 		t.Fatalf("aviso de 30: %+v", a)
 	}
 	if m := e.monitor(); m.CertExpiresAt == nil || !m.CertExpiresAt.Equal(expires) {
 		t.Fatalf("data perdida após checks sem certificado: %v", m.CertExpiresAt)
 	}
 	// quedas seguem o fluxo normal: 1 incidente quando o certificado venceu
-	if e.rec.downs != 1 {
-		t.Fatalf("downs = %d, want 1", e.rec.downs)
+	if e.rec.downs() != 1 {
+		t.Fatalf("downs = %d, want 1", e.rec.downs())
 	}
 }
 
@@ -193,8 +192,8 @@ func TestCertAlertLateActivation(t *testing.T) {
 		e.mustProcess(ok(expires))
 	}
 	got := e.rec.thresholds()
-	if len(got) != 1 || got[0] != 7 || e.rec.alerts[0].DaysLeft != 4 {
-		t.Fatalf("avisos %v (%+v), want um de 7 dias com 4 dias restantes", got, e.rec.alerts)
+	if len(got) != 1 || got[0] != 7 || e.rec.alerts()[0].DaysLeft != 4 {
+		t.Fatalf("avisos %v (%+v), want um de 7 dias com 4 dias restantes", got, e.rec.alerts())
 	}
 }
 
@@ -216,8 +215,8 @@ func TestCertAlertRenewal(t *testing.T) {
 	if len(got) != 3 || got[0] != 30 || got[1] != 30 || got[2] != 7 {
 		t.Fatalf("avisos %v, want [30 30 7]", got)
 	}
-	if !e.rec.alerts[1].ExpiresAt.Equal(second) {
-		t.Fatalf("segundo aviso com a data antiga: %v", e.rec.alerts[1].ExpiresAt)
+	if !e.rec.alerts()[1].ExpiresAt.Equal(second) {
+		t.Fatalf("segundo aviso com a data antiga: %v", e.rec.alerts()[1].ExpiresAt)
 	}
 }
 
@@ -254,7 +253,7 @@ func TestCertAlertGuardedByURL(t *testing.T) {
 	if _, err := e.db.Exec(`UPDATE monitors SET url='https://novo.test' WHERE id='m1'`); err != nil {
 		t.Fatal(err)
 	}
-	sm := service.NewStateMachine(e.uowFn(), e.rec).WithClock(func() time.Time { return e.now })
+	sm := service.NewStateMachine(e.uowFn(), testChannels, nil).WithClock(func() time.Time { return e.now })
 	if err := sm.Process(context.Background(), m, ok(t0.Add(3*day))); err != nil {
 		t.Fatal(err)
 	}
@@ -305,8 +304,8 @@ func TestCertAlertWhileDown(t *testing.T) {
 	msg := "unexpected status code: 500"
 	e.mustProcess(domain.CheckResult{StatusCode: &code, ErrorMessage: &msg, CertNotAfter: &expires, CertURL: "https://api.test"})
 
-	if e.rec.downs != 1 {
-		t.Fatalf("downs = %d, want 1", e.rec.downs)
+	if e.rec.downs() != 1 {
+		t.Fatalf("downs = %d, want 1", e.rec.downs())
 	}
 	if got := e.rec.thresholds(); len(got) != 1 || got[0] != 7 {
 		t.Fatalf("avisos %v, want [7]", got)
@@ -333,8 +332,8 @@ func TestCertDoesNotChangeStateFlow(t *testing.T) {
 	for range 20 {
 		e.mustProcess(ok(expires))
 	}
-	if e.rec.downs != 1 || e.rec.up != 1 || len(e.rec.thresholds()) != 0 {
-		t.Fatalf("downs=%d up=%d avisos=%v", e.rec.downs, e.rec.up, e.rec.thresholds())
+	if e.rec.downs() != 1 || e.rec.up() != 1 || len(e.rec.thresholds()) != 0 {
+		t.Fatalf("downs=%d up=%d avisos=%v", e.rec.downs(), e.rec.up(), e.rec.thresholds())
 	}
 	var writes int
 	if err := e.db.QueryRow(`SELECT COUNT(*) FROM cert_writes`).Scan(&writes); err != nil {

@@ -32,12 +32,6 @@ import (
 	"github.com/Bradrickcruz/pingou/internal/service"
 )
 
-type noopNotifier struct{}
-
-func (noopNotifier) NotifyDown(context.Context, *domain.Monitor, *domain.Incident)         {}
-func (noopNotifier) NotifyRecovery(context.Context, *domain.Monitor, *domain.Incident)     {}
-func (noopNotifier) NotifyCertExpiring(context.Context, *domain.Monitor, domain.CertAlert) {}
-
 type benchEnv struct {
 	db        *sql.DB
 	migration string // versões aplicadas ao abrir e quanto levou
@@ -334,8 +328,8 @@ func TestDBBench(t *testing.T) {
 			msg := "bench failure"
 			res.ErrorMessage = &msg
 		}
-		uow := service.NewUnitOfWork(e.db, repository.NewCheckRepoTx(e.db), repository.NewMonitorRepoTx(e.db), repository.NewIncidentRepoTx(e.db))
-		return service.NewStateMachine(uow, noopNotifier{}).Process(ctx, m, res)
+		uow := service.NewUnitOfWork(e.db, repository.NewCheckRepoTx(e.db), repository.NewMonitorRepoTx(e.db), repository.NewIncidentRepoTx(e.db), repository.NewOutboxRepoTx())
+		return service.NewStateMachine(uow, []string{domain.ChannelWebhook}, nil).Process(ctx, m, res)
 	}
 	write := func(i int) error { return writeResult(i, true) }
 	w := timing{name: fmt.Sprintf("gravação de check (%d)", writes)}

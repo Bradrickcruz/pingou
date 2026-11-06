@@ -12,14 +12,6 @@ import (
 	"github.com/Bradrickcruz/pingou/internal/service"
 )
 
-type countNotifier struct{ downs, recoveries int }
-
-func (n *countNotifier) NotifyDown(context.Context, *domain.Monitor, *domain.Incident) { n.downs++ }
-func (n *countNotifier) NotifyRecovery(context.Context, *domain.Monitor, *domain.Incident) {
-	n.recoveries++
-}
-func (n *countNotifier) NotifyCertExpiring(context.Context, *domain.Monitor, domain.CertAlert) {}
-
 func updateEnabled(b *bool) service.UpdateMonitorInput {
 	return service.UpdateMonitorInput{Enabled: b}
 }
@@ -75,7 +67,6 @@ func TestPauseWithoutIncidentAndResumeKeepState(t *testing.T) {
 func TestPauseIsSilentAndResumeReopensIncident(t *testing.T) {
 	svc, db := newStatsService(t)
 	ctx := context.Background()
-	notifier := &countNotifier{}
 	// checks de antes da pausa ficam 10 min no passado; os de depois, 1 s à frente
 	// (a retomada grava resumed_at com o relógio real, com precisão de segundos)
 	clock := time.Now().UTC().Add(-10 * time.Minute)
@@ -85,15 +76,17 @@ func TestPauseIsSilentAndResumeReopensIncident(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		uow := service.NewUnitOfWork(db, repository.NewCheckRepoTx(db), repository.NewMonitorRepoTx(db), repository.NewIncidentRepoTx(db))
+		uow := newUoW(db)
 		msg := "boom"
 		now := clock
-		sm := service.NewStateMachine(uow, notifier).WithClock(func() time.Time { return now })
+		sm := service.NewStateMachine(uow, testChannels, nil).WithClock(func() time.Time { return now })
 		if err := sm.Process(ctx, m, domain.CheckResult{ErrorMessage: &msg}); err != nil {
 			t.Fatal(err)
 		}
 		clock = clock.Add(time.Second)
 	}
+	downs := func() int { return len(pendingNotices(t, db, domain.EventDown)) }
+	recoveries := func() int { return len(pendingNotices(t, db, domain.EventUp)) }
 	open := func() int {
 		var n int
 		db.QueryRow(`SELECT COUNT(*) FROM incidents WHERE monitor_id='m' AND ended_at IS NULL`).Scan(&n)
@@ -103,16 +96,16 @@ func TestPauseIsSilentAndResumeReopensIncident(t *testing.T) {
 	for range 5 { // acima do threshold
 		process()
 	}
-	if notifier.downs != 1 || open() != 1 {
-		t.Fatalf("antes da pausa: downs=%d abertos=%d, want 1 e 1", notifier.downs, open())
+	if downs() != 1 || open() != 1 {
+		t.Fatalf("antes da pausa: downs=%d abertos=%d, want 1 e 1", downs(), open())
 	}
 
 	off, on := false, true
 	if _, err := svc.Update(ctx, "m", updateEnabled(&off)); err != nil {
 		t.Fatal(err)
 	}
-	if notifier.downs != 1 || notifier.recoveries != 0 || open() != 0 {
-		t.Fatalf("pausa: downs=%d recoveries=%d abertos=%d, want 1, 0 e 0", notifier.downs, notifier.recoveries, open())
+	if downs() != 1 || recoveries() != 0 || open() != 0 {
+		t.Fatalf("pausa: downs=%d recoveries=%d abertos=%d, want 1, 0 e 0", downs(), recoveries(), open())
 	}
 
 	if _, err := svc.Update(ctx, "m", updateEnabled(&on)); err != nil {
@@ -121,12 +114,12 @@ func TestPauseIsSilentAndResumeReopensIncident(t *testing.T) {
 	clock = time.Now().UTC().Add(time.Second)
 	process()
 	process()
-	if notifier.downs != 1 || open() != 0 {
-		t.Fatalf("2 falhas após retomar: downs=%d abertos=%d, want 1 e 0", notifier.downs, open())
+	if downs() != 1 || open() != 0 {
+		t.Fatalf("2 falhas após retomar: downs=%d abertos=%d, want 1 e 0", downs(), open())
 	}
 	process()
-	if notifier.downs != 2 || open() != 1 {
-		t.Fatalf("3 falhas após retomar: downs=%d abertos=%d, want 2 e 1", notifier.downs, open())
+	if downs() != 2 || open() != 1 {
+		t.Fatalf("3 falhas após retomar: downs=%d abertos=%d, want 2 e 1", downs(), open())
 	}
 }
 
@@ -156,14 +149,14 @@ func TestResumeIgnoresFailuresBeforePause(t *testing.T) {
 	if m.ResumedAt == nil {
 		t.Fatal("resumed_at não gravado")
 	}
-	notifier := &countNotifier{}
-	uow := service.NewUnitOfWork(db, repository.NewCheckRepoTx(db), repository.NewMonitorRepoTx(db), repository.NewIncidentRepoTx(db))
+	uow := newUoW(db)
 	msg := "boom"
-	if err := service.NewStateMachine(uow, notifier).Process(ctx, m, domain.CheckResult{ErrorMessage: &msg}); err != nil {
+	if err := service.NewStateMachine(uow, testChannels, nil).Process(ctx, m, domain.CheckResult{ErrorMessage: &msg}); err != nil {
 		t.Fatal(err)
 	}
-	if notifier.downs != 0 || m.CurrentState == domain.StateDown {
-		t.Fatalf("downs=%d state=%s, want 0 e não DOWN", notifier.downs, m.CurrentState)
+	downs := func() int { return len(pendingNotices(t, db, domain.EventDown)) }
+	if downs() != 0 || m.CurrentState == domain.StateDown {
+		t.Fatalf("downs=%d state=%s, want 0 e não DOWN", downs(), m.CurrentState)
 	}
 }
 

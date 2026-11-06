@@ -75,8 +75,8 @@ func TestHeartbeatLifecycle(t *testing.T) {
 	late := e.afterDeadline(got)
 	e.sched.checkHeartbeats(ctx, late)
 	got = e.load(t, m.ID)
-	if got.CurrentState != domain.StateDown || e.countChecks(t, m.ID) != 2 || e.notifier.downs.Load() != 1 {
-		t.Fatalf("após prazo: state=%s checks=%d downs=%d", got.CurrentState, e.countChecks(t, m.ID), e.notifier.downs.Load())
+	if got.CurrentState != domain.StateDown || e.countChecks(t, m.ID) != 2 || e.countNotices(t, domain.EventDown) != 1 {
+		t.Fatalf("após prazo: state=%s checks=%d downs=%d", got.CurrentState, e.countChecks(t, m.ID), e.countNotices(t, domain.EventDown))
 	}
 
 	// segundo tick já em DOWN: sem check novo
@@ -106,8 +106,8 @@ func TestHeartbeatNeverPingedGoesDown(t *testing.T) {
 
 	late := m.UpdatedAt.Add(time.Duration(m.IntervalSeconds+m.Config.GraceSeconds+1) * e.sched.intervalUnit)
 	e.sched.checkHeartbeats(ctx, late)
-	if got := e.load(t, m.ID); got.CurrentState != domain.StateDown || e.notifier.downs.Load() != 1 {
-		t.Fatalf("sem ping após o prazo: state=%s downs=%d, want DOWN e 1", got.CurrentState, e.notifier.downs.Load())
+	if got := e.load(t, m.ID); got.CurrentState != domain.StateDown || e.countNotices(t, domain.EventDown) != 1 {
+		t.Fatalf("sem ping após o prazo: state=%s downs=%d, want DOWN e 1", got.CurrentState, e.countNotices(t, domain.EventDown))
 	}
 }
 

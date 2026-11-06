@@ -76,52 +76,43 @@ func (n *NtfyNotifier) loc() *time.Location {
 	return n.location()
 }
 
-func (n *NtfyNotifier) NotifyDown(ctx context.Context, m *domain.Monitor, i *domain.Incident) {
-	n.send(ctx, eventMonitorDown, ntfyMessage{
-		title:    ntfyTitle(subjectDown(m)),
-		body:     bodyFor(m, i, false, n.publicURL, n.loc()),
-		priority: "high",
-		tags:     "rotating_light",
-		click:    dashboardLink(n.publicURL, m),
-	})
-}
+func (n *NtfyNotifier) Name() string { return domain.ChannelNtfy }
 
-func (n *NtfyNotifier) NotifyRecovery(ctx context.Context, m *domain.Monitor, i *domain.Incident) {
-	n.send(ctx, eventMonitorUp, ntfyMessage{
-		title:    ntfyTitle(subjectUp(m, i)),
-		body:     bodyFor(m, i, true, n.publicURL, n.loc()),
-		priority: "default",
-		tags:     "white_check_mark",
-		click:    dashboardLink(n.publicURL, m),
-	})
-}
-
-// NotifyCertExpiring: prioridade normal no aviso de 30 dias e alta no de 7.
-func (n *NtfyNotifier) NotifyCertExpiring(ctx context.Context, m *domain.Monitor, a domain.CertAlert) {
-	priority := "default"
-	if a.ThresholdDays <= domain.CertAlertFinalDays {
-		priority = "high"
-	}
-	n.send(ctx, eventCertExpiring, ntfyMessage{
-		title:    ntfyTitle(subjectCert(m, a)),
-		body:     certBody(m, a, n.publicURL, n.loc()),
-		priority: priority,
-		tags:     "lock,warning",
-		click:    dashboardLink(n.publicURL, m),
-	})
-}
-
-func (n *NtfyNotifier) send(ctx context.Context, event string, msg ntfyMessage) {
+// Send monta a mensagem a partir do snapshot, na hora do envio, e publica no
+// tópico salvo nas settings. Cert: prioridade normal no aviso de 30 dias e alta
+// no de 7.
+func (n *NtfyNotifier) Send(ctx context.Context, ev domain.OutboxEvent) error {
 	topic := n.getTopic()
 	if topic == "" {
-		return
+		return nil
 	}
-	status, err := publishNtfy(ctx, n.client, n.cfg, topic, msg)
-	if err != nil {
-		slog.Error("ntfy send error", "event", event, "host", n.cfg.Host(), "err", ntfyErrorMessage(err))
-		return
+	m := ev.Snapshot.AsMonitor()
+	click := dashboardLink(n.publicURL, m)
+	var msg ntfyMessage
+	switch ev.EventType {
+	case domain.EventDown:
+		i := ev.Snapshot.AsIncident()
+		msg = ntfyMessage{title: ntfyTitle(subjectDown(m)), body: bodyFor(m, i, false, n.publicURL, n.loc()),
+			priority: "high", tags: "rotating_light", click: click}
+	case domain.EventUp:
+		i := ev.Snapshot.AsIncident()
+		msg = ntfyMessage{title: ntfyTitle(subjectUp(m, i)), body: bodyFor(m, i, true, n.publicURL, n.loc()),
+			priority: "default", tags: "white_check_mark", click: click}
+	case domain.EventCertExpiring:
+		a := ev.Snapshot.AsCertAlert()
+		priority := "default"
+		if a.ThresholdDays <= domain.CertAlertFinalDays {
+			priority = "high"
+		}
+		msg = ntfyMessage{title: ntfyTitle(subjectCert(m, a)), body: certBody(m, a, n.publicURL, n.loc()),
+			priority: priority, tags: "lock,warning", click: click}
+	default:
+		return fmt.Errorf("unknown event type %q", ev.EventType)
 	}
-	slog.Info("ntfy sent", "event", event, "host", n.cfg.Host(), "status", status)
+	if _, err := publishNtfy(ctx, n.client, n.cfg, topic, msg); err != nil {
+		return errors.New(ntfyErrorMessage(err))
+	}
+	return nil
 }
 
 // ntfyTitle tira o "[Pingou]" e o emoji do assunto do e-mail: no ntfy o app já

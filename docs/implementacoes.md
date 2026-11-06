@@ -20,6 +20,7 @@ Consolida o que os planos `plan-*.md` (já removidos; ficam no `git log`) entreg
 | 2026-11-04         | [Manutenção: pausa com motivo e janela agendada](#14-manutenção-pausa-com-motivo-e-janela-agendada) | `feature/maintenance-windows`   |
 | 2026-11-05         | [Modo escuro (Claro, Escuro, Sistema)](#15-modo-escuro-claro-escuro-sistema)                        | `ccr-f77fa1bb-9acipc`           |
 | 2026-11-05         | [Nomes claros nos eventos do webhook](#16-nomes-claros-nos-eventos-do-webhook)                      | `feature/webhook-event-names`   |
+| 2026-11-05         | [Retry de notificações (outbox)](#17-retry-de-notificações-outbox)                                  | `feature/notification-retry`    |
 
 Pendências de validação manual ainda abertas estão no [fim do documento](#pendências-abertas).
 
@@ -594,7 +595,7 @@ Plano `plan-webhook-event-names.md`. **BREAKING:** o campo `event` do webhook mu
 
 - `down` → `monitor_down` e `up` → `monitor_up`, no padrão `<objeto>_<acontecimento>`. **Quebra limpa** (decidido em 2026-11-05): o nome antigo não é mais enviado e não há versionamento do JSON. Os outros campos não mudaram.
 - `cert_expiring` e `test` ficam como estão: `cert_expiring` já segue o padrão e renomear de novo seria uma segunda quebra sem ganho.
-- Nomes viraram constantes (`eventMonitorDown`, `eventMonitorUp`, `eventCertExpiring`, `eventTest`). Os rótulos de log do `MultiNotifier`, do e-mail e do ntfy usam as mesmas constantes, para o log bater com o webhook.
+- Nomes viraram constantes (`eventMonitorDown`, `eventMonitorUp`, `eventCertExpiring`, `eventTest`). As constantes também servem de rótulo de log. (O `MultiNotifier` saiu com o retry de notificações, seção 17.)
 - README: exemplos novos, tabela de nomes, aviso de quebra e a regra "evento desconhecido: ignore".
 
 ### Risco
@@ -605,9 +606,53 @@ A quebra é silenciosa: fluxo "se `down`, alerta; senão, voltou" passa a tratar
 
 `go vet` e `go test ./internal/service/...` verdes. Teste novo (`TestWebhookDownAndRecoveryEventNames`) confere `monitor_down` (com `downtime_duration_seconds` nulo) e `monitor_up` (com a duração); com a constante trocada de volta para `down`, ele falha.
 
+## 17. Retry de notificações (outbox)
+
+Plano `plan-notification-retry.md` (ideia 5 do `IDEAS.md`). Antes, o aviso saía uma vez, depois do commit: canal fora do ar ou crash entre o commit e o envio perdia o aviso, e o webhook registrava "sent" até com 500.
+
+### Entregue
+
+- **Outbox:** tabela `notification_outbox` (migration `0010`), gravada na **mesma transação** do `StateMachine.Process`, uma linha por canal. Rollback não deixa aviso; commit sempre deixa.
+- **Worker** (`OutboxWorker`): lê os vencidos em lotes de 20 (conexão solta antes de enviar), envia, marca `sent` ou agenda a próxima. Acorda depois do commit (`Wake`) e a cada 30 s. Ao subir, retoma os pendentes.
+- **Esperas:** 30 s, 2 min, 10 min, 30 min. **Prazos:** queda e recuperação 60 min do evento; SSL 24 h. Se a próxima tentativa passaria do prazo, expira na hora. "Expirado" só no log.
+- **Canais:** `Channel.Send(ctx, OutboxEvent) error` substitui `Notifier`. Webhook com status fora de 2xx agora é falha. Texto de e-mail e ntfy montado no envio a partir do snapshot (compatível com i18n).
+- **Webhook:** campo novo `id` (UUID, igual em todas as tentativas). `timestamp` passa a ser a hora do evento; no `cert_expiring` antes era a hora do envio.
+- **Retenção:** linhas `sent`/`expired` com mais de 7 dias saem na rotina horária.
+- **Desligamento:** etapa "notifications" espera o worker; pendentes ficam no banco.
+- `MultiNotifier` removido (o fan-out e o `WaitGroup` viraram o worker).
+
+### Decisões
+
+1. **Sem estado `sending`.** Um único processo por banco (lock de arquivo) e um único worker: crash nunca deixa linha presa. Custo: envio sequencial (um webhook lento atrasa o e-mail da fila).
+2. **Snapshot do evento, não só `monitor_id`:** o monitor pode ser editado ou apagado antes do envio. O **destino** é lido na hora.
+3. **Sem segredo na fila:** nada de URL do webhook, destinatários, tópico, token do ntfy ou `ping_token`. `target` do monitor pode ter token na query; já é assim no banco e no payload do webhook.
+4. **Linha com payload ilegível** vira `expired` (senão ocuparia o lote para sempre).
+5. **`event_type`:** `down`, `up`, `cert_expiring` (nomes internos, gravados no outbox). O campo `event` do webhook é montado no envio (`monitor_down`, `monitor_up`, `cert_expiring`), então renomear o que vai ao receptor não mexe nas linhas da fila.
+
+### Limitações conhecidas
+
+- Entrega "pelo menos uma vez": duplicata é possível (por isso o `id`).
+- Webhook que responde 4xx por URL errada gasta as tentativas até o prazo de 60 min (o log mostra o status).
+- `last_error` do e-mail pode trazer texto do servidor SMTP (até 200 caracteres).
+- Ideia 1 (backup): `notification_outbox` deve ficar fora do export.
+
+### Descartado
+
+Reenvio com `time.AfterFunc` em memória; gravar o texto pronto do e-mail/ntfy; uma linha por evento com o estado de cada canal em JSON; estado `sending` com reclamação de linha; fila externa; retry infinito.
+
+### Validação
+
+`go vet` e `go test -race ./...` verdes. Testes novos: migration (sobe/desce, índices parciais), plano de consulta usa `idx_outbox_due` e `idx_outbox_done`, repositório, worker com relógio falso (esperas, prazos de 60 min e 24 h, só o canal com falha repete, canal desconhecido, pânico, aviso vencido, reinício), webhook (2xx/não-2xx, erro sem URL, `id`, `timestamp`), state machine (uma linha por canal com o mesmo `event_id`, rollback, nada sem mudança de estado) e concorrência entre `Process` e worker. Mutação conferida: status não-2xx como sucesso e esperas diferentes derrubam os testes. Depois do merge da develop (PR #20), `go test -race` verde.
+
+**Carga (T9, 2026-11-06):** `Process` a cada ~10 ms por 8 s, worker real, conexão única. Outbox vazio: p50 213 µs, p95 322 µs, p99 463 µs. Com 1 000 `pending` não vencidas: 222 µs, 360 µs, 775 µs. Com 1 000 vencidas sendo drenadas (~3 s, 1 000 envios falhos): 202 µs, 310 µs, 2,1 ms (máx 8,7 ms). Sem atraso; lote e `outboxPoll` ficam. Heap 10 → 14 MB no teste (não é o RSS do binário). Um monitor, receptor falso de 2 ms; webhook lento não foi medido.
+
+**QA com o binário real (parcial, 2026-11-06):** queda com 500 na 1ª tentativa, retry de 30 s e entrega na 2ª com o mesmo `id`/`timestamp`; recuperação (`monitor_up`); `kill -9` com aviso pendente retoma ao subir (`pending:1`) e entrega os dois avisos. Troca da URL do webhook durante as tentativas: a 1ª tentativa foi para a URL antiga (500) e, depois da troca nas settings, a 2ª foi para a nova com o mesmo `id`; a antiga não recebeu mais nada (o destino é lido na hora do envio). **Não feitos:** botões de teste, e-mail/ntfy/`cert_expiring` ponta a ponta, receptor com 500 por ~3 min; estão em "Pendências abertas".
+
 ---
 
 ## Pendências abertas
+
+- **Retry de notificações (item 17):** QA manual que falta com o binário real: botões de teste, e-mail/ntfy/`cert_expiring` ponta a ponta e receptor com 500 por ~3 min.
 
 - **Migrations 0003 e 0004** foram testadas em bancos de teste e de QA, mas **não** rodadas no `pingou.db` real. Fazer backup antes e conferir `failure_count` / `last_error`.
 - **Configurações (T12)**: webhook.site real, destino que não responde (5 s), navegação só por teclado, nome do arquivo baixado no navegador.

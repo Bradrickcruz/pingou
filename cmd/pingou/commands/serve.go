@@ -87,6 +87,8 @@ func runServe(cmd *cobra.Command, args []string) error {
 	checkRepoTx := repository.NewCheckRepoTx(db)
 	monitorRepoTx := repository.NewMonitorRepoTx(db)
 	incidentRepoTx := repository.NewIncidentRepoTx(db)
+	outboxRepoTx := repository.NewOutboxRepoTx()
+	outboxRepository := repository.NewOutboxRepo(db)
 
 	// webhookNotifier
 	webhookNotifier := service.NewWebhookNotifier(func() string {
@@ -97,23 +99,31 @@ func runServe(cmd *cobra.Command, args []string) error {
 	// fuso das datas no e-mail e no ntfy (o webhook segue em UTC, RFC3339)
 	messageLocation := service.LocationLoader(settingsRepository.Get)
 
-	// notifier: repassa cada evento para todos os canais, fora do lock do scheduler
-	notifier := service.NewMultiNotifier(webhookNotifier)
+	// canais: o webhook sempre; e-mail e ntfy se configurados no ambiente
+	channels := []service.Channel{webhookNotifier}
 	if loadedConfig.SMTP.Enabled() {
-		notifier.Add(service.NewEmailNotifier(loadedConfig.SMTP, func() string {
+		channels = append(channels, service.NewEmailNotifier(loadedConfig.SMTP, func() string {
 			recipients, _ := settingsRepository.Get(context.Background(), "email_recipients")
 			return recipients
 		}, loadedConfig.PublicURL).WithLocation(messageLocation))
 		slog.Info("email notifications available", "host", loadedConfig.SMTP.Host, "port", loadedConfig.SMTP.Port, "tls", loadedConfig.SMTP.TLS)
 	}
 	if loadedConfig.Ntfy.Enabled() {
-		notifier.Add(service.NewNtfyNotifier(loadedConfig.Ntfy, func() string {
+		channels = append(channels, service.NewNtfyNotifier(loadedConfig.Ntfy, func() string {
 			topic, _ := settingsRepository.Get(context.Background(), "ntfy_topic")
 			return topic
 		}, loadedConfig.PublicURL).WithLocation(messageLocation))
 		// só o host: a URL pode ter caminho e o token nunca vai para o log
 		slog.Info("ntfy notifications available", "host", loadedConfig.Ntfy.Host(), "auth", loadedConfig.Ntfy.Token != "")
 	}
+	channelNames := make([]string, len(channels))
+	for i, c := range channels {
+		channelNames[i] = c.Name()
+	}
+
+	// worker do outbox: envia os avisos gravados na transação dos checks e
+	// repete os que falharam
+	outboxWorker := service.NewOutboxWorker(outboxRepository, channels...)
 
 	// checkers: o registry escolhe pelo tipo (heartbeat não tem check ativo)
 	monitorChecker := checker.NewRegistry(map[domain.MonitorType]domain.Checker{
@@ -128,7 +138,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 	maintenanceService := service.NewMaintenanceService(maintenanceRepository, monitorRepository)
 
 	// scheduler
-	monitorScheduler := scheduler.NewScheduler(monitorRepository, monitorChecker, db, checkRepoTx, monitorRepoTx, incidentRepoTx, notifier).
+	monitorScheduler := scheduler.NewScheduler(monitorRepository, monitorChecker, db, checkRepoTx, monitorRepoTx, incidentRepoTx, outboxRepoTx, channelNames, outboxWorker.Wake).
 		WithMaintenance(maintenanceRepository)
 	monitorService.SetReloader(monitorScheduler)
 	maintenanceService.SetEnder(monitorScheduler)
@@ -138,13 +148,16 @@ func runServe(cmd *cobra.Command, args []string) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	// Inicia o worker do outbox antes do scheduler: retoma os avisos pendentes de antes
+	outboxWorker.Start(ctx)
+
 	// Inicia scheduler
 	if err := monitorScheduler.Start(ctx); err != nil {
 		return fmt.Errorf("scheduler error: %w", err)
 	}
 
 	// Retention worker
-	retention := scheduler.NewRetentionWorker(checkRepository, settingsRepository)
+	retention := scheduler.NewRetentionWorker(checkRepository, settingsRepository).WithOutbox(outboxRepository)
 	retention.Start(ctx)
 
 	// Inicia server
@@ -184,11 +197,9 @@ func runServe(cmd *cobra.Command, args []string) error {
 			return retention.Wait(ctx)
 		}},
 		{"notifications", func(ctx context.Context) error {
-			deadline, _ := ctx.Deadline()
-			if !notifier.Wait(time.Until(deadline)) {
-				return errors.New("notifications still pending")
-			}
-			return nil
+			// para de pegar avisos novos e termina o envio em curso; o resto
+			// fica pending no banco para a próxima subida
+			return outboxWorker.Wait(ctx)
 		}},
 		{"database", func(context.Context) error { return db.Close() }},
 		{"lock", func(context.Context) error { releaseLock(); return nil }},

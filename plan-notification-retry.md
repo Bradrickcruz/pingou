@@ -409,7 +409,17 @@ sqlite3 pingou.db '.schema notification_outbox'
 
 ### Concluído
 
-- Leitura de `state_machine.go`, `multi_notifier.go`, `notifier.go`, `unit_of_work.go`, `retention.go`, `serve.go` e das migrations `0008`/`0009`; mapa dos pontos a mudar. Só há 3 chamadores de notificação (todos em `state_machine.go`).
+- T0: branch `feature/notification-retry` criada a partir de `develop`.
+- T1: migration `0010_notification_outbox` + teste (sobe/desce, índices parciais) + plano de consulta usa `idx_outbox_due`/`idx_outbox_done`.
+- T2: `domain/outbox.go`, `OutboxRepo`, `OutboxRepoTx` + testes.
+- T3: canais devolvem erro (`Channel.Send`); webhook com `id`, status não-2xx = falha; e-mail e ntfy montam o texto do snapshot.
+- T4: `StateMachine` grava no outbox na transação; `UnitOfWork.OutboxRepo()`; `wake` depois do commit.
+- T5: `OutboxWorker` (envio, backoff, expiração, pânico, canal desconhecido).
+- T6: wiring em `serve.go`, shutdown, retenção de 7 dias, `MultiNotifier` removido.
+- T7: testes (unidade, integração com `httptest`, reinício, expiração, concorrência com `-race`).
+- T8 (parcial): payload e `last_error` conferidos em teste (sem token/URL). Risco residual: `last_error` do e-mail pode trazer texto do servidor SMTP (até 200 caracteres); `target` do monitor pode ter token na query.
+- T11: README, `docs/implementacoes.md` (item 16) e `IDEAS.md`.
+- T12: Pull Request para `develop`.
 
 ### Em andamento
 
@@ -417,11 +427,25 @@ sqlite3 pingou.db '.schema notification_outbox'
 
 ### Pendente
 
-- T0 a T12
+- T10 (resto): botões de teste, e-mail/ntfy/`cert_expiring` com o binário real, receptor com 500 por ~3 min.
 
 ### Evidências
 
--
+- `go vet ./...` e `go test -race ./...` verdes.
+- Mutação: tratar status não-2xx como sucesso derruba `TestWebhookSendStatusCodes` e `TestWorkerWebhookRetriesWithSameID`; mudar a última espera para 20 min derruba `TestWorkerBackoffAndExpiryForDown` e `TestWorkerCertNoticeLivesFor24Hours`.
+- **Depois do merge da develop (PR #20, 2026-11-06):** `go test -race ./internal/... ./cmd/...` verde.
+- **T9, carga (2026-11-06):** teste descartável, não commitado. `Process` a cada ~10 ms por 8 s, worker real, SQLite com conexão única, canal falso que falha após 2 ms. Um monitor, não o perfil de 100 × 10 s; memória é a do processo de teste, não o RSS do binário.
+
+  | Cenário                            | Checks | p50    | p95    | p99    | máx     | Envios | Heap / Sys |
+  | ---------------------------------- | ------ | ------ | ------ | ------ | ------- | ------ | ---------- |
+  | A) outbox vazio                    | 754    | 213 µs | 322 µs | 463 µs | 8,4 ms  | 0      | 10 / 17 MB |
+  | B) 1 000 pending, nenhuma vencida  | 752    | 222 µs | 360 µs | 775 µs | 13,5 ms | 0      | 10 / 25 MB |
+  | C) 1 000 vencidas, worker drenando | 749    | 202 µs | 310 µs | 2,1 ms | 8,7 ms  | 1 000  | 14 / 29 MB |
+
+  Sem atraso no `Process`: p50/p95 iguais nos três; drenar as 1 000 (lotes de 20, `MarkRetry`) levou ~3 s e o p99 foi a 2,1 ms. Lote e `outboxPoll` ficam como estão. Não medido: webhook lento (timeout de 10 s).
+
+- **T10, E2E parcial (2026-11-06):** binário real, banco e HOME isolados, monitor TCP em porta fechada (limite 1), receptor local. Queda com 500 na 1ª tentativa: `notice failed, will retry` (30 s), 2ª tentativa 200, mesmo `id` e `timestamp`, `event: monitor_down`. Recuperação: `monitor_up` com `downtime_duration_seconds: 76`. `kill -9` com aviso pendente e receptor fora do ar: ao subir, `outbox worker started pending:1`, o `monitor_down` pendente (mesmo `event_id`) e o `monitor_up` foram entregues e as duas linhas ficaram `sent`.
+- **T10, troca da URL durante as tentativas (2026-11-06):** webhook em `…:9911/old` (sempre 500). Queda: 1ª tentativa em `/old` (500), `notice failed, will retry`. Troquei a URL nas settings para `…:9912/new` (200). A 2ª tentativa foi para `/new`, com o mesmo `event_id` (`…/new` recebeu `monitor_down` com o `id` da 1ª tentativa); a linha ficou `sent` com 2 tentativas e `/old` não recebeu mais nada. Confirma que o destino é lido na hora do envio.
 
 ## Notes
 
