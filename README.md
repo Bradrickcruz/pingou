@@ -833,12 +833,25 @@ A data aparece na página de detalhe do monitor em todo monitor HTTP com `https:
 
 Quando `webhook_url` está configurado em settings, o Pingou envia um `POST` JSON a cada transição para `DOWN` ou de volta para `UP`, e no [aviso de expiração do certificado SSL](#aviso-de-expiração-do-certificado-ssl).
 
+> **Mudança que quebra compatibilidade (nomes dos eventos).** `down` virou `monitor_down` e `up` virou `monitor_up`. Os nomes antigos **não** são mais enviados, sem período de transição. A quebra é silenciosa: um fluxo "se `down`, alerta; senão, voltou" passa a tratar **toda queda como "voltou"**. Antes de atualizar, ajuste o fluxo para comparar com `monitor_down` e `monitor_up` e **ignorar qualquer outro valor**. Os demais campos do JSON não mudaram.
+
+### Nomes dos eventos
+
+Padrão: `<objeto>_<acontecimento>`, minúsculas, separado por `_`.
+
+| `event`         | Quando                                                |
+| --------------- | ----------------------------------------------------- |
+| `monitor_down`  | O monitor passou para DOWN                            |
+| `monitor_up`    | O monitor voltou para UP                              |
+| `cert_expiring` | O certificado SSL está perto de vencer (ou já venceu) |
+| `test`          | Botão "Testar webhook" das Configurações              |
+
 Evento de queda:
 
 ```json
 {
   "id": "018f2f7a-...",
-  "event": "down",
+  "event": "monitor_down",
   "monitor": {
     "id": "018f2f7a-...",
     "name": "API",
@@ -858,7 +871,7 @@ Evento de recuperação:
 ```json
 {
   "id": "018f2f7a-...",
-  "event": "up",
+  "event": "monitor_up",
   "monitor": {
     "id": "018f2f7a-...",
     "name": "API",
@@ -918,9 +931,9 @@ Aviso de [certificado SSL perto de expirar](#aviso-de-expiração-do-certificado
 | `days_left`       | Dias inteiros que faltam (arredondado para baixo; negativo se já venceu) |
 | `threshold_days`  | Qual aviso é: `30` ou `7`                                                |
 
-Os eventos `down` e `up` não mudam (não levam esses três campos).
+Os eventos `monitor_down` e `monitor_up` não levam esses três campos.
 
-> **Atenção, quem consome o webhook:** `event` agora pode ter um terceiro valor, `cert_expiring`. Integrações que tratam "tudo que não é `up`" como queda vão mostrar o aviso de certificado como queda. Trate `event` pelo valor exato. Como a opção começa desligada, nada muda até alguém ligá-la.
+> **Atenção, quem consome o webhook:** `event` pode ter um terceiro valor, `cert_expiring`. Integrações que tratam "tudo que não é `monitor_up`" como queda vão mostrar o aviso de certificado como queda. Trate `event` pelo valor exato e **ignore o que não conhece**, nunca como `monitor_up`. Como a opção começa desligada, nada muda até alguém ligá-la.
 
 ### Testando o webhook
 
@@ -965,7 +978,7 @@ O payload tem o mesmo formato dos eventos reais:
 }
 ```
 
-> Integrações que tratam `event` devem **ignorar valores desconhecidos**. Novos eventos podem surgir sem aviso.
+> Integrações que tratam `event` devem **ignorar valores desconhecidos** (nunca tratar como `monitor_up`). Novos eventos podem surgir sem aviso.
 
 ## E-mail
 

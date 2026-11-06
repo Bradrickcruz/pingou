@@ -19,7 +19,8 @@ Consolida o que os planos `plan-*.md` (já removidos; ficam no `git log`) entreg
 | 2026-11-02         | [Aviso de expiração do certificado SSL](#13-aviso-de-expiração-do-certificado-ssl)                  | `feature/ssl-expiry` (#16)      |
 | 2026-11-04         | [Manutenção: pausa com motivo e janela agendada](#14-manutenção-pausa-com-motivo-e-janela-agendada) | `feature/maintenance-windows`   |
 | 2026-11-05         | [Modo escuro (Claro, Escuro, Sistema)](#15-modo-escuro-claro-escuro-sistema)                        | `ccr-f77fa1bb-9acipc`           |
-| 2026-11-05         | [Retry de notificações (outbox)](#16-retry-de-notificações-outbox)                                  | `feature/notification-retry`    |
+| 2026-11-05         | [Nomes claros nos eventos do webhook](#16-nomes-claros-nos-eventos-do-webhook)                      | `feature/webhook-event-names`   |
+| 2026-11-05         | [Retry de notificações (outbox)](#17-retry-de-notificações-outbox)                                  | `feature/notification-retry`    |
 
 Pendências de validação manual ainda abertas estão no [fim do documento](#pendências-abertas).
 
@@ -586,7 +587,26 @@ Atalho de tema no cabeçalho do painel; guardar o tema no backend (`settings`); 
 
 ---
 
-## 16. Retry de notificações (outbox)
+## 16. Nomes claros nos eventos do webhook
+
+Plano `plan-webhook-event-names.md`. **BREAKING:** o campo `event` do webhook mudou de nome. Só backend (`internal/service`) e documentação.
+
+### Entregue
+
+- `down` → `monitor_down` e `up` → `monitor_up`, no padrão `<objeto>_<acontecimento>`. **Quebra limpa** (decidido em 2026-11-05): o nome antigo não é mais enviado e não há versionamento do JSON. Os outros campos não mudaram.
+- `cert_expiring` e `test` ficam como estão: `cert_expiring` já segue o padrão e renomear de novo seria uma segunda quebra sem ganho.
+- Nomes viraram constantes (`eventMonitorDown`, `eventMonitorUp`, `eventCertExpiring`, `eventTest`). As constantes também servem de rótulo de log. (O `MultiNotifier` saiu com o retry de notificações, seção 17.)
+- README: exemplos novos, tabela de nomes, aviso de quebra e a regra "evento desconhecido: ignore".
+
+### Risco
+
+A quebra é silenciosa: fluxo "se `down`, alerta; senão, voltou" passa a tratar toda queda como "voltou". Ajustar o fluxo (n8n) **antes** de subir a versão nova.
+
+### Validação
+
+`go vet` e `go test ./internal/service/...` verdes. Teste novo (`TestWebhookDownAndRecoveryEventNames`) confere `monitor_down` (com `downtime_duration_seconds` nulo) e `monitor_up` (com a duração); com a constante trocada de volta para `down`, ele falha.
+
+## 17. Retry de notificações (outbox)
 
 Plano `plan-notification-retry.md` (ideia 5 do `IDEAS.md`). Antes, o aviso saía uma vez, depois do commit: canal fora do ar ou crash entre o commit e o envio perdia o aviso, e o webhook registrava "sent" até com 500.
 
@@ -607,7 +627,7 @@ Plano `plan-notification-retry.md` (ideia 5 do `IDEAS.md`). Antes, o aviso saía
 2. **Snapshot do evento, não só `monitor_id`:** o monitor pode ser editado ou apagado antes do envio. O **destino** é lido na hora.
 3. **Sem segredo na fila:** nada de URL do webhook, destinatários, tópico, token do ntfy ou `ping_token`. `target` do monitor pode ter token na query; já é assim no banco e no payload do webhook.
 4. **Linha com payload ilegível** vira `expired` (senão ocuparia o lote para sempre).
-5. **`event_type`:** `down`, `up`, `cert_expiring` (os nomes que o webhook usa hoje). Se a ideia 7 (nomes de evento) entrar depois, a troca é nas constantes e as linhas antigas vivem no máximo 24 h.
+5. **`event_type`:** `down`, `up`, `cert_expiring` (nomes internos, gravados no outbox). O campo `event` do webhook é montado no envio (`monitor_down`, `monitor_up`, `cert_expiring`), então renomear o que vai ao receptor não mexe nas linhas da fila.
 
 ### Limitações conhecidas
 

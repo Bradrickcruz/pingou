@@ -73,6 +73,15 @@ func downtimeSeconds(i *domain.Incident, end time.Time) int64 {
 	return max(int64(end.Sub(i.StartedAt).Seconds()), 0)
 }
 
+// Nomes do campo "event" do webhook. Padrão: <objeto>_<acontecimento>, minúsculas,
+// separado por "_". Também servem de rótulo de log nos outros canais.
+const (
+	eventMonitorDown  = "monitor_down"
+	eventMonitorUp    = "monitor_up"
+	eventCertExpiring = "cert_expiring"
+	eventTest         = "test"
+)
+
 type webhookPayload struct {
 	// ID é o event_id do outbox: igual em todas as tentativas do mesmo evento,
 	// para o receptor ignorar duplicata (a entrega é "pelo menos uma vez").
@@ -129,19 +138,21 @@ func (n *WebhookNotifier) payloadFor(ev domain.OutboxEvent) (webhookPayload, err
 	m := snap.AsMonitor()
 	payload := webhookPayload{
 		ID:           ev.EventID,
-		Event:        ev.EventType,
 		Monitor:      toWebhookMonitor(m),
 		Timestamp:    snap.OccurredAt.UTC().Format(time.RFC3339),
 		DashboardURL: n.dashboardURL(m),
 	}
 	switch ev.EventType {
 	case domain.EventDown:
+		payload.Event = eventMonitorDown
 		payload.LastError = snap.AsIncident().LastError
 	case domain.EventUp:
+		payload.Event = eventMonitorUp
 		i := snap.AsIncident()
 		downtime := downtimeSeconds(i, recoveredAt(i))
 		payload.DowntimeDurationSeconds = &downtime
 	case domain.EventCertExpiring:
+		payload.Event = eventCertExpiring
 		a := snap.AsCertAlert()
 		expiresAt := a.ExpiresAt.UTC().Format(time.RFC3339)
 		daysLeft, threshold := a.DaysLeft, a.ThresholdDays
@@ -228,7 +239,7 @@ func SendTestWebhook(ctx context.Context, rawURL string) WebhookTestResult {
 	testID, _ := newUUIDv7()
 	payload := webhookPayload{
 		ID:    testID,
-		Event: "test",
+		Event: eventTest,
 		Monitor: webhookPayloadMonitor{
 			ID:     "00000000-0000-0000-0000-000000000000",
 			Name:   "Teste do Pingou",

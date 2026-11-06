@@ -284,3 +284,32 @@ func TestSendTestWebhookHasID(t *testing.T) {
 		t.Fatalf("payload do teste: %+v err=%v", p, err)
 	}
 }
+
+// O campo "event" do webhook usa monitor_down/monitor_up, não os tipos internos do outbox.
+func TestWebhookDownAndRecoveryEventNames(t *testing.T) {
+	bodies := make(chan string, 2)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		bodies <- string(b)
+	}))
+	defer srv.Close()
+	n := NewWebhookNotifier(func() string { return srv.URL }, "")
+	m := &domain.Monitor{ID: "m1", Name: "API", Type: domain.TypeHTTP}
+	i := &domain.Incident{ID: "i1", StartedAt: time.Now().Add(-90 * time.Second)}
+
+	for _, c := range []struct {
+		send func() error
+		want string
+	}{
+		{func() error { return notifyDown(t.Context(), n, m, i) }, "monitor_down"},
+		{func() error { return notifyRecovery(t.Context(), n, m, i) }, "monitor_up"},
+	} {
+		if err := c.send(); err != nil {
+			t.Fatal(err)
+		}
+		var p struct{ Event string }
+		if err := json.Unmarshal([]byte(<-bodies), &p); err != nil || p.Event != c.want {
+			t.Fatalf("event = %q (err %v), quer %q", p.Event, err, c.want)
+		}
+	}
+}
