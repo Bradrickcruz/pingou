@@ -18,28 +18,29 @@ type job struct {
 }
 
 type Scheduler struct {
-	monitors        domain.MonitorRepository
-	checker         domain.Checker
-	db              *sql.DB
-	checkRepoTx     *repository.CheckRepoTx
-	monitorRepoTx   *repository.MonitorRepoTx
-	incidentRepoTx  *repository.IncidentRepoTx
-	outboxRepoTx    *repository.OutboxRepoTx
-	channels        []string                     // canais ativos: uma linha do outbox por canal
-	wake            func()                       // acorda o worker depois do commit
-	maintenance     domain.MaintenanceRepository // nil = sem janelas de manutenção
-	now             func() time.Time             // relógio do gate e do tick de manutenção (testes trocam)
-	jobs            map[string]*job
-	dbMu            sync.Mutex // serializa acesso ao DB (SQLite com MaxOpenConns=1)
-	mu              sync.Mutex
-	intervalUnit    time.Duration      // unidade de interval_seconds; testes reduzem para rodar rápido
-	heartbeatTick   time.Duration      // frequência do avaliador de prazos do heartbeat
-	maintenanceTick time.Duration      // frequência do aplicador de início/fim das janelas
-	rootCtx         context.Context    // contexto de vida dos jobs (definido em Start)
-	startedAt       time.Time          // prazos vencidos antes disso venceram com o Pingou fora do ar
-	stopHeartbeats  context.CancelFunc // para o avaliador de heartbeat e o tick de manutenção
-	stopping        bool               // Stop foi chamado: nenhum job novo começa (protegido por mu)
-	wg              sync.WaitGroup     // loops de check e avaliador de heartbeat em andamento
+	monitors           domain.MonitorRepository
+	checker            domain.Checker
+	db                 *sql.DB
+	checkRepoTx        *repository.CheckRepoTx
+	monitorRepoTx      *repository.MonitorRepoTx
+	incidentRepoTx     *repository.IncidentRepoTx
+	outboxRepoTx       *repository.OutboxRepoTx
+	channels           []string                                // canais ativos: uma linha do outbox por canal
+	wake               func()                                  // acorda o worker depois do commit
+	maintenance        domain.MaintenanceRepository            // nil = sem janelas de manutenção
+	maintenanceNotices func(ctx context.Context) (bool, error) // interruptor do aviso de manutenção; nil = desligado
+	now                func() time.Time                        // relógio do gate e do tick de manutenção (testes trocam)
+	jobs               map[string]*job
+	dbMu               sync.Mutex // serializa acesso ao DB (SQLite com MaxOpenConns=1)
+	mu                 sync.Mutex
+	intervalUnit       time.Duration      // unidade de interval_seconds; testes reduzem para rodar rápido
+	heartbeatTick      time.Duration      // frequência do avaliador de prazos do heartbeat
+	maintenanceTick    time.Duration      // frequência do aplicador de início/fim das janelas
+	rootCtx            context.Context    // contexto de vida dos jobs (definido em Start)
+	startedAt          time.Time          // prazos vencidos antes disso venceram com o Pingou fora do ar
+	stopHeartbeats     context.CancelFunc // para o avaliador de heartbeat e o tick de manutenção
+	stopping           bool               // Stop foi chamado: nenhum job novo começa (protegido por mu)
+	wg                 sync.WaitGroup     // loops de check e avaliador de heartbeat em andamento
 }
 
 func NewScheduler(
@@ -76,6 +77,13 @@ func NewScheduler(
 // de início/fim (iniciado em Start).
 func (s *Scheduler) WithMaintenance(repo domain.MaintenanceRepository) *Scheduler {
 	s.maintenance = repo
+	return s
+}
+
+// WithMaintenanceNotices liga o aviso de início e fim das janelas agendadas.
+// enabled lê o interruptor das settings; só é chamado quando há janela vencida.
+func (s *Scheduler) WithMaintenanceNotices(enabled func(ctx context.Context) (bool, error)) *Scheduler {
+	s.maintenanceNotices = enabled
 	return s
 }
 

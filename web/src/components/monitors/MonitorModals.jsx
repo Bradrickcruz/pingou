@@ -22,9 +22,10 @@ function TypeNote({ type }) {
 export const REASON_MAX = 200;
 
 // Motivo opcional (pausa ou manutenção): textarea com contador de caracteres.
-export function ReasonField({ value, onChange, label, placeholder }) {
+export function ReasonField({ value, onChange, label, placeholder, hint }) {
   const id = useId();
   const counterId = useId();
+  const hintId = useId();
   return (
     <div className="mb-5">
       <label
@@ -40,7 +41,7 @@ export function ReasonField({ value, onChange, label, placeholder }) {
         maxLength={REASON_MAX}
         rows={2}
         placeholder={placeholder}
-        aria-describedby={counterId}
+        aria-describedby={hint ? `${hintId} ${counterId}` : counterId}
         className="w-full px-3 py-2.5 rounded-pg-control text-pg-ui text-pg-texto bg-pg-superficie border border-pg-linha placeholder:text-pg-texto-2 resize-y"
       />
       <p
@@ -49,6 +50,11 @@ export function ReasonField({ value, onChange, label, placeholder }) {
       >
         {value.length}/{REASON_MAX}
       </p>
+      {hint && (
+        <p id={hintId} className="mt-1 mb-0 text-pg-caption text-pg-texto-2">
+          {hint}
+        </p>
+      )}
     </div>
   );
 }

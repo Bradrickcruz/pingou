@@ -14,6 +14,9 @@ const (
 	EventDown         = "down"
 	EventUp           = "up"
 	EventCertExpiring = "cert_expiring"
+	// Avisos de janela agendada: um por grupo de monitores (ver MaintenanceGroupKey).
+	EventMaintenanceStarted = "maintenance_started"
+	EventMaintenanceEnded   = "maintenance_ended"
 )
 
 // OutboxStatus é o estado de uma linha do outbox.
@@ -48,10 +51,13 @@ type OutboxEvent struct {
 // aviso deve dizer o que valia no evento. Nunca leva segredo: nada de
 // ping_token, URL do webhook, destinatários ou tópico.
 type EventSnapshot struct {
-	Monitor    SnapshotMonitor   `json:"monitor"`
-	Incident   *SnapshotIncident `json:"incident,omitempty"`
-	Cert       *SnapshotCert     `json:"cert,omitempty"`
-	OccurredAt time.Time         `json:"occurred_at"`
+	Monitor  SnapshotMonitor   `json:"monitor"`
+	Incident *SnapshotIncident `json:"incident,omitempty"`
+	Cert     *SnapshotCert     `json:"cert,omitempty"`
+	// Maintenance só existe nos eventos de manutenção; neles Monitor fica vazio
+	// (o aviso é do grupo, e a lista está em Maintenance.Monitors).
+	Maintenance *SnapshotMaintenance `json:"maintenance,omitempty"`
+	OccurredAt  time.Time            `json:"occurred_at"`
 }
 
 // SnapshotMonitor guarda o mínimo para Monitor.Target() e para os textos.
@@ -70,6 +76,14 @@ type SnapshotIncident struct {
 	DurationSeconds *int64     `json:"duration_seconds,omitempty"`
 	LastError       *string    `json:"last_error,omitempty"`
 	FailureCount    int64      `json:"failure_count"`
+}
+
+// SnapshotMaintenance é o retrato de uma janela agendada para um grupo de monitores.
+type SnapshotMaintenance struct {
+	Monitors []SnapshotMonitor `json:"monitors"`
+	StartsAt time.Time         `json:"starts_at"`
+	EndsAt   time.Time         `json:"ends_at"`
+	Reason   *string           `json:"reason,omitempty"`
 }
 
 type SnapshotCert struct {
@@ -159,4 +173,28 @@ func (s EventSnapshot) AsCertAlert() CertAlert {
 		return CertAlert{}
 	}
 	return CertAlert{ExpiresAt: s.Cert.ExpiresAt, DaysLeft: s.Cert.DaysLeft, ThresholdDays: s.Cert.ThresholdDays}
+}
+
+// NewMaintenanceSnapshot é o retrato do aviso de manutenção de um grupo de
+// janelas (mesmo início, fim e motivo). windows traz as janelas do grupo e
+// monitors os monitores delas (na ordem de windows; os que não aparecem são
+// ignorados). OccurredAt é o momento do tick (at), não starts_at: o prazo do
+// outbox conta a partir dele, e uma janela notada depois de uma queda longa do
+// Pingou expiraria antes de sair.
+func NewMaintenanceSnapshot(windows []*MaintenanceWindow, monitors []*Monitor, at time.Time) EventSnapshot {
+	byID := make(map[string]*Monitor, len(monitors))
+	for _, m := range monitors {
+		byID[m.ID] = m
+	}
+	snap := &SnapshotMaintenance{Monitors: []SnapshotMonitor{}}
+	for _, w := range windows {
+		if m := byID[w.MonitorID]; m != nil {
+			snap.Monitors = append(snap.Monitors, snapshotMonitor(m))
+		}
+	}
+	if len(windows) > 0 {
+		snap.StartsAt, snap.EndsAt = windows[0].StartsAt.UTC(), windows[0].EndsAt.UTC()
+		snap.Reason = windows[0].Reason
+	}
+	return EventSnapshot{Maintenance: snap, OccurredAt: at.UTC()}
 }

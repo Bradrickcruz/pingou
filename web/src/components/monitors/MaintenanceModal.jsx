@@ -14,6 +14,7 @@ import {
   validateWindow,
   windowState,
 } from "../../lib/maintenance";
+import { useSettings } from "../../hooks/useSettings";
 import { getTimeZone, utcToZonedInput } from "../../lib/timezone";
 
 const LOCKED_NOTE = "A manutenção já começou: só o motivo pode mudar.";
@@ -60,6 +61,8 @@ export function MaintenanceModal({
   const fieldId = (name) => `${uid}-${name}`;
   const errorId = (name) => `${uid}-${name}-error`;
   const zone = getTimeZone();
+  // enquanto carrega ou com erro, settings é null e o aviso não aparece
+  const { settings } = useSettings();
   const lockedNoteId = `${uid}-locked`;
 
   useEffect(() => {
@@ -343,6 +346,11 @@ export function MaintenanceModal({
           value={reason}
           onChange={setReason}
           placeholder="Ex.: atualização do banco de dados"
+          hint={
+            settings?.maintenance_notices
+              ? "Este motivo vai junto no aviso de manutenção (webhook, e-mail e ntfy)."
+              : undefined
+          }
         />
 
         {submitError && (

@@ -257,7 +257,7 @@ func (s *MaintenanceService) Cancel(ctx context.Context, id string) error {
 	if s.ender != nil {
 		return s.ender.EndMaintenance(ctx, w, endsAt)
 	}
-	_, err = s.windows.Finalize(ctx, w, now, &endsAt)
+	_, err = s.windows.FinalizeGroup(ctx, []*domain.MaintenanceWindow{w}, now, &endsAt, nil)
 	return err
 }
 

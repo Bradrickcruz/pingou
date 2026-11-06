@@ -79,6 +79,8 @@ const (
 	eventMonitorDown  = "monitor_down"
 	eventMonitorUp    = "monitor_up"
 	eventCertExpiring = "cert_expiring"
+	eventMaintStart   = "maintenance_started"
+	eventMaintEnd     = "maintenance_ended"
 	eventTest         = "test"
 )
 
@@ -96,6 +98,20 @@ type webhookPayload struct {
 	CertExpiresAt *string `json:"cert_expires_at,omitempty"`
 	DaysLeft      *int    `json:"days_left,omitempty"`
 	ThresholdDays *int    `json:"threshold_days,omitempty"`
+}
+
+// webhookMaintenancePayload é o payload dos eventos maintenance_started e
+// maintenance_ended. O aviso é de um grupo de monitores: usa "monitors" (lista,
+// mesmo com um só) e não leva "monitor". reason sai null sem motivo.
+type webhookMaintenancePayload struct {
+	ID           string                  `json:"id"`
+	Event        string                  `json:"event"`
+	Monitors     []webhookPayloadMonitor `json:"monitors"`
+	StartsAt     string                  `json:"starts_at"`
+	EndsAt       string                  `json:"ends_at"`
+	Reason       *string                 `json:"reason"`
+	Timestamp    string                  `json:"timestamp"`
+	DashboardURL *string                 `json:"dashboard_url"` // página /maintenance
 }
 
 // webhookPayloadMonitor nunca leva o ping_token: webhooks costumam ir para
@@ -124,11 +140,44 @@ func (n *WebhookNotifier) Send(ctx context.Context, ev domain.OutboxEvent) error
 	if url == "" {
 		return nil
 	}
+	if ev.EventType == domain.EventMaintenanceStarted || ev.EventType == domain.EventMaintenanceEnded {
+		payload, err := n.maintenancePayloadFor(ev)
+		if err != nil {
+			return err
+		}
+		return n.post(ctx, url, payload)
+	}
 	payload, err := n.payloadFor(ev)
 	if err != nil {
 		return err
 	}
 	return n.post(ctx, url, payload)
+}
+
+// maintenancePayloadFor monta o JSON dos eventos de manutenção a partir do snapshot.
+func (n *WebhookNotifier) maintenancePayloadFor(ev domain.OutboxEvent) (webhookMaintenancePayload, error) {
+	mt, err := maintenanceSnapshot(ev)
+	if err != nil {
+		return webhookMaintenancePayload{}, err
+	}
+	event := eventMaintStart
+	if ev.EventType == domain.EventMaintenanceEnded {
+		event = eventMaintEnd
+	}
+	monitors := make([]webhookPayloadMonitor, 0, len(mt.Monitors))
+	for _, sm := range mt.Monitors {
+		monitors = append(monitors, toWebhookMonitor((&domain.EventSnapshot{Monitor: sm}).AsMonitor()))
+	}
+	return webhookMaintenancePayload{
+		ID:           ev.EventID,
+		Event:        event,
+		Monitors:     monitors,
+		StartsAt:     mt.StartsAt.UTC().Format(time.RFC3339),
+		EndsAt:       mt.EndsAt.UTC().Format(time.RFC3339),
+		Reason:       mt.Reason,
+		Timestamp:    ev.Snapshot.OccurredAt.UTC().Format(time.RFC3339),
+		DashboardURL: maintenanceLink(n.publicURL),
+	}, nil
 }
 
 // payloadFor monta o JSON do evento a partir do snapshot. O timestamp é o
@@ -168,7 +217,7 @@ func (n *WebhookNotifier) payloadFor(ev domain.OutboxEvent) (webhookPayload, err
 // webhookSendTimeout limita cada POST do outbox.
 const webhookSendTimeout = 10 * time.Second
 
-func (n *WebhookNotifier) post(ctx context.Context, rawURL string, payload webhookPayload) error {
+func (n *WebhookNotifier) post(ctx context.Context, rawURL string, payload any) error {
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return errors.New("could not encode payload")

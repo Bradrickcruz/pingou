@@ -139,7 +139,11 @@ func runServe(cmd *cobra.Command, args []string) error {
 
 	// scheduler
 	monitorScheduler := scheduler.NewScheduler(monitorRepository, monitorChecker, db, checkRepoTx, monitorRepoTx, incidentRepoTx, outboxRepoTx, channelNames, outboxWorker.Wake).
-		WithMaintenance(maintenanceRepository)
+		WithMaintenance(maintenanceRepository).
+		WithMaintenanceNotices(func(ctx context.Context) (bool, error) {
+			v, err := settingsRepository.Get(ctx, service.SettingMaintenanceNotices)
+			return v == "true", err
+		})
 	monitorService.SetReloader(monitorScheduler)
 	maintenanceService.SetEnder(monitorScheduler)
 	monitorService.SetRecorder(monitorScheduler)

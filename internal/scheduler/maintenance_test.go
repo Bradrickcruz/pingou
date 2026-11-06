@@ -3,6 +3,9 @@ package scheduler
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -423,5 +426,318 @@ func TestMaintenanceTickRunsAndStops(t *testing.T) {
 	defer cancel()
 	if err := e.sched.Wait(wctx); err != nil {
 		t.Fatalf("Wait = %v", err)
+	}
+}
+
+// ── avisos de início e fim da janela ──────────────────────────
+
+func (e *mEnv) enableNotices(channels ...string) {
+	e.sched.WithMaintenanceNotices(func(context.Context) (bool, error) { return true, nil })
+	if len(channels) > 0 {
+		e.sched.channels = channels
+	}
+}
+
+// rawMonitor grava o monitor direto no repositório: nenhum job de check sobe.
+func (e *mEnv) rawMonitor(t *testing.T, id string) *domain.Monitor {
+	t.Helper()
+	now := time.Now()
+	m := &domain.Monitor{
+		ID: id, Name: "mon-" + id, Type: domain.TypeHTTP, URL: "http://example.com", IntervalSeconds: 10,
+		TimeoutSeconds: 1, FailureThreshold: 1, Enabled: true, CurrentState: domain.StateDown,
+		CreatedAt: now, UpdatedAt: now,
+	}
+	if err := e.monitors.Create(context.Background(), m); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := e.db.Exec(`INSERT INTO incidents (id, monitor_id, started_at) VALUES (?,?,?)`,
+		"i-"+id, id, now.Add(-time.Hour).UTC().Format(time.RFC3339)); err != nil {
+		t.Fatal(err)
+	}
+	return m
+}
+
+// group cria n monitores com uma janela cada, com o mesmo início, fim e motivo.
+func (e *mEnv) group(t *testing.T, n int, starts, ends time.Time) []*domain.MaintenanceWindow {
+	t.Helper()
+	var ws []*domain.MaintenanceWindow
+	for i := range n {
+		m := e.rawMonitor(t, fmt.Sprintf("g%03d", i))
+		ws = append(ws, e.addWindow(t, m.ID, starts, ends))
+	}
+	return ws
+}
+
+// noticeCounts: linhas do outbox e eventos distintos (event_id) do tipo.
+func (e *mEnv) noticeCounts(t *testing.T, eventType string) (rows, events int) {
+	t.Helper()
+	if err := e.db.QueryRow(`SELECT COUNT(*), COUNT(DISTINCT event_id) FROM notification_outbox WHERE event_type = ?`,
+		eventType).Scan(&rows, &events); err != nil {
+		t.Fatal(err)
+	}
+	return rows, events
+}
+
+func (e *mEnv) wantNotices(t *testing.T, eventType string, rows, events int) {
+	t.Helper()
+	if r, ev := e.noticeCounts(t, eventType); r != rows || ev != events {
+		t.Fatalf("%s: %d linhas / %d eventos, want %d / %d", eventType, r, ev, rows, events)
+	}
+}
+
+func (e *mEnv) snapshotOf(t *testing.T, eventType string) string {
+	t.Helper()
+	var payload string
+	if err := e.db.QueryRow(`SELECT payload FROM notification_outbox WHERE event_type = ? LIMIT 1`, eventType).Scan(&payload); err != nil {
+		t.Fatal(err)
+	}
+	return payload
+}
+
+func TestMaintenanceNoticesOffByDefault(t *testing.T) {
+	e := newMaintenanceEnv(t, true)
+	ctx := context.Background()
+	now := time.Now()
+	ws := e.group(t, 2, now.Add(-time.Second), now.Add(time.Hour))
+	e.sched.applyMaintenance(ctx)
+	e.wantNotices(t, domain.EventMaintenanceStarted, 0, 0)
+	e.expire(t, ws[0])
+	e.expire(t, ws[1])
+	e.sched.applyMaintenance(ctx)
+	e.wantNotices(t, domain.EventMaintenanceEnded, 0, 0)
+	if got := e.window(t, ws[0].ID); got.StartedAt == nil || got.FinalizedAt == nil {
+		t.Fatal("os efeitos da janela devem rodar mesmo sem aviso")
+	}
+}
+
+// Interruptor ligado mas lido com erro: o tick sai e tenta de novo, sem perder nada.
+func TestMaintenanceNoticesFlagErrorRetriesNextTick(t *testing.T) {
+	e := newMaintenanceEnv(t, true)
+	fail := true
+	e.sched.WithMaintenanceNotices(func(context.Context) (bool, error) {
+		if fail {
+			return false, errors.New("db fora")
+		}
+		return true, nil
+	})
+	now := time.Now()
+	ws := e.group(t, 1, now.Add(-time.Second), now.Add(time.Hour))
+	e.sched.applyMaintenance(context.Background())
+	if e.window(t, ws[0].ID).StartedAt != nil {
+		t.Fatal("com erro ao ler o interruptor, o início deve esperar o próximo tick")
+	}
+	fail = false
+	e.sched.applyMaintenance(context.Background())
+	e.wantNotices(t, domain.EventMaintenanceStarted, 1, 1)
+}
+
+func TestMaintenanceGroupSendsOneNoticePerEvent(t *testing.T) {
+	e := newMaintenanceEnv(t, true)
+	e.enableNotices(domain.ChannelWebhook, domain.ChannelEmail)
+	ctx := context.Background()
+	now := time.Now()
+	ws := e.group(t, 3, now.Add(-time.Second), now.Add(time.Hour))
+
+	e.sched.applyMaintenance(ctx)
+	e.wantNotices(t, domain.EventMaintenanceStarted, 2, 1) // 1 evento, 1 linha por canal
+	if p := e.snapshotOf(t, domain.EventMaintenanceStarted); strings.Count(p, `"id":"g00`) != 3 {
+		t.Fatalf("o aviso deve listar os 3 monitores: %s", p)
+	}
+
+	for _, w := range ws {
+		e.expire(t, w)
+	}
+	e.sched.applyMaintenance(ctx)
+	e.wantNotices(t, domain.EventMaintenanceEnded, 2, 1)
+}
+
+// Dois ticks e um reinício do scheduler no meio da janela: o início não repete.
+func TestMaintenanceNoticeNotRepeatedOnRestart(t *testing.T) {
+	e := newMaintenanceEnv(t, true)
+	e.enableNotices()
+	ctx := context.Background()
+	now := time.Now()
+	e.group(t, 2, now.Add(-time.Second), now.Add(time.Hour))
+
+	e.sched.applyMaintenance(ctx)
+	e.sched.applyMaintenance(ctx)
+	e.sched.Stop()
+	if err := e.sched.Start(ctx); err != nil {
+		t.Fatal(err)
+	}
+	e.wantNotices(t, domain.EventMaintenanceStarted, 1, 1)
+}
+
+func TestMaintenanceNoNoticeForDeletedWindowAndPostponedWaits(t *testing.T) {
+	e := newMaintenanceEnv(t, true)
+	e.enableNotices()
+	ctx := context.Background()
+	now := time.Now()
+
+	// apagada antes do início
+	del := e.group(t, 1, now.Add(30*time.Minute), now.Add(time.Hour))[0]
+	if err := e.maint.Cancel(ctx, del.ID); err != nil {
+		t.Fatal(err)
+	}
+	e.sched.applyMaintenance(ctx)
+	e.wantNotices(t, domain.EventMaintenanceStarted, 0, 0)
+
+	// adiada: nenhum aviso até o horário novo
+	m := e.rawMonitor(t, "adiada")
+	w := e.addWindow(t, m.ID, now.Add(-time.Second), now.Add(time.Hour))
+	if _, err := e.db.Exec(`UPDATE maintenance_windows SET starts_at = ?, ends_at = ? WHERE id = ?`,
+		now.Add(30*time.Minute).UTC().Format(time.RFC3339), now.Add(2*time.Hour).UTC().Format(time.RFC3339), w.ID); err != nil {
+		t.Fatal(err)
+	}
+	e.sched.applyMaintenance(ctx)
+	e.wantNotices(t, domain.EventMaintenanceStarted, 0, 0)
+	if _, err := e.db.Exec(`UPDATE maintenance_windows SET starts_at = ? WHERE id = ?`,
+		now.Add(-time.Second).UTC().Format(time.RFC3339), w.ID); err != nil {
+		t.Fatal(err)
+	}
+	e.sched.applyMaintenance(ctx)
+	e.wantNotices(t, domain.EventMaintenanceStarted, 1, 1)
+}
+
+func TestMaintenanceCancelInProgressSendsEndNotice(t *testing.T) {
+	e := newMaintenanceEnv(t, true)
+	e.enableNotices()
+	ctx := context.Background()
+	now := time.Now()
+	w := e.group(t, 1, now.Add(-time.Minute), now.Add(time.Hour))[0]
+	e.sched.applyMaintenance(ctx)
+	e.wantNotices(t, domain.EventMaintenanceStarted, 1, 1)
+
+	if err := e.maint.Cancel(ctx, w.ID); err != nil {
+		t.Fatal(err)
+	}
+	e.wantNotices(t, domain.EventMaintenanceEnded, 1, 1)
+	// o fim avisado é o do cancelamento, não o fim agendado
+	if p := e.snapshotOf(t, domain.EventMaintenanceEnded); strings.Contains(p, e.window(t, w.ID).EndsAt.Add(time.Hour).Format(time.RFC3339)) {
+		t.Fatalf("aviso de fim com horário errado: %s", p)
+	}
+}
+
+// Cancelar com o interruptor ilegível segue sem aviso (cancelar não pode falhar por isso).
+func TestMaintenanceCancelWithFlagErrorStillCancels(t *testing.T) {
+	e := newMaintenanceEnv(t, true)
+	e.sched.WithMaintenanceNotices(func(context.Context) (bool, error) { return false, errors.New("db fora") })
+	ctx := context.Background()
+	now := time.Now()
+	w := e.group(t, 1, now.Add(-time.Minute), now.Add(time.Hour))[0]
+	e.sched.applyMaintenance(ctx)
+	if err := e.maint.Cancel(ctx, w.ID); err != nil {
+		t.Fatalf("Cancel = %v", err)
+	}
+	if e.window(t, w.ID).FinalizedAt == nil {
+		t.Fatal("janela não foi finalizada")
+	}
+	e.wantNotices(t, domain.EventMaintenanceEnded, 0, 0)
+}
+
+// Janela inteira no passado na subida: efeitos aplicados, nenhum aviso.
+func TestMaintenanceWholeWindowInPastHasNoNotice(t *testing.T) {
+	e := newMaintenanceEnv(t, true)
+	e.enableNotices()
+	ctx := context.Background()
+	now := time.Now()
+	ws := e.group(t, 2, now.Add(-2*time.Hour), now.Add(-time.Hour))
+	if err := e.sched.Start(ctx); err != nil {
+		t.Fatal(err)
+	}
+	for _, w := range ws {
+		if got := e.window(t, w.ID); got.StartedAt == nil || got.FinalizedAt == nil {
+			t.Fatalf("efeitos não aplicados: %+v", got)
+		}
+	}
+	e.wantNotices(t, domain.EventMaintenanceStarted, 0, 0)
+	e.wantNotices(t, domain.EventMaintenanceEnded, 0, 0)
+}
+
+// Janela de um lote com o motivo editado vira um aviso separado.
+func TestMaintenanceEditedReasonSplitsTheNotice(t *testing.T) {
+	e := newMaintenanceEnv(t, true)
+	e.enableNotices()
+	ctx := context.Background()
+	now := time.Now()
+	ws := e.group(t, 3, now.Add(-time.Second), now.Add(time.Hour))
+	e.sched.applyMaintenance(ctx)
+	e.wantNotices(t, domain.EventMaintenanceStarted, 1, 1)
+
+	other := "outro motivo"
+	if ok, err := e.windows.UpdateReason(ctx, ws[2].ID, &other); err != nil || !ok {
+		t.Fatalf("UpdateReason = %v, %v", ok, err)
+	}
+	for _, w := range ws {
+		e.expire(t, w)
+	}
+	e.sched.applyMaintenance(ctx)
+	e.wantNotices(t, domain.EventMaintenanceEnded, 2, 2)
+}
+
+// O aviso de fim não fala do estado do monitor; a queda sai à parte pelo fluxo normal.
+func TestMaintenanceEndNoticeSaysNothingAboutState(t *testing.T) {
+	e := newMaintenanceEnv(t, false)
+	e.enableNotices()
+	ctx := context.Background()
+	if err := e.sched.Start(ctx); err != nil {
+		t.Fatal(err)
+	}
+	m := e.downMonitor(t, 1)
+	waitFor(t, "monitor DOWN", func() bool { return e.load(t, m.ID).CurrentState == domain.StateDown })
+	downs := e.countNotices(t, domain.EventDown)
+
+	now := time.Now()
+	w := e.addWindow(t, m.ID, now.Add(-time.Second), now.Add(time.Hour))
+	e.sched.applyMaintenance(ctx)
+	e.expire(t, w)
+	e.sched.applyMaintenance(ctx)
+
+	p := e.snapshotOf(t, domain.EventMaintenanceEnded)
+	for _, forbidden := range []string{"incident", "last_error", "DOWN", "state"} {
+		if strings.Contains(p, forbidden) {
+			t.Fatalf("aviso de fim fala de estado (%q): %s", forbidden, p)
+		}
+	}
+	waitFor(t, "queda reavisada pelo fluxo normal", func() bool { return e.countNotices(t, domain.EventDown) > downs })
+}
+
+func TestMaintenanceManualPauseSendsNoNotice(t *testing.T) {
+	e := newMaintenanceEnv(t, true)
+	e.enableNotices()
+	ctx := context.Background()
+	m := e.downMonitor(t, 1)
+	off := false
+	if _, err := e.svc.Update(ctx, m.ID, service.UpdateMonitorInput{Enabled: &off}); err != nil {
+		t.Fatal(err)
+	}
+	e.sched.applyMaintenance(ctx)
+	e.wantNotices(t, domain.EventMaintenanceStarted, 0, 0)
+	e.wantNotices(t, domain.EventMaintenanceEnded, 0, 0)
+}
+
+// Grupo grande: um aviso só, e a transação cabe num tempo curto.
+func TestMaintenanceGroupOf100Monitors(t *testing.T) {
+	e := newMaintenanceEnv(t, true)
+	e.enableNotices()
+	ctx := context.Background()
+	now := time.Now()
+	ws := e.group(t, 100, now.Add(-time.Second), now.Add(time.Hour))
+
+	t0 := time.Now()
+	e.sched.applyMaintenance(ctx)
+	startTook := time.Since(t0)
+	e.wantNotices(t, domain.EventMaintenanceStarted, 1, 1)
+
+	for _, w := range ws {
+		e.expire(t, w)
+	}
+	t0 = time.Now()
+	e.sched.applyMaintenance(ctx)
+	endTook := time.Since(t0)
+	e.wantNotices(t, domain.EventMaintenanceEnded, 1, 1)
+	t.Logf("100 monitores: início %v, fim %v", startTook, endTook)
+	if startTook > 5*time.Second || endTook > 5*time.Second {
+		t.Fatalf("transação do grupo lenta: início %v, fim %v", startTook, endTook)
 	}
 }

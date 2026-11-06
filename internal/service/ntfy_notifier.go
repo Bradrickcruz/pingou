@@ -106,6 +106,13 @@ func (n *NtfyNotifier) Send(ctx context.Context, ev domain.OutboxEvent) error {
 		}
 		msg = ntfyMessage{title: ntfyTitle(subjectCert(m, a)), body: certBody(m, a, n.publicURL, n.loc()),
 			priority: priority, tags: "lock,warning", click: click}
+	case domain.EventMaintenanceStarted, domain.EventMaintenanceEnded:
+		mt, err := maintenanceSnapshot(ev)
+		if err != nil {
+			return err
+		}
+		msg = ntfyMessage{title: ntfyTitle(subjectMaintenance(ev.EventType, mt)), body: maintenanceBody(ev.EventType, mt, n.publicURL, n.loc()),
+			priority: "default", tags: "wrench", click: maintenanceLink(n.publicURL)}
 	default:
 		return fmt.Errorf("unknown event type %q", ev.EventType)
 	}
@@ -119,7 +126,7 @@ func (n *NtfyNotifier) Send(ctx context.Context, ev domain.OutboxEvent) error {
 // mostra a origem, e o emoji vai em Tags (header não leva emoji cru).
 func ntfyTitle(subject string) string {
 	s := strings.TrimPrefix(subject, "[Pingou] ")
-	for _, emoji := range []string{"🔴 ", "🟢 ", "⚠️ "} {
+	for _, emoji := range []string{"🔴 ", "🟢 ", "⚠️ ", "🔧 "} {
 		s = strings.TrimPrefix(s, emoji)
 	}
 	return s

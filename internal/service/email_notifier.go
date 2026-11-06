@@ -74,6 +74,12 @@ func (n *EmailNotifier) Send(ctx context.Context, ev domain.OutboxEvent) error {
 	case domain.EventCertExpiring:
 		a := ev.Snapshot.AsCertAlert()
 		subject, body = subjectCert(m, a), certBody(m, a, n.publicURL, n.loc())
+	case domain.EventMaintenanceStarted, domain.EventMaintenanceEnded:
+		mt, err := maintenanceSnapshot(ev)
+		if err != nil {
+			return err
+		}
+		subject, body = subjectMaintenance(ev.EventType, mt), maintenanceBody(ev.EventType, mt, n.publicURL, n.loc())
 	default:
 		return fmt.Errorf("unknown event type %q", ev.EventType)
 	}

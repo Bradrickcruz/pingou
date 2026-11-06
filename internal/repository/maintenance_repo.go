@@ -8,7 +8,10 @@ import (
 	"github.com/Bradrickcruz/pingou/internal/domain"
 )
 
-type MaintenanceRepo struct{ db *sql.DB }
+type MaintenanceRepo struct {
+	db     *sql.DB
+	outbox OutboxRepoTx
+}
 
 func NewMaintenanceRepo(db *sql.DB) *MaintenanceRepo { return &MaintenanceRepo{db: db} }
 
@@ -133,33 +136,116 @@ func (r *MaintenanceRepo) DueEnd(ctx context.Context, now time.Time) ([]*domain.
 		WHERE ends_at <= ? AND finalized_at IS NULL ORDER BY ends_at`, fmtTime(now))
 }
 
-func (r *MaintenanceRepo) Start(ctx context.Context, w *domain.MaintenanceWindow, now time.Time) (bool, error) {
+// StartGroup: ver domain.MaintenanceRepository.
+func (r *MaintenanceRepo) StartGroup(ctx context.Context, windows []*domain.MaintenanceWindow, now time.Time, build domain.MaintenanceNoticeBuilder) ([]*domain.MaintenanceWindow, error) {
+	if len(windows) == 0 {
+		return nil, nil
+	}
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	defer tx.Rollback()
-	ok, err := startWindowTx(ctx, tx, w, now)
-	if err != nil || !ok {
-		return false, err
+
+	var applied []*domain.MaintenanceWindow
+	for _, w := range windows {
+		ok, err := startWindowTx(ctx, tx, w, now)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			applied = append(applied, w)
+		}
 	}
-	return true, tx.Commit()
+	if len(applied) == 0 {
+		return nil, nil
+	}
+	if err := r.enqueueNotices(ctx, tx, applied, build); err != nil {
+		return nil, err
+	}
+	return applied, tx.Commit()
+}
+
+// FinalizeGroup: ver domain.MaintenanceRepository.
+func (r *MaintenanceRepo) FinalizeGroup(ctx context.Context, windows []*domain.MaintenanceWindow, now time.Time, endsAt *time.Time, build domain.MaintenanceNoticeBuilder) ([]*domain.MaintenanceWindow, error) {
+	if len(windows) == 0 {
+		return nil, nil
+	}
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	var applied, notice []*domain.MaintenanceWindow
+	for _, w := range windows {
+		hadStarted, ok, err := finalizeWindowTx(ctx, tx, w, now, endsAt)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			continue
+		}
+		done := *w
+		if endsAt != nil {
+			done.EndsAt = endsAt.UTC()
+		}
+		applied = append(applied, &done)
+		if hadStarted {
+			notice = append(notice, &done)
+		}
+	}
+	if len(applied) == 0 {
+		return nil, nil
+	}
+	if err := r.enqueueNotices(ctx, tx, notice, build); err != nil {
+		return nil, err
+	}
+	return applied, tx.Commit()
+}
+
+// enqueueNotices lê os monitores das janelas pelo tx (ler pelo db travaria
+// esperando a própria conexão) e grava no outbox as linhas que build devolver.
+func (r *MaintenanceRepo) enqueueNotices(ctx context.Context, tx *sql.Tx, windows []*domain.MaintenanceWindow, build domain.MaintenanceNoticeBuilder) error {
+	if build == nil || len(windows) == 0 {
+		return nil
+	}
+	monitors := make([]*domain.Monitor, 0, len(windows))
+	for _, w := range windows {
+		m, err := scanMonitor(tx.QueryRowContext(ctx, `SELECT `+monitorColumns+` FROM monitors WHERE id = ?`, w.MonitorID))
+		if err != nil {
+			return err
+		}
+		if m != nil {
+			monitors = append(monitors, m)
+		}
+	}
+	events, err := build(windows, monitors)
+	if err != nil {
+		return err
+	}
+	if len(events) == 0 {
+		return nil
+	}
+	return r.outbox.EnqueueWithTx(ctx, tx, events)
 }
 
 // startWindowTx marca started_at e só então fecha o incidente e zera o estado:
-// se outra chamada já aplicou o início, nada muda.
+// se outra chamada já aplicou o início, nada muda. A guarda starts_at <= now
+// cobre a janela adiada entre a leitura do tick e esta transação: vale o
+// horário novo.
 func startWindowTx(ctx context.Context, tx *sql.Tx, w *domain.MaintenanceWindow, now time.Time) (bool, error) {
+	ts := fmtTime(now)
 	res, err := tx.ExecContext(ctx, `UPDATE maintenance_windows SET started_at = ?
-		WHERE id = ? AND started_at IS NULL AND finalized_at IS NULL`, fmtTime(now), w.ID)
+		WHERE id = ? AND started_at IS NULL AND finalized_at IS NULL AND starts_at <= ?`, ts, w.ID, ts)
 	if err != nil {
 		return false, err
 	}
 	if n, err := res.RowsAffected(); err != nil || n == 0 {
 		return false, err
 	}
-	end := fmtTime(now)
 	if _, err := tx.ExecContext(ctx, sqlIncidentCloseManually,
-		end, int(domain.CloseMaintenance), w.Reason, end, w.MonitorID); err != nil {
+		ts, int(domain.CloseMaintenance), w.Reason, ts, w.MonitorID); err != nil {
 		return false, err
 	}
 	// UNKNOWN: ao voltar, handleFailure abre incidente novo (só abre se prevState != DOWN)
@@ -169,17 +255,30 @@ func startWindowTx(ctx context.Context, tx *sql.Tx, w *domain.MaintenanceWindow,
 	return true, nil
 }
 
-func (r *MaintenanceRepo) Finalize(ctx context.Context, w *domain.MaintenanceWindow, now time.Time, endsAt *time.Time) (bool, error) {
-	tx, err := r.db.BeginTx(ctx, nil)
-	if err != nil {
-		return false, err
+// finalizeWindowTx aplica o fim de uma janela. hadStarted diz se o início já
+// tinha sido aplicado antes desta transação; ok, se o fim foi aplicado agora.
+// Tudo é lido pelo tx, e com uma conexão só nada muda entre a leitura e a escrita.
+func finalizeWindowTx(ctx context.Context, tx *sql.Tx, w *domain.MaintenanceWindow, now time.Time, endsAt *time.Time) (hadStarted, ok bool, err error) {
+	ts := fmtTime(now)
+	var started bool
+	var curEnds string
+	err = tx.QueryRowContext(ctx, `SELECT started_at IS NOT NULL, ends_at FROM maintenance_windows
+		WHERE id = ? AND finalized_at IS NULL`, w.ID).Scan(&started, &curEnds)
+	if err == sql.ErrNoRows {
+		return false, false, nil // apagada ou já finalizada
 	}
-	defer tx.Rollback()
+	if err != nil {
+		return false, false, err
+	}
+	// janela adiada depois da leitura do tick: o fim ainda não chegou
+	if endsAt == nil && curEnds > ts {
+		return false, false, nil
+	}
 
 	// janela que começou e terminou sem o tick do início (Pingou desligado):
 	// o início roda antes, para o incidente aberto fechar como manutenção
 	if _, err := startWindowTx(ctx, tx, w, now); err != nil {
-		return false, err
+		return false, false, err
 	}
 
 	var ends *string
@@ -187,23 +286,22 @@ func (r *MaintenanceRepo) Finalize(ctx context.Context, w *domain.MaintenanceWin
 		s := fmtTime(*endsAt)
 		ends = &s
 	}
-	ts := fmtTime(now)
 	res, err := tx.ExecContext(ctx, `UPDATE maintenance_windows SET finalized_at = ?, ends_at = COALESCE(?, ends_at)
 		WHERE id = ? AND finalized_at IS NULL`, ts, ends, w.ID)
 	if err != nil {
-		return false, err
+		return false, false, err
 	}
 	if n, err := res.RowsAffected(); err != nil || n == 0 {
-		return false, err
+		return false, false, err
 	}
 	// resumed_at: só falhas a partir de agora contam. updated_at e last_ping_at
 	// são a base do prazo do heartbeat: recomeça agora, sem DOWN imediato.
 	if _, err := tx.ExecContext(ctx, `UPDATE monitors SET current_state = 'UNKNOWN', resumed_at = ?, updated_at = ?,
 			last_ping_at = CASE WHEN last_ping_at IS NOT NULL THEN ? END
 		WHERE id = ?`, ts, ts, ts, w.MonitorID); err != nil {
-		return false, err
+		return false, false, err
 	}
-	return true, tx.Commit()
+	return started, true, nil
 }
 
 func (r *MaintenanceRepo) list(ctx context.Context, query string, args ...any) ([]*domain.MaintenanceWindow, error) {

@@ -21,6 +21,7 @@ Consolida o que os planos `plan-*.md` (já removidos; ficam no `git log`) entreg
 | 2026-11-05         | [Modo escuro (Claro, Escuro, Sistema)](#15-modo-escuro-claro-escuro-sistema)                        | `ccr-f77fa1bb-9acipc`           |
 | 2026-11-05         | [Nomes claros nos eventos do webhook](#16-nomes-claros-nos-eventos-do-webhook)                      | `feature/webhook-event-names`   |
 | 2026-11-05         | [Retry de notificações (outbox)](#17-retry-de-notificações-outbox)                                  | `feature/notification-retry`    |
+| 2026-11-06         | [Aviso de manutenção começou/terminou](#18-aviso-de-manutenção-começouterminou)                     | `feature/aviso-manutencao`      |
 
 Pendências de validação manual ainda abertas estão no [fim do documento](#pendências-abertas).
 
@@ -650,6 +651,54 @@ Reenvio com `time.AfterFunc` em memória; gravar o texto pronto do e-mail/ntfy; 
 
 ---
 
+## 18. Aviso de manutenção começou/terminou
+
+### Entregue
+
+- Dois eventos novos nos canais (webhook, e-mail, ntfy): `maintenance_started` e `maintenance_ended`, quando uma **janela agendada** começa e termina. Um **interruptor global** em Configurações (`maintenance_notices`, desligado por padrão) liga e desliga. Pausa manual não avisa.
+- **Um aviso por grupo de monitores.** O banco tem uma janela por monitor e nenhum id de lote, então o grupo é "mesmo início, fim e motivo" (`MaintenanceGroupKey`).
+- **"Uma vez só" sem coluna nova:** `StartGroup` e `FinalizeGroup` (no lugar de `Start` e `Finalize`) aplicam o efeito e gravam o aviso no outbox **na mesma transação**. `started_at` e `finalized_at` já impedem repetição, inclusive depois de `kill -9`. Falha em qualquer ponto desfaz tudo.
+- **Webhook** com `monitors` (lista) e sem `monitor`; e-mail e ntfy com texto próprio (`maintenance_notice.go`), até 20 nomes e "e mais N". O ntfy usa a tag `wrench` e o `click` leva a `/maintenance`.
+- **Painel:** card "Aviso de manutenção" em Configurações (`role="switch"`, entra no `dirty`/`discard`/`update` do formulário) e aviso no modal de agendar: "Este motivo vai junto no aviso de manutenção (webhook, e-mail e ntfy)." quando o interruptor está ligado.
+- **Guarda nova no início:** `UPDATE ... AND starts_at <= ?`. Antes, adiar uma janela entre a leitura do tick e a transação aplicava o início no horário velho. O fim ganhou a guarda equivalente (`ends_at <= now`, exceto no cancelamento).
+
+### Decisões
+
+1. **Interruptor desligado por padrão**, como o aviso de certificado: quem atualiza não recebe evento novo sem pedir.
+2. **Sem migration:** `event_type` não tem `CHECK` e `settings` é chave-valor. A lista de tipos passa a morar nas constantes (o comentário da migration 0010 não muda).
+3. **Janela que começou e terminou com o Pingou fora: nenhum aviso.** O início não saiu, e um "terminou" sozinho só confunde. Janela em curso cancelada avisa o fim.
+4. **Aviso do fim só diz que terminou.** Se o monitor segue caído, a queda sai pelo `monitor_down` normal (conferido no QA).
+5. **`timestamp` e prazo contam do tick**, não de `starts_at`: uma janela notada depois de uma queda longa do Pingou expiraria antes de sair. Prazo de 60 min, como queda e recuperação.
+6. **`monitor_id` da linha do outbox** = primeiro monitor do grupo (a coluna é `NOT NULL`; o worker não usa para enviar).
+7. **Webhook com payload próprio** (`webhookMaintenancePayload`) em vez de um `omitzero` no payload existente: os eventos de queda e recuperação ficam byte a byte como antes e `reason` sai `null` sem motivo.
+8. **Erro ao ler o interruptor:** no tick, sai e tenta no próximo (o bloqueio dos checks vem do relógio); no cancelamento, segue sem aviso e registra no log.
+
+### Limitações aceitas
+
+- Cancelar em curso as janelas de um lote, uma a uma, gera um aviso de fim por janela (não há cancelamento em lote).
+- Editar o motivo de uma janela do lote em curso separa o aviso de fim dela.
+- Ligar o interruptor no meio de uma janela gera aviso de fim sem o de início.
+- Os textos nascem em português, junto dos demais (a ideia 4 os leva com o resto).
+
+### Descartado
+
+Coluna `batch_id`; colunas `start_notified_at`/`end_notified_at`; enfileirar depois da transação do início (um crash entre os dois perderia o aviso); ticker próprio a cada minuto; campo `monitor` com o primeiro do grupo (afirma algo falso sobre os demais).
+
+### Validação
+
+`go vet` e `go test -race ./...` verdes; `npm run lint`, `format:check`, `check:tokens`, `test` e `build` verdes. Testes novos: chave de grupo e snapshot (ida e volta, snapshot antigo sem o campo); repositório (`build` com erro desfaz tudo, segunda chamada não repete, janela adiada não inicia nem termina, aviso de fim só para janela já iniciada, cancelamento); canais (JSON exato dos dois eventos sem `monitor` nem `ping_token`, `monitor_down` inalterado, motivo com `\r\n`, lista de 100 cortada em 20, `reason` nulo); settings (padrão, PATCH liga/desliga, PATCH sem o campo não muda); tick (interruptor desligado, grupo de 3 com um aviso por evento e uma linha por canal, reinício, apagada/adiada, cancelamento em curso, janela inteira no passado, motivo editado, fim sem texto de estado, pausa manual, erro ao ler o interruptor).
+
+**Grupo de 100 monitores:** a transação do início levou ~24 ms e a do fim ~74 ms (SQLite em disco temporário, `-race`). Um aviso só nos dois casos.
+
+**QA com o binário real (2026-11-06):** 3 monitores, receptor de webhook local, interruptor ligado, janela agendada para o futuro.
+
+- Início com o receptor devolvendo 500: 1ª tentativa às 05:40:50 (500) e retry às 05:41:30 (200) com o **mesmo `id`**; `notice sent` no log. Um aviso listando os 3 monitores.
+- `kill -9` no meio de uma janela e subida: o aviso de início **não repetiu**; o de fim saiu uma vez, no horário.
+- Janela que venceu com o Pingou desligado (já iniciada): ao subir, um aviso de fim (3 monitores, `timestamp` da subida), e a queda de um monitor saiu à parte como `monitor_down`.
+- **Não testado:** SMTP e ntfy reais (ver Pendências abertas).
+
+---
+
 ## Pendências abertas
 
 - **Retry de notificações (item 17):** QA manual que falta com o binário real: botões de teste, e-mail/ntfy/`cert_expiring` ponta a ponta e receptor com 500 por ~3 min.
@@ -663,3 +712,4 @@ Reenvio com `time.AfterFunc` em memória; gravar o texto pronto do e-mail/ntfy; 
 - **Pausar fecha o incidente**: QA manual (T7) no navegador (HTTP/TCP e heartbeat: incidente sai de "Abertos", aparece em "Resolvidos" com selo, sem e-mail/ntfy; retomar reabre) e `npm run lint`/`build` do frontend. Decidir se vale limpar incidentes órfãos antigos de monitores já pausados.
 - **Modo escuro**: conferir em dispositivo real (iPhone/Android com tema do sistema trocando de dia para noite) e com leitor de tela no seletor "Aparência". Decidir se o texto "N fora do ar" do banner (tema claro) deve usar `--pg-ardosia` para passar em AA.
 - **Manutenção**: QA em dispositivo real e com leitor de tela no modal de agendar (multi-seleção, erros com foco); janela atravessando a troca de horário de verão num fuso que ainda a tem.
+- **Aviso de manutenção:** QA com SMTP e ntfy reais (assunto, corpo e fuso no cliente de e-mail; tag e `click` no app do ntfy) e no navegador (interruptor só com teclado, claro, escuro e mobile; aviso no modal de agendar).
