@@ -7386,7 +7386,7 @@
       "node_kind": "heading",
       "norm_label": "alternativas consideradas e descartadas",
       "source_file": "plan-notification-retry.md",
-      "source_location": "L459"
+      "source_location": "L460"
     },
     {
       "id": "plan_notification_retry_conclu\u00eddo",
@@ -7470,7 +7470,7 @@
       "node_kind": "heading",
       "norm_label": "notes",
       "source_file": "plan-notification-retry.md",
-      "source_location": "L449"
+      "source_location": "L450"
     },
     {
       "id": "plan_notification_retry_overview",
@@ -93473,7 +93473,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "plan-notification-retry.md",
-      "source_location": "L459",
+      "source_location": "L460",
       "weight": 1.0
     },
     {
@@ -93583,7 +93583,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "plan-notification-retry.md",
-      "source_location": "L449",
+      "source_location": "L450",
       "weight": 1.0
     },
     {
@@ -110255,5 +110255,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "cb0da9d20a53f0588f2f3520263c28d2919db534"
+  "built_at_commit": "3ad380bac5fd52e634e2ce4a98ac2e806a5e4a73"
 }
