@@ -15,6 +15,8 @@
 | 8   | Métricas para Prometheus e Grafana   | Aguardando decisão     | low        |
 | 9   | Ver o que aconteceu com os avisos    | Aguardando decisão     | medium     |
 | 10  | CI no GitHub Actions                 | Aguardando decisão     | medium     |
+| 11  | Menos RAM no cenário grande          | Aguardando decisão     | low        |
+| 12  | Janela de manutenção recorrente      | Aguardando decisão     | low        |
 
 Mais abaixo: ideias [candidatas](#-candidatas-ainda-não-decididas), [adiadas](#-adiadas) e [descartadas](#-descartadas).
 
@@ -542,13 +544,134 @@ medium (a etapa 1 é pequena e não precisa de segredo nenhum)
 
 ---
 
+# 🧩 Task: Menos RAM no cenário grande
+
+## 💡 Idea
+
+O Pingou promete pouca RAM, com meta de menos de 50 MB. No teste de 1 hora com pouco histórico no banco, o pico foi de 29 MB. No **perfil limite** (100 monitores a cada 10 s, ~25 milhões de checks, banco de ~6 GB), ele fica perto da meta e passa dela: 47 a 51 MB na primeira subida depois da migration, e picos de 50 a 60 MB já foram vistos.
+
+A ideia é descobrir **onde** a memória vai nesse cenário e baixar o que for barato. Se não der, deixar a meta honesta.
+
+## 🎯 Goal
+
+Pico abaixo da meta no perfil limite, ou uma meta escrita no README que bata com o que se mede.
+
+## 📦 Initial Scope
+
+1. **Medir antes de mexer.** Separar três momentos: a subida depois da migration (acontece uma vez por atualização), uma subida normal e o regime depois de algum tempo. O número de hoje pode estar misturando o primeiro com os outros. Usar o banco do `dbbench` e o `memtest`.
+2. **Ver onde a memória está.** O RSS soma partes diferentes: heap do Go, memória do SQLite (em C, não aparece no heap do Go), pilhas das goroutines e buffers de rede. Medir cada uma (`runtime.ReadMemStats` e um perfil de heap tirado só em desenvolvimento, nunca na imagem de produção).
+3. **Alavancas baratas, uma por vez, medindo depois de cada:**
+   - limite de memória do Go (`GOMEMLIMIT`) e ajuste do GC;
+   - cache do SQLite (`PRAGMA cache_size`) e o limite de memória dele (`soft_heap_limit`);
+   - conexões HTTP ociosas guardadas pelo checker (são 100 monitores, muitos com `https://`);
+   - corpo da resposta: ler só o necessário e descartar o resto;
+   - memória das consultas pesadas (o `/stats` de 30 dias no banco de 6 GB).
+4. **Rodar o `memtest` de 1 hora inteiro no cenário grande**, com o resultado no README.
+5. **Atualizar o README** com os números novos (seção "Com banco grande").
+
+## 🚧 Out of Scope
+
+- Reescrever o checker ou trocar o SQLite.
+- Baixar a RAM do cenário pequeno (já é 29 MB).
+- Medir em hardware diferente (o README já avisa que depende).
+- Um limite duro de memória que mata o processo.
+
+## 🔍 Context
+
+O README já escreve a limitação: a seção "Com banco grande" mostra os números acima e diz que a meta de 50 MB vale para o teste de 1 hora. Ou seja, a opção "ajustar o texto" **já foi feita**. Resta a opção "investigar e baixar". Os scripts estão em `scripts/` (`memtest.sh` e o `dbbench`, descritos em `scripts/README.md`).
+
+## ⚠️ Notes
+
+- **Dar um tempo limite.** Este é o tipo de ideia que consome uma tarde para ganhar 5 MB. A meta de 50 MB é um número redondo, não um limite real: uma VPS mínima ou um Raspberry Pi tem centenas de MB. Sugestão: uma ou duas tardes para as alavancas baratas. Se não fechar abaixo de 50 MB, escrever no README a meta real do cenário grande (por exemplo, "menos de 64 MB") e encerrar.
+- **A subida depois da migration é pontual.** A migration `0006` recria o índice principal. Se o pico alto acontece só nesse momento, o regime pode já estar abaixo da meta, e a conversa muda: aceitar o pico e documentar.
+- **A memória do SQLite não aparece no heap do Go.** Se o `ReadMemStats` mostrar um heap pequeno e o RSS estiver alto, a diferença é do SQLite e das pilhas. Isso muda onde procurar.
+- **`GOMEMLIMIT` é um limite suave.** Faz o GC trabalhar mais perto do teto, em troca de mais CPU. Medir a CPU também, porque o outro objetivo do projeto é rodar em máquina fraca.
+- **Conferir o teste de 1 hora.** A candidata original dizia que o `memtest` de 1 hora "não foi rodado inteiro". O README afirma que o teste do cenário pequeno durou 1 hora. Confirmar qual vale. Se o do README não foi inteiro, corrigir o texto **antes** de otimizar qualquer coisa.
+- **Ideia 8 (métricas).** Se entrar, ela guarda contadores e tempos por monitor em memória. É pouco, mas medir de novo no perfil limite.
+- **Decisões que faltam** (por isso "Aguardando decisão"):
+  1. **Investigar com tempo limitado** (sugestão) ou só aceitar o número atual e encerrar?
+  2. **Qual é a meta no perfil limite?** Continuar em menos de 50 MB ou aceitar um número maior (por exemplo, menos de 64 MB)?
+
+## 🏷️ Type
+
+melhoria (desempenho)
+
+## ⏱️ Priority
+
+low (com tempo limitado, para não virar um poço sem fundo)
+
+---
+
+# 🧩 Task: Janela de manutenção recorrente
+
+## 💡 Idea
+
+Hoje uma janela de manutenção é única: tem início, fim e acabou. Quem faz manutenção toda semana ("todo domingo às 2h") precisa agendar de novo a cada vez.
+
+A ideia é criar uma **regra** que repete a janela.
+
+## 🎯 Goal
+
+Agendar uma vez e esquecer: o monitor entra em manutenção no horário combinado, toda semana, sem alarme falso.
+
+## 📦 Initial Scope
+
+- **Regra recorrente:** um ou vários monitores, um ou mais dias da semana, horário de início, duração e motivo opcional. Marcar todos os dias cobre "todo dia".
+- **A regra gera janelas normais.** Ela cria a próxima ocorrência como uma janela comum, na mesma tabela e com as mesmas regras de hoje. Todo o resto (checks parados, incidente fechado sem aviso, monitor volta como `UNKNOWN`) continua igual.
+- A próxima ocorrência já aparece em **Manutenções** e pode ser cancelada ("pular só esta vez") sem apagar a regra.
+- A regra pode ser **desligada** sem apagar, editada e apagada.
+- A tela **Manutenções** ganha a seção "Regras recorrentes". Sem ela, a regra não apareceria: a lista mostra só as ocorrências agendadas.
+- O modal de agendar ganha "Repetir toda semana".
+- API: `GET`, `POST`, `PATCH` e `DELETE` em `/api/maintenance-rules` (nome a confirmar).
+- A regra guarda o **fuso** em que foi criada.
+
+## 🚧 Out of Scope
+
+- Repetição mensal ("primeiro sábado do mês") e expressão cron.
+- Data final da regra ou número de repetições.
+- Recorrência para pausa manual.
+- Histórico das ocorrências que já passaram.
+
+## 🔍 Context
+
+Hoje uma janela tem início, fim e motivo, dura no máximo 7 dias, começa no futuro e é **uma viva por monitor** (agendada ou em curso). O estado "em manutenção" vem do relógio do servidor, e o ciclo de 10 s fecha os incidentes e reativa os monitores. O `POST` cria uma janela por monitor.
+
+Precisa de **migration**: tabela de regras, ligação entre regra e monitor (com apagar em cascata quando o monitor sai) e uma coluna na janela dizendo de qual regra ela veio.
+
+## ⚠️ Notes
+
+- **A regra "uma janela viva por monitor" atrapalha.** Se a próxima ocorrência fica sempre agendada, o monitor sempre tem uma janela viva, e uma janela avulsa para ele dá `409` (`MAINTENANCE_CONFLICT`) até alguém cancelar a ocorrência. Caminhos:
+  - (a) trocar a regra por **"sem sobreposição no tempo"**. É a sugestão, e permite também agendar duas manutenções futuras diferentes. Mexe no `409` da API e no campo `maintenance` do monitor, que hoje é uma janela só (passaria a ser a ativa ou, senão, a mais próxima);
+  - (b) manter a regra e gerar a ocorrência só pouco antes do início. Deixa o monitor desprotegido se o Pingou estiver fora nessa hora.
+- **Cancelar uma ocorrência não pode recriá-la.** Se a regra gera a próxima janela assim que a anterior some, "pular só esta vez" não funciona. A regra guarda até qual ocorrência já gerou.
+- **Quando gerar.** Ao criar a regra, ao subir o Pingou e quando uma ocorrência termina, no ciclo de 10 s que já existe. Se o Pingou subir **no meio** de uma ocorrência que não foi gerada, gerar já em curso (início no passado) em vez de perder a manutenção. O endpoint manual continua exigindo início no futuro.
+- **Fuso e horário de verão.** "2h" é horário local. A regra guarda o fuso (nome IANA) de quando foi criada, porque o fuso das Configurações é um só por instalação e pode mudar. Em fusos com horário de verão, um horário pode não existir ou existir duas vezes no dia da troca. Regra: se não existe, usar o próximo horário válido; se existe duas vezes, usar o primeiro. Testar com um fuso de verão (o Brasil não tem hoje, mas outros fusos têm).
+- **Duração menor que o intervalo.** A duração precisa ser menor que o menor intervalo entre duas ocorrências, senão a janela se sobrepõe a si mesma. Validar (`400`). O máximo de 7 dias continua valendo.
+- **Conflito na hora de gerar.** Se um monitor já tem uma janela que se sobrepõe, pular a ocorrência dele, gerar para os outros e registrar no log, com o `rule_id`. Não derrubar a regra inteira.
+- **Várias janelas, um grupo só.** O `POST` cria uma janela por monitor, sem identificador em comum. Para listar "uma ocorrência com 5 monitores", e para a ideia 6 mandar **um aviso só** por janela com vários monitores, as janelas da mesma ocorrência precisam de um identificador comum. Resolver aqui e na ideia 6 com o mesmo campo.
+- **Avisos (ideia 6).** Cada ocorrência manda aviso de início e de fim, pelo mesmo interruptor das Configurações, sem opção própria. Toda semana, às 2h, isso é ruído esperado. Quem não quer desliga o interruptor.
+- **Motivo público (ideia 3).** O mesmo cuidado: o motivo da regra aparece na página pública.
+- **Monitor apagado** sai da regra (cascata). Regra sem nenhum monitor é desligada sozinha.
+- **Decisões que faltam** (por isso "Aguardando decisão"):
+  1. **"Uma janela viva por monitor":** trocar por "sem sobreposição" (sugestão) ou manter e gerar a ocorrência só perto do início?
+  2. **Fuso:** a regra guarda o fuso de quando foi criada (sugestão) ou segue o das Configurações?
+  3. **Conflito ao gerar:** pular só o monitor que conflita e registrar no log (sugestão) ou pular a ocorrência inteira?
+
+## 🏷️ Type
+
+feature
+
+## ⏱️ Priority
+
+low (sobe se você já faz manutenção toda semana)
+
+---
+
 # 🌱 Candidatas (ainda não decididas)
 
 Surgiram no histórico de implementações. Ninguém decidiu fazer. Estão aqui para não se perder.
 
-- **RAM acima da meta no cenário grande.** No perfil limite (100 monitores × 10 s, 25 milhões de checks), a primeira subida depois da migration usa 47 a 51 MB, e picos de 50 a 60 MB já foram vistos; a meta do README é menos de 50 MB. Opções: investigar e baixar, ou ajustar o texto do README para dizer em que cenário a meta vale. O `memtest` de 1 hora também não foi rodado inteiro.
 - **Baldes do `/stats` em fusos de meia hora** (ex.: `Asia/Kolkata`). Hoje alinhados em UTC, então os rótulos de 1 h não caem em hora cheia.
-- **Janela de manutenção recorrente** ("todo domingo às 2h"). Ficou fora da v1.
 
 # ⏸️ Adiadas
 
