@@ -11,6 +11,11 @@
 | 2   | Status HTTP esperado                | Esperando um caso real | low        |
 | 3   | Páginas públicas de status          | Para detalhar          | medium     |
 | 4   | Suporte a inglês (e outros idiomas) | Para detalhar          | medium     |
+| 8   | Métricas para Prometheus e Grafana  | Aguardando decisão     | low        |
+| 9   | Ver o que aconteceu com os avisos   | Aguardando decisão     | medium     |
+| 10  | CI no GitHub Actions                | Aguardando decisão     | medium     |
+| 11  | Menos RAM no cenário grande         | Aguardando decisão     | low        |
+| 12  | Janela de manutenção recorrente     | Aguardando decisão     | low        |
 
 Mais abaixo: ideias [candidatas](#-candidatas-ainda-não-decididas), [adiadas](#-adiadas) e [descartadas](#-descartadas).
 
@@ -256,13 +261,361 @@ medium (fazer antes das páginas públicas)
 
 ---
 
+# 🧩 Task: Métricas para Prometheus e Grafana
+
+## 💡 Idea
+
+Hoje, para ver os monitores fora do painel do Pingou, só dá para chamar a API. Prometheus e Grafana não leem esse formato.
+
+A ideia é o Pingou expor uma rota `/metrics` no formato do Prometheus. O Prometheus coleta os dados e o Grafana desenha os gráficos (disponibilidade, tempo de resposta, validade do certificado) ao lado dos outros serviços.
+
+## 🎯 Goal
+
+Quem já usa Prometheus e Grafana vê os monitores do Pingou nos seus dashboards, sem script de ponte e sem pesar o Pingou.
+
+## 📦 Initial Scope
+
+**A rota:**
+
+- `GET /metrics`, em texto, no formato do Prometheus (`text/plain; version=0.0.4`).
+- **Desligada por padrão.** Só liga com a variável `PINGOU_METRICS_TOKEN` preenchida. Sem ela, a rota responde `404`.
+- Autenticação por `Authorization: Bearer <token>`, que é a opção `authorization` do próprio Prometheus. Comparação em tempo constante. Token errado responde `401`, com limite de tentativas por IP, como na rota de ping.
+- O token vem **só do ambiente** (como a senha do SMTP): não vai para o banco, nem para o export, nem para o `pingou config` (que mostra só "ligado" ou "desligado").
+
+**As métricas** (uma série por monitor, com os rótulos `monitor_id`, `name` e `type`):
+
+| Métrica                                        | Tipo    | O que mostra                                                                                          |
+| ---------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------- |
+| `pingou_monitor_up`                            | gauge   | `1` no ar, `0` fora do ar. **Não aparece** enquanto o estado é desconhecido, pausado ou em manutenção |
+| `pingou_monitor_paused`                        | gauge   | `1` se o monitor está pausado                                                                         |
+| `pingou_monitor_maintenance`                   | gauge   | `1` se o monitor está numa janela de manutenção                                                       |
+| `pingou_monitor_last_check_timestamp_seconds`  | gauge   | Quando foi o último check                                                                             |
+| `pingou_monitor_last_latency_seconds`          | gauge   | Tempo de resposta do último check com sucesso, em segundos (HTTP e TCP; heartbeat não tem)            |
+| `pingou_monitor_cert_expiry_timestamp_seconds` | gauge   | Validade do certificado SSL (só HTTP com `https://` e data já conhecida)                              |
+| `pingou_checks_total`                          | counter | Checks feitos desde que o Pingou subiu, com o rótulo extra `result` (`success` ou `failure`)          |
+
+E duas métricas sem rótulo de monitor:
+
+| Métrica                      | Tipo  | O que mostra                                                              |
+| ---------------------------- | ----- | ------------------------------------------------------------------------- |
+| `pingou_build_info`          | gauge | Sempre `1`, com os rótulos `version` e `commit`                           |
+| `pingou_database_size_bytes` | gauge | Tamanho do banco (o mesmo número do `database_size_bytes` do `/api/info`) |
+
+**Documentação (README):**
+
+- Seção "Métricas (Prometheus)": exemplo de `scrape_config` com `authorization`, a lista das métricas e três consultas de exemplo (disponibilidade em 30 dias, tempo de resposta, dias até o certificado vencer).
+- Exemplo no `docker-compose`, com Prometheus e Pingou na mesma rede, coletando em `pingou:8956`.
+- Aviso de que os contadores zeram quando o Pingou reinicia.
+
+## 🚧 Out of Scope
+
+- Dashboard do Grafana pronto (arquivo JSON). Dá trabalho para manter. As consultas de exemplo no README bastam no começo.
+- Regras de alerta e Alertmanager. Os avisos continuam sendo do Pingou.
+- Histograma de tempo de resposta e métricas do Go (memória, goroutines).
+- Enviar dados ao Prometheus (remote write). O Pingou só **responde** quando o Prometheus pergunta.
+- Métrica de incidentes. `pingou_monitor_up == 0` já mostra quem está fora do ar.
+- Instalar ou configurar Prometheus e Grafana.
+
+## 🔍 Context
+
+Fora de `/api/*`, o Pingou só tem `/healthz` e `/ping/{token}`. A rota `/metrics` fica fora do login da API (que usa `X-API-Key`), então precisa do **próprio** teste de token.
+
+O estado de cada monitor já está na tabela `monitors` (estado atual, hora do último check, validade do certificado, pausa e manutenção). O tempo de resposta mais recente **não** está nessa tabela hoje.
+
+## ⚠️ Notes
+
+- **A rota precisa ser barata.** O SQLite tem uma conexão só, e o Prometheus pergunta a cada 15 a 60 s. Nada de consultar a tabela `checks` a cada pedido: com 25 milhões de linhas, é a consulta que já atrasou o painel antes. Regra: ler só a tabela `monitors` (poucas linhas) e usar contadores e tempos de resposta guardados **em memória**.
+- **Em memória, zera no reinício.** `pingou_checks_total` volta a zero quando o Pingou reinicia (o Prometheus lida com isso em `rate()` e `increase()`). O tempo de resposta some até o primeiro check depois da subida. Não usar `COUNT(*)` na tabela `checks` para o contador: ela expira pela retenção, e um contador não pode diminuir.
+- **Várias goroutines no mesmo estado.** O agendador escreve e a rota lê. Proteger com mutex. Monitor apagado precisa sair da memória.
+- **Nunca nos rótulos:** URL ou alvo do monitor (pode ter `?token=` na query), token de ping do heartbeat, `last_error` (detalhe interno, e muda a cada falha) e qualquer coisa de `settings`. É a mesma lista de "nunca expor" da ideia 3.
+- **O nome do monitor é texto livre.** Escapar `\`, `"` e quebra de linha, como o formato exige, e testar com um nome estranho. Renomear um monitor cria uma série nova no Prometheus, e o gráfico antigo fica com o nome velho. Por isso o `monitor_id` também vai nos rótulos: dá para agrupar por ele.
+- **Sem a biblioteca oficial (sugestão).** A `client_golang` é a escolha comum, mas puxa dependências e registra métricas do Go por padrão. O Pingou tem meta de pouca RAM, e o README valoriza "sem dependência pesada". Para gauges e um contador, escrever o texto à mão é pouco código. O risco é errar o formato sem perceber. Mitigação: teste com a saída esperada e conferir uma vez, à mão, com `promtool check metrics`. Se um dia entrar histograma, rever essa decisão.
+- **O Prometheus só vê o que pergunta.** Com check a cada 10 s e coleta a cada 15 s, alguns tempos de resposta nunca aparecem (o valor é "do último check", não uma média). Para disponibilidade, `pingou_monitor_up` basta. Para tempo de resposta fino, o painel do Pingou é melhor.
+- **Série que some, de propósito.** Durante pausa e manutenção, `pingou_monitor_up` não aparece. Regra de alerta `== 0` não dispara nessa hora. Quem usa `absent()` vai disparar. Documentar isso no README.
+- **Verificar o que o estado guarda** durante pausa e manutenção (o README diz que o monitor volta como `UNKNOWN` no fim da janela), para o `pingou_monitor_up` bater com o que o painel mostra.
+- **Exposição.** Não colocar `/metrics` atrás do proxy público (Traefik, Nginx). Prometheus e Pingou na mesma rede interna coletam direto na porta `8956`. Se for inevitável expor, só com o token e HTTPS. Atrás de proxy, o limite de tentativas por IP vê o IP do proxy: é a mesma limitação do ping (ver "Proxies confiáveis" em Adiadas).
+- **Rota fora de `/api`.** Conferir que o servidor não devolve o `index.html` do painel (o fallback do SPA) para `/metrics`. Testar com e sem token.
+- **Export (ideia 1):** o token só existe no ambiente, então o backup não é afetado.
+- **Só faz sentido com Prometheus e Grafana já rodando.** Sem eles, são dois serviços a mais para ver o que o painel do Pingou já mostra. O ganho real é o Prometheus guardar o próprio histórico (que pode passar de `retention_days`) e juntar o Pingou com outros serviços no mesmo dashboard.
+- **Decisões que faltam** (por isso "Aguardando decisão"):
+  1. **Autenticação:** token próprio em `PINGOU_METRICS_TOKEN`, com a rota desligada sem ele (sugestão), ou reaproveitar a API Key? A API Key dá controle total (apaga monitores) e iria para o arquivo do Prometheus. O token próprio só lê.
+  2. **Biblioteca:** texto escrito à mão (sugestão) ou `client_golang`?
+  3. **Estados sem valor:** `pingou_monitor_up` some em desconhecido, pausa e manutenção, com `paused` e `maintenance` ao lado (sugestão), ou um `pingou_monitor_state` com um rótulo por estado?
+
+## 🏷️ Type
+
+feature (integração)
+
+## ⏱️ Priority
+
+low (pequena e isolada, pode entrar entre as grandes. Sobe se você já usa Grafana no dia a dia)
+
+---
+
+# 🧩 Task: Ver o que aconteceu com os avisos
+
+## 💡 Idea
+
+Hoje, quando um aviso expira (o canal ficou fora por mais de 60 min, ou 24 h no aviso de SSL), o único rastro é uma linha no log. Quem não olha o log só descobre pelo silêncio: o alerta nunca chegou. Para um monitor, perder o próprio alerta sem ninguém ver é o pior caso.
+
+A ideia é mostrar, **por canal** (webhook, e-mail e ntfy), como andam os avisos.
+
+## 🎯 Goal
+
+Saber em poucos segundos, sem ler log, se algum canal está falhando ou perdeu avisos.
+
+## 📦 Initial Scope
+
+- Em Configurações, em cada card de canal, um bloco **"Entrega dos avisos"** com:
+  - o último aviso: quando foi e o resultado (enviado, expirou ou tentando de novo);
+  - quantos estão pendentes agora;
+  - quantos foram enviados e quantos expiraram nos últimos 7 dias.
+- Destaque quando houver aviso expirado ou tentando de novo. Cor **e** texto, não só cor.
+- Sem nenhum aviso em 7 dias, texto neutro: "Nenhum aviso nos últimos 7 dias". Nunca verde: sem aviso, nada foi provado. Quem prova que o canal funciona continua sendo o botão **Enviar teste**.
+- Endpoint protegido `GET /api/notifications/status`, com, por canal: `last_result`, `last_at`, `pending`, `sent_7d` e `expired_7d`. Só resultado, datas e números.
+- Os dados saem da tabela `notification_outbox`, que já tem uma linha por canal.
+- Motivo da falha: só uma **categoria curta** ("tempo esgotado", "conexão recusada", "resposta 401", "erro de TLS"). Nunca a mensagem crua.
+
+## 🚧 Out of Scope
+
+- Lista de cada aviso e reenvio manual.
+- Avisar por outro canal que um canal falhou. Corre o risco de laço: se esse aviso também falhar, falha de novo.
+- Histórico além de 7 dias (a limpeza da retenção apaga antes).
+- Resultado dos botões **Enviar teste** (eles enviam direto, fora da fila).
+- Mudar prazos e esperas do retry.
+
+## 🔍 Context
+
+O README já diz que o aviso expirado só aparece no log. A fila grava uma linha por canal, e as linhas enviadas ou expiradas são apagadas depois de 7 dias pela retenção. Verificar se a tabela já guarda o estado, o número de tentativas e a hora da última tentativa. Provavelmente falta guardar a **categoria do erro**, e isso pede uma migration pequena.
+
+## ⚠️ Notes
+
+- **O erro cru vaza segredo.** O erro do Go no webhook traz a URL inteira (`Post "https://...": ...`), e a URL costuma ser o segredo (Slack, Discord). Se o erro for gravado na fila, ele vai para o banco, para o export e para a tela. Gravar só a categoria. É a mesma regra do log de hoje, que nunca mostra URL, destinatários, tópico nem token.
+- **Só em Configurações, quase ninguém vê.** Foi minha sugestão original, e ela tem esse furo: quem não abre Configurações continua sem saber. Ver a decisão 1.
+- **Contagem por canal, não por evento.** Uma queda gera até 3 linhas (uma por canal). Mostrar cada canal separado e não somar.
+- **Aviso encerrado sem envio** (canal desligado, sem URL, destinatário ou tópico) não conta como enviado nem como falha.
+- **Canal indisponível no ambiente** (ex.: `PINGOU_SMTP_HOST` removido): o card já aparece bloqueado. Não repetir a informação.
+- **Janela de 7 dias** é o limite da limpeza. Para contar mais, seriam contadores próprios, o que é outra ideia.
+- **Consulta barata.** A tabela é pequena (poucos dias de dados), mas o SQLite tem uma conexão só. Fazer uma consulta agrupada por canal. Nada na tabela `checks`.
+- **Prometheus (ideia 8):** se ela entrar, os mesmos números viram métricas (`pingou_notifications_*`). Aí o Prometheus pode alertar por **outro caminho** quando um canal falha, sem o Pingou depender do canal quebrado.
+- **Textos** nascem nos arquivos de tradução (ideia 4), se ela já tiver entrado.
+- **Decisões que faltam** (por isso "Aguardando decisão"):
+  1. **Faixa no topo do painel** enquanto houver aviso expirado nas últimas 24 h ou canal falhando agora? Sugestão: sim, discreta, e some sozinha quando o problema passa.
+  2. **Guardar a categoria do erro** (migration com uma coluna de texto curto, sugestão) ou mostrar só "falhou" e "expirou", sem motivo e sem migration?
+
+## 🏷️ Type
+
+melhoria (confiabilidade)
+
+## ⏱️ Priority
+
+medium (pequena, e fecha a brecha que o retry deixou: o aviso não se perde, mas a perda continua invisível)
+
+---
+
+# 🧩 Task: CI no GitHub Actions
+
+## 💡 Idea
+
+Hoje a validação (`make test`, `npm test`, build) e a publicação no Docker Hub são manuais. Dá para esquecer um passo. E a imagem publicada depende do comando certo na hora: versão, commit, data e as duas arquiteturas.
+
+A ideia é o GitHub rodar os testes e o build a cada push, e publicar a imagem quando uma tag de versão for criada.
+
+## 🎯 Goal
+
+Todo código que entra foi testado e compilado do mesmo jeito, e publicar uma versão vira criar uma tag.
+
+## 📦 Initial Scope
+
+**Etapa 1: validar (sem segredo nenhum).** Arquivo `.github/workflows/ci.yml`:
+
+- Roda em `push` e em `pull_request`. Cancela a execução antiga da mesma branch.
+- **Backend:** Go na versão do `go.mod`, build do frontend antes (o binário embute os arquivos do `web/`), `gofumpt -l` (falha se listar algum arquivo), `go vet`, `make test` e `make build`.
+- **Frontend:** `npm ci`, lint (se existir), `npm test` e `scripts/check-tokens.sh`.
+- **Docker:** build da imagem **sem publicar**, para conferir que o Dockerfile funciona.
+- Selo de estado no README.
+
+**Etapa 2: publicar.** Arquivo `.github/workflows/release.yml`:
+
+- Roda só quando uma tag `vX.Y.Z` é criada.
+- Só publica se os testes da etapa 1 passarem **no mesmo commit** (`needs`).
+- Imagem multi-arquitetura (`linux/amd64` e `linux/arm64`) em `bryanhcruz/pingou`, com as tags `X.Y.Z` (sem o `v`, como hoje) e `latest`. Build args `VERSION`, `COMMIT` e `BUILD_DATE`.
+- Login no Docker Hub com **token de acesso** guardado como secret do GitHub, nunca a senha.
+- `latest` só para versão estável (tag sem sufixo como `-rc1`).
+- README: trocar a lista manual de "Tags disponíveis" por um link para as tags no Docker Hub, e remover a frase "Ainda não há workflow".
+
+## 🚧 Out of Scope
+
+- Binários prontos na página de releases. Compilar com CGO para arm64 pede toolchain de cruzamento: é outra ideia.
+- Deploy automático em servidor.
+- `make docker-startup-test` e `make docker-size` no CI (pesados; seguem manuais).
+- Dependabot, `govulncheck` e `npm audit`. São bons, mas depois da etapa 1 estável.
+- Notas de versão geradas automaticamente.
+
+## 🔍 Context
+
+O README diz: "Ainda não há workflow de GitHub Actions: a validação é local." A publicação é um `docker buildx build` à mão, descrito no README. As tags de hoje são `latest`, `1.3.1` e `1.3.0`. O driver do SQLite exige CGO (`CGO_ENABLED=1`). Os runners Ubuntu já têm `gcc`. O `go-sqlite3` compila o SQLite em C, o que é lento sem cache.
+
+## ⚠️ Notes
+
+- **O primeiro ganho é num clone limpo.** Rodar os testes num clone limpo mostra o que só passa na sua máquina: `.env`, `~/.pingou/pingou.lock`, ou o `web/dist` que precisa existir para o `embed.FS` compilar. Verificar isso antes de escrever o workflow.
+- **O arm64 é a parte cara.** Sob emulação (QEMU), compilar o SQLite em C é lento. Opções:
+  - emulação com cache de camadas (simples, lenta no primeiro build);
+  - um job em runner arm64 nativo e juntar as duas imagens numa tag só (mais rápido; runners arm64 são grátis em repositório público).
+    Sugestão: começar pela emulação, medir, e trocar se ficar lento demais.
+- **Segredos.** Publicar dá poder sobre uma imagem que outras pessoas rodam.
+  - Token do Docker Hub com permissão só de escrita no repositório `pingou`.
+  - O workflow de publicar roda só em tag, nunca em `pull_request`. PR de fork não recebe segredos, e `pull_request_target` não deve ser usado.
+  - Permissões mínimas no workflow (`contents: read`).
+- **Actions de terceiros.** As oficiais (`actions/*` e `docker/*`) podem ficar por versão. Qualquer outra, fixar pelo hash do commit.
+- **A tag vira a fonte da versão.** Hoje o número aparece no README, no `--build-arg` e na tag, tudo à mão. Com CI, nasce da tag. Assim o `pingou version` e o `/api/info` da imagem batem com a tag.
+- **Tag errada publica imagem errada.** Mitigação: o `needs` nos testes, e criar tag só a partir da `main`. As tags do Docker Hub podem ser reescritas, e nada impede isso. Regra: nunca reescrever uma tag já publicada.
+- **`go test -race`.** O worker de notificações e o agendador mexem no mesmo estado, e a ideia 8 acrescenta mais um leitor. Vale uma rodada com `-race`. Medir o tempo antes de decidir se roda sempre ou só na `main`.
+- **Cache.** Módulos do Go e do npm (`setup-go` e `setup-node`) e camadas do Docker (`type=gha`), para o SQLite em C não recompilar a cada execução.
+- **Trabalho solo.** O CI não substitui revisão, mas pega o que o cansaço esquece: formatação, cor crua fora dos tokens, teste que só passa na sua máquina.
+- **Decisões que faltam** (por isso "Aguardando decisão"):
+  1. O repositório é **público**? Isso decide os minutos grátis e o runner arm64.
+  2. **arm64:** emulação (sugestão) ou runner nativo?
+  3. Começar **só pela etapa 1** (sugestão) e deixar a publicação por tag para depois?
+
+## 🏷️ Type
+
+melhoria (infraestrutura)
+
+## ⏱️ Priority
+
+medium (a etapa 1 é pequena e não precisa de segredo nenhum)
+
+---
+
+# 🧩 Task: Menos RAM no cenário grande
+
+## 💡 Idea
+
+O Pingou promete pouca RAM, com meta de menos de 50 MB. No teste de 1 hora com pouco histórico no banco, o pico foi de 29 MB. No **perfil limite** (100 monitores a cada 10 s, ~25 milhões de checks, banco de ~6 GB), ele fica perto da meta e passa dela: 47 a 51 MB na primeira subida depois da migration, e picos de 50 a 60 MB já foram vistos.
+
+A ideia é descobrir **onde** a memória vai nesse cenário e baixar o que for barato. Se não der, deixar a meta honesta.
+
+## 🎯 Goal
+
+Pico abaixo da meta no perfil limite, ou uma meta escrita no README que bata com o que se mede.
+
+## 📦 Initial Scope
+
+1. **Medir antes de mexer.** Separar três momentos: a subida depois da migration (acontece uma vez por atualização), uma subida normal e o regime depois de algum tempo. O número de hoje pode estar misturando o primeiro com os outros. Usar o banco do `dbbench` e o `memtest`.
+2. **Ver onde a memória está.** O RSS soma partes diferentes: heap do Go, memória do SQLite (em C, não aparece no heap do Go), pilhas das goroutines e buffers de rede. Medir cada uma (`runtime.ReadMemStats` e um perfil de heap tirado só em desenvolvimento, nunca na imagem de produção).
+3. **Alavancas baratas, uma por vez, medindo depois de cada:**
+   - limite de memória do Go (`GOMEMLIMIT`) e ajuste do GC;
+   - cache do SQLite (`PRAGMA cache_size`) e o limite de memória dele (`soft_heap_limit`);
+   - conexões HTTP ociosas guardadas pelo checker (são 100 monitores, muitos com `https://`);
+   - corpo da resposta: ler só o necessário e descartar o resto;
+   - memória das consultas pesadas (o `/stats` de 30 dias no banco de 6 GB).
+4. **Rodar o `memtest` de 1 hora inteiro no cenário grande**, com o resultado no README.
+5. **Atualizar o README** com os números novos (seção "Com banco grande").
+
+## 🚧 Out of Scope
+
+- Reescrever o checker ou trocar o SQLite.
+- Baixar a RAM do cenário pequeno (já é 29 MB).
+- Medir em hardware diferente (o README já avisa que depende).
+- Um limite duro de memória que mata o processo.
+
+## 🔍 Context
+
+O README já escreve a limitação: a seção "Com banco grande" mostra os números acima e diz que a meta de 50 MB vale para o teste de 1 hora. Ou seja, a opção "ajustar o texto" **já foi feita**. Resta a opção "investigar e baixar". Os scripts estão em `scripts/` (`memtest.sh` e o `dbbench`, descritos em `scripts/README.md`).
+
+## ⚠️ Notes
+
+- **Dar um tempo limite.** Este é o tipo de ideia que consome uma tarde para ganhar 5 MB. A meta de 50 MB é um número redondo, não um limite real: uma VPS mínima ou um Raspberry Pi tem centenas de MB. Sugestão: uma ou duas tardes para as alavancas baratas. Se não fechar abaixo de 50 MB, escrever no README a meta real do cenário grande (por exemplo, "menos de 64 MB") e encerrar.
+- **A subida depois da migration é pontual.** A migration `0006` recria o índice principal. Se o pico alto acontece só nesse momento, o regime pode já estar abaixo da meta, e a conversa muda: aceitar o pico e documentar.
+- **A memória do SQLite não aparece no heap do Go.** Se o `ReadMemStats` mostrar um heap pequeno e o RSS estiver alto, a diferença é do SQLite e das pilhas. Isso muda onde procurar.
+- **`GOMEMLIMIT` é um limite suave.** Faz o GC trabalhar mais perto do teto, em troca de mais CPU. Medir a CPU também, porque o outro objetivo do projeto é rodar em máquina fraca.
+- **Conferir o teste de 1 hora.** A candidata original dizia que o `memtest` de 1 hora "não foi rodado inteiro". O README afirma que o teste do cenário pequeno durou 1 hora. Confirmar qual vale. Se o do README não foi inteiro, corrigir o texto **antes** de otimizar qualquer coisa.
+- **Ideia 8 (métricas).** Se entrar, ela guarda contadores e tempos por monitor em memória. É pouco, mas medir de novo no perfil limite.
+- **Decisões que faltam** (por isso "Aguardando decisão"):
+  1. **Investigar com tempo limitado** (sugestão) ou só aceitar o número atual e encerrar?
+  2. **Qual é a meta no perfil limite?** Continuar em menos de 50 MB ou aceitar um número maior (por exemplo, menos de 64 MB)?
+
+## 🏷️ Type
+
+melhoria (desempenho)
+
+## ⏱️ Priority
+
+low (com tempo limitado, para não virar um poço sem fundo)
+
+---
+
+# 🧩 Task: Janela de manutenção recorrente
+
+## 💡 Idea
+
+Hoje uma janela de manutenção é única: tem início, fim e acabou. Quem faz manutenção toda semana ("todo domingo às 2h") precisa agendar de novo a cada vez.
+
+A ideia é criar uma **regra** que repete a janela.
+
+## 🎯 Goal
+
+Agendar uma vez e esquecer: o monitor entra em manutenção no horário combinado, toda semana, sem alarme falso.
+
+## 📦 Initial Scope
+
+- **Regra recorrente:** um ou vários monitores, um ou mais dias da semana, horário de início, duração e motivo opcional. Marcar todos os dias cobre "todo dia".
+- **A regra gera janelas normais.** Ela cria a próxima ocorrência como uma janela comum, na mesma tabela e com as mesmas regras de hoje. Todo o resto (checks parados, incidente fechado sem aviso, monitor volta como `UNKNOWN`) continua igual.
+- A próxima ocorrência já aparece em **Manutenções** e pode ser cancelada ("pular só esta vez") sem apagar a regra.
+- A regra pode ser **desligada** sem apagar, editada e apagada.
+- A tela **Manutenções** ganha a seção "Regras recorrentes". Sem ela, a regra não apareceria: a lista mostra só as ocorrências agendadas.
+- O modal de agendar ganha "Repetir toda semana".
+- API: `GET`, `POST`, `PATCH` e `DELETE` em `/api/maintenance-rules` (nome a confirmar).
+- A regra guarda o **fuso** em que foi criada.
+
+## 🚧 Out of Scope
+
+- Repetição mensal ("primeiro sábado do mês") e expressão cron.
+- Data final da regra ou número de repetições.
+- Recorrência para pausa manual.
+- Histórico das ocorrências que já passaram.
+
+## 🔍 Context
+
+Hoje uma janela tem início, fim e motivo, dura no máximo 7 dias, começa no futuro e é **uma viva por monitor** (agendada ou em curso). O estado "em manutenção" vem do relógio do servidor, e o ciclo de 10 s fecha os incidentes e reativa os monitores. O `POST` cria uma janela por monitor.
+
+Precisa de **migration**: tabela de regras, ligação entre regra e monitor (com apagar em cascata quando o monitor sai) e uma coluna na janela dizendo de qual regra ela veio.
+
+## ⚠️ Notes
+
+- **A regra "uma janela viva por monitor" atrapalha.** Se a próxima ocorrência fica sempre agendada, o monitor sempre tem uma janela viva, e uma janela avulsa para ele dá `409` (`MAINTENANCE_CONFLICT`) até alguém cancelar a ocorrência. Caminhos:
+  - (a) trocar a regra por **"sem sobreposição no tempo"**. É a sugestão, e permite também agendar duas manutenções futuras diferentes. Mexe no `409` da API e no campo `maintenance` do monitor, que hoje é uma janela só (passaria a ser a ativa ou, senão, a mais próxima);
+  - (b) manter a regra e gerar a ocorrência só pouco antes do início. Deixa o monitor desprotegido se o Pingou estiver fora nessa hora.
+- **Cancelar uma ocorrência não pode recriá-la.** Se a regra gera a próxima janela assim que a anterior some, "pular só esta vez" não funciona. A regra guarda até qual ocorrência já gerou.
+- **Quando gerar.** Ao criar a regra, ao subir o Pingou e quando uma ocorrência termina, no ciclo de 10 s que já existe. Se o Pingou subir **no meio** de uma ocorrência que não foi gerada, gerar já em curso (início no passado) em vez de perder a manutenção. O endpoint manual continua exigindo início no futuro.
+- **Fuso e horário de verão.** "2h" é horário local. A regra guarda o fuso (nome IANA) de quando foi criada, porque o fuso das Configurações é um só por instalação e pode mudar. Em fusos com horário de verão, um horário pode não existir ou existir duas vezes no dia da troca. Regra: se não existe, usar o próximo horário válido; se existe duas vezes, usar o primeiro. Testar com um fuso de verão (o Brasil não tem hoje, mas outros fusos têm).
+- **Duração menor que o intervalo.** A duração precisa ser menor que o menor intervalo entre duas ocorrências, senão a janela se sobrepõe a si mesma. Validar (`400`). O máximo de 7 dias continua valendo.
+- **Conflito na hora de gerar.** Se um monitor já tem uma janela que se sobrepõe, pular a ocorrência dele, gerar para os outros e registrar no log, com o `rule_id`. Não derrubar a regra inteira.
+- **Várias janelas, um grupo só.** O `POST` cria uma janela por monitor, sem identificador em comum. Para listar "uma ocorrência com 5 monitores", as janelas da mesma ocorrência precisam de um identificador comum. O aviso de início e fim (já entregue) agrupa hoje por "mesmo início, fim e motivo" (`MaintenanceGroupKey`); com o identificador, o agrupamento passa a usá-lo.
+- **Avisos (já entregues).** Cada ocorrência manda aviso de início e de fim, pelo mesmo interruptor das Configurações, sem opção própria. Toda semana, às 2h, isso é ruído esperado. Quem não quer desliga o interruptor.
+- **Motivo público (ideia 3).** O mesmo cuidado: o motivo da regra aparece na página pública.
+- **Monitor apagado** sai da regra (cascata). Regra sem nenhum monitor é desligada sozinha.
+- **Decisões que faltam** (por isso "Aguardando decisão"):
+  1. **"Uma janela viva por monitor":** trocar por "sem sobreposição" (sugestão) ou manter e gerar a ocorrência só perto do início?
+  2. **Fuso:** a regra guarda o fuso de quando foi criada (sugestão) ou segue o das Configurações?
+  3. **Conflito ao gerar:** pular só o monitor que conflita e registrar no log (sugestão) ou pular a ocorrência inteira?
+
+## 🏷️ Type
+
+feature
+
+## ⏱️ Priority
+
+low (sobe se você já faz manutenção toda semana)
+
+---
+
 # 🌱 Candidatas (ainda não decididas)
 
 Surgiram no histórico de implementações. Ninguém decidiu fazer. Estão aqui para não se perder.
 
-- **RAM acima da meta no cenário grande.** No perfil limite (100 monitores × 10 s, 25 milhões de checks), a primeira subida depois da migration usa 47 a 51 MB, e picos de 50 a 60 MB já foram vistos; a meta do README é menos de 50 MB. Opções: investigar e baixar, ou ajustar o texto do README para dizer em que cenário a meta vale. O `memtest` de 1 hora também não foi rodado inteiro.
 - **Baldes do `/stats` em fusos de meia hora** (ex.: `Asia/Kolkata`). Hoje alinhados em UTC, então os rótulos de 1 h não caem em hora cheia.
-- **Janela de manutenção recorrente** ("todo domingo às 2h"). Ficou fora da v1.
 
 # ⏸️ Adiadas
 
