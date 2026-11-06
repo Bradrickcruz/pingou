@@ -545,7 +545,7 @@ Flag `is_in_maintenance` em `monitors`; um timer por janela (`time.AfterFunc`); 
 
 ## 15. Modo escuro (Claro, Escuro, Sistema)
 
-Plano `tasks/plano-dark-mode.md`. Tema escuro no painel, escolhido em Configurações > Aparência. Só frontend (`web/`); nenhuma mudança no Go nem na API.
+Plano `tasks/plano-dark-mode.md` (removido depois da entrega; está no histórico do git). Tema escuro no painel, escolhido em Configurações > Aparência. Só frontend (`web/`); nenhuma mudança no Go nem na API.
 
 ### Entregue
 
@@ -589,7 +589,7 @@ Atalho de tema no cabeçalho do painel; guardar o tema no backend (`settings`); 
 
 ## 16. Nomes claros nos eventos do webhook
 
-Plano `plan-webhook-event-names.md`. **BREAKING:** o campo `event` do webhook mudou de nome. Só backend (`internal/service`) e documentação.
+Plano `plan-webhook-event-names.md` (removido depois da entrega; está no histórico do git). **BREAKING:** o campo `event` do webhook mudou de nome. Só backend (`internal/service`) e documentação.
 
 ### Entregue
 
@@ -608,7 +608,7 @@ A quebra é silenciosa: fluxo "se `down`, alerta; senão, voltou" passa a tratar
 
 ## 17. Retry de notificações (outbox)
 
-Plano `plan-notification-retry.md` (ideia 5 do `IDEAS.md`). Antes, o aviso saía uma vez, depois do commit: canal fora do ar ou crash entre o commit e o envio perdia o aviso, e o webhook registrava "sent" até com 500.
+Plano `plan-notification-retry.md` (removido depois da entrega; está no histórico do git; ideia 5 do `IDEAS.md`). Antes, o aviso saía uma vez, depois do commit: canal fora do ar ou crash entre o commit e o envio perdia o aviso, e o webhook registrava "sent" até com 500.
 
 ### Entregue
 

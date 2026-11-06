@@ -2,7 +2,7 @@
 # Trava do tema escuro: componentes e páginas usam só tokens de PAPEL
 # (bg-pg-superficie, text-pg-texto, ...), nunca a cor crua (bg-pg-branco,
 # text-pg-ardosia, ...) nem cor solta. Cor crua não troca no escuro e deixa a
-# tela "furada". Ver DESIGN.md 3.6 e tasks/plano-dark-mode.md.
+# tela "furada". Ver DESIGN.md 3.6 e o item 15 de docs/implementacoes.md.
 #
 #   scripts/check-tokens.sh          # confere web/src
 #
