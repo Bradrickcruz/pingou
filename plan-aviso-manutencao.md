@@ -31,24 +31,24 @@ Hoje o Pingou pausa os avisos durante uma janela de manutenção e não avisa ni
 
 Este plano está concluído quando:
 
-- [ ] Todos os Success Criteria estão marcados
-- [ ] Build, lint e type-check passam
-- [ ] Nenhum item pendente no Status de Execução
-- [ ] Evidências de verificação registradas
+- [x] Todos os Success Criteria estão marcados
+- [x] Build, lint e type-check passam
+- [x] Nenhum item pendente no Status de Execução
+- [x] Evidências de verificação registradas (ver `docs/implementacoes.md`, item 18)
 
 > Revisar o plano se: escopo mudar, nova dependência for descoberta, ou mais de 2 tasks forem bloqueadas.
 
 ## Success Criteria
 
-- [ ] Com o interruptor ligado, o início e o fim de uma janela agendada geram um aviso em cada canal ligado.
-- [ ] Com o interruptor desligado (padrão), nenhum aviso entra na fila e nada muda para quem já usa o Pingou.
-- [ ] Janela criada para N monitores gera **um** aviso de início e **um** de fim, listando os N.
-- [ ] Reiniciar no meio da janela não repete o aviso de início. Falha na transação não deixa aviso sem efeito, nem efeito sem aviso.
-- [ ] Janela cancelada antes de começar não avisa. Janela adiada avisa no horário novo. Janela cancelada em curso gera aviso de fim.
-- [ ] Pausa manual não gera aviso.
-- [ ] O aviso de fim diz só que a manutenção terminou, sem falar do estado do monitor.
-- [ ] O modal de agendar avisa que o motivo vai para os canais quando o interruptor está ligado.
-- [ ] O README documenta os dois eventos, o payload e o interruptor.
+- [x] Com o interruptor ligado, o início e o fim de uma janela agendada geram um aviso em cada canal ligado.
+- [x] Com o interruptor desligado (padrão), nenhum aviso entra na fila e nada muda para quem já usa o Pingou.
+- [x] Janela criada para N monitores gera **um** aviso de início e **um** de fim, listando os N.
+- [x] Reiniciar no meio da janela não repete o aviso de início. Falha na transação não deixa aviso sem efeito, nem efeito sem aviso.
+- [x] Janela cancelada antes de começar não avisa. Janela adiada avisa no horário novo. Janela cancelada em curso gera aviso de fim.
+- [x] Pausa manual não gera aviso.
+- [x] O aviso de fim diz só que a manutenção terminou, sem falar do estado do monitor.
+- [x] O modal de agendar avisa que o motivo vai para os canais quando o interruptor está ligado.
+- [x] O README documenta os dois eventos, o payload e o interruptor.
 
 ## Tech Stack
 
@@ -337,16 +337,16 @@ graphify update .
 
 | Fase   | Tarefas    | Complexity | Esforço | Target                                    | Status      |
 | ------ | ---------- | ---------- | ------- | ----------------------------------------- | ----------- |
-| Fase 0 | T1, T2, T3 | M          | ~1 h    | Base com grupo transacional e interruptor | ⬜ Pendente |
-| Fase 1 | T4, T5     | M          | ~1 h    | Avisos saindo nos três canais             | ⬜ Pendente |
-| Fase 2 | T6         | S          | ~15 min | Interruptor no painel                     | ⬜ Pendente |
-| Fase 3 | T7, T8, T9 | M          | ~1 h    | Testes, documentação e QA                 | ⬜ Pendente |
+| Fase 0 | T1, T2, T3 | M          | ~1 h    | Base com grupo transacional e interruptor | ✅ Concluída |
+| Fase 1 | T4, T5     | M          | ~1 h    | Avisos saindo nos três canais             | ✅ Concluída |
+| Fase 2 | T6         | S          | ~15 min | Interruptor no painel                     | ✅ Concluída |
+| Fase 3 | T7, T8, T9 | M          | ~1 h    | Testes, documentação e QA                 | ✅ Concluída |
 
 ## Status de Execução
 
 ### Concluído
 
--
+- T1, T2, T3, T4, T5, T6, T7, T8, T9 (QA com SMTP e ntfy reais fica em Pendências abertas de `docs/implementacoes.md`)
 
 ### Em andamento
 
@@ -354,7 +354,7 @@ graphify update .
 
 ### Pendente
 
-- T1, T2, T3, T4, T5, T6, T7, T8, T9
+-
 
 ## Notes
 

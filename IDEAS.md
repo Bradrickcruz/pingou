@@ -1,17 +1,16 @@
 # 💡 Ideias de evolução
 
 > Só o que ainda **não foi implementado**. O que já entrou está em `docs/` no histórico de implementações.
-> Atualizado em 2026-11-05.
+> Atualizado em 2026-11-06.
 
 **Resumo**
 
-| #   | Ideia                                | Estado                 | Prioridade |
-| --- | ------------------------------------ | ---------------------- | ---------- |
-| 1   | Backup sem configurações + importar  | Aguardando decisão     | medium     |
-| 2   | Status HTTP esperado                 | Esperando um caso real | low        |
-| 3   | Páginas públicas de status           | Para detalhar          | medium     |
-| 4   | Suporte a inglês (e outros idiomas)  | Para detalhar          | medium     |
-| 6   | Aviso de manutenção começou/terminou | Para detalhar          | low        |
+| #   | Ideia                               | Estado                 | Prioridade |
+| --- | ----------------------------------- | ---------------------- | ---------- |
+| 1   | Backup sem configurações + importar | Aguardando decisão     | medium     |
+| 2   | Status HTTP esperado                | Esperando um caso real | low        |
+| 3   | Páginas públicas de status          | Para detalhar          | medium     |
+| 4   | Suporte a inglês (e outros idiomas) | Para detalhar          | medium     |
 
 Mais abaixo: ideias [candidatas](#-candidatas-ainda-não-decididas), [adiadas](#-adiadas) e [descartadas](#-descartadas).
 
@@ -220,7 +219,7 @@ Quem não lê português consegue usar o Pingou, e adicionar um idioma novo vira
 - **Seletor de idioma** nas Configurações.
 - **Datas, horas e números** pelo idioma escolhido (`Intl`), respeitando o fuso das Configurações. Rever as datas formatadas à mão, que foram feitas assim porque o `Intl` em pt-BR gerava "28 de out.".
 - **Plurais e textos com variáveis** ("Fora do ar há 1 dia e 4 h", "3 monitores", "Expira em 12 dias") com regra de plural por idioma, sem juntar frases no código.
-- **Notificações** (e-mail e ntfy) no idioma configurado. O JSON do webhook **não muda** (continua `event`, `monitor`, `timestamp`...), exceto pelo campo novo `id` (já entregue com o retry de notificações), pelos eventos novos da ideia 6 e pela renomeação dos eventos do webhook (já entregue: `monitor_down` / `monitor_up`).
+- **Notificações** (e-mail e ntfy) no idioma configurado. O JSON do webhook **não muda** (continua `event`, `monitor`, `timestamp`...), exceto pelo campo novo `id` (já entregue com o retry de notificações), pelos eventos de manutenção `maintenance_started` e `maintenance_ended` (já entregues, com `monitors` no lugar de `monitor`) e pela renomeação dos eventos do webhook (já entregue: `monitor_down` / `monitor_up`).
 - **Mensagens de erro da API:** hoje misturam inglês (validação) e português. Caminho sugerido: a API devolve **código estável** (`VALIDATION_ERROR` etc., já existe) e o painel traduz a mensagem pelo código.
 
 ## 🚧 Out of Scope
@@ -254,61 +253,6 @@ feature
 ## ⏱️ Priority
 
 medium (fazer antes das páginas públicas)
-
----
-
-# 🧩 Task: Aviso de manutenção começou/terminou
-
-## 💡 Idea
-
-Hoje o Pingou **pausa os avisos** durante uma janela de manutenção, mas **não avisa ninguém** que ela começou nem que terminou. Quem recebe os alertas só percebe pelo silêncio.
-
-A ideia é mandar um aviso nos canais quando a janela **começa** e quando **termina**.
-
-## 🎯 Goal
-
-Quem recebe os alertas sabe que a manutenção começou, que o silêncio é de propósito, e quando ela acabou.
-
-## 📦 Initial Scope
-
-- Aviso de **início** e de **fim** da janela de manutenção, nos mesmos canais dos outros avisos (webhook, e-mail, ntfy).
-- **Só janela agendada** gera aviso. Pausa manual não avisa.
-- Um **interruptor em Configurações** liga e desliga o aviso, valendo para todas as janelas. Não há escolha por janela.
-- Eventos novos no webhook: `maintenance_started` e `maintenance_ended` (nomes no padrão `<objeto>_<acontecimento>`, já entregue). O webhook **sempre envia** quando o interruptor está ligado, sem opção própria.
-- Conteúdo: nome do monitor, horário e motivo da janela.
-- Uma janela com vários monitores gera **um aviso só**, listando os monitores (e não um por monitor).
-- Cada aviso sai **uma vez só**, mesmo se o Pingou reiniciar no meio da janela.
-- Textos já nascem nos arquivos de tradução (ideia 4), se ela já tiver entrado.
-
-## 🚧 Out of Scope
-
-- Janela recorrente ("todo domingo às 2h"). É outra ideia.
-- Aviso de pausa manual (decidido em 2026-11-05: não avisa).
-- Aviso de "faltam X minutos para começar".
-- Canal só para manutenção.
-
-## 🔍 Context
-
-O Pingou já tem janelas de manutenção e já mostra o motivo (modais de pausa e de agendar manutenção). O que falta é o **gatilho**: algo que perceba a hora de início e de fim e dispare o aviso. Verificar se o scheduler atual já tem um ponto natural para isso, ou se precisa de uma checagem própria a cada minuto.
-
-## ⚠️ Notes
-
-- **Webhook sempre envia (decidido em 2026-11-05).** O risco: quem usa o webhook (por exemplo, fluxo no n8n) pode tratar "qualquer coisa que não seja `down`" como `up`, e `maintenance_started` viraria um falso "voltou". A resposta foi a renomeação dos eventos (já entregue): com os nomes `monitor_down` e `monitor_up`, quem atualiza é obrigado a rever o fluxo, e o evento novo não cai no "senão" sem ninguém ter olhado. **Por isso a renomeação saiu antes desta.** O README também deve dizer a quem integra: evento que não conhece, **ignore**.
-- **Não repetir aviso.** Precisa guardar que o aviso daquela janela já saiu. Use o outbox (`notification_outbox`, já entregue): o aviso vira só mais uma linha na fila, com a mesma garantia de entrega.
-- **Motivo é texto livre.** Já existe o cuidado de avisar que o motivo aparece na página pública (ideia 3). Aqui é parecido: o motivo vai para **e-mail e webhook**. Avisar no modal quando houver aviso ligado.
-- **Janela que termina e o monitor está fora do ar.** O aviso de fim deve dizer só "a manutenção terminou". Se o monitor ainda estiver caído, o aviso normal de queda cuida disso. Não misturar os dois no mesmo texto.
-- **Janela cancelada ou editada antes de começar.** Não deve gerar aviso de início. Se o horário mudou, vale o novo.
-- **Decisão tomada (2026-11-05):** o aviso sai **só para janela agendada**. Pausa manual é ação de quem está com o painel aberto e já sabe.
-- **Decisão tomada (2026-11-05):** o interruptor fica **só em Configurações**, valendo para todas as janelas. Sem escolha por janela.
-- **Decisão tomada (2026-11-05):** o webhook **sempre envia**, junto com os outros canais. A renomeação dos eventos já foi entregue.
-
-## 🏷️ Type
-
-feature
-
-## ⏱️ Priority
-
-low (de preferência depois da 5)
 
 ---
 

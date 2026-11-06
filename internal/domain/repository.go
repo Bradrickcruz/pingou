@@ -60,15 +60,23 @@ type MaintenanceRepository interface {
 	DueStart(ctx context.Context, now time.Time) ([]*MaintenanceWindow, error)
 	// DueEnd: janelas cujo fim chegou e que ainda não foram finalizadas.
 	DueEnd(ctx context.Context, now time.Time) ([]*MaintenanceWindow, error)
-	// Start aplica o início numa transação: fecha o incidente aberto do monitor
-	// (motivo manutenção), põe o estado em UNKNOWN e marca started_at.
-	// Devolve false se já tinha sido aplicado.
-	Start(ctx context.Context, w *MaintenanceWindow, now time.Time) (bool, error)
-	// Finalize aplica o fim numa transação (e o início antes, se não rodou):
-	// marca finalized_at, grava resumed_at = now, estado UNKNOWN e recomeça o
-	// prazo do heartbeat. endsAt != nil encurta a janela (cancelamento).
-	// Devolve false se já estava finalizada.
-	Finalize(ctx context.Context, w *MaintenanceWindow, now time.Time, endsAt *time.Time) (bool, error)
+	// StartGroup aplica o início de várias janelas numa transação só: para cada
+	// uma, fecha o incidente aberto do monitor (motivo manutenção), põe o estado
+	// em UNKNOWN e marca started_at. Só aplica se starts_at <= now ainda valer
+	// (uma janela adiada depois do DueStart fica de fora). Devolve as janelas em
+	// que o efeito foi aplicado; as já aplicadas não voltam.
+	//
+	// build (nil = sem aviso) roda depois de aplicar, com as janelas aplicadas e
+	// seus monitores (lidos na própria transação), e as linhas que devolver vão
+	// para o outbox na mesma transação: se build falha, nada é aplicado.
+	StartGroup(ctx context.Context, windows []*MaintenanceWindow, now time.Time, build MaintenanceNoticeBuilder) ([]*MaintenanceWindow, error)
+	// FinalizeGroup aplica o fim de várias janelas numa transação só (e o início
+	// antes, se não rodou): marca finalized_at, grava resumed_at = now, estado
+	// UNKNOWN e recomeça o prazo do heartbeat. endsAt != nil encurta as janelas
+	// (cancelamento). Devolve as janelas finalizadas agora. build recebe só as que
+	// já tinham started_at antes da transação: janela que começa e termina com o
+	// Pingou fora não avisa (o início nunca saiu).
+	FinalizeGroup(ctx context.Context, windows []*MaintenanceWindow, now time.Time, endsAt *time.Time, build MaintenanceNoticeBuilder) ([]*MaintenanceWindow, error)
 }
 
 type MonitorFilter struct {
@@ -78,3 +86,7 @@ type MonitorFilter struct {
 	Limit   int
 	Offset  int
 }
+
+// MaintenanceNoticeBuilder monta as linhas do outbox de um grupo de janelas
+// aplicadas. Roda dentro da transação: não pode ler o banco (MaxOpenConns=1).
+type MaintenanceNoticeBuilder func(applied []*MaintenanceWindow, monitors []*Monitor) ([]OutboxEvent, error)

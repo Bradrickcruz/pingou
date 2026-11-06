@@ -6,6 +6,7 @@ import { Spinner } from "../components/ui/Spinner";
 import { WebhookCard } from "../components/settings/WebhookCard";
 import { EmailCard } from "../components/settings/EmailCard";
 import { NtfyCard } from "../components/settings/NtfyCard";
+import { MaintenanceNoticesCard } from "../components/settings/MaintenanceNoticesCard";
 import { RetentionCard } from "../components/settings/RetentionCard";
 import { TimezoneCard } from "../components/settings/TimezoneCard";
 import { useTimeZone } from "../hooks/timeZoneContext";
@@ -64,11 +65,13 @@ export function Settings({ onLogout }) {
   const emailRecipients = current.email_recipients ?? "";
   const ntfyTopic = current.ntfy_topic ?? "";
   const timezone = current.timezone ?? "UTC";
+  const maintenanceNotices = current.maintenance_notices ?? false;
   const dirty =
     webhookURL !== (settings.webhook_url ?? "") ||
     emailRecipients !== (settings.email_recipients ?? "") ||
     ntfyTopic !== (settings.ntfy_topic ?? "") ||
     timezone !== (settings.timezone ?? "UTC") ||
+    maintenanceNotices !== (settings.maintenance_notices ?? false) ||
     current.retention_days !== settings.retention_days;
   const size = info?.database_size_bytes;
 
@@ -88,6 +91,7 @@ export function Settings({ onLogout }) {
         webhook_url: webhookURL,
         retention_days: current.retention_days,
         timezone: timezone.trim(),
+        maintenance_notices: maintenanceNotices,
         // com o e-mail bloqueado, mandar o campo daria 400
         ...(settings.email_available && { email_recipients: emailRecipients }),
         // idem para o ntfy sem PINGOU_NTFY_URL
@@ -141,6 +145,10 @@ export function Settings({ onLogout }) {
             value={ntfyTopic}
             onChange={(v) => set("ntfy_topic", v)}
             available={settings.ntfy_available}
+          />
+          <MaintenanceNoticesCard
+            checked={maintenanceNotices}
+            onChange={(v) => set("maintenance_notices", v)}
           />
         </div>
         <TimezoneCard value={timezone} onChange={(v) => set("timezone", v)} />
