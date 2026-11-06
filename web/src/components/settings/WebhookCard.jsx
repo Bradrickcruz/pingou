@@ -51,7 +51,7 @@ export function WebhookCard({ value, onChange }) {
             href={JSON_DOCS}
             target="_blank"
             rel="noreferrer"
-            className="text-pg-ciano-fundo underline"
+            className="text-pg-link underline"
           >
             Ver formato do JSON
           </a>
@@ -60,7 +60,7 @@ export function WebhookCard({ value, onChange }) {
     >
       <label
         htmlFor="webhook-url"
-        className="block mb-1.5 text-pg-ui font-medium text-pg-ardosia"
+        className="block mb-1.5 text-pg-ui font-medium text-pg-texto"
       >
         URL do webhook
       </label>
@@ -72,13 +72,13 @@ export function WebhookCard({ value, onChange }) {
           onChange={(e) => change(e.target.value)}
           placeholder="https://hooks.exemplo.com/..."
           aria-describedby="webhook-help webhook-result"
-          className="flex-1 min-w-0 px-3 py-2.5 rounded-pg-control font-pg-mono text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda"
+          className="flex-1 min-w-0 px-3 py-2.5 rounded-pg-control font-pg-mono text-pg-ui text-pg-texto bg-pg-superficie border border-pg-linha"
         />
         <TestButton onClick={test} disabled={!value} testing={testing} />
       </div>
       <p
         id="webhook-help"
-        className="mt-1.5 mb-0 text-pg-caption text-pg-neblina"
+        className="mt-1.5 mb-0 text-pg-caption text-pg-texto-2"
       >
         Deixe vazio para não enviar notificações.
       </p>

@@ -7,29 +7,29 @@ import { certStatus } from "../../lib/cert";
 const levels = {
   ok: {
     icon: ShieldCheck,
-    iconColor: "text-pg-up",
-    bg: "bg-pg-up-bg",
+    iconColor: "text-pg-status-up",
+    bg: "bg-pg-status-up-bg",
     label: "Válido",
   },
   warn: {
     icon: ShieldAlert,
-    iconColor: "text-pg-ardosia",
-    bg: "bg-pg-unknown-bg",
+    iconColor: "text-pg-texto",
+    bg: "bg-pg-status-unknown-bg",
     label: "Atenção",
   },
   alert: {
     icon: ShieldAlert,
-    iconColor: "text-pg-down",
-    bg: "bg-pg-down-bg",
+    iconColor: "text-pg-status-down",
+    bg: "bg-pg-status-down-bg",
     label: "Renove já",
-    text: "text-pg-down font-medium",
+    text: "text-pg-status-down font-medium",
   },
   expired: {
     icon: ShieldX,
-    iconColor: "text-pg-down",
-    bg: "bg-pg-down-bg",
+    iconColor: "text-pg-status-down",
+    bg: "bg-pg-status-down-bg",
     label: "Expirado",
-    text: "text-pg-down font-medium",
+    text: "text-pg-status-down font-medium",
   },
 };
 
@@ -43,11 +43,11 @@ export function CertCard({ monitor, now }) {
   const stale = monitor.current_state === "DOWN" && status.level !== "pending";
 
   return (
-    <div className="p-4 rounded-pg-card border border-pg-borda bg-pg-branco text-pg-ui">
+    <div className="p-4 rounded-pg-card border border-pg-linha bg-pg-superficie text-pg-ui">
       <div className="flex flex-wrap items-center justify-between gap-2">
         {level ? (
           <span
-            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-pg-caption font-medium uppercase tracking-wider whitespace-nowrap text-pg-ardosia ${level.bg}`}
+            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-pg-caption font-medium uppercase tracking-wider whitespace-nowrap text-pg-texto ${level.bg}`}
           >
             <level.icon
               size={12}
@@ -57,24 +57,24 @@ export function CertCard({ monitor, now }) {
             {level.label}
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1.5 text-pg-neblina">
+          <span className="inline-flex items-center gap-1.5 text-pg-texto-2">
             <Clock size={14} aria-hidden="true" />
             {status.text}
           </span>
         )}
         {stale && (
-          <span className="text-pg-caption text-pg-neblina">
+          <span className="text-pg-caption text-pg-texto-2">
             último valor conhecido
           </span>
         )}
       </div>
       {level && (
-        <p className={`mt-2 mb-0 ${level.text ?? "text-pg-ardosia"}`}>
+        <p className={`mt-2 mb-0 ${level.text ?? "text-pg-texto"}`}>
           {status.text}
         </p>
       )}
       {monitor.cert_alert_enabled && (
-        <p className="inline-flex items-center gap-1.5 mt-2 mb-0 text-pg-caption text-pg-neblina">
+        <p className="inline-flex items-center gap-1.5 mt-2 mb-0 text-pg-caption text-pg-texto-2">
           <Bell size={12} aria-hidden="true" />
           Aviso ativo (30 e 7 dias antes)
         </p>

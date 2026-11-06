@@ -132,7 +132,7 @@ export function ResponseChart({ stats, now, intervalSeconds, heartbeat }) {
     : series.some((b) => b.avg_latency_ms != null);
   if (!hasData) {
     return (
-      <p className="m-0 py-16 text-center text-pg-ui text-pg-neblina">
+      <p className="m-0 py-16 text-center text-pg-ui text-pg-texto-2">
         {heartbeat
           ? "Sem pings neste período."
           : "Sem dados de resposta neste período."}
@@ -190,7 +190,7 @@ export function ResponseChart({ stats, now, intervalSeconds, heartbeat }) {
     <div className="flex gap-3 pb-6">
       {/* rótulos do eixo Y em HTML: texto não deforma com o SVG */}
       <div
-        className="relative w-12 flex-shrink-0 h-[200px] text-pg-caption text-pg-neblina tabular-nums"
+        className="relative w-12 flex-shrink-0 h-[200px] text-pg-caption text-pg-texto-2 tabular-nums"
         aria-hidden="true"
       >
         {ticks.map((t) => (
@@ -230,7 +230,7 @@ export function ResponseChart({ stats, now, intervalSeconds, heartbeat }) {
               x2={W}
               y1={yOf(t)}
               y2={yOf(t)}
-              stroke="var(--pg-borda)"
+              stroke="var(--pg-cor-linha)"
               strokeWidth="1"
               vectorEffect="non-scaling-stroke"
             />
@@ -244,7 +244,7 @@ export function ResponseChart({ stats, now, intervalSeconds, heartbeat }) {
                 y="0"
                 width={W / n}
                 height={H}
-                fill="var(--pg-unknown-bg)"
+                fill="var(--pg-cor-status-unknown-bg)"
               />
             ) : null,
           )}
@@ -259,14 +259,14 @@ export function ResponseChart({ stats, now, intervalSeconds, heartbeat }) {
                   y="0"
                   width={width}
                   height={H}
-                  fill="var(--pg-down-bg)"
+                  fill="var(--pg-cor-status-down-bg)"
                 />
                 <line
                   x1={x}
                   x2={x}
                   y1="0"
                   y2={H}
-                  stroke="var(--pg-down)"
+                  stroke="var(--pg-cor-status-down)"
                   strokeWidth="1"
                   strokeDasharray="3 3"
                   vectorEffect="non-scaling-stroke"
@@ -304,12 +304,12 @@ export function ResponseChart({ stats, now, intervalSeconds, heartbeat }) {
         {b && (
           <>
             <div
-              className="absolute top-0 bottom-0 w-px bg-pg-borda pointer-events-none"
+              className="absolute top-0 bottom-0 w-px bg-pg-linha pointer-events-none"
               style={{ left: `${leftPct}%` }}
             />
             {!heartbeat && b.avg_latency_ms != null && (
               <div
-                className="absolute w-2.5 h-2.5 -ml-[5px] -mt-[5px] rounded-full bg-pg-ciano border-2 border-pg-branco pointer-events-none"
+                className="absolute w-2.5 h-2.5 -ml-[5px] -mt-[5px] rounded-full bg-pg-ciano border-2 border-pg-superficie pointer-events-none"
                 style={{
                   left: `${leftPct}%`,
                   top: `${(yOf(b.avg_latency_ms) / H) * 100}%`,
@@ -318,7 +318,7 @@ export function ResponseChart({ stats, now, intervalSeconds, heartbeat }) {
             )}
             <div
               aria-hidden="true"
-              className={`absolute top-2 z-10 w-max max-w-[220px] px-3 py-2 rounded-pg-control border border-pg-borda bg-pg-branco shadow-[0_4px_16px_rgba(30,43,51,0.08)] text-pg-caption text-pg-ardosia pointer-events-none ${
+              className={`absolute top-2 z-10 w-max max-w-[220px] px-3 py-2 rounded-pg-control border border-pg-linha bg-pg-superficie shadow-pg-flutuante text-pg-caption text-pg-texto pointer-events-none ${
                 leftPct > 50 ? "-translate-x-[calc(100%+8px)]" : "translate-x-2"
               }`}
               style={{ left: `${leftPct}%` }}
@@ -343,26 +343,30 @@ export function ResponseChart({ stats, now, intervalSeconds, heartbeat }) {
                         </strong>
                       </>
                     ) : (
-                      <span className="text-pg-neblina">Sem resposta</span>
+                      <span className="text-pg-texto-2">Sem resposta</span>
                     )}
                   </div>
-                  <div className="text-pg-neblina tabular-nums">
+                  <div className="text-pg-texto-2 tabular-nums">
                     {plural(b.checks, "check", "checks")} ·{" "}
-                    <span className={b.failures > 0 ? "text-pg-down" : ""}>
+                    <span
+                      className={b.failures > 0 ? "text-pg-status-down" : ""}
+                    >
                       {plural(b.failures, "falha", "falhas")}
                     </span>
                   </div>
                 </>
               )}
               {pointDown && (
-                <div className="mt-1 font-medium text-pg-down">Fora do ar</div>
+                <div className="mt-1 font-medium text-pg-status-down">
+                  Fora do ar
+                </div>
               )}
             </div>
           </>
         )}
         {/* eixo X: rótulos que encostariam nas bordas do card ficam de fora */}
         <div
-          className="absolute left-0 right-0 top-full mt-2 h-4 text-pg-caption text-pg-neblina tabular-nums"
+          className="absolute left-0 right-0 top-full mt-2 h-4 text-pg-caption text-pg-texto-2 tabular-nums"
           aria-hidden="true"
         >
           {axisTicks(since, until)
@@ -389,7 +393,7 @@ export function ResponseChart({ stats, now, intervalSeconds, heartbeat }) {
 export function ChartLegend({ bucketSeconds, heartbeat }) {
   return (
     <div
-      className="flex gap-3 md:gap-4 text-pg-caption text-pg-neblina"
+      className="flex gap-3 md:gap-4 text-pg-caption text-pg-texto-2"
       aria-hidden="true"
     >
       <span className="inline-flex items-center gap-1.5">
@@ -410,12 +414,12 @@ export function ChartLegend({ bucketSeconds, heartbeat }) {
         )}
       </span>
       <span className="inline-flex items-center gap-1.5">
-        <span className="w-3 h-3 rounded-[2px] border border-pg-down bg-pg-down-bg" />{" "}
+        <span className="w-3 h-3 rounded-[2px] border border-pg-status-down bg-pg-status-down-bg" />{" "}
         fora do ar
       </span>
       {!heartbeat && (
         <span className="inline-flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-[2px] border border-pg-neblina bg-pg-unknown-bg" />{" "}
+          <span className="w-3 h-3 rounded-[2px] border border-pg-borda-input bg-pg-status-unknown-bg" />{" "}
           sem dados
         </span>
       )}

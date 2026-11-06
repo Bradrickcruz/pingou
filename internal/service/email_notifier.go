@@ -53,30 +53,42 @@ func (n *EmailNotifier) loc() *time.Location {
 	return n.location()
 }
 
-func (n *EmailNotifier) NotifyDown(ctx context.Context, m *domain.Monitor, i *domain.Incident) {
-	n.send(ctx, "down", subjectDown(m), bodyFor(m, i, false, n.publicURL, n.loc()))
-}
+func (n *EmailNotifier) Name() string { return domain.ChannelEmail }
 
-func (n *EmailNotifier) NotifyRecovery(ctx context.Context, m *domain.Monitor, i *domain.Incident) {
-	n.send(ctx, "up", subjectUp(m, i), bodyFor(m, i, true, n.publicURL, n.loc()))
-}
-
-func (n *EmailNotifier) NotifyCertExpiring(ctx context.Context, m *domain.Monitor, a domain.CertAlert) {
-	n.send(ctx, "cert_expiring", subjectCert(m, a), certBody(m, a, n.publicURL, n.loc()))
-}
-
-func (n *EmailNotifier) send(ctx context.Context, event, subject, body string) {
+// Send monta o assunto e o corpo a partir do snapshot, na hora do envio (fuso e
+// idioma de agora), e entrega aos destinatários salvos nas settings.
+func (n *EmailNotifier) Send(ctx context.Context, ev domain.OutboxEvent) error {
 	to := splitRecipients(n.getRecipients())
 	if len(to) == 0 {
-		return
+		return nil
+	}
+	m := ev.Snapshot.AsMonitor()
+	var subject, body string
+	switch ev.EventType {
+	case domain.EventDown:
+		i := ev.Snapshot.AsIncident()
+		subject, body = subjectDown(m), bodyFor(m, i, false, n.publicURL, n.loc())
+	case domain.EventUp:
+		i := ev.Snapshot.AsIncident()
+		subject, body = subjectUp(m, i), bodyFor(m, i, true, n.publicURL, n.loc())
+	case domain.EventCertExpiring:
+		a := ev.Snapshot.AsCertAlert()
+		subject, body = subjectCert(m, a), certBody(m, a, n.publicURL, n.loc())
+	case domain.EventMaintenanceStarted, domain.EventMaintenanceEnded:
+		mt, err := maintenanceSnapshot(ev)
+		if err != nil {
+			return err
+		}
+		subject, body = subjectMaintenance(ev.EventType, mt), maintenanceBody(ev.EventType, mt, n.publicURL, n.loc())
+	default:
+		return fmt.Errorf("unknown event type %q", ev.EventType)
 	}
 	msg := buildEmail(n.cfg.From, to, subject, body, time.Now())
-	// o log nunca leva os endereços nem a senha
+	// o erro nunca leva a senha; o log do worker não leva os endereços
 	if err := sendMail(ctx, n.cfg, to, msg); err != nil {
-		slog.Error("email send error", "event", event, "recipients_count", len(to), "err", smtpErrorMessage(err))
-		return
+		return errors.New(smtpErrorMessage(err))
 	}
-	slog.Info("email sent", "event", event, "recipients_count", len(to))
+	return nil
 }
 
 // splitRecipients separa a lista salva (já validada e normalizada).

@@ -18,23 +18,29 @@ type job struct {
 }
 
 type Scheduler struct {
-	monitors       domain.MonitorRepository
-	checker        domain.Checker
-	db             *sql.DB
-	checkRepoTx    *repository.CheckRepoTx
-	monitorRepoTx  *repository.MonitorRepoTx
-	incidentRepoTx *repository.IncidentRepoTx
-	notifier       service.Notifier
-	jobs           map[string]*job
-	dbMu           sync.Mutex // serializa acesso ao DB (SQLite com MaxOpenConns=1)
-	mu             sync.Mutex
-	intervalUnit   time.Duration   // unidade de interval_seconds; testes reduzem para rodar rápido
-	heartbeatTick  time.Duration   // frequência do avaliador de prazos do heartbeat
-	rootCtx        context.Context // contexto de vida dos jobs (definido em Start)
-	startedAt      time.Time       // prazos vencidos antes disso venceram com o Pingou fora do ar
-	stopHeartbeats context.CancelFunc
-	stopping       bool           // Stop foi chamado: nenhum job novo começa (protegido por mu)
-	wg             sync.WaitGroup // loops de check e avaliador de heartbeat em andamento
+	monitors           domain.MonitorRepository
+	checker            domain.Checker
+	db                 *sql.DB
+	checkRepoTx        *repository.CheckRepoTx
+	monitorRepoTx      *repository.MonitorRepoTx
+	incidentRepoTx     *repository.IncidentRepoTx
+	outboxRepoTx       *repository.OutboxRepoTx
+	channels           []string                                // canais ativos: uma linha do outbox por canal
+	wake               func()                                  // acorda o worker depois do commit
+	maintenance        domain.MaintenanceRepository            // nil = sem janelas de manutenção
+	maintenanceNotices func(ctx context.Context) (bool, error) // interruptor do aviso de manutenção; nil = desligado
+	now                func() time.Time                        // relógio do gate e do tick de manutenção (testes trocam)
+	jobs               map[string]*job
+	dbMu               sync.Mutex // serializa acesso ao DB (SQLite com MaxOpenConns=1)
+	mu                 sync.Mutex
+	intervalUnit       time.Duration      // unidade de interval_seconds; testes reduzem para rodar rápido
+	heartbeatTick      time.Duration      // frequência do avaliador de prazos do heartbeat
+	maintenanceTick    time.Duration      // frequência do aplicador de início/fim das janelas
+	rootCtx            context.Context    // contexto de vida dos jobs (definido em Start)
+	startedAt          time.Time          // prazos vencidos antes disso venceram com o Pingou fora do ar
+	stopHeartbeats     context.CancelFunc // para o avaliador de heartbeat e o tick de manutenção
+	stopping           bool               // Stop foi chamado: nenhum job novo começa (protegido por mu)
+	wg                 sync.WaitGroup     // loops de check e avaliador de heartbeat em andamento
 }
 
 func NewScheduler(
@@ -44,28 +50,48 @@ func NewScheduler(
 	checkRepoTx *repository.CheckRepoTx,
 	monitorRepoTx *repository.MonitorRepoTx,
 	incidentRepoTx *repository.IncidentRepoTx,
-	notifier service.Notifier,
+	outboxRepoTx *repository.OutboxRepoTx,
+	channels []string,
+	wake func(),
 ) *Scheduler {
 	return &Scheduler{
-		monitors:       monitors,
-		checker:        checker,
-		db:             db,
-		checkRepoTx:    checkRepoTx,
-		monitorRepoTx:  monitorRepoTx,
-		incidentRepoTx: incidentRepoTx,
-		notifier:       notifier,
-		jobs:           make(map[string]*job),
-		intervalUnit:   time.Second,
-		heartbeatTick:  10 * time.Second,
-		rootCtx:        context.Background(),
+		monitors:        monitors,
+		checker:         checker,
+		db:              db,
+		checkRepoTx:     checkRepoTx,
+		monitorRepoTx:   monitorRepoTx,
+		incidentRepoTx:  incidentRepoTx,
+		outboxRepoTx:    outboxRepoTx,
+		channels:        channels,
+		wake:            wake,
+		jobs:            make(map[string]*job),
+		intervalUnit:    time.Second,
+		heartbeatTick:   10 * time.Second,
+		maintenanceTick: 10 * time.Second,
+		now:             time.Now,
+		rootCtx:         context.Background(),
 	}
+}
+
+// WithMaintenance liga as janelas de manutenção: o gate em withMonitor e o tick
+// de início/fim (iniciado em Start).
+func (s *Scheduler) WithMaintenance(repo domain.MaintenanceRepository) *Scheduler {
+	s.maintenance = repo
+	return s
+}
+
+// WithMaintenanceNotices liga o aviso de início e fim das janelas agendadas.
+// enabled lê o interruptor das settings; só é chamado quando há janela vencida.
+func (s *Scheduler) WithMaintenanceNotices(enabled func(ctx context.Context) (bool, error)) *Scheduler {
+	s.maintenanceNotices = enabled
+	return s
 }
 
 // Start carrega todos os monitors ativos e inicia os jobs
 func (s *Scheduler) Start(ctx context.Context) error {
 	s.mu.Lock()
 	s.rootCtx = ctx
-	s.startedAt = time.Now()
+	s.startedAt = s.now()
 	s.stopping = false
 	hbCtx, cancel := context.WithCancel(ctx)
 	s.stopHeartbeats = cancel
@@ -75,6 +101,19 @@ func (s *Scheduler) Start(ctx context.Context) error {
 		defer s.wg.Done()
 		s.runHeartbeats(hbCtx)
 	}()
+
+	if s.maintenance != nil {
+		// reinício no meio de uma janela, ou janela que venceu com o Pingou
+		// fora: aplica o pendente antes de subir os jobs
+		s.applyMaintenance(ctx)
+		s.mu.Lock()
+		s.wg.Add(1)
+		s.mu.Unlock()
+		go func() {
+			defer s.wg.Done()
+			s.runMaintenance(hbCtx)
+		}()
+	}
 
 	enabled := true
 	monitors, _, err := s.monitors.FindAll(ctx, domain.MonitorFilter{
@@ -175,6 +214,11 @@ func (s *Scheduler) runLoop(ctx context.Context, m *domain.Monitor) {
 }
 
 func (s *Scheduler) runCheck(jobCtx context.Context, m *domain.Monitor) {
+	// em manutenção: nem faz a requisição (o gate em withMonitor descartaria)
+	if s.inMaintenance(jobCtx, m.ID) {
+		slog.Debug("check skipped: maintenance", "monitor_id", m.ID)
+		return
+	}
 	slog.Debug("running check", "monitor_id", m.ID, "name", m.Name, "type", m.Type)
 
 	checkCtx, cancel := context.WithTimeout(jobCtx, time.Duration(m.TimeoutSeconds)*time.Second)
@@ -230,6 +274,12 @@ func (s *Scheduler) withMonitor(ctx context.Context, monitorID string, decide fu
 	if m == nil || !m.Enabled {
 		return nil // excluído ou pausado enquanto o check rodava
 	}
+	// Gate de manutenção: ponto único por onde passa todo resultado (check
+	// HTTP/TCP, heartbeat vencido e ping). Sem gravar o check, não há incidente
+	// nem aviso, inclusive o de certificado (processCert roda dentro de Process).
+	if s.inMaintenance(ctx, m.ID) {
+		return nil
+	}
 
 	result := decide(m)
 	if result == nil {
@@ -237,8 +287,8 @@ func (s *Scheduler) withMonitor(ctx context.Context, monitorID string, decide fu
 	}
 
 	// Criar nova UnitOfWork para este check
-	uow := service.NewUnitOfWork(s.db, s.checkRepoTx, s.monitorRepoTx, s.incidentRepoTx)
-	sm := service.NewStateMachine(uow, s.notifier)
+	uow := service.NewUnitOfWork(s.db, s.checkRepoTx, s.monitorRepoTx, s.incidentRepoTx, s.outboxRepoTx)
+	sm := service.NewStateMachine(uow, s.channels, s.wake)
 	return sm.Process(ctx, m, *result)
 }
 

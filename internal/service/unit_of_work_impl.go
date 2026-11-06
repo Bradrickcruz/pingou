@@ -15,17 +15,19 @@ type sqliteUnitOfWork struct {
 	checkRepo    *repository.CheckRepoTx
 	monitorRepo  *repository.MonitorRepoTx
 	incidentRepo *repository.IncidentRepoTx
+	outboxRepo   *repository.OutboxRepoTx
 	tx           *sql.Tx
 }
 
 // NewUnitOfWork cria uma nova instância de UnitOfWork.
 // Recebe a conexão DB e instâncias dos repositórios.
-func NewUnitOfWork(db *sql.DB, checkRepo *repository.CheckRepoTx, monitorRepo *repository.MonitorRepoTx, incidentRepo *repository.IncidentRepoTx) UnitOfWork {
+func NewUnitOfWork(db *sql.DB, checkRepo *repository.CheckRepoTx, monitorRepo *repository.MonitorRepoTx, incidentRepo *repository.IncidentRepoTx, outboxRepo *repository.OutboxRepoTx) UnitOfWork {
 	return &sqliteUnitOfWork{
 		db:           db,
 		checkRepo:    checkRepo,
 		monitorRepo:  monitorRepo,
 		incidentRepo: incidentRepo,
+		outboxRepo:   outboxRepo,
 	}
 }
 
@@ -71,6 +73,20 @@ func (u *sqliteUnitOfWork) IncidentRepo() IncidentRepositoryTx {
 	return &incidentRepoWithTx{u.incidentRepo, u.tx}
 }
 
+func (u *sqliteUnitOfWork) OutboxRepo() OutboxRepositoryTx {
+	return &outboxRepoWithTx{u.outboxRepo, u.tx}
+}
+
+// outboxRepoWithTx envolve OutboxRepoTx com uma transação ativa
+type outboxRepoWithTx struct {
+	repo *repository.OutboxRepoTx
+	tx   *sql.Tx
+}
+
+func (r *outboxRepoWithTx) EnqueueWithTx(ctx context.Context, events []domain.OutboxEvent) error {
+	return r.repo.EnqueueWithTx(ctx, r.tx, events)
+}
+
 // checkRepoWithTx envolve CheckRepoTx com uma transação ativa
 type checkRepoWithTx struct {
 	repo *repository.CheckRepoTx
@@ -81,8 +97,8 @@ func (r *checkRepoWithTx) CreateWithTx(ctx context.Context, c *domain.Check) err
 	return r.repo.CreateWithTx(ctx, r.tx, c)
 }
 
-func (r *checkRepoWithTx) Latest(ctx context.Context, monitorID string, n int) ([]*domain.Check, error) {
-	return r.repo.Latest(ctx, r.tx, monitorID, n)
+func (r *checkRepoWithTx) Latest(ctx context.Context, monitorID string, n int, since *time.Time) ([]*domain.Check, error) {
+	return r.repo.Latest(ctx, r.tx, monitorID, n, since)
 }
 
 // monitorRepoWithTx envolve MonitorRepoTx com uma transação ativa

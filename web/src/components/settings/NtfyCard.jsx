@@ -50,7 +50,7 @@ export function NtfyCard({ value, onChange, available }) {
     >
       <label
         htmlFor="ntfy-topic"
-        className="block mb-1.5 text-pg-ui font-medium text-pg-ardosia"
+        className="block mb-1.5 text-pg-ui font-medium text-pg-texto"
       >
         Tópico
       </label>
@@ -66,7 +66,7 @@ export function NtfyCard({ value, onChange, available }) {
           placeholder="pingou-alertas"
           aria-invalid={invalid || undefined}
           aria-describedby="ntfy-help ntfy-result"
-          className="flex-1 min-w-0 px-3 py-2.5 rounded-pg-control font-pg-mono text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda aria-[invalid=true]:border-pg-down disabled:bg-pg-nuvem disabled:text-pg-neblina disabled:cursor-not-allowed"
+          className="flex-1 min-w-0 px-3 py-2.5 rounded-pg-control font-pg-mono text-pg-ui text-pg-texto bg-pg-superficie border border-pg-linha aria-[invalid=true]:border-pg-status-down disabled:bg-pg-fundo disabled:text-pg-texto-2 disabled:cursor-not-allowed"
         />
         {available && (
           <TestButton
@@ -79,7 +79,7 @@ export function NtfyCard({ value, onChange, available }) {
       {available ? (
         <p
           id="ntfy-help"
-          className={`mt-1.5 mb-0 text-pg-caption ${invalid ? "text-pg-down" : "text-pg-neblina"}`}
+          className={`mt-1.5 mb-0 text-pg-caption ${invalid ? "text-pg-status-down" : "text-pg-texto-2"}`}
         >
           {invalid
             ? "Use de 1 a 64 caracteres: letras sem acento, números, _ ou -."
@@ -88,7 +88,7 @@ export function NtfyCard({ value, onChange, available }) {
       ) : (
         <p
           id="ntfy-help"
-          className="mt-1.5 mb-0 text-pg-caption text-pg-neblina"
+          className="mt-1.5 mb-0 text-pg-caption text-pg-texto-2"
         >
           Para ativar, configure{" "}
           <code className="font-pg-mono">PINGOU_NTFY_URL</code> (e{" "}
@@ -98,7 +98,7 @@ export function NtfyCard({ value, onChange, available }) {
             href={NTFY_DOCS}
             target="_blank"
             rel="noreferrer"
-            className="text-pg-ciano-fundo underline"
+            className="text-pg-link underline"
           >
             Como configurar
           </a>

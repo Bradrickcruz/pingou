@@ -19,7 +19,10 @@ type incidentResponse struct {
 	NotificationSent bool                     `json:"notification_sent"`
 	DurationSeconds  int64                    `json:"duration_seconds"`
 	Open             bool                     `json:"open"`
-	ClosedManually   bool                     `json:"closed_manually"`
+	// ClosedManually segue na resposta por compatibilidade (= close_reason != null).
+	ClosedManually bool    `json:"closed_manually"`
+	CloseReason    *string `json:"close_reason"` // "pause" | "maintenance" | null
+	CloseNote      *string `json:"close_note"`   // motivo da pausa ou da manutenção
 }
 
 type incidentMonitorResponse struct {
@@ -104,7 +107,11 @@ func toIncidentResponse(i *domain.Incident) incidentResponse {
 		NotificationSent: i.NotificationSent,
 		DurationSeconds:  durationSeconds,
 		Open:             i.EndedAt == nil,
-		ClosedManually:   i.ClosedManually,
+		ClosedManually:   i.CloseReason != domain.CloseNone,
+		CloseNote:        i.CloseNote,
+	}
+	if r := i.CloseReason.String(); r != "" {
+		res.CloseReason = &r
 	}
 	if i.MonitorName != "" {
 		res.Monitor = &incidentMonitorResponse{

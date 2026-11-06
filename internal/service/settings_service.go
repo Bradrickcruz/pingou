@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/Bradrickcruz/pingou/internal/config"
@@ -29,6 +30,8 @@ type Settings struct {
 	NtfyAvailable   bool   `json:"ntfy_available"`   // false = PINGOU_NTFY_URL não configurado
 	Timezone        string `json:"timezone"`         // nome IANA; painel, e-mail e ntfy. API e banco seguem em UTC
 	TimezoneSet     bool   `json:"timezone_set"`     // false = nunca configurado; o painel sugere o fuso do navegador
+	// MaintenanceNotices: avisa nos canais quando uma janela agendada começa e termina. Desligado por padrão.
+	MaintenanceNotices bool `json:"maintenance_notices"`
 }
 
 type UpdateSettingsInput struct {
@@ -37,12 +40,16 @@ type UpdateSettingsInput struct {
 	EmailRecipients *string
 	NtfyTopic       *string
 	Timezone        *string
+	// MaintenanceNotices nil = não muda
+	MaintenanceNotices *bool
 }
 
 const (
 	settingEmailRecipients = "email_recipients"
 	settingNtfyTopic       = "ntfy_topic"
 	settingTimezone        = "timezone"
+	// SettingMaintenanceNotices: "true" ou "false"; ausente = desligado.
+	SettingMaintenanceNotices = "maintenance_notices"
 )
 
 var (
@@ -85,15 +92,21 @@ func (s *SettingsService) Get(ctx context.Context) (*Settings, error) {
 		tz = DefaultTimezone // instalação antiga: chave ainda não existe
 	}
 
+	notices, err := s.repo.Get(ctx, SettingMaintenanceNotices)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Settings{
-		WebhookURL:      webhookURL,
-		RetentionDays:   retention,
-		EmailRecipients: recipients,
-		EmailAvailable:  s.smtp.Enabled(),
-		NtfyTopic:       topic,
-		NtfyAvailable:   s.ntfy.Enabled(),
-		Timezone:        tz,
-		TimezoneSet:     tzSet,
+		MaintenanceNotices: notices == "true",
+		WebhookURL:         webhookURL,
+		RetentionDays:      retention,
+		EmailRecipients:    recipients,
+		EmailAvailable:     s.smtp.Enabled(),
+		NtfyTopic:          topic,
+		NtfyAvailable:      s.ntfy.Enabled(),
+		Timezone:           tz,
+		TimezoneSet:        tzSet,
 	}, nil
 }
 
@@ -154,6 +167,12 @@ func (s *SettingsService) Update(ctx context.Context, in UpdateSettingsInput) (*
 			return nil, err
 		}
 		if err := s.repo.Set(ctx, settingTimezone, tz); err != nil {
+			return nil, err
+		}
+	}
+
+	if in.MaintenanceNotices != nil {
+		if err := s.repo.Set(ctx, SettingMaintenanceNotices, strconv.FormatBool(*in.MaintenanceNotices)); err != nil {
 			return nil, err
 		}
 	}

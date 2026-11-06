@@ -37,7 +37,7 @@ export function TimezoneCard({ value, onChange }) {
     >
       <label
         htmlFor="timezone"
-        className="block mb-1.5 text-pg-ui font-medium text-pg-ardosia"
+        className="block mb-1.5 text-pg-ui font-medium text-pg-texto"
       >
         Fuso
       </label>
@@ -52,7 +52,7 @@ export function TimezoneCard({ value, onChange }) {
       />
       <p
         id="timezone-help"
-        className={`mt-1.5 mb-0 text-pg-caption ${invalid ? "text-pg-down" : "text-pg-neblina"}`}
+        className={`mt-1.5 mb-0 text-pg-caption ${invalid ? "text-pg-status-down" : "text-pg-texto-2"}`}
       >
         {invalid
           ? "Fuso desconhecido neste navegador. Escolha outro da lista."

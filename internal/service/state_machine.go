@@ -8,16 +8,35 @@ import (
 	"github.com/Bradrickcruz/pingou/internal/domain"
 )
 
+// Prazo de cada aviso no outbox, contado do evento. Aviso de queda velho
+// confunde; o de certificado vale o dia inteiro.
+const (
+	incidentNoticeTTL = 60 * time.Minute
+	certNoticeTTL     = 24 * time.Hour
+)
+
+// pendingNotice é um aviso decidido pela state machine, ainda sem linhas no outbox.
+type pendingNotice struct {
+	eventType string
+	snapshot  domain.EventSnapshot
+	ttl       time.Duration
+}
+
 type StateMachine struct {
 	uow      UnitOfWork
-	notifier Notifier
+	channels []string // canais ativos: uma linha do outbox por canal
+	wake     func()   // acorda o worker depois do commit; nil = ninguém a acordar
 	clock    func() time.Time
 }
 
-func NewStateMachine(uow UnitOfWork, notifier Notifier) *StateMachine {
+// NewStateMachine cria a state machine. Os avisos vão para o outbox (uma linha
+// por canal em channels), na mesma transação do check; wake é chamado depois
+// do commit, sem bloquear.
+func NewStateMachine(uow UnitOfWork, channels []string, wake func()) *StateMachine {
 	return &StateMachine{
 		uow:      uow,
-		notifier: notifier,
+		channels: channels,
+		wake:     wake,
 		clock:    time.Now,
 	}
 }
@@ -62,50 +81,92 @@ func (sm *StateMachine) Process(ctx context.Context, m *domain.Monitor, result d
 	// 2. aplica transição de estado
 	prevState := m.CurrentState
 
-	var notify func()
+	var notices []pendingNotice
+	var notice *pendingNotice
 	var err error
 	if result.Success {
-		notify, err = sm.handleSuccess(ctx, m, prevState, now)
+		notice, err = sm.handleSuccess(ctx, m, prevState, now)
 	} else {
-		notify, err = sm.handleFailure(ctx, m, prevState, result, now)
+		notice, err = sm.handleFailure(ctx, m, prevState, result, now)
 	}
 	if err != nil {
 		return err
+	}
+	if notice != nil {
+		notices = append(notices, *notice)
 	}
 
 	// 3. certificado SSL: data de expiração e aviso de 30/7 dias
-	certNotify, err := sm.processCert(ctx, m, result, now)
+	certNotice, err := sm.processCert(ctx, m, result, now)
+	if err != nil {
+		return err
+	}
+	if certNotice != nil {
+		notices = append(notices, *certNotice)
+	}
+
+	// 4. avisos no outbox, na mesma transação: rollback não deixa aviso e
+	// commit sempre deixa
+	queued, err := sm.enqueue(ctx, notices, now)
 	if err != nil {
 		return err
 	}
 
-	// Commit da transação antes de notificar
 	if err := sm.uow.Commit(); err != nil {
 		return err
 	}
 
 	success = true
 
-	// Notificações APÓS commit: o notifier lê settings no banco, e com
-	// MaxOpenConns=1 isso travaria esperando a conexão presa na transação
-	if notify != nil {
-		notify()
-	}
-	if certNotify != nil {
-		certNotify()
+	// O worker lê o outbox fora da transação (com MaxOpenConns=1 ler antes do
+	// commit travaria esperando a conexão presa aqui), então só é acordado agora.
+	if queued && sm.wake != nil {
+		sm.wake()
 	}
 
 	return nil
 }
 
+// enqueue grava uma linha por canal para cada aviso, todas com o mesmo
+// event_id por aviso. Devolve true se gravou alguma.
+func (sm *StateMachine) enqueue(ctx context.Context, notices []pendingNotice, now time.Time) (bool, error) {
+	var rows []domain.OutboxEvent
+	for _, n := range notices {
+		eventID, err := newUUIDv7()
+		if err != nil {
+			return false, err
+		}
+		for _, ch := range sm.channels {
+			rows = append(rows, domain.OutboxEvent{
+				EventID:       eventID,
+				EventType:     n.eventType,
+				Channel:       ch,
+				MonitorID:     n.snapshot.Monitor.ID,
+				Snapshot:      n.snapshot,
+				Status:        domain.OutboxPending,
+				CreatedAt:     now,
+				ExpiresAt:     n.snapshot.OccurredAt.Add(n.ttl),
+				NextAttemptAt: now,
+			})
+		}
+	}
+	if len(rows) == 0 {
+		return false, nil
+	}
+	if err := sm.uow.OutboxRepo().EnqueueWithTx(ctx, rows); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // processCert atualiza a data do certificado e decide o aviso de expiração,
 // dentro da transação do check. Só escreve quando algo muda (data nova ou marca
-// nova): na maioria dos checks não há escrita extra. Devolve o aviso a enviar
-// após o commit (ou nil).
+// nova): na maioria dos checks não há escrita extra. Devolve o aviso a gravar
+// no outbox (ou nil).
 //
 // Check sem certificado (falha de conexão, http://) não apaga a data guardada,
 // e o aviso ainda é avaliado com ela: um site fora do ar não adia o aviso.
-func (sm *StateMachine) processCert(ctx context.Context, m *domain.Monitor, result domain.CheckResult, now time.Time) (func(), error) {
+func (sm *StateMachine) processCert(ctx context.Context, m *domain.Monitor, result domain.CheckResult, now time.Time) (*pendingNotice, error) {
 	if m.Type != domain.TypeHTTP {
 		return nil, nil
 	}
@@ -151,11 +212,11 @@ func (sm *StateMachine) processCert(ctx context.Context, m *domain.Monitor, resu
 	a := *alert
 	slog.Info("cert expiring alert", "monitor_id", m.ID, "name", m.Name,
 		"threshold_days", a.ThresholdDays, "days_left", a.DaysLeft, "cert_expires_at", a.ExpiresAt.Format(time.RFC3339))
-	return func() { sm.notifier.NotifyCertExpiring(ctx, m, a) }, nil
+	return &pendingNotice{eventType: domain.EventCertExpiring, snapshot: domain.NewCertSnapshot(m, a, now), ttl: certNoticeTTL}, nil
 }
 
-// handleSuccess aplica a transição e devolve a notificação a enviar após o commit (ou nil).
-func (sm *StateMachine) handleSuccess(ctx context.Context, m *domain.Monitor, prevState domain.MonitorState, now time.Time) (func(), error) {
+// handleSuccess aplica a transição e devolve o aviso a gravar no outbox (ou nil).
+func (sm *StateMachine) handleSuccess(ctx context.Context, m *domain.Monitor, prevState domain.MonitorState, now time.Time) (*pendingNotice, error) {
 	m.CurrentState = domain.StateUp
 	m.LastCheckedAt = &now
 	m.UpdatedAt = now
@@ -183,7 +244,7 @@ func (sm *StateMachine) handleSuccess(ctx context.Context, m *domain.Monitor, pr
 			incident.DurationSeconds = &d
 			incident.EndedAt = &now
 			slog.Info("monitor recovered", "monitor_id", m.ID, "name", m.Name)
-			return func() { sm.notifier.NotifyRecovery(ctx, m, incident) }, nil
+			return &pendingNotice{eventType: domain.EventUp, snapshot: domain.NewRecoverySnapshot(m, incident, now), ttl: incidentNoticeTTL}, nil
 		}
 	}
 	// UNKNOWN→UP: não notifica (D na PRD)
@@ -191,8 +252,8 @@ func (sm *StateMachine) handleSuccess(ctx context.Context, m *domain.Monitor, pr
 	return nil, nil
 }
 
-// handleFailure aplica a transição e devolve a notificação a enviar após o commit (ou nil).
-func (sm *StateMachine) handleFailure(ctx context.Context, m *domain.Monitor, prevState domain.MonitorState, result domain.CheckResult, now time.Time) (func(), error) {
+// handleFailure aplica a transição e devolve o aviso a gravar no outbox (ou nil).
+func (sm *StateMachine) handleFailure(ctx context.Context, m *domain.Monitor, prevState domain.MonitorState, result domain.CheckResult, now time.Time) (*pendingNotice, error) {
 	m.LastCheckedAt = &now
 	m.UpdatedAt = now
 
@@ -238,7 +299,7 @@ func (sm *StateMachine) handleFailure(ctx context.Context, m *domain.Monitor, pr
 			return nil, err
 		}
 		slog.Warn("monitor down", "monitor_id", m.ID, "name", m.Name, "error", result.ErrorMessage)
-		return func() { sm.notifier.NotifyDown(ctx, m, incident) }, nil
+		return &pendingNotice{eventType: domain.EventDown, snapshot: domain.NewDownSnapshot(m, incident), ttl: incidentNoticeTTL}, nil
 	}
 
 	// já estava DOWN: mais uma falha no incidente aberto (last_error segue
@@ -246,11 +307,13 @@ func (sm *StateMachine) handleFailure(ctx context.Context, m *domain.Monitor, pr
 	return nil, sm.uow.IncidentRepo().IncrementFailureCount(ctx, m.ID)
 }
 
-// countConsecutiveFails conta checks recentes até encontrar um sucesso
+// countConsecutiveFails conta checks recentes até encontrar um sucesso.
+// Só olha checks feitos depois da última retomada (pausa ou fim de janela de
+// manutenção): falhas de antes não somam com as de depois.
 // Lê dentro da transação (SQLite tem 1 conexão; ler fora dela trava)
 func (sm *StateMachine) countConsecutiveFails(ctx context.Context, m *domain.Monitor) (int, error) {
 	// busca os últimos N checks (N = failure_threshold + 1 para ter margem)
-	checks, err := sm.uow.CheckRepo().Latest(ctx, m.ID, effectiveThreshold(m)+1)
+	checks, err := sm.uow.CheckRepo().Latest(ctx, m.ID, effectiveThreshold(m)+1, m.ResumedAt)
 	if err != nil {
 		return 0, err
 	}

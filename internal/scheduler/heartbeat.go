@@ -46,7 +46,7 @@ func (s *Scheduler) checkHeartbeats(ctx context.Context, now time.Time) {
 		if ctx.Err() != nil {
 			return
 		}
-		if !s.heartbeatExpired(m, now) {
+		if !s.heartbeatExpired(m, now) || s.inMaintenance(ctx, m.ID) {
 			continue
 		}
 		// confere de novo dentro do lock: um ping pode ter chegado nesse meio tempo.

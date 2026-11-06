@@ -155,3 +155,30 @@ func TestClosedManuallyInResolved(t *testing.T) {
 		}
 	}
 }
+
+func TestCloseReasonAndNoteInResponse(t *testing.T) {
+	s, h, _ := newTestServer(t)
+	seedIncidents(t, s)
+	if _, err := s.db.Exec(`UPDATE incidents SET closed_manually = 1, close_note = 'troca de disco' WHERE id = 'a-r1'`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.db.Exec(`UPDATE incidents SET closed_manually = 2, close_note = 'janela' WHERE id = 'b-r1'`); err != nil {
+		t.Fatal(err)
+	}
+	for _, d := range listIncidents(t, h, "/api/incidents?status=resolved").Data {
+		switch d.ID {
+		case "a-r1":
+			if d.CloseReason == nil || *d.CloseReason != "pause" || d.CloseNote == nil || *d.CloseNote != "troca de disco" || !d.ClosedManually {
+				t.Errorf("a-r1: reason=%v note=%v manual=%v", d.CloseReason, d.CloseNote, d.ClosedManually)
+			}
+		case "b-r1":
+			if d.CloseReason == nil || *d.CloseReason != "maintenance" || !d.ClosedManually {
+				t.Errorf("b-r1: reason=%v manual=%v", d.CloseReason, d.ClosedManually)
+			}
+		default:
+			if d.CloseReason != nil || d.ClosedManually {
+				t.Errorf("%s: reason=%v manual=%v, want nil e false", d.ID, d.CloseReason, d.ClosedManually)
+			}
+		}
+	}
+}

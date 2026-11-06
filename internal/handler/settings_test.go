@@ -237,6 +237,8 @@ type settingsBody struct {
 	NtfyAvailable   bool   `json:"ntfy_available"`
 	Timezone        string `json:"timezone"`
 	TimezoneSet     bool   `json:"timezone_set"`
+
+	MaintenanceNotices bool `json:"maintenance_notices"`
 }
 
 func TestSettingsEmailWithoutSMTP(t *testing.T) {
@@ -439,5 +441,26 @@ func TestSettingsTimezone(t *testing.T) {
 	// vazio volta para UTC
 	if got := decode[settingsBody](t, do(t, h, "PATCH", "/api/settings", `{"timezone":""}`)); got.Timezone != "UTC" {
 		t.Fatalf("vazio = %q, want UTC", got.Timezone)
+	}
+}
+
+func TestSettingsMaintenanceNotices(t *testing.T) {
+	_, h, _ := newTestServer(t)
+
+	if got := decode[settingsBody](t, do(t, h, "GET", "/api/settings", "")); got.MaintenanceNotices {
+		t.Fatal("padrão deve ser desligado")
+	}
+	if got := decode[settingsBody](t, do(t, h, "PATCH", "/api/settings", `{"maintenance_notices":true}`)); !got.MaintenanceNotices {
+		t.Fatal("PATCH deveria ligar")
+	}
+	if got := decode[settingsBody](t, do(t, h, "GET", "/api/settings", "")); !got.MaintenanceNotices {
+		t.Fatal("GET deveria mostrar ligado")
+	}
+	// PATCH sem o campo não muda
+	if got := decode[settingsBody](t, do(t, h, "PATCH", "/api/settings", `{"retention_days":14}`)); !got.MaintenanceNotices {
+		t.Fatal("PATCH sem o campo desligou o interruptor")
+	}
+	if got := decode[settingsBody](t, do(t, h, "PATCH", "/api/settings", `{"maintenance_notices":false}`)); got.MaintenanceNotices {
+		t.Fatal("PATCH deveria desligar")
 	}
 }

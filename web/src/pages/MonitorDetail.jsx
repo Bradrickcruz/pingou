@@ -23,6 +23,8 @@ import { Button } from "../components/ui/Button";
 import { Spinner } from "../components/ui/Spinner";
 import { RowMenu } from "../components/monitors/RowMenu";
 import { MonitorModals } from "../components/monitors/MonitorModals";
+import { MaintenanceModal } from "../components/monitors/MaintenanceModal";
+import { MaintenanceCard } from "../components/monitor-detail/MaintenanceCard";
 import { PingBlock } from "../components/monitors/MonitorForm";
 import { RangeTabs } from "../components/monitor-detail/RangeTabs";
 import { RANGES, clampRange } from "../lib/ranges";
@@ -149,15 +151,15 @@ function StatCard({
 }) {
   return (
     <div
-      className={`p-4 rounded-pg-card border border-pg-borda bg-pg-branco min-w-0 ${className}`}
+      className={`p-4 rounded-pg-card border border-pg-linha bg-pg-superficie min-w-0 ${className}`}
     >
-      <div className="text-pg-caption text-pg-neblina">
+      <div className="text-pg-caption text-pg-texto-2">
         <span className="md:hidden">{short ?? label}</span>
         <span className="hidden md:inline">{label}</span>
       </div>
       <div
         className={`mt-1 font-pg-heading text-pg-h3 md:text-pg-h2 font-medium tabular-nums break-words md:truncate ${
-          alert ? "text-pg-down md:text-pg-ardosia" : "text-pg-ardosia"
+          alert ? "text-pg-status-down md:text-pg-texto" : "text-pg-texto"
         }`}
       >
         {shortValue != null ? (
@@ -169,7 +171,7 @@ function StatCard({
           value
         )}
       </div>
-      <div className="hidden md:block mt-1 text-pg-caption text-pg-neblina">
+      <div className="hidden md:block mt-1 text-pg-caption text-pg-texto-2">
         {note}
       </div>
     </div>
@@ -179,16 +181,14 @@ function StatCard({
 function SectionTitle({ children, action }) {
   return (
     <div className="flex items-baseline justify-between gap-3 mb-3">
-      <h2 className="text-pg-h3 font-medium text-pg-ardosia my-0">
-        {children}
-      </h2>
+      <h2 className="text-pg-h3 font-medium text-pg-texto my-0">{children}</h2>
       {action}
     </div>
   );
 }
 
 const linkClass =
-  "text-pg-ui text-pg-ciano-fundo underline focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano";
+  "text-pg-ui text-pg-link underline focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano";
 
 function Performance({
   monitor,
@@ -210,7 +210,7 @@ function Performance({
       <div className="flex flex-col md:flex-row md:flex-wrap md:items-center md:justify-between gap-3 mb-3 md:mb-4">
         <h2
           id="desempenho"
-          className="text-pg-h3 font-medium text-pg-ardosia my-0"
+          className="text-pg-h3 font-medium text-pg-texto my-0"
         >
           Desempenho
         </h2>
@@ -222,7 +222,7 @@ function Performance({
       </div>
 
       {statsError && !stats && (
-        <p className="text-pg-ui text-pg-down mb-4" role="alert">
+        <p className="text-pg-ui text-pg-status-down mb-4" role="alert">
           {statsError}{" "}
           <button
             type="button"
@@ -281,9 +281,9 @@ function Performance({
         />
       </div>
 
-      <div className="p-4 sm:p-5 rounded-pg-card border border-pg-borda bg-pg-branco">
+      <div className="p-4 sm:p-5 rounded-pg-card border border-pg-linha bg-pg-superficie">
         <div className="flex flex-col md:flex-row md:flex-wrap md:items-center md:justify-between gap-1 md:gap-2 mb-4">
-          <h3 className="text-pg-ui font-medium text-pg-ardosia my-0">
+          <h3 className="text-pg-ui font-medium text-pg-texto my-0">
             {heartbeat ? "Pings recebidos" : "Tempo de resposta"}
           </h3>
           <ChartLegend
@@ -379,11 +379,16 @@ export function MonitorDetail() {
     setSelected(null);
   };
 
+  // pausar abre o modal do motivo; retomar é direto
   const handleToggle = async (m) => {
     setActionError(null);
+    if (m.enabled) {
+      openModal("pause")(m);
+      return;
+    }
     try {
-      await monitorsApi.update(m.id, { enabled: !m.enabled });
-      toast.success(m.enabled ? "Monitor pausado" : "Monitor retomado");
+      await monitorsApi.update(m.id, { enabled: true });
+      toast.success("Monitor retomado");
       await reload();
     } catch (e) {
       setActionError(e.message);
@@ -393,7 +398,7 @@ export function MonitorDetail() {
   const back = (
     <Link
       to="/"
-      className="hidden md:inline-flex items-center gap-1 mb-5 text-pg-ui text-pg-ciano-fundo no-underline hover:underline"
+      className="hidden md:inline-flex items-center gap-1 mb-5 text-pg-ui text-pg-link no-underline hover:underline"
     >
       <ChevronLeft size={16} aria-hidden="true" />
       Monitores
@@ -418,11 +423,11 @@ export function MonitorDetail() {
         <DetailTopBar />
         {back}
         {notFound ? (
-          <div className="text-center py-16 px-4 rounded-pg-card border border-dashed border-pg-borda">
-            <p className="font-medium text-pg-ardosia mb-1.5">
+          <div className="text-center py-16 px-4 rounded-pg-card border border-dashed border-pg-linha">
+            <p className="font-medium text-pg-texto mb-1.5">
               Monitor não encontrado
             </p>
-            <p className="text-pg-ui text-pg-neblina mb-5">
+            <p className="text-pg-ui text-pg-texto-2 mb-5">
               Ele pode ter sido excluído.
             </p>
             <Link to="/" className={linkClass}>
@@ -430,7 +435,7 @@ export function MonitorDetail() {
             </Link>
           </div>
         ) : (
-          <p className="text-pg-ui text-pg-down" role="alert">
+          <p className="text-pg-ui text-pg-status-down" role="alert">
             {error}{" "}
             <Button variant="ghost" onClick={() => reload()} className="ml-2">
               Tentar de novo
@@ -450,9 +455,11 @@ export function MonitorDetail() {
   const lastLabel = heartbeat ? "último ping" : "último check";
   const last = paused
     ? "pausado"
-    : lastAt
-      ? `${lastLabel} ${timeAgo(lastAt, now)}`
-      : `${lastLabel}: ainda não houve`;
+    : status === "MAINTENANCE"
+      ? "em manutenção"
+      : lastAt
+        ? `${lastLabel} ${timeAgo(lastAt, now)}`
+        : `${lastLabel}: ainda não houve`;
   // o incidente aberto é sempre o mais novo; fora dos 3 carregados, o cartão não aparece
   const openIncident = status === "DOWN" ? incidents.find((i) => i.open) : null;
   const menu = (
@@ -461,6 +468,7 @@ export function MonitorDetail() {
       onEdit={openModal("edit")}
       onToggle={handleToggle}
       onDelete={openModal("delete")}
+      onSchedule={openModal("maintenance")}
     />
   );
 
@@ -472,12 +480,12 @@ export function MonitorDetail() {
       <header className="flex items-start justify-between gap-4 mb-4 md:mb-8">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-pg-h1 font-medium text-pg-ardosia my-0 break-words min-w-0">
+            <h1 className="text-pg-h1 font-medium text-pg-texto my-0 break-words min-w-0">
               {monitor.name}
             </h1>
             <Badge state={status} />
           </div>
-          <div className="flex flex-col items-start md:flex-row md:flex-wrap md:items-center gap-x-4 gap-y-1 mt-2 text-pg-ui text-pg-neblina">
+          <div className="flex flex-col items-start md:flex-row md:flex-wrap md:items-center gap-x-4 gap-y-1 mt-2 text-pg-ui text-pg-texto-2">
             <span className="inline-flex items-center gap-1.5 min-w-0 max-w-full">
               <Icon size={14} aria-hidden="true" className="flex-shrink-0" />
               <span className="sr-only">{monitor.type.toUpperCase()}:</span>
@@ -486,7 +494,7 @@ export function MonitorDetail() {
                   href={monitor.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="relative font-pg-mono text-pg-caption text-pg-ciano-fundo underline truncate"
+                  className="relative font-pg-mono text-pg-caption text-pg-link underline truncate"
                   title={target}
                 >
                   {target}
@@ -513,7 +521,7 @@ export function MonitorDetail() {
           <Button
             variant="ghost"
             onClick={() => handleToggle(monitor)}
-            className="hidden md:inline-flex gap-1.5 h-10 bg-pg-branco"
+            className="hidden md:inline-flex gap-1.5 h-10 bg-pg-superficie"
           >
             {monitor.enabled ? (
               <Pause size={16} aria-hidden="true" />
@@ -525,16 +533,31 @@ export function MonitorDetail() {
           <Button
             variant="ghost"
             onClick={() => openModal("edit")(monitor)}
-            className="hidden md:inline-flex gap-1.5 h-10 bg-pg-branco"
+            className="hidden md:inline-flex gap-1.5 h-10 bg-pg-superficie"
           >
             <Pencil size={16} aria-hidden="true" />
             Editar
           </Button>
-          <div className="hidden md:block rounded-pg-control border border-pg-borda bg-pg-branco">
+          <div className="hidden md:block rounded-pg-control border border-pg-linha bg-pg-superficie">
             {menu}
           </div>
         </div>
       </header>
+
+      {paused && monitor.pause_reason && (
+        <p className="mb-4 md:-mt-4 md:mb-6 p-3 rounded-pg-control border border-pg-linha bg-pg-superficie text-pg-ui text-pg-texto break-words">
+          <span className="font-medium">Motivo da pausa:</span>{" "}
+          {monitor.pause_reason}
+        </p>
+      )}
+
+      {monitor.maintenance && (
+        <MaintenanceCard
+          maintenance={monitor.maintenance}
+          monitorName={monitor.name}
+          onChanged={refresh}
+        />
+      )}
 
       {openIncident && <DownAlert incident={openIncident} now={now} />}
 
@@ -542,7 +565,7 @@ export function MonitorDetail() {
         <Button
           variant="ghost"
           onClick={() => handleToggle(monitor)}
-          className="gap-1.5 min-h-[44px] bg-pg-branco"
+          className="gap-1.5 min-h-[44px] bg-pg-superficie"
         >
           {monitor.enabled ? (
             <Pause size={16} aria-hidden="true" />
@@ -554,7 +577,7 @@ export function MonitorDetail() {
         <Button
           variant="ghost"
           onClick={() => openModal("edit")(monitor)}
-          className="gap-1.5 min-h-[44px] bg-pg-branco"
+          className="gap-1.5 min-h-[44px] bg-pg-superficie"
         >
           <Pencil size={16} aria-hidden="true" />
           Editar
@@ -562,7 +585,7 @@ export function MonitorDetail() {
       </div>
 
       {(actionError || (error && monitor)) && (
-        <p className="text-pg-ui text-pg-down mb-4" role="alert">
+        <p className="text-pg-ui text-pg-status-down mb-4" role="alert">
           {actionError ?? error}
         </p>
       )}
@@ -651,6 +674,14 @@ export function MonitorDetail() {
           </section>
         </div>
       </div>
+
+      {modal === "maintenance" && selected && (
+        <MaintenanceModal
+          initialIds={[selected.id]}
+          onClose={closeModal}
+          onCreated={refresh}
+        />
+      )}
 
       <MonitorModals
         modal={modal}

@@ -3,6 +3,7 @@ import { CircleX, Eye, EyeOff } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import marca from "../assets/brand/pingou-marca-horizontal.svg";
 import marcaNegativa from "../assets/brand/pingou-marca-horizontal-negativa.svg";
+import { ThemedImage } from "../components/ui/ThemedImage";
 import { version } from "../../package.json";
 
 const GITHUB_URL = "https://github.com/Bradrickcruz/pingou";
@@ -88,8 +89,8 @@ export function Login({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen bg-pg-nuvem md:grid md:grid-cols-[45%_1fr]">
-      <aside className="relative hidden flex-col justify-between overflow-hidden bg-pg-ardosia p-14 text-pg-branco md:flex">
+    <div className="min-h-screen bg-pg-fundo md:grid md:grid-cols-[45%_1fr]">
+      <aside className="relative hidden flex-col justify-between overflow-hidden bg-pg-login-lateral p-14 text-pg-sobre-escuro md:flex">
         <img
           src={marcaNegativa}
           alt="pingou"
@@ -103,26 +104,29 @@ export function Login({ onLogin }) {
             Monitor de uptime leve e self-hosted.
           </p>
         </div>
-        <Footer className="self-end" linkClassName="text-pg-branco" />
+        <Footer className="self-end" linkClassName="text-pg-sobre-escuro" />
         <Ondas />
       </aside>
 
       <main className="flex min-h-screen flex-col px-6 pb-6 pt-8 md:items-center md:justify-center md:p-0">
-        <img
-          src={marca}
-          alt="pingou"
-          className="h-9 w-auto self-start md:hidden"
-        />
+        <div className="self-start md:hidden">
+          <ThemedImage
+            light={marca}
+            dark={marcaNegativa}
+            alt="pingou"
+            className="h-9 w-auto"
+          />
+        </div>
 
         <div className="mt-12 w-full max-w-[360px] flex-1 md:mt-0 md:flex-none">
-          <h1 className="font-pg-heading text-pg-h2 font-medium text-pg-ardosia">
+          <h1 className="font-pg-heading text-pg-h2 font-medium text-pg-texto">
             Entrar no painel
           </h1>
 
           <form onSubmit={handleSubmit} aria-busy={loading} className="mt-6">
             <label
               htmlFor="api-key"
-              className="mb-1.5 block text-pg-ui font-medium text-pg-ardosia"
+              className="mb-1.5 block text-pg-ui font-medium text-pg-texto"
             >
               API Key
             </label>
@@ -142,8 +146,8 @@ export function Login({ onLogin }) {
                 readOnly={loading}
                 aria-invalid={error ? "true" : undefined}
                 aria-describedby={error ? "api-key-error" : undefined}
-                className={`w-full rounded-pg-control py-2.5 pl-3 pr-11 text-pg-ui text-pg-ardosia ${
-                  error ? "border-pg-down" : "border-pg-borda"
+                className={`w-full rounded-pg-control py-2.5 pl-3 pr-11 text-pg-ui text-pg-texto ${
+                  error ? "border-pg-status-down" : "border-pg-linha"
                 }`}
               />
               <button
@@ -151,7 +155,7 @@ export function Login({ onLogin }) {
                 onClick={() => setVisible((v) => !v)}
                 aria-label={visible ? "Ocultar API Key" : "Mostrar API Key"}
                 aria-pressed={visible}
-                className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-pg-control text-pg-neblina hover:bg-pg-nuvem"
+                className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-pg-control text-pg-texto-2 hover:bg-pg-hover"
               >
                 {visible ? (
                   <EyeOff size={18} aria-hidden="true" />
@@ -165,7 +169,7 @@ export function Login({ onLogin }) {
               <p
                 id="api-key-error"
                 role="alert"
-                className="mt-2 flex items-start gap-2 text-pg-ui text-pg-down"
+                className="mt-2 flex items-start gap-2 text-pg-ui text-pg-status-down"
               >
                 <CircleX
                   size={16}
@@ -185,14 +189,14 @@ export function Login({ onLogin }) {
             </Button>
           </form>
 
-          <p className="mt-6 text-pg-caption text-pg-neblina">
+          <p className="mt-6 text-pg-caption text-pg-texto-2">
             A chave fica salva neste navegador até você sair.
           </p>
         </div>
 
         <Footer
-          className="mt-8 text-pg-neblina md:hidden"
-          linkClassName="text-pg-ciano-fundo"
+          className="mt-8 text-pg-texto-2 md:hidden"
+          linkClassName="text-pg-link"
         />
       </main>
     </div>

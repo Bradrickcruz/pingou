@@ -4,19 +4,28 @@ import { Badge } from "../ui/Badge";
 import { HistoryBar } from "./HistoryBar";
 import { RowMenu } from "./RowMenu";
 import { formatUptime, timeAgo } from "../../lib/format";
-import { statusOf, targetOf } from "../../lib/monitors";
+import { maintenanceUntil, statusOf, targetOf } from "../../lib/monitors";
 
 const typeIcon = { http: Globe, tcp: Server, heartbeat: Activity };
 
 const cell = "px-5 py-3 align-middle";
 
 // Linha da tabela do painel. Substitui o antigo MonitorCard.
-export function MonitorRow({ monitor, now, onEdit, onToggle, onDelete }) {
+export function MonitorRow({
+  monitor,
+  now,
+  onEdit,
+  onToggle,
+  onDelete,
+  onSchedule,
+}) {
   const status = statusOf(monitor);
   const paused = status === "PAUSED";
+  const maintenance = status === "MAINTENANCE";
+  const dimmed = paused || maintenance;
   const Icon = typeIcon[monitor.type] ?? Globe;
   const isHeartbeat = monitor.type === "heartbeat";
-  const muted = paused ? "text-pg-neblina" : "text-pg-ardosia";
+  const muted = dimmed ? "text-pg-texto-2" : "text-pg-texto";
 
   const uptime = formatUptime(monitor.uptime_24h);
   // latência só faz sentido com o alvo respondendo; heartbeat não mede resposta
@@ -24,12 +33,39 @@ export function MonitorRow({ monitor, now, onEdit, onToggle, onDelete }) {
     !isHeartbeat && status === "UP" && monitor.last_latency_ms != null
       ? `${monitor.last_latency_ms} ms`
       : null;
-  const lastCheck = paused ? "pausado" : timeAgo(monitor.last_checked_at, now);
+  const lastCheck = paused
+    ? "pausado"
+    : maintenance
+      ? "em manutenção"
+      : timeAgo(monitor.last_checked_at, now);
 
   return (
-    <tr className="border-t border-pg-borda">
+    <tr className="border-t border-pg-linha">
       <td className={cell}>
         <Badge state={status} />
+        {paused && monitor.pause_reason && (
+          <div
+            className="mt-1 max-w-[160px] truncate text-pg-caption text-pg-texto-2"
+            title={monitor.pause_reason}
+          >
+            <span className="sr-only">Motivo: </span>
+            {monitor.pause_reason}
+          </div>
+        )}
+        {maintenance && (
+          <div
+            className="mt-1 mx-auto max-w-[180px] text-center text-pg-caption text-pg-texto-2"
+            title={monitor.maintenance.reason ?? undefined}
+          >
+            {maintenanceUntil(monitor, now)}
+            {monitor.maintenance.reason && (
+              <span className="block truncate">
+                <span className="sr-only">Motivo: </span>
+                {monitor.maintenance.reason}
+              </span>
+            )}
+          </div>
+        )}
       </td>
       <td className={`${cell} max-w-0 w-full`}>
         <Link
@@ -38,7 +74,7 @@ export function MonitorRow({ monitor, now, onEdit, onToggle, onDelete }) {
         >
           {monitor.name}
         </Link>
-        <div className="flex items-center gap-1.5 mt-0.5 text-pg-neblina min-w-0">
+        <div className="flex items-center gap-1.5 mt-0.5 text-pg-texto-2 min-w-0">
           <Icon size={14} aria-hidden="true" className="flex-shrink-0" />
           <span className="sr-only">{monitor.type.toUpperCase()}:</span>
           <span
@@ -50,11 +86,11 @@ export function MonitorRow({ monitor, now, onEdit, onToggle, onDelete }) {
         </div>
       </td>
       <td className={`${cell} hidden lg:table-cell`}>
-        <HistoryBar history={monitor.history} dimmed={paused} />
+        <HistoryBar history={monitor.history} dimmed={dimmed} />
       </td>
       <td
         className={`${cell} hidden md:table-cell text-right tabular-nums text-pg-ui ${
-          status === "DOWN" ? "text-pg-down" : muted
+          status === "DOWN" ? "text-pg-status-down" : muted
         }`}
       >
         {uptime ?? <span aria-label="sem dados">—</span>}
@@ -65,7 +101,7 @@ export function MonitorRow({ monitor, now, onEdit, onToggle, onDelete }) {
         {latency ?? <span aria-label="sem dados">—</span>}
       </td>
       <td
-        className={`${cell} hidden sm:table-cell text-pg-caption text-pg-neblina whitespace-nowrap`}
+        className={`${cell} hidden sm:table-cell text-pg-caption text-pg-texto-2 whitespace-nowrap`}
       >
         {lastCheck ?? "—"}
       </td>
@@ -75,6 +111,7 @@ export function MonitorRow({ monitor, now, onEdit, onToggle, onDelete }) {
           onEdit={onEdit}
           onToggle={onToggle}
           onDelete={onDelete}
+          onSchedule={onSchedule}
         />
       </td>
     </tr>

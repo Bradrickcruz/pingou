@@ -1,7 +1,14 @@
 // node --test src/lib
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cardFooter, heartbeatExpectation, matchesQuery } from "./monitors.js";
+import {
+  bySeverity,
+  cardFooter,
+  countByStatus,
+  heartbeatExpectation,
+  matchesQuery,
+  statusOf,
+} from "./monitors.js";
 
 const now = Date.parse("2026-10-30T12:00:00Z");
 const base = {
@@ -72,6 +79,16 @@ test("cardFooter PAUSED", () => {
   );
 });
 
+test("cardFooter PAUSED com motivo", () => {
+  assert.equal(
+    cardFooter(
+      { ...base, enabled: false, pause_reason: "troca de disco" },
+      now,
+    ),
+    "Pausado · troca de disco",
+  );
+});
+
 const http = {
   type: "http",
   name: "Serviço de Pagamentos",
@@ -112,4 +129,48 @@ test("matchesQuery em heartbeat usa só o nome", () => {
 test("matchesQuery com busca vazia casa tudo", () => {
   assert.equal(matchesQuery(http, ""), true);
   assert.equal(matchesQuery(http, "   "), true);
+});
+
+const inMaintenance = (ends = "2026-10-30T14:00:00Z", extra = {}) => ({
+  ...base,
+  current_state: "DOWN",
+  maintenance: { active: true, ends_at: ends, reason: null, ...extra },
+});
+
+test("statusOf: pausado > manutenção > estado", () => {
+  assert.equal(statusOf(inMaintenance()), "MAINTENANCE");
+  assert.equal(statusOf({ ...inMaintenance(), enabled: false }), "PAUSED");
+  const scheduled = {
+    ...base,
+    current_state: "UP",
+    maintenance: { active: false, ends_at: "2026-10-31T00:00:00Z" },
+  };
+  assert.equal(statusOf(scheduled), "UP");
+});
+
+test("manutenção não conta como fora do ar e fica antes de pausado", () => {
+  const list = [
+    { ...base, name: "p", enabled: false, current_state: "UP" },
+    { ...inMaintenance(), name: "m" },
+    { ...base, name: "d", current_state: "DOWN" },
+  ];
+  assert.deepEqual(
+    [...list].sort(bySeverity).map((m) => m.name),
+    ["d", "m", "p"],
+  );
+  const counts = countByStatus(list);
+  assert.equal(counts.DOWN, 1);
+  assert.equal(counts.MAINTENANCE, 1);
+});
+
+test("cardFooter MAINTENANCE hoje, outro dia e com motivo", () => {
+  assert.equal(cardFooter(inMaintenance(), now), "Em manutenção até 14:00");
+  assert.equal(
+    cardFooter(inMaintenance("2026-11-02T09:30:00Z"), now),
+    "Em manutenção até 2 nov, 09:30",
+  );
+  assert.equal(
+    cardFooter(inMaintenance(undefined, { reason: "deploy" }), now),
+    "Em manutenção até 14:00 · deploy",
+  );
 });

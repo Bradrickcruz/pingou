@@ -15,7 +15,7 @@ O projeto tem quatro objetivos:
 
 ## Baixo uso de memória
 
-Uma das características mais importantes do Pingou é consumir pouca RAM. Medido com **100 monitores** (o limite do projeto) checando a cada 10 s, sendo 50 deles `https://google.com`, mais o dashboard e as estatísticas sendo consultados a cada ciclo, durante **1 hora**:
+Uma das características mais importantes do Pingou é consumir pouca RAM. Medido com **100 monitores** (o limite do projeto) checando a cada 10 s, sendo 50 deles `https://google.com`, mais o dashboard e as estatísticas sendo consultados a cada ciclo, durante **1 hora**, com pouco histórico no banco:
 
 | Métrica                  | Resultado                 |
 | ------------------------ | ------------------------- |
@@ -31,6 +31,17 @@ HTTPS_N=50 scripts/memtest.sh 3600
 ```
 
 Detalhes do teste em [`scripts/README.md`](scripts/README.md). O resultado vale para o hardware e a rede em que foi medido; seu consumo pode variar um pouco.
+
+### Com banco grande
+
+A RAM cresce com o tamanho do banco. No **perfil limite** com 30 dias de dados (100 monitores a cada 10 s, ~25 milhões de checks, banco de ~6 GB):
+
+| Momento                             | RAM (RSS)  |
+| ----------------------------------- | ---------- |
+| Primeira subida depois da migration | 47 a 51 MB |
+| Picos já vistos                     | 50 a 60 MB |
+
+Nesse cenário o Pingou fica perto da meta de 50 MB e, em picos, passa dela. A meta vale para o teste de 1 hora acima.
 
 ---
 
@@ -119,7 +130,9 @@ Um novo tipo de check só entra no Pingou se passar nas quatro perguntas:
 - Dashboard web embutido no binário
 - Página de detalhe por monitor (`/monitors/:id`): uptime, resposta média, incidentes e tempo fora do ar em 24h / 7 / 14 / 30 dias, gráfico de tempo de resposta, últimos checks e configuração
 - Login com API Key
+- Tema claro, escuro ou do sistema (padrão), em Configurações > Aparência. A escolha vale só para o navegador onde foi feita
 - Notificações de queda e recuperação por webhook, por e-mail (SMTP) e pelo [ntfy](https://ntfy.sh), ligados ao mesmo tempo se quiser
+- [Manutenção](#manutenção): pausa com motivo e janela agendada (início e fim) para um ou vários monitores. Na janela, nada é conferido, nenhum incidente abre e ninguém é avisado de queda. Opcionalmente, o Pingou avisa quando a janela [começa e termina](#aviso-de-início-e-fim)
 - [Aviso de expiração do certificado SSL](#aviso-de-expiração-do-certificado-ssl) em monitores HTTP com `https://`: um aviso 30 dias e outro 7 dias antes, por todos os canais
 - Retenção configurável: checks expiram após `retention_days`; incidentes são mantidos. A limpeza roda na subida e a cada 1 h
 - Fuso horário configurável (padrão UTC) para o painel, o e-mail e o ntfy
@@ -190,8 +203,9 @@ O processamento da state machine é **atômico**, usando o padrão Unit of Work.
 │  3. monitorRepo.UpdateWithTx()      → atualiza monitor      │
 │  4. incidentRepo.CreateWithTx()     → abre incidente        │
 │  5. incidentRepo.Close()            → fecha incidente       │
-│  6. uow.Commit()                    → confirma transação    │
-│  7. notifier.NotifyDown/Recovery()  → webhook (APÓS commit) │
+│  6. outboxRepo.EnqueueWithTx()      → grava os avisos       │
+│  7. uow.Commit()                    → confirma transação    │
+│  8. worker.Wake()                   → acorda o envio (APÓS) │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -199,7 +213,7 @@ Garantias:
 
 - **Atomicidade**: check, mudança de estado e incidente são gravados juntos.
 - **Rollback automático**: em caso de erro, nada é gravado.
-- **Webhook seguro**: as notificações só saem depois do commit.
+- **Aviso não se perde**: os avisos entram numa fila (`notification_outbox`) na mesma transação. Se a transação desfaz, não existe aviso; se confirma, o aviso está garantido na fila. O envio é de um worker, depois do commit. Veja [Entrega das notificações](#entrega-das-notificações).
 
 | Componente         | Arquivo                                   | Descrição                  |
 | ------------------ | ----------------------------------------- | -------------------------- |
@@ -355,9 +369,9 @@ docker buildx build --platform linux/amd64,linux/arm64 \
   -t bryanhcruz/pingou:1.3.1 -t bryanhcruz/pingou:latest --push .
 ```
 
-Para buildar localmente:
-
 O Dockerfile inclui um `HEALTHCHECK` que consulta o endpoint público `/healthz` a cada 30 segundos.
+
+Para buildar localmente:
 
 ```bash
 make docker-build   # build da imagem
@@ -509,31 +523,37 @@ Como `/ping/{token}` é pública, ela limita **60 tokens inválidos por minuto p
 
 Sobre `/ping/{token}`:
 
-- Responde `200` quando o token é válido (mesmo com o monitor pausado).
+- Responde `200` quando o token é válido (mesmo com o monitor pausado ou em manutenção; nesses casos nada é registrado).
 - Responde `404` quando o token não existe, sem revelar detalhes.
 - O corpo da requisição é ignorado.
 
 ### Protegidos
 
-| Método   | Rota                          | Descrição                                                                             |
-| -------- | ----------------------------- | ------------------------------------------------------------------------------------- |
-| `GET`    | `/api/monitors`               | Lista os monitores                                                                    |
-| `POST`   | `/api/monitors`               | Cria um monitor                                                                       |
-| `GET`    | `/api/monitors/:id`           | Busca um monitor                                                                      |
-| `PATCH`  | `/api/monitors/:id`           | Atualiza um monitor                                                                   |
-| `DELETE` | `/api/monitors/:id`           | Remove um monitor                                                                     |
-| `POST`   | `/api/monitors/:id/token`     | Gera um novo token de ping (Heartbeat)                                                |
-| `GET`    | `/api/monitors/:id/checks`    | Histórico de checks, paginado (`limit`, `offset`)                                     |
-| `GET`    | `/api/monitors/:id/incidents` | Incidentes do monitor (mesmos filtros de `/api/incidents`)                            |
-| `GET`    | `/api/monitors/:id/stats`     | Estatísticas numa janela (`range=24h\|7d\|14d\|30d`)                                  |
-| `GET`    | `/api/incidents`              | Lista incidentes (`status`, `monitor_id`, `limit`, `offset`)                          |
-| `GET`    | `/api/settings`               | Busca as configurações globais                                                        |
-| `PATCH`  | `/api/settings`               | Atualiza as configurações globais (`webhook_url` só http/https; `timezone` nome IANA) |
-| `POST`   | `/api/settings/webhook/test`  | Envia um evento `test` ao webhook (5 por minuto por IP)                               |
-| `POST`   | `/api/settings/email/test`    | Envia um e-mail de teste (5 por minuto por IP)                                        |
-| `POST`   | `/api/settings/ntfy/test`     | Publica uma notificação de teste no ntfy (5 por minuto por IP)                        |
-| `GET`    | `/api/info`                   | Versão, commit, data do build e tamanho do banco                                      |
-| `GET`    | `/api/export`                 | Baixa um dump do SQLite (`pingou-AAAA-MM-DD.db`, `VACUUM INTO`)                       |
+| Método   | Rota                           | Descrição                                                                             |
+| -------- | ------------------------------ | ------------------------------------------------------------------------------------- |
+| `GET`    | `/api/monitors`                | Lista os monitores                                                                    |
+| `POST`   | `/api/monitors`                | Cria um monitor                                                                       |
+| `GET`    | `/api/monitors/:id`            | Busca um monitor                                                                      |
+| `PATCH`  | `/api/monitors/:id`            | Atualiza um monitor                                                                   |
+| `DELETE` | `/api/monitors/:id`            | Remove um monitor                                                                     |
+| `POST`   | `/api/monitors/:id/token`      | Gera um novo token de ping (Heartbeat)                                                |
+| `GET`    | `/api/monitors/:id/checks`     | Histórico de checks, paginado (`limit`, `offset`)                                     |
+| `GET`    | `/api/monitors/:id/incidents`  | Incidentes do monitor (mesmos filtros de `/api/incidents`)                            |
+| `GET`    | `/api/monitors/:id/stats`      | Estatísticas numa janela (`range=24h\|7d\|14d\|30d`)                                  |
+| `GET`    | `/api/incidents`               | Lista incidentes (`status`, `monitor_id`, `limit`, `offset`)                          |
+| `GET`    | `/api/maintenance-windows`     | Lista as janelas agendadas e em curso, com o nome do monitor                          |
+| `POST`   | `/api/maintenance-windows`     | Agenda uma janela de manutenção para um ou mais monitores (tudo ou nada)              |
+| `PATCH`  | `/api/maintenance-windows/:id` | Edita uma janela (em curso: só o motivo)                                              |
+| `DELETE` | `/api/maintenance-windows/:id` | Cancela uma janela agendada ou encerra a que está em curso                            |
+| `GET`    | `/api/settings`                | Busca as configurações globais                                                        |
+| `PATCH`  | `/api/settings`                | Atualiza as configurações globais (`webhook_url` só http/https; `timezone` nome IANA) |
+| `POST`   | `/api/settings/webhook/test`   | Envia um evento `test` ao webhook (5 por minuto por IP)                               |
+| `POST`   | `/api/settings/email/test`     | Envia um e-mail de teste (5 por minuto por IP)                                        |
+| `POST`   | `/api/settings/ntfy/test`      | Publica uma notificação de teste no ntfy (5 por minuto por IP)                        |
+| `GET`    | `/api/info`                    | Versão, commit, data do build e tamanho do banco                                      |
+| `GET`    | `/api/export`                  | Baixa um dump do SQLite (`pingou-AAAA-MM-DD.db`, `VACUUM INTO`)                       |
+
+> `GET /api/export` entrega o banco inteiro, com os mesmos dados sensíveis descritos no [`export-db`](#export-db). Trate o arquivo como um segredo.
 
 ### Info
 
@@ -679,6 +699,132 @@ Limites de `interval_seconds`: 10 a 86400 para `http` e `tcp`; 60 a 604800 (1 se
 
 ---
 
+## Manutenção
+
+Duas formas de tirar um monitor do ar de propósito, sem alarme falso.
+
+### 1. Pausar com motivo
+
+Ao pausar, o painel pede um **motivo opcional** (até 200 caracteres). Ele aparece na lista, no card e no detalhe. Na API: `PATCH /api/monitors/:id` com `{"enabled": false, "pause_reason": "troca do servidor"}`.
+
+- Um incidente aberto fecha **sem aviso**, com o selo "Fechado manualmente" e o motivo.
+- Ao retomar, o motivo é apagado e só contam as falhas **depois da retomada**. Antes, falhas de antes da pausa somavam com as de depois.
+
+### 2. Janela agendada
+
+Uma janela tem **início**, **fim** e **motivo opcional**. Pode ser criada para vários monitores de uma vez.
+
+Enquanto a janela está em curso:
+
+- Nenhum check roda (HTTP e TCP nem fazem a requisição).
+- Nenhum incidente abre e ninguém é avisado de queda, recuperação ou certificado (webhook, e-mail, ntfy). O aviso de que a própria janela começou e terminou é à parte e fica desligado por padrão: veja [Aviso de início e fim](#aviso-de-início-e-fim).
+- O ping de heartbeat responde `200`, mas não é registrado.
+- Um incidente aberto no início fecha **sem aviso**, com o selo "Fechado por manutenção" e o motivo.
+
+Quando a janela termina:
+
+- O monitor volta como `UNKNOWN` e o primeiro check roda na hora.
+- A contagem de falhas recomeça (falhas de antes da janela não contam).
+- O prazo do heartbeat recomeça a contar do fim da janela.
+- Um monitor **pausado** durante a janela continua pausado: a pausa manual vence.
+
+Regras:
+
+| Regra               | Valor                                                                   |
+| ------------------- | ----------------------------------------------------------------------- |
+| Duração máxima      | 7 dias                                                                  |
+| Início              | no futuro                                                               |
+| Janelas por monitor | uma viva (agendada ou em curso). Para mudar, cancele e crie outra       |
+| Recorrência         | não tem (janela única)                                                  |
+| Fuso no painel      | as datas digitadas valem no fuso das Configurações, não no do navegador |
+
+"Em manutenção" vem do relógio do servidor, não de uma flag: reiniciar o Pingou no meio da janela mantém o monitor em manutenção, e uma janela que terminou com o Pingou desligado é encerrada na subida. Fechar o incidente no início e reativar o monitor no fim rodam num ciclo de 10 s, então podem atrasar até 10 s.
+
+#### Aviso de início e fim
+
+Por padrão, a janela começa e termina em silêncio: quem recebe os alertas só percebe pela ausência deles. Em **Configurações → Aviso de manutenção** (ou `PATCH /api/settings` com `{"maintenance_notices": true}`), o Pingou manda um aviso nos canais ligados (webhook, e-mail e ntfy) quando uma **janela agendada** começa e quando termina.
+
+| Regra                                       | Comportamento                                                                                                                                               |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Padrão                                      | Desligado. Quem atualiza não recebe evento novo sem pedir                                                                                                   |
+| Valor                                       | Um interruptor global, sem escolha por janela. O webhook sempre envia quando ele está ligado                                                                |
+| Pausa manual                                | Não avisa                                                                                                                                                   |
+| Vários monitores                            | Um aviso só por grupo, listando os monitores. Grupo = janelas com o **mesmo início, fim e motivo** (o banco tem uma janela por monitor e nenhum id de lote) |
+| Janela cancelada antes                      | Não avisa. Janela adiada avisa no horário novo                                                                                                              |
+| Janela cancelada em curso                   | Avisa o fim (o início já foi avisado). Cancelar as janelas de um lote uma a uma gera um aviso de fim por janela                                             |
+| Motivo editado em curso                     | A janela editada deixa o grupo: o aviso de fim dela sai separado                                                                                            |
+| Reinício no meio da janela                  | O início não repete. O aviso é gravado na mesma transação que marca `started_at`, então "uma vez só" vale mesmo depois de `kill -9`                         |
+| Janela começou e terminou com o Pingou fora | Nenhum aviso (o início nunca saiu, e um "terminou" sozinho só confunde)                                                                                     |
+| Início notado com atraso                    | O aviso sai, porque a manutenção ainda vale                                                                                                                 |
+| Ligar no meio da janela                     | Sai o aviso de fim, sem o de início                                                                                                                         |
+| Fim com o monitor ainda caído               | O aviso diz só que a manutenção terminou. A queda sai à parte, pelo aviso normal de `monitor_down`                                                          |
+
+O **motivo** da janela vai junto no aviso, para terceiros (Slack, e-mail). O modal de agendar avisa disso quando o interruptor está ligado. O Pingou nunca preenche o motivo sozinho.
+
+E-mail e ntfy listam até **20 monitores** e fecham com "e mais N". O webhook leva a lista inteira.
+
+#### Criando uma janela
+
+```bash
+curl -X POST http://localhost:8956/api/maintenance-windows \
+  -H "X-API-Key: dev-api-key" -H "Content-Type: application/json" \
+  -d '{
+    "monitor_ids": ["<id-1>", "<id-2>"],
+    "starts_at": "2026-11-10T05:00:00Z",
+    "ends_at": "2026-11-10T07:00:00Z",
+    "reason": "atualização do banco"
+  }'
+```
+
+| Status | Quando                                                                                                                       |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `201`  | `{"windows": [...]}`, uma janela por monitor                                                                                 |
+| `400`  | `VALIDATION_ERROR`: início no passado, fim antes do início, mais de 7 dias, motivo longo, lista vazia, data fora do RFC 3339 |
+| `404`  | algum monitor não existe                                                                                                     |
+| `409`  | `MAINTENANCE_CONFLICT`: algum monitor já tem janela viva; `monitor_ids` diz quais. Nada é criado                             |
+
+`DELETE /api/maintenance-windows/:id` responde `204`. Antes do início, apaga a janela. Durante, encerra na hora e o monitor volta. Janela já encerrada: `404`.
+
+#### Página de manutenções
+
+O menu **Manutenções** (`/maintenance`) lista as janelas agendadas e em curso de todos os monitores, pelo início. Cada uma tem:
+
+- **Editar**: abre o mesmo modal de agendar, com o monitor fixo.
+- **Cancelar** (agendada): apaga a janela.
+- **Desligar** (em curso): encerra agora e o monitor volta a ser checado.
+
+O card de manutenção no detalhe do monitor tem os mesmos botões.
+
+#### Listando e editando
+
+`GET /api/maintenance-windows` devolve `{"windows": [{id, monitor_id, monitor_name, starts_at, ends_at, reason, state}]}`. `state` é `"scheduled"` ou `"active"`, calculado com o relógio do servidor. Janelas encerradas não aparecem (não há histórico).
+
+`PATCH /api/maintenance-windows/:id` recebe `{starts_at?, ends_at?, reason?}`. Campo ausente não muda; `"reason": null` ou `""` apaga o motivo.
+
+| Janela   | O que pode mudar     |
+| -------- | -------------------- |
+| Agendada | início, fim e motivo |
+| Em curso | **só o motivo**      |
+
+Para parar uma janela em curso antes da hora, use o `DELETE`. Para trocar o monitor, cancele e agende outra.
+
+| Status | Quando                                                                                                                       |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `200`  | a janela atualizada                                                                                                          |
+| `400`  | `VALIDATION_ERROR`: corpo vazio, início no passado, fim antes do início, mais de 7 dias, motivo longo, `monitor_id` no corpo |
+| `404`  | a janela não existe ou já terminou                                                                                           |
+| `409`  | `MAINTENANCE_LOCKED`: a janela já começou e o corpo traz `starts_at` ou `ends_at`. Nada muda                                 |
+
+Editar o motivo de uma janela em curso não muda o motivo já gravado nos incidentes que ela fechou: o incidente guarda o texto do momento em que fechou.
+
+#### Campos nas respostas
+
+- `GET /api/monitors` e `GET /api/monitors/:id` trazem `maintenance`: `{id, monitor_id, starts_at, ends_at, reason, active}` ou `null`. `active` é calculado no servidor.
+- Monitor: `pause_reason`, `paused_at` e `resumed_at`.
+- Incidente: `close_reason` (`"pause"`, `"maintenance"` ou `null`) e `close_note` (o motivo no momento do fechamento). `closed_manually` continua, igual a `close_reason != null`.
+
+---
+
 ## Aviso de expiração do certificado SSL
 
 Quando o certificado SSL vence, o site "cai" para todos os visitantes. O Pingou pode avisar antes.
@@ -721,13 +867,29 @@ A data aparece na página de detalhe do monitor em todo monitor HTTP com `https:
 
 ## Webhook
 
-Quando `webhook_url` está configurado em settings, o Pingou envia um `POST` JSON a cada transição para `DOWN` ou de volta para `UP`, e no [aviso de expiração do certificado SSL](#aviso-de-expiração-do-certificado-ssl).
+Quando `webhook_url` está configurado em settings, o Pingou envia um `POST` JSON a cada transição para `DOWN` ou de volta para `UP`, e no [aviso de expiração do certificado SSL](#aviso-de-expiração-do-certificado-ssl). Com o [aviso de manutenção](#aviso-de-início-e-fim) ligado, também envia um `POST` quando uma janela agendada começa e termina.
+
+> **Mudança que quebra compatibilidade (nomes dos eventos).** `down` virou `monitor_down` e `up` virou `monitor_up`. Os nomes antigos **não** são mais enviados, sem período de transição. A quebra é silenciosa: um fluxo "se `down`, alerta; senão, voltou" passa a tratar **toda queda como "voltou"**. Antes de atualizar, ajuste o fluxo para comparar com `monitor_down` e `monitor_up` e **ignorar qualquer outro valor**. Os demais campos do JSON não mudaram.
+
+### Nomes dos eventos
+
+Padrão: `<objeto>_<acontecimento>`, minúsculas, separado por `_`.
+
+| `event`               | Quando                                                            |
+| --------------------- | ----------------------------------------------------------------- |
+| `monitor_down`        | O monitor passou para DOWN                                        |
+| `monitor_up`          | O monitor voltou para UP                                          |
+| `cert_expiring`       | O certificado SSL está perto de vencer (ou já venceu)             |
+| `maintenance_started` | Uma janela agendada começou (só com o aviso de manutenção ligado) |
+| `maintenance_ended`   | Uma janela agendada terminou (idem)                               |
+| `test`                | Botão "Testar webhook" das Configurações                          |
 
 Evento de queda:
 
 ```json
 {
-  "event": "down",
+  "id": "018f2f7a-...",
+  "event": "monitor_down",
   "monitor": {
     "id": "018f2f7a-...",
     "name": "API",
@@ -746,7 +908,8 @@ Evento de recuperação:
 
 ```json
 {
-  "event": "up",
+  "id": "018f2f7a-...",
+  "event": "monitor_up",
   "monitor": {
     "id": "018f2f7a-...",
     "name": "API",
@@ -760,6 +923,8 @@ Evento de recuperação:
   "dashboard_url": "https://pingou.exemplo.com/monitors/018f2f7a-..."
 }
 ```
+
+`id` identifica o evento. É o **mesmo `id` em todas as tentativas** do mesmo aviso (veja [Entrega das notificações](#entrega-das-notificações)): guarde os ids já tratados e ignore os repetidos. O `timestamp` é a hora do evento, não a do envio, e também não muda entre tentativas.
 
 Campos `type` e `target`:
 
@@ -804,9 +969,47 @@ Aviso de [certificado SSL perto de expirar](#aviso-de-expiração-do-certificado
 | `days_left`       | Dias inteiros que faltam (arredondado para baixo; negativo se já venceu) |
 | `threshold_days`  | Qual aviso é: `30` ou `7`                                                |
 
-Os eventos `down` e `up` não mudam (não levam esses três campos).
+Os eventos `monitor_down` e `monitor_up` não levam esses três campos.
 
-> **Atenção, quem consome o webhook:** `event` agora pode ter um terceiro valor, `cert_expiring`. Integrações que tratam "tudo que não é `up`" como queda vão mostrar o aviso de certificado como queda. Trate `event` pelo valor exato. Como a opção começa desligada, nada muda até alguém ligá-la.
+> **Atenção, quem consome o webhook:** `event` pode ter um terceiro valor, `cert_expiring`. Integrações que tratam "tudo que não é `monitor_up`" como queda vão mostrar o aviso de certificado como queda. Trate `event` pelo valor exato e **ignore o que não conhece**, nunca como `monitor_up`. Como a opção começa desligada, nada muda até alguém ligá-la.
+
+### Eventos `maintenance_started` e `maintenance_ended`
+
+Só saem com o [aviso de manutenção](#aviso-de-início-e-fim) ligado. O aviso é de um **grupo** de monitores, então o payload usa **`monitors`** (uma lista, mesmo com um monitor só) e **não tem o campo `monitor`**:
+
+```json
+{
+  "id": "0193...",
+  "event": "maintenance_started",
+  "monitors": [
+    {
+      "id": "...",
+      "name": "API",
+      "type": "http",
+      "target": "https://...",
+      "url": "https://..."
+    }
+  ],
+  "starts_at": "2026-11-08T02:00:00Z",
+  "ends_at": "2026-11-08T04:00:00Z",
+  "reason": "troca de disco",
+  "timestamp": "2026-11-08T02:00:04Z",
+  "dashboard_url": "https://pingou.exemplo.com/maintenance"
+}
+```
+
+| Campo           | O que é                                                                                                                              |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `monitors`      | Os monitores do grupo, no mesmo formato de `monitor` (nunca leva o `ping_token`)                                                     |
+| `starts_at`     | Início da janela (UTC, RFC 3339)                                                                                                     |
+| `ends_at`       | Fim da janela. No aviso de fim de uma janela cancelada em curso, é o horário do cancelamento                                         |
+| `reason`        | Motivo da janela, ou `null`                                                                                                          |
+| `timestamp`     | Quando o Pingou percebeu o evento (o tick), não `starts_at`. Uma janela notada depois de uma queda do Pingou sai com a hora da volta |
+| `dashboard_url` | Link para `/maintenance`, ou `null` sem `PINGOU_PUBLIC_URL`                                                                          |
+
+O aviso de fim não fala do estado dos monitores.
+
+> **Atenção, quem consome o webhook:** estes eventos usam `monitors` no lugar de `monitor`. Um fluxo que lê `monitor.name` em todo evento quebra ao receber um deles. Trate `event` pelo valor exato e **ignore o que não conhece**. Como a opção começa desligada, nada muda até alguém ligá-la.
 
 ### Testando o webhook
 
@@ -851,7 +1054,7 @@ O payload tem o mesmo formato dos eventos reais:
 }
 ```
 
-> Integrações que tratam `event` devem **ignorar valores desconhecidos**. Novos eventos podem surgir sem aviso.
+> Integrações que tratam `event` devem **ignorar valores desconhecidos** (nunca tratar como `monitor_up`). Novos eventos podem surgir sem aviso.
 
 ## E-mail
 
@@ -1048,7 +1251,20 @@ curl -X POST http://localhost:8956/api/settings/ntfy/test \
 
 ## Entrega das notificações
 
-Webhook, e-mail e ntfy são enviados **fora** do processamento dos checks: um destino lento não atrasa os outros monitores. O Pingou avisa **uma vez por transição**, sem retry. No [desligamento](#desligamento), envios em andamento são esperados dentro do prazo de 15 s; um crash ou `kill -9` pode perder o aviso.
+Cada aviso (queda, recuperação, certificado, início e fim de manutenção) é gravado numa fila no próprio SQLite (`notification_outbox`), **na mesma transação** do check que o gerou. Um worker lê a fila, envia e **repete** o que falhou. Os envios acontecem fora do processamento dos checks: um destino lento não atrasa os outros monitores.
+
+- **Um canal por linha.** Webhook, e-mail e ntfy repetem cada um por si: se só o e-mail falhou, só ele tenta de novo.
+- **Falha** é erro de rede, timeout ou resposta fora de 2xx. Antes, o webhook contava como enviado mesmo com 500.
+- **Esperas:** 30 s, 2 min, 10 min e depois 30 min entre tentativas.
+- **Prazo:** queda e recuperação valem **60 minutos** a partir do evento; o aviso de certificado vale **24 horas**; o aviso de início e fim de manutenção vale **60 minutos** (contados do momento em que o Pingou o percebeu). Passou do prazo, o aviso é descartado e o log mostra `notice expired` com `event_id`, `channel` e `attempts`. Aviso de queda velho demais só confunde.
+- **Reinício:** ao subir, o Pingou retoma o que ficou pendente (inclusive depois de `kill -9`) e não reenvia o que já saiu.
+- **Pelo menos uma vez:** se o Pingou cair depois de enviar e antes de marcar como enviado, o aviso sai de novo. Por isso o JSON do webhook tem o campo `id`: quem recebe ignora o `id` repetido.
+- **Destino lido na hora.** A fila **não guarda** a URL do webhook, os destinatários, o tópico, o token do ntfy nem o `ping_token`. Trocar a URL do webhook vale para os avisos que ainda estão pendentes. O texto do e-mail e do ntfy é montado na hora do envio, com o fuso de agora.
+- **Canal desligado** (URL, destinatários ou tópico vazios) = nada a enviar: o aviso é encerrado sem tentar de novo. Canal que não existe mais no ambiente (ex.: `PINGOU_SMTP_HOST` removido) expira.
+- Os botões **Enviar teste** continuam enviando direto, sem passar pela fila.
+- Linhas enviadas ou expiradas são apagadas depois de 7 dias, pela rotina de retenção. Quem expira só aparece no log, não no painel.
+
+No [desligamento](#desligamento), o worker para de pegar avisos novos e o envio em andamento termina dentro do prazo de 15 s; o que sobrou continua pendente no banco para a próxima subida.
 
 ## Fuso horário
 
@@ -1082,7 +1298,7 @@ Ao receber **SIGTERM** ou **SIGINT** (Ctrl+C), o Pingou desliga em etapas, com p
 1. Para o agendador: nenhum check novo começa.
 2. Para de aceitar conexões e termina as requisições em andamento (incluindo pings `/ping/{token}`).
 3. Espera os checks em andamento. Um check cortado pelo desligamento é **descartado**: não conta como falha nem abre incidente.
-4. Espera as notificações em andamento.
+4. Para o worker de notificações: o envio em andamento termina, os avisos pendentes ficam no banco.
 5. Fecha o banco.
 6. Remove o lock `~/.pingou/pingou.lock`.
 
@@ -1212,7 +1428,7 @@ O monitor é sempre criado com `enabled: true`. Para `heartbeat`, o comando impr
 ./pingou export-db -o /tmp/backup.db --key <API_KEY>
 ```
 
-> O export inclui os tokens de ping dos monitores Heartbeat e a URL do webhook, que costuma conter um segredo (a do Slack, por exemplo). Guarde o arquivo com o mesmo cuidado que a API Key.
+> O export é uma cópia do banco inteiro. Inclui os tokens de ping dos monitores Heartbeat, a URL do webhook (que costuma conter um segredo, como a do Slack), o tópico do ntfy (num servidor aberto, como o `ntfy.sh`, o tópico funciona como senha) e os destinatários de e-mail. Guarde o arquivo com o mesmo cuidado que a API Key.
 
 ### version
 
@@ -1289,16 +1505,26 @@ A ideia não é competir com ferramentas enterprise nem com plataformas completa
 - [x] Monitor Heartbeat
 - [x] Redesign do dashboard com a nova identidade visual (tema claro)
 
+### Entregue desde a v1.1
+
+- [x] Tema escuro (além do claro e do sistema)
+- [x] Notificações por e-mail (SMTP) e ntfy, além do webhook
+- [x] Manutenção: pausa com motivo e janela agendada
+- [x] Aviso de expiração do certificado SSL
+- [x] Fila de avisos com retry (`notification_outbox`)
+- [x] Eventos do webhook com nomes claros (`monitor_down`, `monitor_up`)
+- [x] Fuso horário configurável
+- [x] Desligamento ordenado
+- [x] Desempenho com banco grande (migration `0006`)
+
 ### Próxima versão
 
 - [ ] Verificação de palavra-chave na resposta HTTP
-- [ ] Aviso de expiração de certificado SSL (via webhook, sem estado novo)
 
 ### Depois
 
 - Monitor DNS
 - Ping ICMP (depende de resolver as permissões sem complicar a instalação)
-- Tema escuro
 - Status page pública
 - Integração com Prometheus
 - Webhook por monitor

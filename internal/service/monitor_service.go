@@ -80,6 +80,10 @@ type UpdateMonitorInput struct {
 	// CertAlertEnabled nil mantém o valor atual; se a URL nova não for https,
 	// a opção é desligada sozinha.
 	CertAlertEnabled *bool
+	// PauseReason: motivo opcional da pausa (até 200 caracteres). Vale ao pausar
+	// e enquanto o monitor segue pausado (nil mantém, "" apaga); ignorado com o
+	// monitor ativo. Retomar limpa o motivo.
+	PauseReason *string
 }
 
 func (s *MonitorService) Create(ctx context.Context, in CreateMonitorInput) (*domain.Monitor, error) {
@@ -171,6 +175,10 @@ func (s *MonitorService) Update(ctx context.Context, id string, in UpdateMonitor
 	if in.Type != nil && domain.MonitorType(*in.Type) != m.Type {
 		return nil, fmt.Errorf("%w: type cannot be changed", ErrValidation)
 	}
+	pauseReason, err := normalizeReason("pause_reason", in.PauseReason)
+	if err != nil {
+		return nil, err
+	}
 
 	wasEnabled := m.Enabled
 	oldURL := m.URL
@@ -231,6 +239,16 @@ func (s *MonitorService) Update(ctx context.Context, id string, in UpdateMonitor
 	if m.Type == domain.TypeHeartbeat && !wasEnabled && m.Enabled && m.LastPingAt != nil {
 		m.LastPingAt = &now
 	}
+	switch {
+	case wasEnabled && !m.Enabled: // pausou agora
+		m.PausedAt, m.PauseReason = &now, pauseReason
+	case !wasEnabled && !m.Enabled: // segue pausado: só troca o motivo se veio no PATCH
+		if in.PauseReason != nil {
+			m.PauseReason = pauseReason
+		}
+	case !wasEnabled && m.Enabled: // retomou: falhas de antes não contam mais
+		m.ResumedAt, m.PausedAt, m.PauseReason = &now, nil, nil
+	}
 	m.UpdatedAt = now
 
 	if err := s.monitors.Update(ctx, m); err != nil {
@@ -245,7 +263,7 @@ func (s *MonitorService) Update(ctx context.Context, id string, in UpdateMonitor
 		// abriria incidente novo: handleFailure só abre se prevState != DOWN);
 		// aqui só alinhamos o objeto devolvido ao banco.
 		m.CurrentState = domain.StateUnknown
-		if err := s.incidents.CloseManually(ctx, m.ID, now); err != nil {
+		if err := s.incidents.CloseManually(ctx, m.ID, now, domain.ClosePause, m.PauseReason); err != nil {
 			return nil, fmt.Errorf("closing incident: %w", err)
 		}
 	}

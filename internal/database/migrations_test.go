@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/pressly/goose/v3"
@@ -250,6 +251,52 @@ func TestMonitorCertExpiryMigration(t *testing.T) {
 	}
 	if m, c := countRows(t, db, "monitors"), countRows(t, db, "checks"); m != 1 || c != 1 {
 		t.Fatalf("após down: monitors=%d checks=%d, want 1 e 1", m, c)
+	}
+	assertFKOn(t, db)
+}
+
+func TestNotificationOutboxMigration(t *testing.T) {
+	db, err := OpenDB(filepath.Join(t.TempDir(), "t.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	setupGoose(t)
+
+	if err := goose.UpTo(db, "migrations", 10); err != nil {
+		t.Fatal(err)
+	}
+	now := "2026-01-01T00:00:00Z"
+	insert := `INSERT INTO notification_outbox (event_id, event_type, channel, monitor_id, payload, status, created_at, expires_at, next_attempt_at)
+		VALUES ('e1','down','webhook','m1','{}',?,?,?,?)`
+	mustExec(t, db, insert, "pending", now, now, now)
+	// monitor_id sem FK: o aviso sobrevive ao monitor apagado
+	if n := countRows(t, db, "notification_outbox"); n != 1 {
+		t.Fatalf("linhas = %d, want 1", n)
+	}
+	if _, err := db.Exec(insert, "enviando", now, now, now); err == nil {
+		t.Fatal("status inválido aceito, want erro de CHECK")
+	}
+
+	// índices parciais: um para vencidos, outro para a retenção
+	for name, want := range map[string]string{
+		"idx_outbox_due":  "WHERE status = 'pending'",
+		"idx_outbox_done": "WHERE status <> 'pending'",
+	} {
+		var sqlText string
+		if err := db.QueryRow(`SELECT sql FROM sqlite_master WHERE type='index' AND name=?`, name).Scan(&sqlText); err != nil {
+			t.Fatalf("índice %s: %v", name, err)
+		}
+		if !strings.Contains(sqlText, want) {
+			t.Fatalf("índice %s = %q, want parcial %q", name, sqlText, want)
+		}
+	}
+
+	if err := goose.DownTo(db, "migrations", 9); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`SELECT 1 FROM notification_outbox`); err == nil {
+		t.Fatal("tabela notification_outbox continua após down")
 	}
 	assertFKOn(t, db)
 }

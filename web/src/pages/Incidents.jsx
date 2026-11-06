@@ -139,9 +139,9 @@ function LoadError({ message, onRetry }) {
   return (
     <div
       role="alert"
-      className="flex flex-wrap items-center gap-3 p-4 rounded-pg-card border border-pg-borda bg-pg-branco"
+      className="flex flex-wrap items-center gap-3 p-4 rounded-pg-card border border-pg-linha bg-pg-superficie"
     >
-      <span className="text-pg-ui text-pg-down">
+      <span className="text-pg-ui text-pg-status-down">
         Não foi possível carregar: {message}
       </span>
       <Button variant="ghost" onClick={onRetry}>
@@ -153,7 +153,7 @@ function LoadError({ message, onRetry }) {
 
 function Empty({ children }) {
   return (
-    <p className="m-0 py-8 px-4 text-center text-pg-ui text-pg-neblina rounded-pg-card border border-dashed border-pg-borda">
+    <p className="m-0 py-8 px-4 text-center text-pg-ui text-pg-texto-2 rounded-pg-card border border-dashed border-pg-linha">
       {children}
     </p>
   );
@@ -200,10 +200,10 @@ export function Incidents() {
   return (
     <div className="max-w-[1680px]">
       <MobileHeader title="Incidentes" />
-      <h1 className="hidden md:block text-pg-h1 font-medium text-pg-ardosia my-0">
+      <h1 className="hidden md:block text-pg-h1 font-medium text-pg-texto my-0">
         Incidentes
       </h1>
-      <p className="hidden md:block mt-2 mb-6 text-pg-ui text-pg-neblina">
+      <p className="hidden md:block mt-2 mb-6 text-pg-ui text-pg-texto-2">
         Cada vez que um monitor caiu e quando voltou.
       </p>
 
@@ -223,7 +223,7 @@ export function Incidents() {
         <div className="flex flex-col gap-1.5 md:flex-row md:items-center md:gap-3">
           <label
             htmlFor="incident-monitor"
-            className="text-pg-caption md:text-pg-ui text-pg-neblina"
+            className="text-pg-caption md:text-pg-ui text-pg-texto-2"
           >
             Monitor
           </label>
@@ -231,7 +231,7 @@ export function Incidents() {
             id="incident-monitor"
             value={monitorId}
             onChange={(e) => setParam("monitor", e.target.value)}
-            className="w-full md:w-[220px] px-3 py-2.5 min-h-[44px] md:min-h-0 rounded-pg-control text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano"
+            className="w-full md:w-[220px] px-3 py-2.5 min-h-[44px] md:min-h-0 rounded-pg-control text-pg-ui text-pg-texto bg-pg-superficie border border-pg-linha focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano"
           >
             <option value="">Todos os monitores</option>
             {monitors.map((m) => (
@@ -247,11 +247,11 @@ export function Incidents() {
         <section aria-labelledby="open-title" className="mb-7 md:mb-9">
           <h2
             id="open-title"
-            className="flex items-center gap-2.5 text-pg-h3 font-medium text-pg-ardosia mt-0 mb-3"
+            className="flex items-center gap-2.5 text-pg-h3 font-medium text-pg-texto mt-0 mb-3"
           >
             Abertos agora
             {open.total > 0 && (
-              <span className="min-w-[22px] px-1.5 rounded-full bg-pg-down-bg text-pg-down text-pg-caption font-medium text-center tabular-nums">
+              <span className="min-w-[22px] px-1.5 rounded-full bg-pg-status-down-bg text-pg-status-down text-pg-caption font-medium text-center tabular-nums">
                 {open.total}
               </span>
             )}
@@ -282,7 +282,7 @@ export function Incidents() {
         <section aria-labelledby="resolved-title">
           <h2
             id="resolved-title"
-            className="text-pg-h3 font-medium text-pg-ardosia mt-0 mb-3"
+            className="text-pg-h3 font-medium text-pg-texto mt-0 mb-3"
           >
             Resolvidos
           </h2>
@@ -308,7 +308,7 @@ export function Incidents() {
                 loadingMore={resolved.loadingMore}
               />
               {resolved.error && (
-                <p role="alert" className="mt-3 text-pg-ui text-pg-down">
+                <p role="alert" className="mt-3 text-pg-ui text-pg-status-down">
                   Não foi possível carregar mais: {resolved.error}
                 </p>
               )}

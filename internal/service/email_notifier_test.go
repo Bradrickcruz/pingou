@@ -270,7 +270,7 @@ func TestStartTLSRequired(t *testing.T) {
 func TestEmailNotifierSkipsWithoutRecipients(t *testing.T) {
 	f := newFakeSMTP(t)
 	n := NewEmailNotifier(f.cfg(config.SMTPTLSNone), func() string { return "" }, "")
-	n.NotifyDown(t.Context(), &domain.Monitor{Name: "x"}, &domain.Incident{StartedAt: time.Now()})
+	notifyDown(t.Context(), n, &domain.Monitor{Name: "x"}, &domain.Incident{StartedAt: time.Now()})
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.from != "" {
@@ -281,7 +281,7 @@ func TestEmailNotifierSkipsWithoutRecipients(t *testing.T) {
 func TestEmailNotifierSendsDown(t *testing.T) {
 	f := newFakeSMTP(t)
 	n := NewEmailNotifier(f.cfg(config.SMTPTLSNone), func() string { return "ops@exemplo.com" }, "")
-	n.NotifyDown(t.Context(), &domain.Monitor{Name: "API", Type: domain.TypeHTTP, URL: "https://x.test"}, &domain.Incident{StartedAt: time.Now()})
+	notifyDown(t.Context(), n, &domain.Monitor{Name: "API", Type: domain.TypeHTTP, URL: "https://x.test"}, &domain.Incident{StartedAt: time.Now()})
 	<-f.done
 	f.mu.Lock()
 	defer f.mu.Unlock()

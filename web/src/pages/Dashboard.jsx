@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, RefreshCw, Search } from "lucide-react";
+import { Plus, RefreshCw, Search, Wrench } from "lucide-react";
 import { toast } from "react-toastify";
 import { useMonitors } from "../hooks/useMonitors";
 import { useNow } from "../hooks/useNow";
@@ -10,6 +10,7 @@ import { MonitorCard } from "../components/monitors/MonitorCard";
 import { MobileHeader } from "../components/layout/MobileHeader";
 import { MonitorForm } from "../components/monitors/MonitorForm";
 import { MonitorModals } from "../components/monitors/MonitorModals";
+import { MaintenanceModal } from "../components/monitors/MaintenanceModal";
 import { StatusBanner } from "../components/monitors/StatusBanner";
 import { Modal } from "../components/ui/Modal";
 import { Button } from "../components/ui/Button";
@@ -22,11 +23,18 @@ import {
   statusOf,
 } from "../lib/monitors";
 import logo from "../assets/brand/pingou-simbolo.svg";
+import logoInvertido from "../assets/brand/pingou-simbolo-invertido.svg";
+import { ThemedImage } from "../components/ui/ThemedImage";
 
 const FILTERS = [
   { key: "all", label: "Todos", match: () => true },
   { key: "down", label: "Fora do ar", match: (s) => s === "DOWN" },
   { key: "up", label: "No ar", match: (s) => s === "UP" },
+  {
+    key: "maintenance",
+    label: "Em manutenção",
+    match: (s) => s === "MAINTENANCE",
+  },
   { key: "paused", label: "Pausados", match: (s) => s === "PAUSED" },
 ];
 
@@ -73,7 +81,7 @@ export function Dashboard() {
       <button
         type="button"
         onClick={() => setQuery("")}
-        className="text-pg-ciano-fundo underline hover:no-underline focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano"
+        className="text-pg-link underline hover:no-underline focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano"
       >
         Limpar busca
       </button>
@@ -89,6 +97,11 @@ export function Dashboard() {
   const openDelete = (m) => {
     setSelected(m);
     setModal("delete");
+  };
+  // manutenção: do topo (nenhum marcado) ou do menu da linha (o monitor marcado)
+  const openSchedule = (m) => {
+    setSelected(m ?? null);
+    setModal("maintenance");
   };
   const closeModal = () => {
     setModal(null);
@@ -112,11 +125,17 @@ export function Dashboard() {
       toast.success("Monitor criado");
     });
 
+  // pausar abre o modal do motivo; retomar é direto
   const handleToggle = async (m) => {
     setActionError(null);
+    if (m.enabled) {
+      setSelected(m);
+      setModal("pause");
+      return;
+    }
     try {
-      await monitorsApi.update(m.id, { enabled: !m.enabled });
-      toast.success(m.enabled ? "Monitor pausado" : "Monitor retomado");
+      await monitorsApi.update(m.id, { enabled: true });
+      toast.success("Monitor retomado");
       await refetch();
     } catch (e) {
       setActionError(e.message);
@@ -130,8 +149,8 @@ export function Dashboard() {
       disabled={isFetching}
       aria-label="Atualizar lista de monitores"
       aria-busy={isFetching}
-      className={`flex items-center justify-center w-11 h-11 rounded-pg-control border border-pg-borda bg-pg-branco transition-colors ${
-        isFetching ? "opacity-50 cursor-not-allowed" : "hover:bg-pg-nuvem"
+      className={`flex items-center justify-center w-11 h-11 rounded-pg-control border border-pg-linha bg-pg-superficie transition-colors ${
+        isFetching ? "opacity-50 cursor-not-allowed" : "hover:bg-pg-hover"
       }`}
     >
       <RefreshCw
@@ -162,19 +181,27 @@ export function Dashboard() {
       />
 
       <div className="hidden md:flex md:flex-row gap-4 md:justify-between md:items-center mb-7">
-        <h1 className="text-pg-h1 font-medium text-pg-ardosia my-0">
-          Monitores
-        </h1>
+        <h1 className="text-pg-h1 font-medium text-pg-texto my-0">Monitores</h1>
         <div className="flex items-center gap-3">
           {updatedAt && (
             <span
-              className="text-pg-caption text-pg-neblina whitespace-nowrap"
+              className="text-pg-caption text-pg-texto-2 whitespace-nowrap"
               aria-live="off"
             >
               Atualizado {timeAgo(updatedAt, now)}
             </span>
           )}
           {refreshButton}
+          {monitors.length > 0 && (
+            <Button
+              variant="ghost"
+              onClick={() => openSchedule()}
+              className="inline-flex items-center gap-1.5 h-11 bg-pg-superficie"
+            >
+              <Wrench size={16} aria-hidden="true" />
+              Agendar manutenção
+            </Button>
+          )}
           <Button
             onClick={() => setModal("create")}
             className="inline-flex items-center gap-1.5 h-11"
@@ -192,26 +219,27 @@ export function Dashboard() {
       )}
 
       {error && (
-        <p className="text-pg-ui text-pg-down mb-4" role="alert">
+        <p className="text-pg-ui text-pg-status-down mb-4" role="alert">
           {error}
         </p>
       )}
       {actionError && (
-        <p className="text-pg-ui text-pg-down mb-4" role="alert">
+        <p className="text-pg-ui text-pg-status-down mb-4" role="alert">
           {actionError}
         </p>
       )}
 
       {!loading && !error && monitors.length === 0 && (
-        <div className="text-center py-16 px-4 rounded-pg-card border border-dashed border-pg-borda text-pg-neblina">
-          <img
-            src={logo}
+        <div className="text-center py-16 px-4 rounded-pg-card border border-dashed border-pg-linha text-pg-texto-2">
+          <ThemedImage
+            light={logo}
+            dark={logoInvertido}
             alt=""
             width={40}
             height={40}
             className="mx-auto mb-3"
           />
-          <p className="font-medium text-pg-ardosia mb-1.5">
+          <p className="font-medium text-pg-texto mb-1.5">
             Nenhum monitor ainda
           </p>
           <p className="text-pg-ui mb-5">
@@ -247,8 +275,8 @@ export function Dashboard() {
                     onClick={() => setFilter(f.key)}
                     className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-full border text-pg-ui transition-colors duration-150 focus-visible:outline-2 focus-visible:outline focus-visible:outline-pg-ciano ${
                       on
-                        ? "bg-pg-ardosia border-pg-ardosia text-pg-branco"
-                        : "bg-pg-branco border-pg-borda text-pg-ardosia hover:bg-pg-nuvem"
+                        ? "bg-pg-ativo border-pg-ativo text-pg-ativo-texto"
+                        : "bg-pg-superficie border-pg-linha text-pg-texto hover:bg-pg-hover"
                     }`}
                   >
                     {f.label} ({filterCount(f)})
@@ -260,7 +288,7 @@ export function Dashboard() {
               <Search
                 size={16}
                 aria-hidden="true"
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-pg-neblina"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-pg-texto-2"
               />
               <input
                 type="search"
@@ -268,7 +296,7 @@ export function Dashboard() {
                 placeholder="Buscar por nome ou endereço"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 rounded-pg-control text-pg-ui text-pg-ardosia bg-pg-branco border border-pg-borda placeholder:text-pg-neblina"
+                className="w-full pl-9 pr-3 py-2.5 rounded-pg-control text-pg-ui text-pg-texto bg-pg-superficie border border-pg-linha placeholder:text-pg-texto-2"
               />
             </div>
           </div>
@@ -278,19 +306,19 @@ export function Dashboard() {
               <MonitorCard key={m.id} monitor={m} now={now} />
             ))}
             {visible.length === 0 && (
-              <li className="py-10 text-center text-pg-ui text-pg-neblina">
+              <li className="py-10 text-center text-pg-ui text-pg-texto-2">
                 {emptyMessage}
               </li>
             )}
           </ul>
 
-          <div className="hidden md:block rounded-pg-card border border-pg-borda bg-pg-branco">
+          <div className="hidden md:block rounded-pg-card border border-pg-linha bg-pg-superficie">
             <table className="w-full border-collapse text-left">
               <caption className="sr-only">
                 Monitores, ordenados por gravidade
               </caption>
               <thead>
-                <tr className="bg-pg-ciano-nevoa text-pg-caption text-pg-ciano-fundo">
+                <tr className="bg-pg-destaque text-pg-caption text-pg-link">
                   <th
                     scope="col"
                     className="px-5 py-3 font-medium rounded-tl-pg-card"
@@ -338,13 +366,14 @@ export function Dashboard() {
                     onEdit={openEdit}
                     onToggle={handleToggle}
                     onDelete={openDelete}
+                    onSchedule={openSchedule}
                   />
                 ))}
                 {visible.length === 0 && (
-                  <tr className="border-t border-pg-borda">
+                  <tr className="border-t border-pg-linha">
                     <td
                       colSpan={7}
-                      className="px-5 py-10 text-center text-pg-ui text-pg-neblina"
+                      className="px-5 py-10 text-center text-pg-ui text-pg-texto-2"
                     >
                       {emptyMessage}
                     </td>
@@ -352,18 +381,19 @@ export function Dashboard() {
                 )}
               </tbody>
             </table>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-5 py-3 border-t border-pg-borda text-pg-caption text-pg-neblina">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-5 py-3 border-t border-pg-linha text-pg-caption text-pg-texto-2">
               <span>Ordenado por gravidade: fora do ar primeiro.</span>
               <span className="flex gap-4" aria-hidden="true">
                 <span className="inline-flex items-center gap-1.5">
-                  <span className="w-1.5 h-3 rounded-[1px] bg-pg-up" /> no ar
+                  <span className="w-1.5 h-3 rounded-[1px] bg-pg-status-up" />{" "}
+                  no ar
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <span className="w-1.5 h-3 rounded-[1px] bg-pg-down" /> fora
-                  do ar
+                  <span className="w-1.5 h-3 rounded-[1px] bg-pg-status-down" />{" "}
+                  fora do ar
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <span className="w-1.5 h-3 rounded-[1px] bg-pg-borda" /> sem
+                  <span className="w-1.5 h-3 rounded-[1px] bg-pg-linha" /> sem
                   dados
                 </span>
               </span>
@@ -380,6 +410,15 @@ export function Dashboard() {
             loading={saving}
           />
         </Modal>
+      )}
+
+      {modal === "maintenance" && (
+        <MaintenanceModal
+          monitors={monitors}
+          initialIds={selected ? [selected.id] : []}
+          onClose={closeModal}
+          onCreated={refetch}
+        />
       )}
 
       <MonitorModals

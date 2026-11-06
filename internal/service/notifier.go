@@ -15,12 +15,16 @@ import (
 	"github.com/Bradrickcruz/pingou/internal/domain"
 )
 
-type Notifier interface {
-	NotifyDown(ctx context.Context, m *domain.Monitor, i *domain.Incident)
-	NotifyRecovery(ctx context.Context, m *domain.Monitor, i *domain.Incident)
-	// NotifyCertExpiring avisa que o certificado SSL de um monitor http está
-	// perto de expirar (limite de 30 ou 7 dias).
-	NotifyCertExpiring(ctx context.Context, m *domain.Monitor, a domain.CertAlert)
+// Channel é um canal de aviso (webhook, e-mail, ntfy). O OutboxWorker chama
+// Send para cada linha do outbox e repete se devolver erro.
+//
+// Send lê o destino (URL, destinatários, tópico) das settings na hora e monta
+// o texto a partir do snapshot do evento. Destino vazio = canal desligado:
+// devolve nil sem enviar (a linha encerra, sem retry eterno). O erro devolvido
+// nunca leva URL, tópico, endereço nem token.
+type Channel interface {
+	Name() string
+	Send(ctx context.Context, ev domain.OutboxEvent) error
 }
 
 // WebhookNotifier envia payloads para a URL configurada nas settings
@@ -69,7 +73,21 @@ func downtimeSeconds(i *domain.Incident, end time.Time) int64 {
 	return max(int64(end.Sub(i.StartedAt).Seconds()), 0)
 }
 
+// Nomes do campo "event" do webhook. Padrão: <objeto>_<acontecimento>, minúsculas,
+// separado por "_". Também servem de rótulo de log nos outros canais.
+const (
+	eventMonitorDown  = "monitor_down"
+	eventMonitorUp    = "monitor_up"
+	eventCertExpiring = "cert_expiring"
+	eventMaintStart   = "maintenance_started"
+	eventMaintEnd     = "maintenance_ended"
+	eventTest         = "test"
+)
+
 type webhookPayload struct {
+	// ID é o event_id do outbox: igual em todas as tentativas do mesmo evento,
+	// para o receptor ignorar duplicata (a entrega é "pelo menos uma vez").
+	ID                      string                `json:"id"`
 	Event                   string                `json:"event"`
 	Monitor                 webhookPayloadMonitor `json:"monitor"`
 	Timestamp               string                `json:"timestamp"`
@@ -80,6 +98,20 @@ type webhookPayload struct {
 	CertExpiresAt *string `json:"cert_expires_at,omitempty"`
 	DaysLeft      *int    `json:"days_left,omitempty"`
 	ThresholdDays *int    `json:"threshold_days,omitempty"`
+}
+
+// webhookMaintenancePayload é o payload dos eventos maintenance_started e
+// maintenance_ended. O aviso é de um grupo de monitores: usa "monitors" (lista,
+// mesmo com um só) e não leva "monitor". reason sai null sem motivo.
+type webhookMaintenancePayload struct {
+	ID           string                  `json:"id"`
+	Event        string                  `json:"event"`
+	Monitors     []webhookPayloadMonitor `json:"monitors"`
+	StartsAt     string                  `json:"starts_at"`
+	EndsAt       string                  `json:"ends_at"`
+	Reason       *string                 `json:"reason"`
+	Timestamp    string                  `json:"timestamp"`
+	DashboardURL *string                 `json:"dashboard_url"` // página /maintenance
 }
 
 // webhookPayloadMonitor nunca leva o ping_token: webhooks costumam ir para
@@ -100,83 +132,127 @@ func toWebhookMonitor(m *domain.Monitor) webhookPayloadMonitor {
 	return out
 }
 
-func (n *WebhookNotifier) NotifyDown(ctx context.Context, m *domain.Monitor, i *domain.Incident) {
+func (n *WebhookNotifier) Name() string { return domain.ChannelWebhook }
+
+// Send entrega o evento. Erro de rede ou status fora de 2xx é falha (o worker repete).
+func (n *WebhookNotifier) Send(ctx context.Context, ev domain.OutboxEvent) error {
 	url := n.getWebhookURL()
 	if url == "" {
-		return
+		return nil
 	}
-
-	payload := webhookPayload{
-		Event:                   "down",
-		Monitor:                 toWebhookMonitor(m),
-		Timestamp:               i.StartedAt.UTC().Format(time.RFC3339),
-		LastError:               i.LastError,
-		DowntimeDurationSeconds: nil,
-		DashboardURL:            n.dashboardURL(m),
+	if ev.EventType == domain.EventMaintenanceStarted || ev.EventType == domain.EventMaintenanceEnded {
+		payload, err := n.maintenancePayloadFor(ev)
+		if err != nil {
+			return err
+		}
+		return n.post(ctx, url, payload)
 	}
-
-	n.send(url, payload)
+	payload, err := n.payloadFor(ev)
+	if err != nil {
+		return err
+	}
+	return n.post(ctx, url, payload)
 }
 
-func (n *WebhookNotifier) NotifyRecovery(ctx context.Context, m *domain.Monitor, i *domain.Incident) {
-	url := n.getWebhookURL()
-	if url == "" {
-		return
+// maintenancePayloadFor monta o JSON dos eventos de manutenção a partir do snapshot.
+func (n *WebhookNotifier) maintenancePayloadFor(ev domain.OutboxEvent) (webhookMaintenancePayload, error) {
+	mt, err := maintenanceSnapshot(ev)
+	if err != nil {
+		return webhookMaintenancePayload{}, err
 	}
-
-	timestamp := recoveredAt(i)
-	downtimeDurationSeconds := downtimeSeconds(i, timestamp)
-
-	payload := webhookPayload{
-		Event:                   "up",
-		Monitor:                 toWebhookMonitor(m),
-		Timestamp:               timestamp.Format(time.RFC3339),
-		LastError:               nil,
-		DowntimeDurationSeconds: &downtimeDurationSeconds,
-		DashboardURL:            n.dashboardURL(m),
+	event := eventMaintStart
+	if ev.EventType == domain.EventMaintenanceEnded {
+		event = eventMaintEnd
 	}
-
-	n.send(url, payload)
+	monitors := make([]webhookPayloadMonitor, 0, len(mt.Monitors))
+	for _, sm := range mt.Monitors {
+		monitors = append(monitors, toWebhookMonitor((&domain.EventSnapshot{Monitor: sm}).AsMonitor()))
+	}
+	return webhookMaintenancePayload{
+		ID:           ev.EventID,
+		Event:        event,
+		Monitors:     monitors,
+		StartsAt:     mt.StartsAt.UTC().Format(time.RFC3339),
+		EndsAt:       mt.EndsAt.UTC().Format(time.RFC3339),
+		Reason:       mt.Reason,
+		Timestamp:    ev.Snapshot.OccurredAt.UTC().Format(time.RFC3339),
+		DashboardURL: maintenanceLink(n.publicURL),
+	}, nil
 }
 
-// NotifyCertExpiring envia o evento "cert_expiring". timestamp é o momento do
-// aviso; cert_expires_at é a validade do certificado (UTC, RFC 3339).
-func (n *WebhookNotifier) NotifyCertExpiring(ctx context.Context, m *domain.Monitor, a domain.CertAlert) {
-	url := n.getWebhookURL()
-	if url == "" {
-		return
-	}
-
-	expiresAt := a.ExpiresAt.UTC().Format(time.RFC3339)
-	daysLeft, threshold := a.DaysLeft, a.ThresholdDays
+// payloadFor monta o JSON do evento a partir do snapshot. O timestamp é o
+// momento do evento, não o do envio: numa nova tentativa a mensagem não muda.
+func (n *WebhookNotifier) payloadFor(ev domain.OutboxEvent) (webhookPayload, error) {
+	snap := ev.Snapshot
+	m := snap.AsMonitor()
 	payload := webhookPayload{
-		Event:         "cert_expiring",
-		Monitor:       toWebhookMonitor(m),
-		Timestamp:     time.Now().UTC().Format(time.RFC3339),
-		DashboardURL:  n.dashboardURL(m),
-		CertExpiresAt: &expiresAt,
-		DaysLeft:      &daysLeft,
-		ThresholdDays: &threshold,
+		ID:           ev.EventID,
+		Monitor:      toWebhookMonitor(m),
+		Timestamp:    snap.OccurredAt.UTC().Format(time.RFC3339),
+		DashboardURL: n.dashboardURL(m),
 	}
-
-	n.send(url, payload)
+	switch ev.EventType {
+	case domain.EventDown:
+		payload.Event = eventMonitorDown
+		payload.LastError = snap.AsIncident().LastError
+	case domain.EventUp:
+		payload.Event = eventMonitorUp
+		i := snap.AsIncident()
+		downtime := downtimeSeconds(i, recoveredAt(i))
+		payload.DowntimeDurationSeconds = &downtime
+	case domain.EventCertExpiring:
+		payload.Event = eventCertExpiring
+		a := snap.AsCertAlert()
+		expiresAt := a.ExpiresAt.UTC().Format(time.RFC3339)
+		daysLeft, threshold := a.DaysLeft, a.ThresholdDays
+		payload.CertExpiresAt = &expiresAt
+		payload.DaysLeft = &daysLeft
+		payload.ThresholdDays = &threshold
+	default:
+		return payload, fmt.Errorf("unknown event type %q", ev.EventType)
+	}
+	return payload, nil
 }
 
-func (n *WebhookNotifier) send(url string, payload webhookPayload) {
+// webhookSendTimeout limita cada POST do outbox.
+const webhookSendTimeout = 10 * time.Second
+
+func (n *WebhookNotifier) post(ctx context.Context, rawURL string, payload any) error {
 	body, err := json.Marshal(payload)
 	if err != nil {
-		slog.Error("webhook marshal error", "err", err)
-		return
+		return errors.New("could not encode payload")
 	}
-
-	resp, err := n.client.Post(url, "application/json", bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, rawURL, bytes.NewReader(body))
 	if err != nil {
-		slog.Error("webhook send error", "err", err)
-		return
+		return errors.New("invalid url")
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := n.client.Do(req)
+	if err != nil {
+		return errors.New(urlErrorMessage(err, webhookSendTimeout))
 	}
 	defer resp.Body.Close()
+	_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, webhookTestBodyLimit))
 
-	slog.Info("webhook sent", "event", payload.Event, "status", resp.StatusCode)
+	// antes, qualquer resposta contava como "sent"; agora 4xx/5xx é falha
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	return nil
+}
+
+// urlErrorMessage tira o prefixo `Post "<url>": ` do erro, para a URL (que pode
+// ter token na query) não ir para o log nem para o last_error.
+func urlErrorMessage(err error, timeout time.Duration) string {
+	var ue *url.Error
+	if errors.As(err, &ue) {
+		if ue.Timeout() {
+			return fmt.Sprintf("timeout após %s", timeout)
+		}
+		return ue.Err.Error()
+	}
+	return err.Error()
 }
 
 // WebhookTestResult é a resposta de POST /api/settings/webhook/test. O corpo
@@ -209,8 +285,10 @@ func newWebhookTestClient() *http.Client {
 // formato dos eventos reais. Não grava nada no banco. O log leva só o host.
 func SendTestWebhook(ctx context.Context, rawURL string) WebhookTestResult {
 	target := "https://exemplo.com"
+	testID, _ := newUUIDv7()
 	payload := webhookPayload{
-		Event: "test",
+		ID:    testID,
+		Event: eventTest,
 		Monitor: webhookPayloadMonitor{
 			ID:     "00000000-0000-0000-0000-000000000000",
 			Name:   "Teste do Pingou",
@@ -258,15 +336,7 @@ func SendTestWebhook(ctx context.Context, rawURL string) WebhookTestResult {
 	return WebhookTestResult{OK: true, StatusCode: &status, DurationMS: time.Since(start).Milliseconds()}
 }
 
-// webhookTestErrorMessage tira o prefixo `Post "<url>": ` do erro, para a URL
-// (que pode ter token na query) não voltar na resposta.
+// webhookTestErrorMessage: ver urlErrorMessage.
 func webhookTestErrorMessage(err error) string {
-	var ue *url.Error
-	if errors.As(err, &ue) {
-		if ue.Timeout() {
-			return fmt.Sprintf("timeout após %s", webhookTestTimeout)
-		}
-		return ue.Err.Error()
-	}
-	return err.Error()
+	return urlErrorMessage(err, webhookTestTimeout)
 }

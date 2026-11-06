@@ -6,12 +6,14 @@ import "react-toastify/dist/ReactToastify.css";
 import "./index.css";
 import { injectGlobalStyles } from "./theme/globalStyles";
 import { ConnectionProvider } from "./hooks/useConnection";
+import { ThemeProvider } from "./hooks/ThemeProvider";
 import { TimeZoneProvider } from "./hooks/useTimeZone";
 import { ConnectionOverlay } from "./components/ui/ConnectionOverlay";
 import { Shell } from "./components/layout/Shell";
 import { Dashboard } from "./pages/Dashboard";
 import { Incidents } from "./pages/Incidents";
 import { Settings } from "./pages/Settings";
+import { Maintenance } from "./pages/Maintenance";
 import { MonitorDetail } from "./pages/MonitorDetail";
 import { Login } from "./pages/Login";
 
@@ -44,6 +46,7 @@ function App() {
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/monitors/:id" element={<MonitorDetail />} />
                 <Route path="/incidents" element={<Incidents />} />
+                <Route path="/maintenance" element={<Maintenance />} />
                 <Route
                   path="/settings"
                   element={<Settings onLogout={handleLogout} />}
@@ -61,6 +64,8 @@ export { App };
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <App />
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
   </React.StrictMode>,
 );

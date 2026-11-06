@@ -20,25 +20,25 @@ function MonitorCell({ incident }) {
   const m = incident.monitor;
   return (
     <div className="flex items-center gap-3 min-w-0">
-      <span className="flex-shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full bg-pg-up-bg text-pg-up">
+      <span className="flex-shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full bg-pg-status-up-bg text-pg-status-up">
         <Check size={14} aria-hidden="true" />
       </span>
       <div className="min-w-0">
         {m ? (
           <Link
             to={`/monitors/${m.id}`}
-            className="block text-pg-ui font-medium text-pg-ardosia truncate no-underline hover:underline"
+            className="block text-pg-ui font-medium text-pg-texto truncate no-underline hover:underline"
           >
             {m.name}
           </Link>
         ) : (
-          <div className="text-pg-ui font-medium text-pg-ardosia truncate">
+          <div className="text-pg-ui font-medium text-pg-texto truncate">
             Monitor removido
           </div>
         )}
         {m?.target && (
           <div
-            className="font-pg-mono text-pg-caption text-pg-neblina truncate"
+            className="font-pg-mono text-pg-caption text-pg-texto-2 truncate"
             title={m.target}
           >
             {m.target}
@@ -51,14 +51,37 @@ function MonitorCell({ incident }) {
 
 const cell = "px-5 py-3 align-middle";
 
-// Neutro de propósito: não foi recuperação (verde), o monitor foi pausado.
-function ManualBadge({ className = "" }) {
+const closeLabel = {
+  pause: "Fechado manualmente",
+  maintenance: "Fechado por manutenção",
+};
+
+// Neutro de propósito: não foi recuperação (verde), o monitor foi pausado ou
+// entrou em manutenção. close_reason ausente (API antiga): só closed_manually.
+function ManualBadge({ incident, className = "" }) {
+  const label =
+    closeLabel[incident.close_reason] ??
+    (incident.closed_manually ? closeLabel.pause : null);
+  if (!label) return null;
   return (
     <span
-      className={`block w-fit mt-0.5 rounded-full border border-pg-borda px-2 py-0.5 text-pg-caption font-normal text-pg-neblina whitespace-nowrap ${className}`}
+      className={`block w-fit mt-0.5 rounded-full border border-pg-linha px-2 py-0.5 text-pg-caption font-normal text-pg-texto-2 whitespace-nowrap ${className}`}
     >
-      Fechado manualmente
+      {label}
     </span>
+  );
+}
+
+// Motivo da pausa ou da manutenção, guardado no fechamento.
+function CloseNote({ incident, className = "line-clamp-2" }) {
+  if (!incident.close_note) return null;
+  return (
+    <p
+      className={`mt-0.5 mb-0 text-pg-caption text-pg-texto-2 break-words ${className}`}
+      title={incident.close_note}
+    >
+      {incident.close_note}
+    </p>
   );
 }
 
@@ -66,7 +89,7 @@ export function ResolvedTable({ incidents, total, onLoadMore, loadingMore }) {
   const groups = groupByDay(incidents);
 
   return (
-    <div className="rounded-pg-card border border-pg-borda bg-pg-branco overflow-hidden">
+    <div className="rounded-pg-card border border-pg-linha bg-pg-superficie overflow-hidden">
       {/* desktop: tabela */}
       <table className="hidden md:table w-full table-fixed border-collapse text-left">
         <caption className="sr-only">
@@ -79,7 +102,7 @@ export function ResolvedTable({ incidents, total, onLoadMore, loadingMore }) {
           <col />
         </colgroup>
         <thead>
-          <tr className="bg-pg-ciano-nevoa text-pg-caption text-pg-ciano-fundo">
+          <tr className="bg-pg-destaque text-pg-caption text-pg-link">
             <th scope="col" className="px-5 py-3 font-medium">
               Monitor
             </th>
@@ -96,37 +119,41 @@ export function ResolvedTable({ incidents, total, onLoadMore, loadingMore }) {
         </thead>
         {groups.map((g) => (
           <tbody key={g.key}>
-            <tr className="border-t border-pg-borda bg-pg-nuvem">
+            <tr className="border-t border-pg-linha bg-pg-fundo">
               <th
                 scope="rowgroup"
                 colSpan={4}
-                className="px-5 py-2 text-pg-caption font-normal text-pg-neblina"
+                className="px-5 py-2 text-pg-caption font-normal text-pg-texto-2"
               >
                 {g.label}
               </th>
             </tr>
             {g.items.map((i) => (
-              <tr key={i.id} className="border-t border-pg-borda">
+              <tr key={i.id} className="border-t border-pg-linha">
                 <td className={cell}>
                   <MonitorCell incident={i} />
                 </td>
                 <td
-                  className={`${cell} text-pg-ui text-pg-ardosia whitespace-nowrap tabular-nums`}
+                  className={`${cell} text-pg-ui text-pg-texto whitespace-nowrap tabular-nums`}
                 >
                   {timeRange(i.started_at, i.ended_at)}
                 </td>
                 <td
-                  className={`${cell} text-right text-pg-ui font-medium text-pg-ardosia whitespace-nowrap`}
+                  className={`${cell} text-right text-pg-ui font-medium text-pg-texto whitespace-nowrap`}
                 >
                   {formatDuration(i.duration_seconds)}
-                  {i.closed_manually && <ManualBadge className="ml-auto" />}
                 </td>
-                <td
-                  className={`${cell} font-pg-mono text-pg-caption text-pg-neblina`}
-                >
-                  <div className="truncate" title={i.last_error ?? undefined}>
+                <td className={`${cell} text-pg-caption text-pg-texto-2`}>
+                  <div
+                    className="truncate font-pg-mono"
+                    title={i.last_error ?? undefined}
+                  >
                     {i.last_error ?? "—"}
                   </div>
+                  {/* pausa ou manutenção: selo e motivo abaixo do erro, sem
+                      apertar a coluna de duração */}
+                  <ManualBadge incident={i} />
+                  <CloseNote incident={i} className="line-clamp-1" />
                 </td>
               </tr>
             ))}
@@ -138,16 +165,16 @@ export function ResolvedTable({ incidents, total, onLoadMore, loadingMore }) {
       <div className="md:hidden [&>section:last-of-type_li:last-child]:border-b-0">
         {groups.map((g) => (
           <section key={g.key} aria-label={g.label}>
-            <h3 className="m-0 px-4 py-2 bg-pg-nuvem border-b border-pg-borda text-pg-caption font-normal text-pg-neblina">
+            <h3 className="m-0 px-4 py-2 bg-pg-fundo border-b border-pg-linha text-pg-caption font-normal text-pg-texto-2">
               {g.label}
             </h3>
             <ul className="list-none m-0 p-0">
               {g.items.map((i) => (
                 <li
                   key={i.id}
-                  className="flex gap-3 px-4 py-3 border-b border-pg-borda"
+                  className="flex gap-3 px-4 py-3 border-b border-pg-linha"
                 >
-                  <span className="flex-shrink-0 inline-flex items-center justify-center w-6 h-6 mt-0.5 rounded-full bg-pg-up-bg text-pg-up">
+                  <span className="flex-shrink-0 inline-flex items-center justify-center w-6 h-6 mt-0.5 rounded-full bg-pg-status-up-bg text-pg-status-up">
                     <Check size={14} aria-hidden="true" />
                   </span>
                   <div className="flex-1 min-w-0">
@@ -155,25 +182,26 @@ export function ResolvedTable({ incidents, total, onLoadMore, loadingMore }) {
                       {i.monitor ? (
                         <Link
                           to={`/monitors/${i.monitor.id}`}
-                          className="text-pg-ui font-medium text-pg-ardosia truncate no-underline hover:underline"
+                          className="text-pg-ui font-medium text-pg-texto truncate no-underline hover:underline"
                         >
                           {i.monitor.name}
                         </Link>
                       ) : (
-                        <span className="text-pg-ui font-medium text-pg-ardosia truncate">
+                        <span className="text-pg-ui font-medium text-pg-texto truncate">
                           Monitor removido
                         </span>
                       )}
-                      <span className="text-pg-ui font-medium text-pg-ardosia whitespace-nowrap">
+                      <span className="text-pg-ui font-medium text-pg-texto whitespace-nowrap">
                         {formatDuration(i.duration_seconds)}
                       </span>
                     </div>
-                    <div className="text-pg-caption text-pg-neblina tabular-nums">
+                    <div className="text-pg-caption text-pg-texto-2 tabular-nums">
                       {timeRange(i.started_at, i.ended_at)}
                     </div>
-                    {i.closed_manually && <ManualBadge />}
+                    <ManualBadge incident={i} />
+                    <CloseNote incident={i} />
                     {i.last_error && (
-                      <p className="mt-0.5 mb-0 font-pg-mono text-pg-caption text-pg-neblina break-words line-clamp-2">
+                      <p className="mt-0.5 mb-0 font-pg-mono text-pg-caption text-pg-texto-2 break-words line-clamp-2">
                         {i.last_error}
                       </p>
                     )}
@@ -188,15 +216,15 @@ export function ResolvedTable({ incidents, total, onLoadMore, loadingMore }) {
             type="button"
             onClick={onLoadMore}
             disabled={loadingMore}
-            className="w-full min-h-[48px] border-t border-pg-borda text-pg-ui font-medium text-pg-ciano-fundo disabled:opacity-50 focus-visible:outline-2 focus-visible:outline focus-visible:-outline-offset-2 focus-visible:outline-pg-ciano"
+            className="w-full min-h-[48px] border-t border-pg-linha text-pg-ui font-medium text-pg-link disabled:opacity-50 focus-visible:outline-2 focus-visible:outline focus-visible:-outline-offset-2 focus-visible:outline-pg-ciano"
           >
             {loadingMore ? "Carregando…" : "Carregar mais"}
           </button>
         )}
       </div>
 
-      <div className="hidden md:flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-t border-pg-borda">
-        <span className="text-pg-caption text-pg-neblina" aria-live="polite">
+      <div className="hidden md:flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-t border-pg-linha">
+        <span className="text-pg-caption text-pg-texto-2" aria-live="polite">
           Mostrando {incidents.length} de {total}{" "}
           {total === 1 ? "incidente resolvido" : "incidentes resolvidos"}
         </span>

@@ -71,7 +71,7 @@ func TestNtfyNotifierDown(t *testing.T) {
 	n := NewNtfyNotifier(config.NtfyConfig{URL: f.srv.URL, Token: "tk_segredo"}, func() string { return "alertas" }, "https://pingou.exemplo.com")
 	m := &domain.Monitor{ID: "m1", Name: "API\r\nX-Evil: 1", Type: domain.TypeHTTP, URL: "https://api.test"}
 	errMsg := "connection refused"
-	n.NotifyDown(t.Context(), m, &domain.Incident{StartedAt: time.Now(), LastError: &errMsg})
+	notifyDown(t.Context(), n, m, &domain.Incident{StartedAt: time.Now(), LastError: &errMsg})
 
 	r := f.last(t)
 	if r.method != http.MethodPost || r.path != "/alertas" {
@@ -106,7 +106,7 @@ func TestNtfyNotifierRecoveryWithoutTokenOrLink(t *testing.T) {
 	n := NewNtfyNotifier(config.NtfyConfig{URL: f.srv.URL}, func() string { return "alertas" }, "")
 	started := time.Now().Add(-5 * time.Minute)
 	ended := time.Now()
-	n.NotifyRecovery(t.Context(), &domain.Monitor{Name: "API", Type: domain.TypeHTTP, URL: "https://api.test"},
+	notifyRecovery(t.Context(), n, &domain.Monitor{Name: "API", Type: domain.TypeHTTP, URL: "https://api.test"},
 		&domain.Incident{StartedAt: started, EndedAt: &ended})
 
 	r := f.last(t)
@@ -132,7 +132,7 @@ func TestNtfyNotifierHeartbeatNeverSendsPingToken(t *testing.T) {
 	n := NewNtfyNotifier(config.NtfyConfig{URL: f.srv.URL}, func() string { return "alertas" }, "https://p.test")
 	token := "ping-token-secreto"
 	m := &domain.Monitor{ID: "h1", Name: "Backup", Type: domain.TypeHeartbeat, PingToken: &token}
-	n.NotifyDown(t.Context(), m, &domain.Incident{StartedAt: time.Now()})
+	notifyDown(t.Context(), n, m, &domain.Incident{StartedAt: time.Now()})
 
 	r := f.last(t)
 	if strings.Contains(r.body, "Alvo") {
@@ -152,7 +152,7 @@ func TestNtfyNotifierSkipsWithoutTopic(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { calls.Add(1) }))
 	defer srv.Close()
 	n := NewNtfyNotifier(config.NtfyConfig{URL: srv.URL}, func() string { return "" }, "")
-	n.NotifyDown(t.Context(), &domain.Monitor{Name: "x"}, &domain.Incident{StartedAt: time.Now()})
+	notifyDown(t.Context(), n, &domain.Monitor{Name: "x"}, &domain.Incident{StartedAt: time.Now()})
 	if calls.Load() != 0 {
 		t.Fatal("publicou sem tópico")
 	}
@@ -232,20 +232,5 @@ func TestValidNtfyTopic(t *testing.T) {
 		if validNtfyTopic(s) {
 			t.Fatalf("%q não deveria valer", s)
 		}
-	}
-}
-
-// Um ntfy quebrado (erro ou panic) não impede os outros canais.
-func TestMultiNotifierNtfyFailureDoesNotBlockOthers(t *testing.T) {
-	ntfyDown := NewNtfyNotifier(config.NtfyConfig{URL: "http://127.0.0.1:1"}, func() string { return "t" }, "")
-	ntfyPanic := NewNtfyNotifier(config.NtfyConfig{URL: "http://x"}, func() string { panic("ntfy quebrado") }, "")
-	var calls atomic.Int64
-	n := NewMultiNotifier(ntfyDown, ntfyPanic, funcNotifier{func() { calls.Add(1) }})
-	n.NotifyDown(t.Context(), &domain.Monitor{Name: "x"}, &domain.Incident{StartedAt: time.Now()})
-	if !n.Wait(5 * time.Second) {
-		t.Fatal("Wait expirou")
-	}
-	if calls.Load() != 1 {
-		t.Fatalf("outro canal recebeu %d chamadas, want 1", calls.Load())
 	}
 }

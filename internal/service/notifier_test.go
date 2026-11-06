@@ -35,8 +35,8 @@ func TestWebhookPayloadByType(t *testing.T) {
 	}
 	for _, c := range cases {
 		for _, send := range []func(){
-			func() { n.NotifyDown(t.Context(), c.m, incident) },
-			func() { n.NotifyRecovery(t.Context(), c.m, incident) },
+			func() { notifyDown(t.Context(), n, c.m, incident) },
+			func() { notifyRecovery(t.Context(), n, c.m, incident) },
 		} {
 			send()
 			body := <-bodies
@@ -87,11 +87,11 @@ func TestWebhookDashboardURL(t *testing.T) {
 		"https://pingou.exemplo.com": str("https://pingou.exemplo.com/monitors/abc"),
 	} {
 		n := NewWebhookNotifier(func() string { return srv.URL }, publicURL)
-		n.NotifyDown(t.Context(), m, incident)
+		notifyDown(t.Context(), n, m, incident)
 		if got := dashboardURL(); !eqPtr(got, want) {
 			t.Fatalf("down, publicURL %q: dashboard_url = %v", publicURL, got)
 		}
-		n.NotifyRecovery(t.Context(), m, incident)
+		notifyRecovery(t.Context(), n, m, incident)
 		if got := dashboardURL(); !eqPtr(got, want) {
 			t.Fatalf("up, publicURL %q: dashboard_url = %v", publicURL, got)
 		}
@@ -177,5 +177,139 @@ func TestSendTestWebhook(t *testing.T) {
 	r := SendTestWebhook(t.Context(), "http://127.0.0.1:1/hook")
 	if r.OK || r.StatusCode != nil || r.Error == nil || strings.Contains(*r.Error, "127.0.0.1:1/hook") {
 		t.Fatalf("conexão recusada: %+v %v", r, *r.Error)
+	}
+}
+
+// Status fora de 2xx é falha (antes contava como "sent"); 2xx é sucesso.
+func TestWebhookSendStatusCodes(t *testing.T) {
+	for _, c := range []struct {
+		status  int
+		wantErr bool
+	}{{200, false}, {204, false}, {301, true}, {400, true}, {404, true}, {500, true}, {503, true}} {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, "corpo do receptor", c.status)
+			if c.status < 300 {
+				w.WriteHeader(c.status)
+			}
+		}))
+		n := NewWebhookNotifier(func() string { return srv.URL }, "")
+		err := notifyDown(t.Context(), n, &domain.Monitor{ID: "1", Name: "API", Type: domain.TypeHTTP, URL: "https://x.test"}, &domain.Incident{StartedAt: time.Now()})
+		srv.Close()
+		if (err != nil) != c.wantErr {
+			t.Errorf("status %d: err = %v, wantErr %v", c.status, err, c.wantErr)
+		}
+		if err != nil && strings.Contains(err.Error(), srv.URL) {
+			t.Errorf("status %d: erro com a URL: %v", c.status, err)
+		}
+	}
+}
+
+// Erro de rede devolve erro sem a URL (que pode ter token na query).
+func TestWebhookSendNetworkErrorHidesURL(t *testing.T) {
+	n := NewWebhookNotifier(func() string { return "http://127.0.0.1:1/hook?token=segredo" }, "")
+	err := notifyDown(t.Context(), n, &domain.Monitor{ID: "1", Name: "API", Type: domain.TypeHTTP, URL: "https://x.test"}, &domain.Incident{StartedAt: time.Now()})
+	if err == nil {
+		t.Fatal("erro esperado")
+	}
+	if strings.Contains(err.Error(), "segredo") || strings.Contains(err.Error(), "127.0.0.1:1/hook") {
+		t.Fatalf("erro vazou a URL: %v", err)
+	}
+}
+
+// Sem URL configurada o canal está desligado: nil, sem chamada (sem retry eterno).
+func TestWebhookSendEmptyURLIsNoop(t *testing.T) {
+	var calls int
+	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { calls++ }))
+	defer srv.Close()
+	n := NewWebhookNotifier(func() string { return "" }, "")
+	if err := notifyDown(t.Context(), n, &domain.Monitor{ID: "1", Name: "API"}, &domain.Incident{StartedAt: time.Now()}); err != nil {
+		t.Fatal(err)
+	}
+	if calls != 0 {
+		t.Fatalf("chamadas = %d, want 0", calls)
+	}
+}
+
+// O JSON ganha só o campo id (igual ao event_id); o timestamp é a hora do
+// evento, não a do envio.
+func TestWebhookPayloadHasEventIDAndEventTime(t *testing.T) {
+	bodies := make(chan string, 2)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		bodies <- string(b)
+	}))
+	defer srv.Close()
+	n := NewWebhookNotifier(func() string { return srv.URL }, "")
+	m := &domain.Monitor{ID: "1", Name: "API", Type: domain.TypeHTTP, URL: "https://x.test"}
+	occurred := time.Date(2026, 3, 4, 5, 6, 7, 0, time.UTC)
+
+	ev := testEvent(domain.EventCertExpiring, domain.NewCertSnapshot(m, domain.CertAlert{ExpiresAt: occurred.Add(72 * time.Hour), DaysLeft: 3, ThresholdDays: 7}, occurred))
+	for range 2 { // duas tentativas: mesmo corpo
+		if err := n.Send(t.Context(), ev); err != nil {
+			t.Fatal(err)
+		}
+	}
+	first, second := <-bodies, <-bodies
+	if first != second {
+		t.Fatalf("corpo mudou entre tentativas:\n%s\n%s", first, second)
+	}
+	var p map[string]any
+	if err := json.Unmarshal([]byte(first), &p); err != nil {
+		t.Fatal(err)
+	}
+	if p["id"] != ev.EventID || p["timestamp"] != "2026-03-04T05:06:07Z" || p["event"] != "cert_expiring" {
+		t.Fatalf("payload: %s", first)
+	}
+	// os demais campos seguem como antes
+	for _, k := range []string{"monitor", "last_error", "downtime_duration_seconds", "dashboard_url", "cert_expires_at", "days_left", "threshold_days"} {
+		if _, ok := p[k]; !ok {
+			t.Errorf("campo %q sumiu: %s", k, first)
+		}
+	}
+}
+
+// O botão de teste do webhook leva um id novo a cada envio.
+func TestSendTestWebhookHasID(t *testing.T) {
+	bodies := make(chan string, 1)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		bodies <- string(b)
+	}))
+	defer srv.Close()
+	if res := SendTestWebhook(t.Context(), srv.URL); !res.OK {
+		t.Fatalf("resultado: %+v", res)
+	}
+	var p struct{ ID, Event string }
+	if err := json.Unmarshal([]byte(<-bodies), &p); err != nil || p.ID == "" || p.Event != "test" {
+		t.Fatalf("payload do teste: %+v err=%v", p, err)
+	}
+}
+
+// O campo "event" do webhook usa monitor_down/monitor_up, não os tipos internos do outbox.
+func TestWebhookDownAndRecoveryEventNames(t *testing.T) {
+	bodies := make(chan string, 2)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		bodies <- string(b)
+	}))
+	defer srv.Close()
+	n := NewWebhookNotifier(func() string { return srv.URL }, "")
+	m := &domain.Monitor{ID: "m1", Name: "API", Type: domain.TypeHTTP}
+	i := &domain.Incident{ID: "i1", StartedAt: time.Now().Add(-90 * time.Second)}
+
+	for _, c := range []struct {
+		send func() error
+		want string
+	}{
+		{func() error { return notifyDown(t.Context(), n, m, i) }, "monitor_down"},
+		{func() error { return notifyRecovery(t.Context(), n, m, i) }, "monitor_up"},
+	} {
+		if err := c.send(); err != nil {
+			t.Fatal(err)
+		}
+		var p struct{ Event string }
+		if err := json.Unmarshal([]byte(<-bodies), &p); err != nil || p.Event != c.want {
+			t.Fatalf("event = %q (err %v), quer %q", p.Event, err, c.want)
+		}
 	}
 }
