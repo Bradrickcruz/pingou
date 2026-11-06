@@ -336,8 +336,8 @@
     "semantic_hash": ""
   },
   "internal/service/email_notifier.go": {
-    "mtime": 1793939008.8209012,
-    "seen": 1793939011.2184107,
+    "mtime": 1793939650.734909,
+    "seen": 1793939688.5631201,
     "ast_hash": "8d0bb236926303462d22e492361131ec",
     "semantic_hash": ""
   },
@@ -366,15 +366,15 @@
     "semantic_hash": ""
   },
   "internal/service/notifier.go": {
-    "mtime": 1793939008.8209012,
-    "seen": 1793939011.2186973,
-    "ast_hash": "5e5b5f7a47da950d3ffb19e236892ccc",
+    "mtime": 1793939655.4659111,
+    "seen": 1793939688.5632806,
+    "ast_hash": "bb37a1a05863e4a48ae75fe2bce35d48",
     "semantic_hash": ""
   },
   "internal/service/notifier_test.go": {
-    "mtime": 1793939008.8209012,
-    "seen": 1793939011.2186985,
-    "ast_hash": "1009796b1dc9fb856f9443c371bd7c38",
+    "mtime": 1793939663.0849144,
+    "seen": 1793939688.5632813,
+    "ast_hash": "c34bd58bf88a75e68b70e5d452df625e",
     "semantic_hash": ""
   },
   "internal/service/settings_service.go": {
@@ -900,9 +900,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1793939008.8009014,
-    "seen": 1793939011.2251456,
-    "ast_hash": "ba3ba00bb32169a4866b6ebb04aee9d7",
+    "mtime": 1793939681.490923,
+    "seen": 1793939688.5668788,
+    "ast_hash": "c83bfe5a8d5bfc4517bf2a5a3080c8d0",
     "semantic_hash": ""
   },
   "docker-compose.yml": {
@@ -912,9 +912,9 @@
     "semantic_hash": ""
   },
   "docs/implementacoes.md": {
-    "mtime": 1793939008.8099012,
-    "seen": 1793939011.2251654,
-    "ast_hash": "2336606a144829bcca0c06ff746a9def",
+    "mtime": 1793939681.4919229,
+    "seen": 1793939688.5669072,
+    "ast_hash": "ea07e72ac39f447bd467f736854dc42f",
     "semantic_hash": ""
   },
   "scripts/README.md": {
@@ -1242,14 +1242,14 @@
     "semantic_hash": ""
   },
   "IDEAS.md": {
-    "mtime": 1793939008.7999012,
-    "seen": 1793939011.2251058,
-    "ast_hash": "09a76e4d96ef2fcdf85b6912785e2206",
+    "mtime": 1793939681.4919229,
+    "seen": 1793939688.566824,
+    "ast_hash": "37bf5177163774a97a22525caf8864c2",
     "semantic_hash": ""
   },
   "internal/service/ntfy_notifier.go": {
-    "mtime": 1793939008.8209012,
-    "seen": 1793939011.2187092,
+    "mtime": 1793939650.735909,
+    "seen": 1793939688.5633063,
     "ast_hash": "40cd0cc7dd6702c528f138fba86850ab",
     "semantic_hash": ""
   },

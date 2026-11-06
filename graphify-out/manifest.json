@@ -103,26 +103,26 @@
   },
   "internal/database/migrations/0001_init.sql": {
     "mtime": 1777012405.3893824,
-    "seen": 1793879998.891295,
-    "ast_hash": "",
+    "seen": 1793939968.3438902,
+    "ast_hash": "cdf3d4043c780543a27d4cc148cf5555",
     "semantic_hash": ""
   },
   "internal/database/migrations/0002_add_duration_seconds_to_incidents.sql": {
     "mtime": 1777061129.9355462,
-    "seen": 1793879998.8912961,
-    "ast_hash": "",
+    "seen": 1793939968.3438928,
+    "ast_hash": "ab52761c5aed638df004b2cddba66e83",
     "semantic_hash": ""
   },
   "internal/database/migrations/0003_monitor_types.sql": {
     "mtime": 1793391650.2071128,
-    "seen": 1793879998.891297,
-    "ast_hash": "",
+    "seen": 1793939968.343894,
+    "ast_hash": "acc29bbbdeb940baaf9ab1e94647b53e",
     "semantic_hash": ""
   },
   "internal/database/migrations/0004_incidents_page.sql": {
     "mtime": 1793391650.2071128,
-    "seen": 1793879998.891298,
-    "ast_hash": "",
+    "seen": 1793939968.3438962,
+    "ast_hash": "b6bac1548426042243e703bf72f471e7",
     "semantic_hash": ""
   },
   "internal/database/migrations_test.go": {
@@ -1285,8 +1285,8 @@
   },
   "internal/database/migrations/0005_incident_closed_manually.sql": {
     "mtime": 1793565155.0309525,
-    "seen": 1793879998.8912995,
-    "ast_hash": "",
+    "seen": 1793939968.3438983,
+    "ast_hash": "657004d6f307a019e1515d89e7089ecc",
     "semantic_hash": ""
   },
   "cmd/pingou/commands/serve_test.go": {
@@ -1351,8 +1351,8 @@
   },
   "internal/database/migrations/0006_checks_indexes.sql": {
     "mtime": 1793638920.2396975,
-    "seen": 1793879998.8913007,
-    "ast_hash": "",
+    "seen": 1793939968.3439002,
+    "ast_hash": "18af34f825ef9a8cb5e8b5efbef3d22a",
     "semantic_hash": ""
   },
   "internal/repository/dbbench_test.go": {
@@ -1459,8 +1459,8 @@
   },
   "internal/database/migrations/0007_monitor_cert_expiry.sql": {
     "mtime": 1793638920.2396975,
-    "seen": 1793879998.8913019,
-    "ast_hash": "",
+    "seen": 1793939968.343903,
+    "ast_hash": "efe04d59cadeb14dc72cbf2c2303de92",
     "semantic_hash": ""
   },
   "internal/domain/maintenance.go": {
@@ -1537,14 +1537,14 @@
   },
   "internal/database/migrations/0008_pause_reason.sql": {
     "mtime": 1793826012.078335,
-    "seen": 1793879998.8913035,
-    "ast_hash": "",
+    "seen": 1793939968.3439054,
+    "ast_hash": "402f4f4ebf82f76c06984dceec9500c8",
     "semantic_hash": ""
   },
   "internal/database/migrations/0009_maintenance_windows.sql": {
     "mtime": 1793826012.078335,
-    "seen": 1793879998.8913047,
-    "ast_hash": "",
+    "seen": 1793939968.343907,
+    "ast_hash": "7707f49e98d759559d8353de9946bf44",
     "semantic_hash": ""
   },
   "web/src/components/maintenance/CancelWindowDialog.jsx": {
@@ -1743,6 +1743,12 @@
     "mtime": 1793939008.821901,
     "seen": 1793939011.2187157,
     "ast_hash": "db3ef8f512be3b4f94c7179c67e33cdc",
+    "semantic_hash": ""
+  },
+  "internal/database/migrations/0010_notification_outbox.sql": {
+    "mtime": 1793939008.8199012,
+    "seen": 1793939968.3439085,
+    "ast_hash": "100bd0d449229f297e8a40fbe8aa3af4",
     "semantic_hash": ""
   }
 }
