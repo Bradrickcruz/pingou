@@ -900,9 +900,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1793941067.811799,
-    "seen": 1793941218.1503553,
-    "ast_hash": "c83bfe5a8d5bfc4517bf2a5a3080c8d0",
+    "mtime": 1793942491.6439948,
+    "seen": 1793943230.2262986,
+    "ast_hash": "0cd480538b65c17a68ce7a343b316e5e",
     "semantic_hash": ""
   },
   "docker-compose.yml": {
@@ -1218,9 +1218,9 @@
     "semantic_hash": ""
   },
   "IDEAS.md": {
-    "mtime": 1793941067.8107991,
-    "seen": 1793941218.1503537,
-    "ast_hash": "37bf5177163774a97a22525caf8864c2",
+    "mtime": 1793943578.47152,
+    "seen": 1793943591.1161273,
+    "ast_hash": "245791322bb9e127953805bd063f3914",
     "semantic_hash": ""
   },
   "internal/service/ntfy_notifier.go": {
