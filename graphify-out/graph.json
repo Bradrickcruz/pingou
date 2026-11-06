@@ -7386,7 +7386,7 @@
       "node_kind": "heading",
       "norm_label": "alternativas consideradas e descartadas",
       "source_file": "plan-notification-retry.md",
-      "source_location": "L448"
+      "source_location": "L459"
     },
     {
       "id": "plan_notification_retry_conclu\u00eddo",
@@ -7446,7 +7446,7 @@
       "node_kind": "heading",
       "norm_label": "evidencias",
       "source_file": "plan-notification-retry.md",
-      "source_location": "L433"
+      "source_location": "L432"
     },
     {
       "id": "plan_notification_retry_file_structure",
@@ -7470,7 +7470,7 @@
       "node_kind": "heading",
       "norm_label": "notes",
       "source_file": "plan-notification-retry.md",
-      "source_location": "L438"
+      "source_location": "L449"
     },
     {
       "id": "plan_notification_retry_overview",
@@ -22834,7 +22834,7 @@
       "node_kind": "heading",
       "norm_label": "pendencias abertas",
       "source_file": "docs/implementacoes.md",
-      "source_location": "L649"
+      "source_location": "L653"
     },
     {
       "id": "docs_implementacoes_risco",
@@ -86983,7 +86983,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/implementacoes.md",
-      "source_location": "L649",
+      "source_location": "L653",
       "weight": 1.0
     },
     {
@@ -93473,7 +93473,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "plan-notification-retry.md",
-      "source_location": "L448",
+      "source_location": "L459",
       "weight": 1.0
     },
     {
@@ -93583,7 +93583,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "plan-notification-retry.md",
-      "source_location": "L438",
+      "source_location": "L449",
       "weight": 1.0
     },
     {
@@ -93660,7 +93660,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "plan-notification-retry.md",
-      "source_location": "L433",
+      "source_location": "L432",
       "weight": 1.0
     },
     {
@@ -110255,5 +110255,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "1f07395aba7baa7f0e682edea391f9907ff353c9"
+  "built_at_commit": "cb0da9d20a53f0588f2f3520263c28d2919db534"
 }

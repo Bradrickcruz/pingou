@@ -912,9 +912,9 @@
     "semantic_hash": ""
   },
   "docs/implementacoes.md": {
-    "mtime": 1793939681.4919229,
-    "seen": 1793939688.5669072,
-    "ast_hash": "ea07e72ac39f447bd467f736854dc42f",
+    "mtime": 1793940672.9562428,
+    "seen": 1793940693.8021789,
+    "ast_hash": "6cc14f9740cc4bb0fee5f3c915e80d9f",
     "semantic_hash": ""
   },
   "scripts/README.md": {
@@ -1674,9 +1674,9 @@
     "semantic_hash": ""
   },
   "plan-notification-retry.md": {
-    "mtime": 1793939008.821901,
-    "seen": 1793939011.2251658,
-    "ast_hash": "133442b9f9786726a7932b24687ea716",
+    "mtime": 1793940682.0679848,
+    "seen": 1793940693.80218,
+    "ast_hash": "241d3e61f5fb405a4c43553dc905af8c",
     "semantic_hash": ""
   },
   "plan-webhook-event-names.md": {

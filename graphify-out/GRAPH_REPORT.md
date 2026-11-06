@@ -1,7 +1,7 @@
 # Graph Report - pingou-health-checker  (2026-11-06)
 
 ## Corpus Check
-- 242 files · ~264,673 words
+- 242 files · ~265,100 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 17 file(s) not represented in the graph (top: (none) 11, .woff2 4, .example 1)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `1f07395a`
+- Built from commit: `cb0da9d2`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -158,8 +158,6 @@
 10. `Scheduler` - 29 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `⚠️ Notes` --references--> `ThemedImage()`  [INFERRED]
-  IDEAS.md → web/src/components/ui/ThemedImage.jsx
 - `Entregue` --references--> `MobileHeader()`  [INFERRED]
   docs/implementacoes.md → web/src/components/layout/MobileHeader.jsx
 - `Entregue` --references--> `matchesQuery()`  [INFERRED]
@@ -168,6 +166,8 @@
   docs/implementacoes.md → web/src/components/monitor-detail/ResponseChart.jsx
 - `Entregue` --references--> `TimeZoneProvider()`  [INFERRED]
   docs/implementacoes.md → web/src/hooks/useTimeZone.jsx
+- `Task T3: Núcleo do tema (lib, hook, script inline)` --references--> `getPreference()`  [INFERRED]
+  tasks/plano-dark-mode.md → web/src/lib/theme.js
 
 ## Import Cycles
 - None detected.
@@ -611,7 +611,7 @@ Cohesion: 0.07
 Nodes (34): go_pkg_crypto_ecdsa, go_pkg_crypto_elliptic, go_pkg_crypto_rand, go_pkg_crypto_subtle, go_pkg_crypto_x509, go_pkg_crypto_x509_pkix, go_pkg_encoding_hex, go_pkg_encoding_pem (+26 more)
 
 ## Knowledge Gaps
-- **620 isolated node(s):** `💡 Ideias de evolução`, `💡 Idea`, `🎯 Goal`, `📦 Initial Scope`, `🚧 Out of Scope` (+615 more)
+- **620 isolated node(s):** `Decisões`, `Limitações conhecidas`, `Descartado`, `Entregue`, `Decisões` (+615 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 740 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **21 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -619,12 +619,12 @@ Nodes (34): go_pkg_crypto_ecdsa, go_pkg_crypto_elliptic, go_pkg_crypto_rand, go_
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Histórico de implementações (planos aplicados)` connect `Histórico de implementações (planos aplicados)` to `Pingou README`, `theme.js`, `5. Remodelagem mobile`, `11. Fuso horário + desligamento ordenado`, `12. Índices e desempenho do banco`, `13. Aviso de expiração do certificado SSL`, `17. Retry de notificações (outbox)`, `MonitorDetail.jsx`, `8. Notificação via ntfy`, `6. E-mail (SMTP) e envio fora do lock`, `1. Tipos de check (HTTP, TCP, Heartbeat) + redesign do painel`, `9. Eixo Y dinâmico + gráfico de pings`, `10. Pausar monitor fecha o incidente`, `14. Manutenção: pausa com motivo e janela agendada`, `7. Largura no desktop + busca parcial`?**
-  _High betweenness centrality (0.020) - this node is a cross-community bridge._
+  _High betweenness centrality (0.017) - this node is a cross-community bridge._
 - **Why does `ThemedImage()` connect `main.jsx` to `theme.js`, `🧩 Task: Páginas públicas de status`, `Dashboard.jsx`, `react`?**
-  _High betweenness centrality (0.013) - this node is a cross-community bridge._
-- **Why does `devDependencies` connect `devDependencies` to `package.json`?**
-  _High betweenness centrality (0.010) - this node is a cross-community bridge._
-- **What connects `💡 Ideias de evolução`, `💡 Idea`, `🎯 Goal` to the rest of the system?**
+  _High betweenness centrality (0.016) - this node is a cross-community bridge._
+- **Why does `react` connect `react` to `theme.js`, `MaintenanceModal.jsx`, `package.json`, `MonitorForm.jsx`, `timezone.js`, `MonitorDetail.jsx`, `format.js`, `Dashboard.jsx`, `main.jsx`?**
+  _High betweenness centrality (0.012) - this node is a cross-community bridge._
+- **What connects `Decisões`, `Limitações conhecidas`, `Descartado` to the rest of the system?**
   _620 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `MonitorForm.jsx` be split into smaller, more focused modules?**
   _Cohesion score 0.13043478260869565 - nodes in this community are weakly interconnected._
