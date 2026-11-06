@@ -104,25 +104,25 @@
   "internal/database/migrations/0001_init.sql": {
     "mtime": 1777012405.3893824,
     "seen": 1793945023.358299,
-    "ast_hash": "cdf3d4043c780543a27d4cc148cf5555",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "internal/database/migrations/0002_add_duration_seconds_to_incidents.sql": {
     "mtime": 1777061129.9355462,
     "seen": 1793945023.3583,
-    "ast_hash": "ab52761c5aed638df004b2cddba66e83",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "internal/database/migrations/0003_monitor_types.sql": {
     "mtime": 1793391650.2071128,
     "seen": 1793945023.3583007,
-    "ast_hash": "acc29bbbdeb940baaf9ab1e94647b53e",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "internal/database/migrations/0004_incidents_page.sql": {
     "mtime": 1793391650.2071128,
     "seen": 1793945023.3583014,
-    "ast_hash": "b6bac1548426042243e703bf72f471e7",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "internal/database/migrations_test.go": {
@@ -462,9 +462,9 @@
     "semantic_hash": ""
   },
   "web/package.json": {
-    "mtime": 1793944956.8266377,
-    "seen": 1793945023.3583786,
-    "ast_hash": "d47953c76a1a03a097d6924bab90ac88",
+    "mtime": 1793945117.1630223,
+    "seen": 1793945118.2051775,
+    "ast_hash": "ef041af146476f34984f72019617b89c",
     "semantic_hash": ""
   },
   "web/postcss.config.js": {
@@ -1262,7 +1262,7 @@
   "internal/database/migrations/0005_incident_closed_manually.sql": {
     "mtime": 1793565155.0309525,
     "seen": 1793945023.3583024,
-    "ast_hash": "657004d6f307a019e1515d89e7089ecc",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "cmd/pingou/commands/serve_test.go": {
@@ -1328,7 +1328,7 @@
   "internal/database/migrations/0006_checks_indexes.sql": {
     "mtime": 1793638920.2396975,
     "seen": 1793945023.3583033,
-    "ast_hash": "18af34f825ef9a8cb5e8b5efbef3d22a",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "internal/repository/dbbench_test.go": {
@@ -1436,7 +1436,7 @@
   "internal/database/migrations/0007_monitor_cert_expiry.sql": {
     "mtime": 1793638920.2396975,
     "seen": 1793945023.3583043,
-    "ast_hash": "efe04d59cadeb14dc72cbf2c2303de92",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "internal/domain/maintenance.go": {
@@ -1514,13 +1514,13 @@
   "internal/database/migrations/0008_pause_reason.sql": {
     "mtime": 1793826012.078335,
     "seen": 1793945023.3583057,
-    "ast_hash": "402f4f4ebf82f76c06984dceec9500c8",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "internal/database/migrations/0009_maintenance_windows.sql": {
     "mtime": 1793826012.078335,
     "seen": 1793945023.3583064,
-    "ast_hash": "7707f49e98d759559d8353de9946bf44",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "web/src/components/maintenance/CancelWindowDialog.jsx": {
@@ -1706,7 +1706,7 @@
   "internal/database/migrations/0010_notification_outbox.sql": {
     "mtime": 1793941067.8377986,
     "seen": 1793945023.3583071,
-    "ast_hash": "100bd0d449229f297e8a40fbe8aa3af4",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "docs/modelo-plano-dev-extended.md": {
