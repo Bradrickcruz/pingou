@@ -1714,5 +1714,17 @@
     "seen": 1793941526.6740348,
     "ast_hash": "4c4c5c317abdbf7bddf56748f41e62f3",
     "semantic_hash": ""
+  },
+  "plan-aviso-manutencao.md": {
+    "mtime": 1793942228.5130334,
+    "seen": 1793942244.276483,
+    "ast_hash": "28d0caac7d38cd6850827ca6650ce0ca",
+    "semantic_hash": ""
+  },
+  "plan-status-http.md": {
+    "mtime": 1793942229.4840274,
+    "seen": 1793942244.2764843,
+    "ast_hash": "93c4f4c088924b8ec4644188222f5eec",
+    "semantic_hash": ""
   }
 }
