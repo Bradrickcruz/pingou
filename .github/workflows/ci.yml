@@ -1,0 +1,94 @@
+name: CI
+
+# Só valida: testes, lint e build. Não publica nada e não usa segredo nenhum.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Um push novo na mesma branch ou no mesmo PR cancela a execução antiga.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run check:tokens
+      - run: npm test
+      - run: npm run build
+
+      # O binário Go embute estes arquivos (go:embed em internal/handler).
+      - uses: actions/upload-artifact@v7
+        with:
+          name: web-dist
+          path: internal/handler/dist
+          if-no-files-found: error
+          retention-days: 1
+
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    needs: frontend
+    env:
+      CGO_ENABLED: "1" # exigido pelo go-sqlite3
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: web-dist
+          path: internal/handler/dist
+
+      - name: Formatação (gofumpt)
+        run: |
+          go install mvdan.cc/gofumpt@v0.12.0
+          fora=$("$(go env GOPATH)/bin/gofumpt" -l cmd internal scripts)
+          if [ -n "$fora" ]; then
+            echo "Arquivos fora do formato (rode 'make fmt'):"
+            echo "$fora"
+            exit 1
+          fi
+
+      - run: go vet ./...
+      - run: go test -race ./...
+      - run: go build -o bin/pingou ./cmd/pingou
+
+  docker:
+    name: Docker (build sem publicar)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

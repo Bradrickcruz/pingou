@@ -2,6 +2,8 @@
 
 # Pingou
 
+[![CI](https://github.com/Bradrickcruz/pingou/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Bradrickcruz/pingou/actions/workflows/ci.yml)
+
 > **Rodou, pingou.** Monitor de uptime self-hosted, leve e open-source, escrito em Go.
 
 O Pingou verifica se seus serviços estão no ar, guarda o histórico em SQLite, abre e fecha incidentes quando o estado muda e avisa por webhook. Tudo em **um binário só**, com o dashboard web embutido.
@@ -332,7 +334,17 @@ make build
 
 O binário é gerado em `bin/pingou`.
 
-Ainda não há workflow de GitHub Actions: a validação é local. Rode `make test` (testes Go) e, no frontend, `npm test` dentro de `web/`. `make build` e `make docker-build` completam a checagem quando necessário.
+### Validação automática (CI)
+
+O GitHub Actions (`.github/workflows/ci.yml`) valida o código em dois casos: **push na `main`** e **pull request para a `main`**. Ele não publica nada e não usa segredos.
+
+| Job      | O que roda                                                                                |
+| -------- | ----------------------------------------------------------------------------------------- |
+| Frontend | `npm ci`, ESLint, Prettier (`format:check`), `check:tokens`, `npm test` e build           |
+| Backend  | `gofumpt -l` (falha se houver arquivo fora do formato), `go vet`, `go test -race` e build |
+| Docker   | build da imagem, **sem publicar**                                                         |
+
+Nas outras branches a validação continua local: `make test` (testes Go), `npm test` dentro de `web/`, e `make build` e `make docker-build` quando necessário. A publicação no Docker Hub ainda é manual.
 
 ### Convenções de formatação
 

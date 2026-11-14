@@ -1,7 +1,7 @@
 # 💡 Ideias de evolução
 
 > Só o que ainda **não foi implementado**. O que já entrou está em `docs/` no histórico de implementações.
-> Atualizado em 2026-11-06.
+> Atualizado em 2026-11-14.
 
 **Resumo**
 
@@ -13,7 +13,7 @@
 | 4   | Suporte a inglês (e outros idiomas) | Para detalhar          | medium     |
 | 8   | Métricas para Prometheus e Grafana  | Aguardando decisão     | low        |
 | 9   | Ver o que aconteceu com os avisos   | Aguardando decisão     | medium     |
-| 10  | CI no GitHub Actions                | Aguardando decisão     | medium     |
+| 10  | Publicar a imagem por tag (CI)      | Aguardando decisão     | medium     |
 | 11  | Menos RAM no cenário grande         | Aguardando decisão     | low        |
 | 12  | Janela de manutenção recorrente     | Aguardando decisão     | low        |
 
@@ -413,52 +413,42 @@ medium (pequena, e fecha a brecha que o retry deixou: o aviso não se perde, mas
 
 ---
 
-# 🧩 Task: CI no GitHub Actions
+# 🧩 Task: Publicar a imagem por tag (CI)
 
 ## 💡 Idea
 
-Hoje a validação (`make test`, `npm test`, build) e a publicação no Docker Hub são manuais. Dá para esquecer um passo. E a imagem publicada depende do comando certo na hora: versão, commit, data e as duas arquiteturas.
+A validação automática já existe (`.github/workflows/ci.yml`, ver `docs/implementacoes.md`, item 19). A publicação no Docker Hub continua manual: um `docker buildx build` à mão, com versão, commit, data e as duas arquiteturas digitados na hora.
 
-A ideia é o GitHub rodar os testes e o build a cada push, e publicar a imagem quando uma tag de versão for criada.
+A ideia é o GitHub publicar a imagem quando uma tag de versão for criada.
 
 ## 🎯 Goal
 
-Todo código que entra foi testado e compilado do mesmo jeito, e publicar uma versão vira criar uma tag.
+Publicar uma versão vira criar uma tag.
 
 ## 📦 Initial Scope
 
-**Etapa 1: validar (sem segredo nenhum).** Arquivo `.github/workflows/ci.yml`:
-
-- Roda em `push` e em `pull_request`. Cancela a execução antiga da mesma branch.
-- **Backend:** Go na versão do `go.mod`, build do frontend antes (o binário embute os arquivos do `web/`), `gofumpt -l` (falha se listar algum arquivo), `go vet`, `make test` e `make build`.
-- **Frontend:** `npm ci`, lint (se existir), `npm test` e `scripts/check-tokens.sh`.
-- **Docker:** build da imagem **sem publicar**, para conferir que o Dockerfile funciona.
-- Selo de estado no README.
-
-**Etapa 2: publicar.** Arquivo `.github/workflows/release.yml`:
+Arquivo `.github/workflows/release.yml`:
 
 - Roda só quando uma tag `vX.Y.Z` é criada.
-- Só publica se os testes da etapa 1 passarem **no mesmo commit** (`needs`).
+- Só publica se os testes passarem **no mesmo commit** (`needs`).
 - Imagem multi-arquitetura (`linux/amd64` e `linux/arm64`) em `bryanhcruz/pingou`, com as tags `X.Y.Z` (sem o `v`, como hoje) e `latest`. Build args `VERSION`, `COMMIT` e `BUILD_DATE`.
 - Login no Docker Hub com **token de acesso** guardado como secret do GitHub, nunca a senha.
 - `latest` só para versão estável (tag sem sufixo como `-rc1`).
-- README: trocar a lista manual de "Tags disponíveis" por um link para as tags no Docker Hub, e remover a frase "Ainda não há workflow".
+- README: trocar a lista manual de "Tags disponíveis" por um link para as tags no Docker Hub.
 
 ## 🚧 Out of Scope
 
 - Binários prontos na página de releases. Compilar com CGO para arm64 pede toolchain de cruzamento: é outra ideia.
 - Deploy automático em servidor.
 - `make docker-startup-test` e `make docker-size` no CI (pesados; seguem manuais).
-- Dependabot, `govulncheck` e `npm audit`. São bons, mas depois da etapa 1 estável.
 - Notas de versão geradas automaticamente.
 
 ## 🔍 Context
 
-O README diz: "Ainda não há workflow de GitHub Actions: a validação é local." A publicação é um `docker buildx build` à mão, descrito no README. As tags de hoje são `latest`, `1.3.1` e `1.3.0`. O driver do SQLite exige CGO (`CGO_ENABLED=1`). Os runners Ubuntu já têm `gcc`. O `go-sqlite3` compila o SQLite em C, o que é lento sem cache.
+A publicação é um `docker buildx build` à mão, descrito no README. O driver do SQLite exige CGO (`CGO_ENABLED=1`). O `go-sqlite3` compila o SQLite em C, o que é lento sem cache.
 
 ## ⚠️ Notes
 
-- **O primeiro ganho é num clone limpo.** Rodar os testes num clone limpo mostra o que só passa na sua máquina: `.env`, `~/.pingou/pingou.lock`, ou o `web/dist` que precisa existir para o `embed.FS` compilar. Verificar isso antes de escrever o workflow.
 - **O arm64 é a parte cara.** Sob emulação (QEMU), compilar o SQLite em C é lento. Opções:
   - emulação com cache de camadas (simples, lenta no primeiro build);
   - um job em runner arm64 nativo e juntar as duas imagens numa tag só (mais rápido; runners arm64 são grátis em repositório público).
@@ -470,13 +460,10 @@ O README diz: "Ainda não há workflow de GitHub Actions: a validação é local
 - **Actions de terceiros.** As oficiais (`actions/*` e `docker/*`) podem ficar por versão. Qualquer outra, fixar pelo hash do commit.
 - **A tag vira a fonte da versão.** Hoje o número aparece no README, no `--build-arg` e na tag, tudo à mão. Com CI, nasce da tag. Assim o `pingou version` e o `/api/info` da imagem batem com a tag.
 - **Tag errada publica imagem errada.** Mitigação: o `needs` nos testes, e criar tag só a partir da `main`. As tags do Docker Hub podem ser reescritas, e nada impede isso. Regra: nunca reescrever uma tag já publicada.
-- **`go test -race`.** O worker de notificações e o agendador mexem no mesmo estado, e a ideia 8 acrescenta mais um leitor. Vale uma rodada com `-race`. Medir o tempo antes de decidir se roda sempre ou só na `main`.
-- **Cache.** Módulos do Go e do npm (`setup-go` e `setup-node`) e camadas do Docker (`type=gha`), para o SQLite em C não recompilar a cada execução.
-- **Trabalho solo.** O CI não substitui revisão, mas pega o que o cansaço esquece: formatação, cor crua fora dos tokens, teste que só passa na sua máquina.
+- **Depois, se fizer falta:** Dependabot, `govulncheck` e `npm audit`.
 - **Decisões que faltam** (por isso "Aguardando decisão"):
   1. O repositório é **público**? Isso decide os minutos grátis e o runner arm64.
   2. **arm64:** emulação (sugestão) ou runner nativo?
-  3. Começar **só pela etapa 1** (sugestão) e deixar a publicação por tag para depois?
 
 ## 🏷️ Type
 
@@ -484,7 +471,7 @@ melhoria (infraestrutura)
 
 ## ⏱️ Priority
 
-medium (a etapa 1 é pequena e não precisa de segredo nenhum)
+medium
 
 ---
 

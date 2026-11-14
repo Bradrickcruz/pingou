@@ -699,6 +699,26 @@ Coluna `batch_id`; colunas `start_notified_at`/`end_notified_at`; enfileirar dep
 
 ---
 
+## 19. CI no GitHub Actions (validação)
+
+### Entregue
+
+- `.github/workflows/ci.yml`. Roda só em **push na `main`** e em **pull request para a `main`**. Um push novo cancela a execução antiga do mesmo PR ou branch. Permissão mínima (`contents: read`), sem segredo nenhum, e não publica nada.
+- **Frontend:** `npm ci`, ESLint, Prettier (`format:check`), `check:tokens`, `npm test` e build. O `dist` gerado vira um artefato.
+- **Backend:** baixa o `dist` (o binário o embute com `go:embed`), Go na versão do `go.mod`, `gofumpt -l` (falha se listar arquivo), `go vet`, `go test -race` e build com `CGO_ENABLED=1`.
+- **Docker:** build da imagem **sem publicar**, com cache de camadas (`type=gha`).
+- Selo de estado no README.
+- Cinco arquivos Go estavam fora do formato do `gofumpt` e foram formatados (sem mudança de comportamento).
+
+### Decisões
+
+- **Só `main`:** as outras branches (como a `develop`) não gastam minutos de CI. O custo: um erro só aparece quando o PR para a `main` é aberto.
+- **`gofumpt` fixado em `v0.12.0`** e só em `cmd`, `internal` e `scripts`, para uma versão nova da ferramenta não quebrar o CI sozinha.
+- **`-race` sempre:** os testes com `-race` levaram cerca de 1 min localmente.
+- **Fora:** a publicação por tag continua manual (ideia 10 do `IDEAS.md`).
+
+---
+
 ## Pendências abertas
 
 - **Retry de notificações (item 17):** QA manual que falta com o binário real: botões de teste, e-mail/ntfy/`cert_expiring` ponta a ponta e receptor com 500 por ~3 min.
