@@ -30,9 +30,9 @@
     "semantic_hash": ""
   },
   "cmd/pingou/commands/rm.go": {
-    "mtime": 1777837480.0230563,
-    "seen": 1793825855.9716673,
-    "ast_hash": "c137cf8053ced30e37e3fff475a64de8",
+    "mtime": 1794679175.7911866,
+    "seen": 1794679192.007648,
+    "ast_hash": "8c03e2543f8e86ae3a6070058519008b",
     "semantic_hash": ""
   },
   "cmd/pingou/commands/root.go": {
@@ -104,25 +104,25 @@
   "internal/database/migrations/0001_init.sql": {
     "mtime": 1777012405.3893824,
     "seen": 1793945914.8520727,
-    "ast_hash": "cdf3d4043c780543a27d4cc148cf5555",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "internal/database/migrations/0002_add_duration_seconds_to_incidents.sql": {
     "mtime": 1777061129.9355462,
     "seen": 1793945914.8520734,
-    "ast_hash": "ab52761c5aed638df004b2cddba66e83",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "internal/database/migrations/0003_monitor_types.sql": {
     "mtime": 1793391650.2071128,
     "seen": 1793945914.852074,
-    "ast_hash": "acc29bbbdeb940baaf9ab1e94647b53e",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "internal/database/migrations/0004_incidents_page.sql": {
     "mtime": 1793391650.2071128,
     "seen": 1793945914.852075,
-    "ast_hash": "b6bac1548426042243e703bf72f471e7",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "internal/database/migrations_test.go": {
@@ -900,9 +900,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1793945337.9957619,
-    "seen": 1793945914.8522227,
-    "ast_hash": "03b4704f5928383574f6e7879619369f",
+    "mtime": 1794679175.7911866,
+    "seen": 1794679192.0078402,
+    "ast_hash": "6032f418f513dd5fee94b16aecfeec33",
     "semantic_hash": ""
   },
   "docker-compose.yml": {
@@ -912,9 +912,9 @@
     "semantic_hash": ""
   },
   "docs/implementacoes.md": {
-    "mtime": 1793945337.9967618,
-    "seen": 1793945914.852224,
-    "ast_hash": "e946bbefcc615e65b6506d7a332aef6c",
+    "mtime": 1794679175.7921867,
+    "seen": 1794679192.0078418,
+    "ast_hash": "822ebc06680c12d270ec7827cd26cbab",
     "semantic_hash": ""
   },
   "scripts/README.md": {
@@ -1218,15 +1218,15 @@
     "semantic_hash": ""
   },
   "IDEAS.md": {
-    "mtime": 1793945337.9957619,
-    "seen": 1793945914.8522208,
-    "ast_hash": "20d986edd3e42c2aeb269c47a23f1125",
+    "mtime": 1794679175.7901866,
+    "seen": 1794679192.0078385,
+    "ast_hash": "2bbc7127fd3449c8aeaf795a8d65de0e",
     "semantic_hash": ""
   },
   "internal/service/ntfy_notifier.go": {
-    "mtime": 1793945338.0477617,
-    "seen": 1793945914.852134,
-    "ast_hash": "011501fb14e16da7d8ed4e92c727c9ec",
+    "mtime": 1794679175.7921867,
+    "seen": 1794679192.0077472,
+    "ast_hash": "d32420461e4ced2abe9b951b98cea143",
     "semantic_hash": ""
   },
   "internal/service/ntfy_notifier_test.go": {
@@ -1262,7 +1262,7 @@
   "internal/database/migrations/0005_incident_closed_manually.sql": {
     "mtime": 1793565155.0309525,
     "seen": 1793945914.8520758,
-    "ast_hash": "657004d6f307a019e1515d89e7089ecc",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "cmd/pingou/commands/serve_test.go": {
@@ -1328,13 +1328,13 @@
   "internal/database/migrations/0006_checks_indexes.sql": {
     "mtime": 1793638920.2396975,
     "seen": 1793945914.8520765,
-    "ast_hash": "18af34f825ef9a8cb5e8b5efbef3d22a",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "internal/repository/dbbench_test.go": {
-    "mtime": 1793945338.0457616,
-    "seen": 1793945914.8521056,
-    "ast_hash": "52e82a895292e1ff4ed3e4457edb7a38",
+    "mtime": 1794679175.7921867,
+    "seen": 1794679192.0077095,
+    "ast_hash": "810459728e13dd25a030b40dc0a09be0",
     "semantic_hash": ""
   },
   "internal/repository/queries.go": {
@@ -1436,7 +1436,7 @@
   "internal/database/migrations/0007_monitor_cert_expiry.sql": {
     "mtime": 1793638920.2396975,
     "seen": 1793945914.8520777,
-    "ast_hash": "efe04d59cadeb14dc72cbf2c2303de92",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "internal/domain/maintenance.go": {
@@ -1514,13 +1514,13 @@
   "internal/database/migrations/0008_pause_reason.sql": {
     "mtime": 1793945338.0447617,
     "seen": 1793945914.8520792,
-    "ast_hash": "402f4f4ebf82f76c06984dceec9500c8",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "internal/database/migrations/0009_maintenance_windows.sql": {
     "mtime": 1793945338.0447617,
     "seen": 1793945914.8520799,
-    "ast_hash": "7707f49e98d759559d8353de9946bf44",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "web/src/components/maintenance/CancelWindowDialog.jsx": {
@@ -1686,9 +1686,9 @@
     "semantic_hash": ""
   },
   "internal/service/outbox_state_machine_test.go": {
-    "mtime": 1793945338.0477617,
-    "seen": 1793945914.8521357,
-    "ast_hash": "832ae00ccb5232f3ef101aa9e7b724cc",
+    "mtime": 1794679175.7921867,
+    "seen": 1794679192.007749,
+    "ast_hash": "8a57d67ae151f7078b88b88323534cca",
     "semantic_hash": ""
   },
   "internal/service/outbox_worker.go": {
@@ -1706,7 +1706,7 @@
   "internal/database/migrations/0010_notification_outbox.sql": {
     "mtime": 1793945338.0447617,
     "seen": 1793945914.8520806,
-    "ast_hash": "100bd0d449229f297e8a40fbe8aa3af4",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "docs/modelo-plano-dev-extended.md": {
@@ -1746,15 +1746,27 @@
     "semantic_hash": ""
   },
   "internal/service/maintenance_notice_test.go": {
-    "mtime": 1793945338.0467618,
-    "seen": 1793945914.8521283,
-    "ast_hash": "a88865b8189d612efc20eb9a8bf2957d",
+    "mtime": 1794679175.7921867,
+    "seen": 1794679192.0077412,
+    "ast_hash": "eb2c67a42ce261aecd216e9cff04e4e8",
     "semantic_hash": ""
   },
   "web/src/components/settings/MaintenanceNoticesCard.jsx": {
     "mtime": 1793945338.0507617,
     "seen": 1793945914.8521729,
     "ast_hash": "c5176b5a66fa22294319754120c66f6b",
+    "semantic_hash": ""
+  },
+  ".vscode/settings.json": {
+    "mtime": 1794679123.8352938,
+    "seen": 1794679192.0076404,
+    "ast_hash": "db23d3342541b899eaa884e97d592259",
+    "semantic_hash": ""
+  },
+  ".github/workflows/ci.yml": {
+    "mtime": 1794679175.7901866,
+    "seen": 1794679192.0078297,
+    "ast_hash": "6868890fcf19d10f446e1ceffadac689",
     "semantic_hash": ""
   }
 }
