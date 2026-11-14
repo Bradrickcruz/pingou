@@ -485,8 +485,11 @@ func TestResultsSameWithOldIndex(t *testing.T) {
 		add(ms, err)
 		add(svc.Summaries(ctx, ms))
 		for _, f := range []domain.IncidentFilter{
-			{}, {Status: domain.IncidentStatusOpen}, {Status: domain.IncidentStatusResolved},
-			{MonitorID: "m1"}, {Limit: 5, Offset: 10},
+			{},
+			{Status: domain.IncidentStatusOpen},
+			{Status: domain.IncidentStatusResolved},
+			{MonitorID: "m1"},
+			{Limit: 5, Offset: 10},
 		} {
 			l, total, err := incidents.FindAll(ctx, f)
 			add([]any{l, total}, err)

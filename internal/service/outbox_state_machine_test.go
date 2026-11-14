@@ -264,6 +264,7 @@ func (c *countingChannel) Send(context.Context, domain.OutboxEvent) error {
 	c.n++
 	return nil
 }
+
 func (c *countingChannel) count() int {
 	c.mu.Lock()
 	defer c.mu.Unlock()

@@ -24,7 +24,7 @@ Exemplo:
 Para proteger o comando, use a flag --key:
   pingou rm --id 019def55-0c92-76a5-a7c4-b573ab447ac2 --key SUA_API_KEY`,
 	RunE:              runRM,
-	PersistentPreRunE:  requireKey,
+	PersistentPreRunE: requireKey,
 	DisableAutoGenTag: true,
 }
 

@@ -25,8 +25,10 @@ func maintenanceEvent(eventType string, n int, reason *string) domain.OutboxEven
 		ws = append(ws, &domain.MaintenanceWindow{
 			MonitorID: id, StartsAt: noticeAt.Add(-4 * time.Second), EndsAt: noticeAt.Add(2 * time.Hour), Reason: reason,
 		})
-		ms = append(ms, &domain.Monitor{ID: id, Name: fmt.Sprintf("API %d", i), Type: domain.TypeHTTP,
-			URL: "https://x.test/" + id, PingToken: &token})
+		ms = append(ms, &domain.Monitor{
+			ID: id, Name: fmt.Sprintf("API %d", i), Type: domain.TypeHTTP,
+			URL: "https://x.test/" + id, PingToken: &token,
+		})
 	}
 	return testEvent(eventType, domain.NewMaintenanceSnapshot(ws, ms, noticeAt))
 }

@@ -92,27 +92,35 @@ func (n *NtfyNotifier) Send(ctx context.Context, ev domain.OutboxEvent) error {
 	switch ev.EventType {
 	case domain.EventDown:
 		i := ev.Snapshot.AsIncident()
-		msg = ntfyMessage{title: ntfyTitle(subjectDown(m)), body: bodyFor(m, i, false, n.publicURL, n.loc()),
-			priority: "high", tags: "rotating_light", click: click}
+		msg = ntfyMessage{
+			title: ntfyTitle(subjectDown(m)), body: bodyFor(m, i, false, n.publicURL, n.loc()),
+			priority: "high", tags: "rotating_light", click: click,
+		}
 	case domain.EventUp:
 		i := ev.Snapshot.AsIncident()
-		msg = ntfyMessage{title: ntfyTitle(subjectUp(m, i)), body: bodyFor(m, i, true, n.publicURL, n.loc()),
-			priority: "default", tags: "white_check_mark", click: click}
+		msg = ntfyMessage{
+			title: ntfyTitle(subjectUp(m, i)), body: bodyFor(m, i, true, n.publicURL, n.loc()),
+			priority: "default", tags: "white_check_mark", click: click,
+		}
 	case domain.EventCertExpiring:
 		a := ev.Snapshot.AsCertAlert()
 		priority := "default"
 		if a.ThresholdDays <= domain.CertAlertFinalDays {
 			priority = "high"
 		}
-		msg = ntfyMessage{title: ntfyTitle(subjectCert(m, a)), body: certBody(m, a, n.publicURL, n.loc()),
-			priority: priority, tags: "lock,warning", click: click}
+		msg = ntfyMessage{
+			title: ntfyTitle(subjectCert(m, a)), body: certBody(m, a, n.publicURL, n.loc()),
+			priority: priority, tags: "lock,warning", click: click,
+		}
 	case domain.EventMaintenanceStarted, domain.EventMaintenanceEnded:
 		mt, err := maintenanceSnapshot(ev)
 		if err != nil {
 			return err
 		}
-		msg = ntfyMessage{title: ntfyTitle(subjectMaintenance(ev.EventType, mt)), body: maintenanceBody(ev.EventType, mt, n.publicURL, n.loc()),
-			priority: "default", tags: "wrench", click: maintenanceLink(n.publicURL)}
+		msg = ntfyMessage{
+			title: ntfyTitle(subjectMaintenance(ev.EventType, mt)), body: maintenanceBody(ev.EventType, mt, n.publicURL, n.loc()),
+			priority: "default", tags: "wrench", click: maintenanceLink(n.publicURL),
+		}
 	default:
 		return fmt.Errorf("unknown event type %q", ev.EventType)
 	}
