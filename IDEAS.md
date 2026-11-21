@@ -1,7 +1,7 @@
 # 💡 Ideias de evolução
 
 > Só o que ainda **não foi implementado**. O que já entrou está em `docs/` no histórico de implementações.
-> Atualizado em 2026-11-14.
+> Atualizado em 2026-11-21.
 
 **Resumo**
 
@@ -16,6 +16,8 @@
 | 10  | Publicar a imagem por tag (CI)      | Aguardando decisão     | medium     |
 | 11  | Menos RAM no cenário grande         | Aguardando decisão     | low        |
 | 12  | Janela de manutenção recorrente     | Aguardando decisão     | low        |
+| 13  | URL sem protocolo vira HTTPS        | Para detalhar          | low        |
+| 14  | Nome de monitor único               | Para detalhar          | medium     |
 
 Mais abaixo: ideias [candidatas](#-candidatas-ainda-não-decididas), [adiadas](#-adiadas) e [descartadas](#-descartadas).
 
@@ -595,6 +597,96 @@ feature
 ## ⏱️ Priority
 
 low (sobe se você já faz manutenção toda semana)
+
+---
+
+# 🧩 Task: URL sem protocolo vira HTTPS
+
+## 💡 Idea
+
+Ao configurar um monitor HTTP, se a URL vier sem `http://` ou `https://` (por exemplo `exemplo.com/saude`), o Pingou presume **`https://`**.
+
+## 🎯 Goal
+
+Quem digita só o endereço não leva erro de validação nem monitora o endereço errado.
+
+## 📦 Initial Scope
+
+- Na criação e na edição de monitor HTTP, URL sem protocolo ganha `https://` na frente antes de validar e gravar.
+- URL que já tem `http://` ou `https://` não muda.
+- O valor gravado e devolvido pela API já tem o protocolo, então o painel mostra a URL completa.
+- O aviso de SSL (`cert_alert_enabled`) passa a valer também para quem digitou sem protocolo, já que vira `https://`.
+
+## 🚧 Out of Scope
+
+- Cair para `http://` quando `https://` falhar.
+- Outros esquemas (`ftp://` etc.): continuam recusados.
+- Mudar monitores já gravados.
+- Monitores TCP e heartbeat (não usam URL).
+
+## 🔍 Context
+
+A validação fica em `internal/service/validate.go`. Hoje `isHTTPS` só olha o prefixo `https://`, e o `validateHost` do TCP recusa `://`. Verificar onde a URL do HTTP é conferida hoje, para pôr a normalização **no mesmo ponto** (criar e atualizar), uma vez só.
+
+## ⚠️ Notes
+
+- **Presumir HTTPS erra para serviço só em HTTP** (rede local, `192.168.x.x:8080`). O monitor vai falhar com erro de TLS até a pessoa escrever `http://`. A regra é a pedida, mas a mensagem de erro e o formulário devem deixar claro que o protocolo presumido foi `https://`.
+- **Mostrar o resultado.** Se o painel mostra a URL já completa depois de salvar, a pessoa percebe o `https://` posto sozinho.
+- **Espaços e maiúsculas:** tirar espaços nas pontas antes de checar o prefixo; o esquema não diferencia maiúsculas (como o `isHTTPS` já faz).
+- **Teste:** `exemplo.com`, `exemplo.com:8080/x`, `HTTP://exemplo.com` e `https://exemplo.com`.
+
+## 🏷️ Type
+
+melhoria (usabilidade)
+
+## ⏱️ Priority
+
+low (pequena)
+
+---
+
+# 🧩 Task: Nome de monitor único
+
+## 💡 Idea
+
+Todos os monitores precisam ter **nome único**. Não pode haver dois com o mesmo nome.
+
+## 🎯 Goal
+
+Nunca confundir dois monitores na lista, nos avisos (e-mail, ntfy, webhook) e, no futuro, nas páginas públicas e nas métricas.
+
+## 📦 Initial Scope
+
+- Criar ou renomear um monitor com nome já usado por outro responde `409` com um código estável (por exemplo `NAME_CONFLICT`), no mesmo padrão do `MAINTENANCE_CONFLICT`.
+- O painel mostra a mensagem junto ao campo Nome.
+- A regra vale para os três tipos (http, tcp, heartbeat).
+- Salvar um monitor com o **próprio nome** (sem mudar) não dá conflito.
+
+## 🚧 Out of Scope
+
+- Nome `sugerido` automático ("Monitor 2").
+- Unicidade entre outras entidades (páginas, canais).
+
+## 🔍 Context
+
+Hoje `name` em `monitors` só tem `CHECK` de tamanho (1 a 100), sem `UNIQUE` (`0003_monitor_types.sql`). A validação do nome está em `validateName`, em `internal/service/validate.go`.
+
+## ⚠️ Notes
+
+- **Bancos existentes podem já ter nomes repetidos.** Uma migration com `UNIQUE` falha nesse caso. Decidir como tratar: (a) renomear os repetidos na migration (`Nome (2)`), (b) só validar na API e não criar índice, ou (c) recusar subir e pedir ajuste. Sugestão: (a).
+- **Defesa dupla:** validar na API (para dar a mensagem certa) **e** um índice único no banco (para valer mesmo com duas requisições ao mesmo tempo). O SQLite tem uma conexão só, mas a checagem + gravação em passos separados ainda tem janela.
+- **Maiúsculas e espaços:** `API` e `api` contam como o mesmo nome? Sugestão: sim, sem diferenciar maiúsculas e sem espaços nas pontas (`COLLATE NOCASE` no índice; `TrimSpace` na validação).
+- **Importar (ideia 1):** o `pingou import` numa instância vazia não conflita, mas deve conferir nomes repetidos do arquivo.
+- **Texto do erro** nasce nos arquivos de tradução (ideia 4), se ela já tiver entrado.
+- **Decisões que faltam:** como tratar nomes repetidos que já existem (ver o primeiro item) e se maiúsculas contam como iguais.
+
+## 🏷️ Type
+
+melhoria (consistência)
+
+## ⏱️ Priority
+
+medium (quanto antes, menos nomes repetidos a resolver na migration)
 
 ---
 
